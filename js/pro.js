@@ -1,20 +1,11 @@
 /* Bijak Labur Premium: portfolio, simulator DCA, zakat pelaburan, penjana rujukan, laporan PDF */
 (function () {
-  if (!Premium.available) return;
   const REST = 'https://data-api.binance.vision/api/v3';
   const rm = new Intl.NumberFormat('ms-MY', { style: 'currency', currency: 'MYR', minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const fmtRM = v => rm.format(v || 0).replace(/ /g, ' ');
   const pct = v => (v >= 0 ? '+' : '') + v.toFixed(2) + '%';
   const sign = v => v >= 0 ? 'up' : 'down';
   const numIn = el => { const v = parseFloat(String(el.value).replace(/,/g, '')); return isFinite(v) ? v : NaN; };
-  const TOOLS = { portfolio: ['Portfolio', 'pelabur'], dca: ['Simulator DCA', 'pelabur'], zakat: ['Zakat', 'pelabur'], rujukan: ['Rujukan', 'pelajar'] };
-  const PITCH = {
-    portfolio: 'Catat pegangan saham dan kripto anda. Nilai kripto dikemas kini secara langsung dan semuanya ditukar ke Ringgit, supaya anda nampak untung rugi sebenar.',
-    dca: 'Lihat apa yang berlaku jika anda melabur jumlah tetap setiap bulan, menggunakan harga bulanan sebenar dari Binance sejak 2017.',
-    zakat: 'Kira zakat atas saham, kripto dan simpanan tunai berbanding nisab emas semasa.',
-    rujukan: 'Hasilkan rujukan APA 7, MLA 9 atau Harvard daripada butiran buku, jurnal atau laman web, kemudian salin senarai rujukan yang lengkap.'
-  };
-
   /* ---------- Kadar tukaran USD/MYR ---------- */
   const FX = {
     rate: store.get('fx', { v: 4.2, t: 0, live: false }),
@@ -28,30 +19,47 @@
     }
   };
 
-  /* ---------- Tab alat ---------- */
-  let tool = store.get('proTool', 'portfolio');
-  if (!TOOLS[tool]) tool = 'portfolio';
-  function renderTabs() {
-    $('#toolTabs').innerHTML = Object.entries(TOOLS).map(([k, [n, plan]]) =>
-      `<button class="chip ${k === tool ? 'active' : ''}" data-tool="${k}">${Premium.has(plan) ? '' : icon('lock', 'ic lock')}${n}</button>`).join('');
-    Object.keys(TOOLS).forEach(k => $('#tool-' + k).classList.toggle('hidden', k !== tool));
-    const [, plan] = TOOLS[tool], open = Premium.has(plan);
-    $('#tool-' + tool).querySelector('.tool-body').classList.toggle('hidden', !open);
-    let lock = $('#tool-' + tool).querySelector('.locked');
-    if (!open && !lock) {
-      lock = document.createElement('div'); lock.className = 'card locked';
-      $('#tool-' + tool).prepend(lock);
-    }
-    if (lock) {
-      lock.classList.toggle('hidden', open);
-      lock.innerHTML = `<span class="sc-ico">${icon('lock')}</span><div class="sc-body"><div class="sc-title">${TOOLS[tool][0]}</div><p class="sc-sub">${PITCH[tool]}</p>
-        <button class="btn sm" data-goplans>Buka dengan pelan ${Premium.PLANS[plan].name} atau Lengkap</button></div>`;
-    }
-    if (open) INIT[tool]();
+  /* ---------- Senarai alat ---------- */
+  const TOOLS = {};
+  const ProTools = window.ProTools = {
+    // meta: { name, plan, icon, desc, pitch, init, html (pilihan, untuk alat yang dibina dalam JS) }
+    add(key, meta) {
+      TOOLS[key] = meta;
+      if (meta.html && !$('#tool-' + key)) $('#toolsBlock').insertAdjacentHTML('beforeend', `<div class="tool hidden" id="tool-${key}"><div class="tool-body">${meta.html}</div></div>`);
+      if (meta.init) meta.init = once(meta.init);
+    },
+    back() { if (!tool || !$('#view-premium').classList.contains('active')) return false; open(null); return true; },
+    kit: null
+  };
+  let tool = null;
+  const GROUPS = [['pelabur', 'Untuk pelabur'], ['pelajar', 'Untuk pelajar']];
+  function renderGrid() {
+    $('#toolGrid').innerHTML = GROUPS.map(([g, title]) => `<h2 class="grid-title">${title}</h2><div class="tools">${
+      Object.entries(TOOLS).filter(([, m]) => m.plan === g).map(([k, m]) => `<button class="tool-card" data-tool="${k}">
+        <span class="sc-ico">${icon(m.icon)}</span><span class="tc-body"><span class="tc-name">${m.name}${Premium.has(m.plan) ? '' : icon('lock', 'ic lock')}</span><span class="tc-desc">${m.desc}</span></span></button>`).join('')}</div>`).join('');
   }
-  $('#toolTabs').addEventListener('click', e => { const b = e.target.closest('[data-tool]'); if (b) { tool = b.dataset.tool; store.set('proTool', tool); renderTabs(); } });
+  function open(key) {
+    tool = key && TOOLS[key] ? key : null;
+    $('#toolGrid').classList.toggle('hidden', !!tool);
+    $('#toolHead').classList.toggle('hidden', !tool);
+    Object.keys(TOOLS).forEach(k => $('#tool-' + k).classList.toggle('hidden', k !== tool));
+    if (!tool) { renderGrid(); return; }
+    const m = TOOLS[tool], ok = Premium.has(m.plan), el = $('#tool-' + tool);
+    $('#toolTitle').textContent = m.name;
+    el.querySelector('.tool-body').classList.toggle('hidden', !ok);
+    let lock = el.querySelector('.locked');
+    if (!ok && !lock) { lock = document.createElement('div'); lock.className = 'card locked'; el.prepend(lock); }
+    if (lock) {
+      lock.classList.toggle('hidden', ok);
+      lock.innerHTML = `<span class="sc-ico">${icon('lock')}</span><div class="sc-body"><p class="sc-sub">${m.pitch}</p>
+        <button class="btn sm" data-goplans>${Premium.native ? 'Lihat pelan' : `Cuba percuma 3 hari atau pilih pelan ${Premium.PLANS[m.plan].name}`}</button></div>`;
+    }
+    if (ok) m.init();
+  }
+  $('#toolGrid').addEventListener('click', e => { const b = e.target.closest('[data-tool]'); if (b) { open(b.dataset.tool); $('#toolsBlock').scrollIntoView({ block: 'start' }); } });
+  $('#toolBack').addEventListener('click', () => open(null));
   $('#view-premium').addEventListener('click', e => { if (e.target.closest('[data-goplans]')) $('#plansBlock').scrollIntoView({ behavior: 'smooth' }); });
-  const once = fn => { let done = false; return () => { if (!done) { done = true; fn(); } else if (fn.again) fn.again(); }; };
+  function once(fn) { let done = false; return () => { if (!done) { done = true; fn(); } }; }
 
   /* ---------- Portfolio ---------- */
   let hold = store.get('portfolio', []);
@@ -319,7 +327,26 @@
     sync();
   });
 
-  const INIT = { portfolio: initPortfolio, dca: initDca, zakat: initZakat, rujukan: initRujukan };
+  ProTools.add('portfolio', { name: 'Portfolio', plan: 'pelabur', icon: 'wallet', init: initPortfolio, desc: 'Nilai dan untung rugi dalam Ringgit',
+    pitch: 'Catat pegangan saham dan kripto anda. Nilai kripto dikemas kini secara langsung dan semuanya ditukar ke Ringgit, supaya anda nampak untung rugi sebenar.' });
+  ProTools.add('dca', { name: 'Simulator DCA', plan: 'pelabur', icon: 'chart', init: initDca, desc: 'Labur tetap setiap bulan sejak 2017',
+    pitch: 'Lihat apa yang berlaku jika anda melabur jumlah tetap setiap bulan, menggunakan harga bulanan sebenar dari Binance sejak 2017.' });
+  ProTools.add('zakat', { name: 'Zakat pelaburan', plan: 'pelabur', icon: 'moon', init: initZakat, desc: 'Saham, kripto dan simpanan',
+    pitch: 'Kira zakat atas saham, kripto dan simpanan tunai berbanding nisab emas semasa.' });
+  ProTools.add('rujukan', { name: 'Penjana rujukan', plan: 'pelajar', icon: 'quote', init: initRujukan, desc: 'APA 7, MLA 9 dan Harvard',
+    pitch: 'Hasilkan rujukan APA 7, MLA 9 atau Harvard daripada butiran buku, jurnal atau laman web, kemudian salin senarai rujukan yang lengkap.' });
+  // Pembina medan borang dan simpanan nilai borang untuk alat lain
+  const field = (id, label, attrs = '', wide = false) => `<div class="field${wide ? ' wide' : ''}"><label for="${id}">${label}</label><input id="${id}" ${attrs || 'type="number" step="any" min="0" inputmode="decimal"'}></div>`;
+  function persist(form, key, onChange) {
+    const saved = store.get('t_' + key, {});
+    $$('input, select, textarea', form).forEach(el => { if (el.id && saved[el.id] != null) el.type === 'checkbox' ? el.checked = saved[el.id] : el.value = saved[el.id]; });
+    const save = () => { const o = {}; $$('input, select, textarea', form).forEach(el => { if (el.id && !el.dataset.nosave) o[el.id] = el.type === 'checkbox' ? el.checked : el.value; }); store.set('t_' + key, o); };
+    form.addEventListener('input', () => { save(); onChange && onChange(); });
+    form.addEventListener('change', () => { save(); onChange && onChange(); });
+    form.addEventListener('submit', e => e.preventDefault());
+    onChange && onChange();
+  }
+  ProTools.kit = { fmtRM, pct, sign, numIn, FX, once, REST, field, persist, portfolio: () => hold, valueOf };
 
   /* ---------- Laporan PDF daripada penyemak kertas ---------- */
   $('#reportBtn').addEventListener('click', () => {
@@ -346,7 +373,7 @@
   function paint() {
     $('#reportBtn').querySelector('.lock').classList.toggle('hidden', Premium.has('pelajar'));
     $('#proWrap').classList.toggle('subscribed', !!Premium.plan);
-    renderTabs();
+    open(tool);
   }
   document.addEventListener('premiumchange', paint);
   document.addEventListener('viewchange', e => { if (e.detail === 'premium') paint(); });

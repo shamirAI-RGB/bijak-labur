@@ -82,7 +82,7 @@ function paintThemeIcon() {
 })();
 
 /* Navigasi berasaskan hash */
-const VIEWS = ['utama', 'belajar', 'pasaran', 'solat', 'semak'].concat(Native ? [] : ['premium']);
+const VIEWS = ['utama', 'belajar', 'pasaran', 'solat', 'semak', 'premium'];
 let currentView = null;
 function route() {
   const v = (location.hash || '#utama').slice(1);
@@ -101,6 +101,7 @@ window.addEventListener('scroll', () => $('.topbar').classList.toggle('scrolled'
 /* Butang kembali Android: kembali ke Utama dahulu sebelum keluar */
 const AppPlugin = plugin('App');
 if (AppPlugin) AppPlugin.addListener('backButton', () => {
+  if (window.ProTools && ProTools.back()) return;
   if (currentView && currentView !== 'utama') location.hash = '#utama'; else AppPlugin.exitApp();
 });
 

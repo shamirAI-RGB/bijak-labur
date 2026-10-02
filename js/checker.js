@@ -431,6 +431,7 @@
       state.plag = Object.assign(plagiarism(text, state.sents, sources), { checked: sources.length > 0 });
       state.view = 'fix'; $$('#viewTabs .seg').forEach(t => t.classList.toggle('active', t.dataset.v === 'fix'));
       $('#results').classList.remove('hidden'); renderAll();
+      document.dispatchEvent(new CustomEvent('checkdone'));
       $('#results').scrollIntoView({ behavior: 'smooth' });
     } catch (e) { console.error(e); toast('Ralat semasa menganalisis.'); }
     btn.disabled = false; btn.textContent = 'Semak sekarang';

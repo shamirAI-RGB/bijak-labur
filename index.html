@@ -41,6 +41,17 @@
       <symbol id="i-link" viewBox="0 0 24 24"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></symbol>
       <symbol id="i-lock" viewBox="0 0 24 24"><rect width="16" height="11" x="4" y="11" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
       <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 2 10 5-10 5L2 7z"/><path d="m2 17 10 5 10-5M2 12l10 5 10-5"/></symbol>
+      <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M19 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></symbol>
+      <symbol id="i-quote" viewBox="0 0 24 24"><path d="M3 21c3 0 7-1 7-8V5H3v7h4c0 4-2 5-4 5z"/><path d="M14 21c3 0 7-1 7-8V5h-7v7h4c0 4-2 5-4 5z"/></symbol>
+      <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></symbol>
+      <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="M12 8v4M12 16h.01"/></symbol>
+      <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8H8M16 12H8M13 16H8"/></symbol>
+      <symbol id="i-coins" viewBox="0 0 24 24"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/></symbol>
+      <symbol id="i-bars" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M8 17V11M13 17V7M18 17v-4"/></symbol>
+      <symbol id="i-cap" viewBox="0 0 24 24"><path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></symbol>
+      <symbol id="i-diff" viewBox="0 0 24 24"><path d="M12 3v14M5 10h14"/><path d="M5 21h14"/></symbol>
+      <symbol id="i-history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5M12 7v5l4 2"/></symbol>
+      <symbol id="i-cover" viewBox="0 0 24 24"><rect width="16" height="20" x="4" y="2" rx="2"/><path d="M8 7h8M8 11h8M10 17h4"/></symbol>
       <symbol id="i-phone" viewBox="0 0 24 24"><rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/></symbol>
     </defs>
   </svg>
@@ -92,7 +103,7 @@
             </a>
             <a class="card shortcut hidden" href="#premium" data-premium-entry>
               <span class="sc-ico gold"><svg class="ic"><use href="#i-layers"/></svg></span>
-              <div class="sc-body"><div class="sc-title">Bijak Labur Premium</div><div class="sc-sub">Portfolio dalam Ringgit, simulator DCA, zakat dan penjana rujukan</div></div>
+              <div class="sc-body"><div class="sc-title">Bijak Labur Premium</div><div class="sc-sub">15 alat untuk pelabur dan pelajar. Cuba percuma 3 hari</div></div>
               <svg class="ic chev"><use href="#i-chev"/></svg>
             </a>
           </div>
@@ -295,15 +306,19 @@
       <div class="page-head">
         <p class="eyebrow">Bijak Labur Premium</p>
         <h1 id="h-premium">Alat untuk langkah seterusnya</h1>
-        <p class="lead">Bayar sekali untuk 30 hari atau setahun. Tiada caj automatik, tiada iklan, dan semua ciri percuma kekal percuma.</p>
+        <p class="lead">15 alat untuk melabur dengan lebih teratur dan menyiapkan tugasan dengan lebih kemas. Cuba percuma selama 3 hari. Semua ciri percuma kekal percuma.</p>
       </div>
       <div class="pro-wrap" id="proWrap">
         <div class="card toggle-row hidden" id="proStatus"></div>
 
         <div id="toolsBlock">
-          <div class="chips" id="toolTabs" aria-label="Alat Premium"></div>
+          <div id="toolGrid" class="tool-grid"></div>
+          <div class="tool-head hidden" id="toolHead">
+            <button type="button" class="link-btn back" id="toolBack"><svg class="ic"><use href="#i-chev"/></svg>Semua alat</button>
+            <h2 id="toolTitle"></h2>
+          </div>
 
-          <div class="tool" id="tool-portfolio">
+          <div class="tool hidden" id="tool-portfolio">
             <div class="tool-body">
               <div class="stat-row two" id="pfSummary"></div>
               <div id="pfAlloc"></div>
@@ -406,9 +421,18 @@
 
         <div id="plansBlock">
           <div class="block-head"><h2 id="plansTitle">Pilih pelan</h2><div class="segmented small" id="periodSeg" role="tablist" aria-label="Tempoh"></div></div>
+          <div class="card trial-card hidden" id="trialCard" data-web-only>
+            <div class="sc-body"><div class="sc-title">Cuba semua alat Premium percuma selama 3 hari</div><div class="sc-sub">Tiada bayaran dan tiada butiran kad. Selepas 3 hari, alat dikunci semula sehingga anda memilih pelan.</div></div>
+            <button class="btn" id="trialGo" type="button">Mula percubaan</button>
+          </div>
           <div class="plan-grid" id="planGrid"></div>
-          <p class="muted small">Bayaran diproses dengan selamat oleh ToyyibPay melalui FPX (RHB, Maybank, CIMB, Bank Islam dan bank lain) atau kad debit dan kredit. Bijak Labur tidak menyimpan butiran bank atau kad anda. <a href="terma.html">Terma dan polisi bayaran balik</a>.</p>
-          <details class="card restore" id="restore">
+          <p class="muted small store-terms" id="storeTerms" data-native-only></p>
+          <div class="actions" data-native-only>
+            <button class="btn sm ghost" type="button" id="storeRestore">Pulihkan pembelian</button>
+            <button class="btn sm ghost" type="button" id="storeManage">Urus langganan</button>
+          </div>
+          <p class="muted small" data-web-only>Bayaran diproses dengan selamat oleh ToyyibPay melalui FPX (RHB, Maybank, CIMB, Bank Islam dan bank lain) atau kad debit dan kredit. Bijak Labur tidak menyimpan butiran bank atau kad anda. <a href="terma.html">Terma dan polisi bayaran balik</a>.</p>
+          <details class="card restore" id="restore" data-web-only>
             <summary>Sudah membayar? Aktifkan Premium pada peranti ini</summary>
             <form id="restoreForm" class="form-grid" autocomplete="on">
               <div class="field"><label for="restoreCode">Kod bil ToyyibPay</label><input id="restoreCode" placeholder="Dalam resit e-mel, cth. 8x2kf1ab" autocapitalize="off"></div>
@@ -421,7 +445,7 @@
     </section>
   </main>
 
-  <dialog id="payDlg" aria-labelledby="payTitle">
+  <dialog id="payDlg" aria-labelledby="payTitle" data-web-only>
     <form id="payForm" autocomplete="on">
       <p class="eyebrow">Bijak Labur Premium</p>
       <h2 id="payTitle">Pelan</h2>
@@ -459,5 +483,7 @@
   <script src="js/checker.js"></script>
   <script src="js/premium.js"></script>
   <script src="js/pro.js"></script>
+  <script src="js/pro-invest.js"></script>
+  <script src="js/pro-study.js"></script>
 </body>
 </html>
