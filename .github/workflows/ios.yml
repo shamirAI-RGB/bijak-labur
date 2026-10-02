@@ -1,0 +1,62 @@
+name: iOS
+
+# Sentiasa menyemak bahawa app iOS boleh dibina. Jika rahsia App Store Connect telah ditetapkan,
+# app turut ditandatangani dan dimuat naik ke TestFlight / App Store Connect.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15
+    env:
+      HAS_ASC: ${{ secrets.APPSTORE_API_KEY_ID != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Muat turun data waktu solat sandaran
+        run: npm run solat-data || echo "Data sandaran dilangkau"
+      - run: npm run build
+      - run: npx cap sync ios
+
+      - name: Bina untuk simulator (semakan, tanpa tandatangan)
+        working-directory: ios/App
+        run: |
+          xcodebuild -project App.xcodeproj -scheme App -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO build | tail -n 30
+
+      - name: Arkib, tandatangan dan muat naik ke App Store Connect
+        if: github.ref == 'refs/heads/main' && env.HAS_ASC == 'true'
+        env:
+          ASC_KEY_ID: ${{ secrets.APPSTORE_API_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        working-directory: ios/App
+        run: |
+          KEY="$RUNNER_TEMP/AuthKey_$ASC_KEY_ID.p8"
+          printf '%s' "$ASC_PRIVATE_KEY" > "$KEY"
+          AUTH="-allowProvisioningUpdates -authenticationKeyPath $KEY -authenticationKeyID $ASC_KEY_ID -authenticationKeyIssuerID $ASC_ISSUER_ID"
+          xcodebuild -project App.xcodeproj -scheme App -configuration Release \
+            -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/App.xcarchive" \
+            DEVELOPMENT_TEAM="$TEAM_ID" CODE_SIGN_STYLE=Automatic \
+            CURRENT_PROJECT_VERSION=${{ github.run_number }} $AUTH archive
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+            <key>teamID</key><string>$TEAM_ID</string>
+            <key>signingStyle</key><string>automatic</string>
+          </dict></plist>
+          PLIST
+          xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/App.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -exportPath "$RUNNER_TEMP/export" $AUTH

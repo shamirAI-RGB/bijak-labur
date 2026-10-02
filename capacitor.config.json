@@ -1,0 +1,11 @@
+{
+  "appId": "io.github.shamirairgb.bijaklabur",
+  "appName": "Bijak Labur",
+  "webDir": "www",
+  "backgroundColor": "#f6f5f1",
+  "android": { "allowMixedContent": false },
+  "ios": { "contentInset": "never", "scrollEnabled": true },
+  "plugins": {
+    "LocalNotifications": { "smallIcon": "ic_stat_notify", "iconColor": "#0b5d4b" }
+  }
+}

@@ -1,7 +1,7 @@
 /* Service worker: simpan app shell untuk kegunaan luar talian */
-const CACHE = 'bijak-labur-v1';
-const SHELL = ['./', 'index.html', 'css/style.css', 'js/app.js', 'js/learn.js', 'js/market.js', 'js/solat.js', 'js/checker.js',
-  'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-180.png'];
+const CACHE = 'bijak-labur-v2';
+const SHELL = ['./', 'index.html', 'css/style.css', 'js/app.js', 'js/learn.js', 'js/market.js', 'js/solat.js', 'js/checker.js', 'js/vendor/lightweight-charts.js',
+  'manifest.webmanifest', 'privacy.html', 'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-180.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -17,7 +17,7 @@ self.addEventListener('fetch', e => {
     e.respondWith(fetch(e.request).then(r => {
       const copy = r.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); return r;
     }).catch(() => caches.match(e.request, { ignoreSearch: true }).then(r => r || caches.match('index.html'))));
-  } else if (/fonts\.(googleapis|gstatic)\.com|cdn\.jsdelivr\.net|cdnjs\.cloudflare\.com/.test(url.host)) {
+  } else if (/cdn\.jsdelivr\.net|cdnjs\.cloudflare\.com/.test(url.host)) {
     e.respondWith(caches.match(e.request).then(r => r || fetch(e.request).then(res => {
       const copy = res.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); return res;
     })));

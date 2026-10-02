@@ -4,175 +4,234 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Bijak Labur</title>
-  <meta name="description" content="Belajar melabur dan trading di Moomoo, harga saham & kripto masa nyata, waktu solat seluruh Malaysia, dan penyemak kertas kerja pelajar.">
-  <meta name="theme-color" content="#0f766e">
+  <meta name="description" content="Belajar melabur di Moomoo, harga saham dan kripto masa nyata, waktu solat seluruh Malaysia, dan penyemak kertas kerja pelajar.">
+  <meta name="theme-color" content="#f6f5f1" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0e1311" media="(prefers-color-scheme: dark)">
+  <meta name="color-scheme" content="light dark">
+  <meta name="format-detection" content="telephone=no">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icons/icon-180.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Bijak Labur">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></symbol>
+      <symbol id="i-book" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></symbol>
+      <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 6-6"/></symbol>
+      <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol>
+      <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></symbol>
+      <symbol id="i-file" viewBox="0 0 24 24"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5z"/><path d="M14 2v6h6"/><path d="m9 15 2 2 4-4"/></symbol>
+      <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></symbol>
+      <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+      <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></symbol>
+      <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></symbol>
+      <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></symbol>
+      <symbol id="i-copy" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+      <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+      <symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/></symbol>
+      <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+      <symbol id="i-link" viewBox="0 0 24 24"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></symbol>
+      <symbol id="i-phone" viewBox="0 0 24 24"><rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/></symbol>
+    </defs>
+  </svg>
+
   <header class="topbar">
     <div class="topbar-inner">
-      <a class="logo" href="#utama"><img src="icons/icon.svg" alt="">Bijak Labur</a>
+      <a class="logo" href="#utama" aria-label="Bijak Labur, halaman utama"><img src="icons/icon.svg" alt="" width="30" height="30"><span>Bijak Labur</span></a>
       <nav class="desk-nav" aria-label="Navigasi utama">
         <a href="#utama" data-nav="utama">Utama</a>
-        <a href="#belajar" data-nav="belajar">Belajar Moomoo</a>
-        <a href="#pasaran" data-nav="pasaran">Pasaran Live</a>
+        <a href="#belajar" data-nav="belajar">Belajar</a>
+        <a href="#pasaran" data-nav="pasaran">Pasaran</a>
         <a href="#solat" data-nav="solat">Waktu Solat</a>
         <a href="#semak" data-nav="semak">Semak Kertas</a>
       </nav>
-      <button class="icon-btn" id="themeBtn" aria-label="Tukar tema">🌓</button>
+      <button class="icon-btn" id="themeBtn" aria-label="Tukar tema cerah atau gelap"><svg class="ic"><use href="#i-moon"/></svg></button>
     </div>
   </header>
 
-  <main>
+  <main id="main">
     <!-- UTAMA -->
-    <section class="view" id="view-utama">
-      <div class="hero">
-        <span class="pill" style="background:rgba(255,255,255,.15);color:#fff">Percuma · Boleh dipasang sebagai app</span>
-        <h1 style="margin-top:12px">Belajar labur dengan bijak, kekal tenang dengan waktu solat.</h1>
-        <p>Panduan lengkap Moomoo untuk saham dan kripto, harga pasaran masa nyata, waktu solat seluruh Malaysia, dan penyemak kertas kerja pelajar, semuanya dalam satu tempat.</p>
-        <div class="hero-actions">
-          <a class="btn" href="#belajar">Mula belajar</a>
-          <a class="btn ghost" href="#pasaran">Lihat pasaran live</a>
-          <button class="btn ghost hidden" id="installBtn">⬇ Pasang app</button>
-        </div>
-        <div class="hero-next" id="homeNext">🕌 Memuatkan waktu solat…</div>
+    <section class="view" id="view-utama" aria-labelledby="greet">
+      <div class="page-head">
+        <p class="eyebrow" id="todayLine">&nbsp;</p>
+        <h1 id="greet">Assalamualaikum</h1>
       </div>
 
-      <div class="section-head"><h2>Apa yang ada di sini</h2></div>
-      <div class="grid g4">
-        <a class="card feature" href="#belajar"><div class="f-ico">📚</div><h3>Belajar Moomoo</h3><p class="muted small">Dari buka akaun hingga analisis fundamental & teknikal saham dan kripto. Ada kuiz & kalkulator.</p></a>
-        <a class="card feature" href="#pasaran"><div class="f-ico">📈</div><h3>Pasaran Live</h3><p class="muted small">Harga kripto masa nyata (detik demi detik) dan carta saham AS & Bursa Malaysia.</p></a>
-        <a class="card feature" href="#solat"><div class="f-ico">🕌</div><h3>Waktu Solat</h3><p class="muted small">Semua zon JAKIM seluruh Malaysia, kiraan detik ke waktu seterusnya dan jadual sebulan.</p></a>
-        <a class="card feature" href="#semak"><div class="f-ico">📝</div><h3>Semak Kertas Kerja</h3><p class="muted small">Anggaran peratus tulisan AI & plagiarisme, serta cadangan pembetulan bervisual.</p></a>
-      </div>
+      <div class="home-grid">
+        <div class="home-main">
+          <a class="prayer-card" href="#solat" aria-label="Waktu solat seterusnya">
+            <div class="pc-top"><span>Solat seterusnya</span><span id="homeZone">&nbsp;</span></div>
+            <div class="pc-main">
+              <div><div class="pc-name" id="homeNextName">Memuatkan</div><div class="pc-time" id="homeNextTime">&nbsp;</div></div>
+              <div class="pc-count num" id="homeCount">--:--:--</div>
+            </div>
+            <ol class="pc-row" id="homeRow"></ol>
+          </a>
 
-      <div class="section-head"><h2>Ringkasan pasaran</h2><span class="pill live" id="homeLive">LIVE</span></div>
-      <div class="ticker" id="homeTicker"></div>
-
-      <div class="card" id="installCard" style="margin-top:24px">
-        <div class="install-banner">
-          <div style="font-size:2rem">📱</div>
-          <div style="flex:1;min-width:220px">
-            <h3 style="margin:0">Pasang sebagai app di telefon</h3>
-            <p class="muted small" style="margin:0"><b>Android/Chrome:</b> tekan menu ⋮ → <i>Install app / Add to Home screen</i>. <b>iPhone/Safari:</b> tekan butang Kongsi ⬆ → <i>Add to Home Screen</i>.</p>
+          <div class="shortcut-row">
+            <a class="card shortcut" href="#belajar">
+              <span class="ring-wrap"><svg class="ring" viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="18" class="ring-bg"/><circle cx="22" cy="22" r="18" class="ring-fg" id="homeRing" stroke-dasharray="113.1" stroke-dashoffset="113.1"/></svg><span class="ring-txt num" id="homePct">0%</span></span>
+              <div class="sc-body"><div class="sc-title">Sambung belajar</div><div class="sc-sub" id="homeLesson">Mula dengan modul pertama</div></div>
+              <svg class="ic chev"><use href="#i-chev"/></svg>
+            </a>
+            <a class="card shortcut" href="#semak">
+              <span class="sc-ico"><svg class="ic"><use href="#i-file"/></svg></span>
+              <div class="sc-body"><div class="sc-title">Semak kertas kerja</div><div class="sc-sub">Anggaran AI, plagiarisme dan pembetulan bahasa</div></div>
+              <svg class="ic chev"><use href="#i-chev"/></svg>
+            </a>
           </div>
         </div>
+
+        <div class="home-side">
+          <div class="block-head">
+            <h2>Kripto</h2>
+            <span class="live" id="homeLive">Menyambung</span>
+            <a class="more" href="#pasaran">Semua pasaran</a>
+          </div>
+          <div class="list" id="homeTicker"></div>
+        </div>
+      </div>
+
+      <div class="card install hidden" id="installCard">
+        <span class="sc-ico"><svg class="ic"><use href="#i-phone"/></svg></span>
+        <div class="sc-body">
+          <div class="sc-title">Pasang di telefon anda</div>
+          <div class="sc-sub" id="installHow">Dalam Chrome atau Edge, tekan ikon pasang di hujung bar alamat.</div>
+        </div>
+        <button class="btn sm hidden" id="installBtn">Pasang</button>
+        <button class="icon-btn plain" id="installClose" aria-label="Tutup"><svg class="ic"><use href="#i-x"/></svg></button>
       </div>
     </section>
 
     <!-- BELAJAR -->
-    <section class="view" id="view-belajar">
-      <h1>Akademi Moomoo</h1>
-      <p class="muted">Ikut modul mengikut turutan. Tanda setiap pelajaran sebagai selesai untuk jejak kemajuan anda.</p>
-      <div class="card" style="margin-bottom:16px">
-        <div style="display:flex;justify-content:space-between;font-weight:700;margin-bottom:8px"><span>Kemajuan anda</span><span id="progText">0%</span></div>
-        <div class="progress-bar"><div id="progBar"></div></div>
+    <section class="view" id="view-belajar" aria-labelledby="h-belajar">
+      <div class="page-head">
+        <p class="eyebrow">Akademi Moomoo</p>
+        <h1 id="h-belajar">Belajar melabur</h1>
+        <p class="lead">Ikut modul mengikut turutan. Tandakan setiap pelajaran selepas selesai untuk menjejak kemajuan.</p>
       </div>
-      <div class="tabs" id="learnTabs" role="tablist"></div>
-      <div id="learnContent" style="margin-top:14px"></div>
-      <p class="disclaimer" style="margin-top:20px">⚠️ Kandungan ini untuk pendidikan sahaja, bukan nasihat kewangan. Pelaburan melibatkan risiko termasuk kehilangan modal. Laman ini tidak bergabung dengan Moomoo atau Futu.</p>
+      <div class="progress-line" aria-live="polite">
+        <div class="progress-bar"><div id="progBar"></div></div>
+        <span id="progText" class="num">0%</span>
+      </div>
+      <div class="chips" id="learnTabs" role="tablist" aria-label="Modul"></div>
+      <div id="learnContent"></div>
+      <p class="note"><svg class="ic"><use href="#i-alert"/></svg><span>Kandungan ini untuk pendidikan sahaja dan bukan nasihat kewangan. Pelaburan melibatkan risiko, termasuk kehilangan modal. Bijak Labur tidak bergabung dengan Moomoo atau Futu.</span></p>
     </section>
 
     <!-- PASARAN -->
-    <section class="view" id="view-pasaran">
-      <div class="section-head" style="margin-top:0">
-        <div><h1 style="margin:0">Pasaran Live</h1><p class="muted" style="margin:0">Kripto dikemas kini setiap detik terus dari bursa. Saham melalui carta TradingView.</p></div>
-        <span class="pill live" id="cryptoStatus">Menyambung…</span>
-      </div>
-
-      <h2>🪙 Kripto masa nyata</h2>
-      <div class="ticker" id="cryptoTicker"></div>
-      <div class="card" style="margin-top:16px">
-        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between">
-          <h3 style="margin:0" id="chartTitle">BTC/USDT</h3>
-          <div class="tabs" id="tfTabs"></div>
+    <section class="view" id="view-pasaran" aria-labelledby="h-pasaran">
+      <div class="page-head with-aside">
+        <div>
+          <p class="eyebrow">Pasaran</p>
+          <h1 id="h-pasaran">Harga semasa</h1>
         </div>
-        <div id="cryptoChart" class="chart-box" style="margin-top:10px;height:380px"></div>
+        <div class="segmented" role="tablist" aria-label="Jenis aset">
+          <button role="tab" class="seg active" data-seg="crypto" aria-selected="true">Kripto</button>
+          <button role="tab" class="seg" data-seg="stock" aria-selected="false">Saham</button>
+        </div>
       </div>
 
-      <div class="grid g2" style="margin-top:16px">
-        <div class="card">
-          <h3>🔔 Amaran harga</h3>
-          <p class="muted small">Dapatkan notifikasi apabila harga kripto melepasi paras anda (semasa laman dibuka).</p>
-          <div class="alert-row">
-            <select id="alSym"></select>
-            <select id="alDir"><option value="above">Melebihi</option><option value="below">Bawah</option></select>
-            <input id="alPrice" type="number" step="any" placeholder="Harga (USD)">
-            <button class="btn" id="alAdd">Tambah</button>
+      <div id="seg-crypto">
+        <div class="block-head"><h2>Kripto</h2><span class="live" id="cryptoStatus">Menyambung</span><button type="button" class="link-btn" id="editList">Edit</button></div>
+        <div class="list" id="cryptoTicker"></div>
+        <form class="inline-form" id="addSymForm" autocomplete="off">
+          <input id="addSym" placeholder="Tambah simbol, cth. AVAX" aria-label="Simbol kripto" maxlength="12" autocapitalize="characters">
+          <button class="btn ghost" type="submit"><svg class="ic"><use href="#i-plus"/></svg>Tambah</button>
+        </form>
+
+        <div class="card chart-card">
+          <div class="chart-head">
+            <h3 id="chartTitle">BTC/USDT</h3>
+            <div class="segmented small" id="tfTabs" aria-label="Tempoh carta"></div>
           </div>
-          <div id="alList" style="margin-top:10px"></div>
+          <div id="cryptoChart" class="chart-box"></div>
         </div>
+
         <div class="card">
-          <h3>➕ Tambah kripto</h3>
-          <p class="muted small">Masukkan simbol (cth. ADA, AVAX, LINK). Disenaraikan berpasangan USDT.</p>
-          <div class="alert-row"><input id="addSym" placeholder="cth. LINK"><button class="btn" id="addSymBtn">Tambah</button></div>
-          <p class="muted small" style="margin-top:10px">Sumber: Binance public market data (WebSocket). Data CoinGecko digunakan jika sambungan gagal.</p>
+          <h3 class="with-ic"><svg class="ic"><use href="#i-bell"/></svg>Amaran harga</h3>
+          <p class="muted small">Notifikasi apabila harga melepasi paras anda, semasa app dibuka.</p>
+          <form class="inline-form" id="alForm">
+            <select id="alSym" aria-label="Kripto"></select>
+            <select id="alDir" aria-label="Arah"><option value="above">Melebihi</option><option value="below">Di bawah</option></select>
+            <input id="alPrice" type="number" step="any" inputmode="decimal" placeholder="Harga (USD)" aria-label="Harga sasaran">
+            <button class="btn" type="submit">Tambah</button>
+          </form>
+          <div id="alList"></div>
         </div>
+        <p class="source">Sumber: Binance (data pasaran awam, masa nyata). CoinGecko digunakan jika sambungan terputus.</p>
       </div>
 
-      <h2 style="margin-top:28px">📊 Saham (AS & Bursa Malaysia)</h2>
-      <div class="tabs" id="stockTabs"></div>
-      <div class="card" style="margin-top:10px;padding:0;overflow:hidden">
-        <div id="tvStock" class="tv-box" style="height:500px"></div>
+      <div id="seg-stock" class="hidden">
+        <div class="chips" id="stockTabs" aria-label="Saham"></div>
+        <form class="inline-form" id="stockForm" autocomplete="off">
+          <input id="stockSearch" placeholder="Cari, cth. NASDAQ:AMD atau NYSE:KO" aria-label="Simbol saham" autocapitalize="characters">
+          <button class="btn ghost" type="submit"><svg class="ic"><use href="#i-search"/></svg>Papar</button>
+        </form>
+        <div class="card flush"><div id="tvStock" class="tv-box"></div></div>
+        <div class="card">
+          <h3>Bursa Malaysia</h3>
+          <p class="muted small">Penyedia carta percuma tidak membenarkan paparan data Bursa dalam app pihak ketiga. Buka kaunter di bawah dalam Moomoo atau TradingView.</p>
+          <div class="list" id="bursaList"></div>
+        </div>
+        <div class="card flush"><div id="tvMovers" class="tv-box short"></div></div>
+        <p class="source">Carta saham AS oleh TradingView. Sahkan harga dalam Moomoo sebelum membuat transaksi.</p>
       </div>
-      <div class="card" style="margin-top:16px">
-        <h3>🔍 Cari saham lain</h3>
-        <div class="alert-row"><input id="stockSearch" placeholder="cth. NASDAQ:AMD, NYSE:KO, MYX:TENAGA"><button class="btn" id="stockGo">Papar carta</button></div>
-        <p class="muted small" style="margin-top:8px">Format: BURSA:SIMBOL. Data saham dari TradingView mungkin tertunda bergantung pada bursa.</p>
-      </div>
-      <div class="grid g2" style="margin-top:16px">
-        <div class="card" style="padding:0;overflow:hidden"><div id="tvMovers" style="height:460px"></div></div>
-        <div class="card" style="padding:0;overflow:hidden"><div id="tvNews" style="height:460px"></div></div>
-      </div>
-      <p class="disclaimer" style="margin-top:16px">Harga adalah untuk rujukan pendidikan. Sahkan harga dalam app Moomoo sebelum membuat sebarang transaksi.</p>
     </section>
 
     <!-- SOLAT -->
-    <section class="view" id="view-solat">
-      <div class="grid g2" style="align-items:end;margin-bottom:16px">
-        <div><h1 style="margin:0">Waktu Solat Malaysia</h1><p class="muted" style="margin:0">Berdasarkan zon rasmi JAKIM (e-Solat).</p></div>
-        <div style="display:flex;gap:8px">
+    <section class="view" id="view-solat" aria-labelledby="h-solat">
+      <div class="page-head with-aside">
+        <div>
+          <p class="eyebrow" id="solatDate">&nbsp;</p>
+          <h1 id="h-solat">Waktu solat</h1>
+        </div>
+        <div class="zone-pick">
           <select id="zoneSel" aria-label="Pilih zon"></select>
-          <button class="btn ghost" id="gpsBtn" title="Guna lokasi saya" aria-label="Guna lokasi saya">📍</button>
+          <button class="icon-btn" id="gpsBtn" aria-label="Kesan zon melalui lokasi saya"><svg class="ic"><use href="#i-pin"/></svg></button>
         </div>
       </div>
-      <div class="solat-hero">
-        <div class="small" id="solatDate" style="opacity:.85">–</div>
-        <div class="next-name" id="nextName">Memuatkan…</div>
-        <div class="count" id="countdown">--:--:--</div>
-        <div class="small" id="zoneName" style="opacity:.85"></div>
+
+      <div class="solat-panel">
+        <div class="sp-label" id="nextName">Memuatkan</div>
+        <div class="sp-count num" id="countdown">--:--:--</div>
+        <div class="sp-zone" id="zoneName">&nbsp;</div>
       </div>
-      <div class="solat-grid" id="todayGrid"></div>
-      <div class="card" style="margin-top:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-        <div style="flex:1;min-width:200px"><b>🔔 Peringatan azan</b><div class="muted small">Notifikasi apabila masuk waktu (semasa laman dibuka).</div></div>
-        <button class="btn ghost" id="notifBtn">Aktifkan</button>
+      <ol class="solat-list" id="todayGrid"></ol>
+
+      <div class="card toggle-row">
+        <span class="sc-ico"><svg class="ic"><use href="#i-bell"/></svg></span>
+        <div class="sc-body"><div class="sc-title">Peringatan waktu solat</div><div class="sc-sub" id="notifSub">Notifikasi apabila masuk waktu</div></div>
+        <button class="switch" id="notifBtn" role="switch" aria-checked="false" aria-label="Peringatan waktu solat"><span></span></button>
       </div>
-      <div class="section-head"><h2 id="monthTitle">Jadual bulanan</h2></div>
-      <div class="card" style="padding:6px"><div class="tbl-wrap"><table id="monthTable"></table></div></div>
-      <p class="muted small" style="margin-top:12px">Sumber data: api.waktusolat.app (data JAKIM). Disimpan untuk kegunaan luar talian.</p>
+
+      <div class="block-head"><h2 id="monthTitle">Jadual bulanan</h2></div>
+      <div class="card flush"><div class="tbl-wrap"><table id="monthTable" class="month"></table></div></div>
+      <p class="source">Data waktu solat rasmi JAKIM melalui api.waktusolat.app. Disimpan dalam peranti untuk kegunaan luar talian.</p>
     </section>
 
     <!-- SEMAK -->
-    <section class="view" id="view-semak">
-      <h1>Penyemak Kertas Kerja</h1>
-      <p class="muted">Tampal teks atau muat naik fail (.txt, .docx, .pdf). Analisis dibuat dalam pelayar anda; teks hanya dihantar ke perkhidmatan semakan tatabahasa dan carian sumber jika anda aktifkan.</p>
-      <div class="grid g2">
+    <section class="view" id="view-semak" aria-labelledby="h-semak">
+      <div class="page-head">
+        <p class="eyebrow">Untuk pelajar</p>
+        <h1 id="h-semak">Semak kertas kerja</h1>
+        <p class="lead">Tampal teks atau muat naik fail. Anda akan dapat anggaran peratus AI dan plagiarisme, serta pembetulan bahasa yang boleh diterima satu demi satu.</p>
+      </div>
+      <div class="checker-input">
         <div class="card">
-          <div class="drop" id="drop">📄 Seret fail ke sini atau <u>pilih fail</u> (.txt, .docx, .pdf)<input type="file" id="fileIn" accept=".txt,.docx,.pdf,text/plain" hidden></div>
-          <div class="field" style="margin-top:12px">
-            <label for="paper">Teks kertas kerja</label>
-            <textarea id="paper" placeholder="Tampal esei atau kertas kerja di sini (sekurang-kurangnya 80 patah perkataan untuk keputusan yang lebih tepat)…"></textarea>
-            <div class="muted small" id="wc">0 patah perkataan</div>
-          </div>
+          <button type="button" class="drop" id="drop"><svg class="ic"><use href="#i-upload"/></svg><span>Muat naik .txt, .docx atau .pdf</span></button>
+          <input type="file" id="fileIn" accept=".txt,.docx,.pdf,text/plain,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden>
+          <label for="paper" class="sr-only">Teks kertas kerja</label>
+          <textarea id="paper" placeholder="Atau tampal teks di sini. Sekurang-kurangnya 80 patah perkataan untuk anggaran yang lebih tepat."></textarea>
+          <div class="row-between"><span class="muted small num" id="wc">0 patah perkataan</span><button type="button" class="link-btn" id="sampleBtn">Cuba contoh</button></div>
         </div>
         <div class="card">
           <div class="field">
@@ -180,61 +239,60 @@
             <select id="lang"><option value="auto">Kesan automatik</option><option value="ms">Bahasa Melayu</option><option value="en">English</option></select>
           </div>
           <div class="field">
-            <label for="sources">Teks sumber untuk dibandingkan (pilihan)</label>
-            <textarea id="sources" style="min-height:110px" placeholder="Tampal teks rujukan / kerja pelajar lain. Pisahkan setiap sumber dengan baris ---"></textarea>
+            <label for="sources">Teks sumber untuk dibandingkan <span class="muted">(pilihan)</span></label>
+            <textarea id="sources" class="short" placeholder="Tampal teks rujukan atau kerja pelajar lain. Pisahkan setiap sumber dengan baris ---"></textarea>
           </div>
-          <label style="font-weight:500;display:flex;gap:8px;align-items:center"><input type="checkbox" id="optWeb" checked style="width:auto"> Cari padanan di Wikipedia (BM & EN)</label>
-          <label style="font-weight:500;display:flex;gap:8px;align-items:center"><input type="checkbox" id="optLT" checked style="width:auto"> Semakan tatabahasa lanjutan (LanguageTool)</label>
-          <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
-            <button class="btn" id="checkBtn">✨ Semak sekarang</button>
-            <button class="btn ghost" id="sampleBtn">Cuba contoh</button>
-          </div>
+          <label class="check"><input type="checkbox" id="optWeb" checked><span>Cari padanan dalam Wikipedia</span></label>
+          <label class="check"><input type="checkbox" id="optLT" checked><span>Semakan tatabahasa lanjutan (teks Inggeris)</span></label>
+          <button class="btn block" id="checkBtn">Semak sekarang</button>
+          <p class="muted small privacy-note">Analisis dibuat dalam peranti anda. Teks hanya dihantar ke Wikipedia dan LanguageTool jika pilihan di atas ditanda.</p>
         </div>
       </div>
 
-      <div id="results" class="hidden" style="margin-top:20px">
-        <div class="card pad-lg">
+      <div id="results" class="hidden">
+        <div class="card">
           <div class="gauges" id="gauges"></div>
-          <p class="muted small" style="text-align:center;margin:14px 0 0">Peratus ini ialah <b>anggaran</b> berdasarkan ciri-ciri statistik teks dan carian sumber terbuka. Ia bukan bukti muktamad; gunakan sebagai panduan dan semak secara manual.</p>
+          <p class="muted small center">Peratus di atas ialah anggaran berdasarkan ciri statistik teks dan carian sumber terbuka. Ia bukan bukti muktamad dan tidak setara dengan Turnitin.</p>
         </div>
-        <div class="grid g2" style="margin-top:16px">
-          <div class="card"><h3>📊 Statistik penulisan</h3><div class="stat-row" id="stats"></div></div>
-          <div class="card"><h3>🤖 Isyarat tulisan AI</h3><div class="bars" id="aiBars"></div></div>
+        <div class="two-col">
+          <div class="card"><h3>Statistik penulisan</h3><div class="stat-row" id="stats"></div></div>
+          <div class="card"><h3>Isyarat tulisan AI</h3><div class="bars" id="aiBars"></div></div>
         </div>
-        <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));margin-top:16px">
+        <div class="two-col wide">
           <div class="card">
-            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
-              <h3 style="margin:0">🖍️ Teks beranotasi</h3>
-              <div class="tabs" id="viewTabs"></div>
+            <div class="row-between wrap">
+              <h3>Teks beranotasi</h3>
+              <div class="segmented small" id="viewTabs" aria-label="Paparan"></div>
             </div>
             <div class="legend" id="legend"></div>
             <div class="annotated" id="annotated"></div>
-            <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
-              <button class="btn sm" id="applyAll">Terima semua pembetulan</button>
-              <button class="btn sm ghost" id="copyFixed">Salin teks dibetulkan</button>
-              <button class="btn sm ghost" id="dlFixed">Muat turun .txt</button>
+            <div class="actions">
+              <button class="btn sm" id="applyAll"><svg class="ic"><use href="#i-check"/></svg>Terima semua</button>
+              <button class="btn sm ghost" id="copyFixed"><svg class="ic"><use href="#i-copy"/></svg>Salin</button>
+              <button class="btn sm ghost" id="dlFixed"><svg class="ic"><use href="#i-download"/></svg>Muat turun</button>
             </div>
           </div>
           <div class="card">
-            <h3>💡 Cadangan pembetulan <span class="pill" id="suggCount">0</span></h3>
+            <h3>Cadangan pembetulan <span class="count num" id="suggCount">0</span></h3>
             <div class="sugg-list" id="suggList"></div>
           </div>
         </div>
-        <div class="card" style="margin-top:16px"><h3>🔗 Sumber yang sepadan</h3><div id="sourceList"></div></div>
+        <div class="card"><h3>Sumber yang sepadan</h3><div id="sourceList"></div></div>
       </div>
     </section>
   </main>
 
-  <footer>
-    <b>Bijak Labur</b> · Projek pendidikan percuma. Bukan nasihat kewangan. Tidak bergabung dengan Moomoo/Futu, JAKIM atau Binance. Data: Binance, CoinGecko, TradingView, api.waktusolat.app, LanguageTool, Wikipedia.
+  <footer class="site-footer">
+    <p>Bijak Labur ialah projek pendidikan percuma dan bukan nasihat kewangan. Tidak bergabung dengan Moomoo, Futu, JAKIM atau Binance.</p>
+    <p><a href="privacy.html">Dasar privasi</a> · Data: Binance, CoinGecko, TradingView, api.waktusolat.app, LanguageTool, Wikipedia.</p>
   </footer>
 
-  <nav class="bottom-nav" aria-label="Navigasi">
-    <a href="#utama" data-nav="utama"><span class="ico">🏠</span>Utama</a>
-    <a href="#belajar" data-nav="belajar"><span class="ico">📚</span>Belajar</a>
-    <a href="#pasaran" data-nav="pasaran"><span class="ico">📈</span>Pasaran</a>
-    <a href="#solat" data-nav="solat"><span class="ico">🕌</span>Solat</a>
-    <a href="#semak" data-nav="semak"><span class="ico">📝</span>Semak</a>
+  <nav class="tabbar" aria-label="Navigasi">
+    <a href="#utama" data-nav="utama"><svg class="ic"><use href="#i-home"/></svg><span>Utama</span></a>
+    <a href="#belajar" data-nav="belajar"><svg class="ic"><use href="#i-book"/></svg><span>Belajar</span></a>
+    <a href="#pasaran" data-nav="pasaran"><svg class="ic"><use href="#i-chart"/></svg><span>Pasaran</span></a>
+    <a href="#solat" data-nav="solat"><svg class="ic"><use href="#i-moon"/></svg><span>Solat</span></a>
+    <a href="#semak" data-nav="semak"><svg class="ic"><use href="#i-file"/></svg><span>Semak</span></a>
   </nav>
 
   <script src="js/app.js"></script>

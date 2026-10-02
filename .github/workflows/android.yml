@@ -1,0 +1,68 @@
+name: Android
+
+# Bina APK (untuk dicuba terus di telefon) dan AAB (untuk Google Play).
+# AAB ditandatangani jika rahsia ANDROID_KEYSTORE_BASE64 dan kata laluannya telah ditetapkan.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      HAS_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+      HAS_PLAY: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v4
+      - run: npm ci
+      - name: Muat turun data waktu solat sandaran
+        run: npm run solat-data || echo "Data sandaran dilangkau"
+      - run: npm run build
+      - run: npx cap sync android
+
+      - name: Sediakan kunci tandatangan
+        if: env.HAS_KEYSTORE == 'true'
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+          echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
+
+      - name: Bina APK dan AAB
+        working-directory: android
+        env:
+          VERSION_CODE: ${{ github.run_number }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleDebug bundleRelease
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bijak-labur-android
+          path: |
+            android/app/build/outputs/apk/debug/app-debug.apk
+            android/app/build/outputs/bundle/release/app-release.aab
+
+      - name: Hantar ke Google Play (trek ujian dalaman)
+        if: github.ref == 'refs/heads/main' && env.HAS_PLAY == 'true' && env.HAS_KEYSTORE == 'true'
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: io.github.shamirairgb.bijaklabur
+          releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
+          track: internal
+          status: draft

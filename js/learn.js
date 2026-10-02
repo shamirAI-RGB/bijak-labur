@@ -11,7 +11,7 @@
 
   const MODULES = [
     {
-      id: 'mula', name: '🚀 Mula di Moomoo', lessons: [
+      id: 'mula', name: 'Mula di Moomoo', lessons: [
         { id: 'm1', t: 'Apa itu Moomoo dan kenapa ramai guna', h: `
           <p><b>Moomoo</b> ialah platform pelaburan milik Futu Holdings (tersenarai di NASDAQ: FUTU). Di Malaysia, ia dikendalikan oleh <b>Moomoo Securities Malaysia Sdn Bhd</b> yang dilesenkan oleh <b>Suruhanjaya Sekuriti Malaysia (SC)</b>.</p>
           <ul>
@@ -56,7 +56,7 @@
       ]
     },
     {
-      id: 'order', name: '🧾 Jenis Order', lessons: [
+      id: 'order', name: 'Jenis order', lessons: [
         { id: 'o1', t: 'Market, Limit, Stop dan Stop-Limit', h: `
           <div class="tbl-wrap"><table>
             <tr><th>Order</th><th class="wrap">Cara ia berfungsi</th><th class="wrap">Bila guna</th></tr>
@@ -79,7 +79,7 @@
       ]
     },
     {
-      id: 'fund', name: '🏢 Fundamental Saham', lessons: [
+      id: 'fund', name: 'Fundamental saham', lessons: [
         { id: 'f1', t: 'Tiga penyata kewangan utama', h: `
           <ul>
             <li><b>Penyata Pendapatan</b>: hasil (revenue), untung kasar, untung bersih. Adakah ia berkembang setiap tahun?</li>
@@ -119,7 +119,7 @@
       ]
     },
     {
-      id: 'tech', name: '📉 Analisis Teknikal', lessons: [
+      id: 'tech', name: 'Analisis teknikal', lessons: [
         { id: 't1', t: 'Membaca candlestick', h: `
           <p>Setiap batang lilin menunjukkan harga <b>Buka, Tinggi, Rendah, Tutup</b> (OHLC) dalam satu tempoh.</p>
           <div class="candle-demo">${candle(30, 80, 20, 70, 'Bullish')}${candle(70, 85, 25, 35, 'Bearish')}${candle(50, 75, 25, 51, 'Doji')}${candle(60, 66, 20, 64, 'Hammer')}${candle(40, 85, 36, 44, 'Shooting star')}</div>
@@ -145,7 +145,7 @@
       ]
     },
     {
-      id: 'crypto', name: '🪙 Fundamental Kripto', lessons: [
+      id: 'crypto', name: 'Fundamental kripto', lessons: [
         { id: 'c1', t: 'Asas blockchain dan kripto', h: `
           <ul>
             <li><b>Blockchain</b>: lejar digital teragih yang mencatat transaksi dan sukar diubah.</li>
@@ -180,7 +180,7 @@
       ]
     },
     {
-      id: 'risk', name: '🛡️ Risiko & Psikologi', lessons: [
+      id: 'risk', name: 'Risiko & psikologi', lessons: [
         { id: 'r1', t: 'Peraturan 1–2% dan saiz kedudukan', h: `
           <p>Jangan risikokan lebih daripada <b>1 hingga 2% modal</b> dalam satu dagangan.</p>
           <div class="tip"><b>Contoh:</b> Modal RM10,000, risiko 1% = RM100. Beli pada RM2.00, stop loss RM1.80 (risiko RM0.20 seunit). Saiz = 100 ÷ 0.20 = <b>500 unit</b> (5 lot). Cuba kalkulator dalam tab <i>Kalkulator</i>.</div>` },
@@ -198,7 +198,7 @@
       ]
     },
     {
-      id: 'strat', name: '🎯 Strategi', lessons: [
+      id: 'strat', name: 'Strategi', lessons: [
         { id: 's1', t: 'Melabur jangka panjang vs trading', h: `
           <div class="tbl-wrap"><table>
             <tr><th>Gaya</th><th>Tempoh</th><th class="wrap">Ciri-ciri</th></tr>
@@ -216,7 +216,7 @@
       ]
     },
     {
-      id: 'syariah', name: '☪️ Syariah & Cukai', lessons: [
+      id: 'syariah', name: 'Syariah & cukai', lessons: [
         { id: 'sy1', t: 'Saham patuh Syariah', h: `
           <ul>
             <li>Untuk Bursa Malaysia, rujuk <b>Senarai Sekuriti Patuh Syariah</b> yang dikemas kini oleh Majlis Penasihat Syariah SC dua kali setahun (Mei & November).</li>
@@ -233,8 +233,8 @@
           </ul>` }
       ]
     },
-    { id: 'calc', name: '🧮 Kalkulator', calc: true },
-    { id: 'quiz', name: '❓ Kuiz', quiz: true }
+    { id: 'calc', name: 'Kalkulator', calc: true },
+    { id: 'quiz', name: 'Kuiz', quiz: true }
   ];
 
   const QUIZ = [
@@ -257,11 +257,19 @@
   function updateProgress() {
     const pct = Math.round(done.size / allLessons.length * 100);
     $('#progBar').style.width = pct + '%';
-    $('#progText').textContent = `${pct}% · ${done.size}/${allLessons.length} pelajaran`;
+    $('#progText').textContent = `${done.size}/${allLessons.length} pelajaran`;
+    $('#homePct').textContent = pct + '%';
+    $('#homeRing').setAttribute('stroke-dashoffset', (113.1 * (1 - pct / 100)).toFixed(1));
+    const next = allLessons.find(l => !done.has(l.id));
+    $('#homeLesson').textContent = next ? next.t : 'Semua pelajaran selesai. Cuba kuiz!';
   }
 
   function renderTabs() {
-    $('#learnTabs').innerHTML = MODULES.map(m => `<button class="tab ${m.id === current ? 'active' : ''}" role="tab" data-id="${m.id}">${m.name}</button>`).join('');
+    $('#learnTabs').innerHTML = MODULES.map(m => {
+      const n = m.lessons ? m.lessons.filter(l => done.has(l.id)).length : 0;
+      const badge = m.lessons ? `<span class="done-n">${n}/${m.lessons.length}</span>` : '';
+      return `<button class="chip ${m.id === current ? 'active' : ''}" role="tab" aria-selected="${m.id === current}" data-id="${m.id}">${esc(m.name)}${badge}</button>`;
+    }).join('');
   }
 
   function renderModule() {
@@ -271,50 +279,49 @@
     if (m.quiz) return renderQuiz(box);
     box.innerHTML = m.lessons.map((l, i) => `
       <details class="lesson ${done.has(l.id) ? 'done' : ''}" data-id="${l.id}" ${i === 0 ? 'open' : ''}>
-        <summary><span class="done-dot">${done.has(l.id) ? '✓' : ''}</span>${esc(l.t)}<span class="chev">›</span></summary>
+        <summary><span class="dot">${icon('check')}</span>${esc(l.t)}${icon('chev', 'ic chev')}</summary>
         <div class="lesson-body">${l.h}
-          <button class="btn sm ${done.has(l.id) ? 'ghost' : ''}" data-mark="${l.id}">${done.has(l.id) ? 'Tandakan belum selesai' : '✓ Tandakan selesai'}</button>
+          <button class="btn sm ${done.has(l.id) ? 'ghost' : ''}" data-mark="${l.id}">${done.has(l.id) ? 'Tandakan belum selesai' : 'Tandakan selesai'}</button>
         </div>
       </details>`).join('');
   }
 
   $('#learnTabs').addEventListener('click', e => {
-    const b = e.target.closest('.tab'); if (!b) return;
+    const b = e.target.closest('.chip'); if (!b) return;
     current = b.dataset.id; store.set('learnTab', current); renderTabs(); renderModule();
   });
   $('#learnContent').addEventListener('click', e => {
     const b = e.target.closest('[data-mark]'); if (!b) return;
     const id = b.dataset.mark;
-    if (done.has(id)) done.delete(id); else { done.add(id); toast('Bagus! Pelajaran ditanda selesai 🎉'); }
-    store.set('learnDone', [...done]); updateProgress();
+    if (done.has(id)) done.delete(id); else { done.add(id); toast('Pelajaran ditanda selesai'); }
+    store.set('learnDone', [...done]); updateProgress(); renderTabs();
     const det = b.closest('details'); det.classList.toggle('done', done.has(id));
-    det.querySelector('.done-dot').textContent = done.has(id) ? '✓' : '';
-    b.textContent = done.has(id) ? 'Tandakan belum selesai' : '✓ Tandakan selesai';
+    b.textContent = done.has(id) ? 'Tandakan belum selesai' : 'Tandakan selesai';
     b.classList.toggle('ghost', done.has(id));
     if (done.has(id)) { const nx = det.nextElementSibling; det.open = false; if (nx) nx.open = true; }
   });
 
   const rm = n => 'RM' + n.toLocaleString('ms-MY', { maximumFractionDigits: 2, minimumFractionDigits: 2 });
   function renderCalc(box) {
-    box.innerHTML = `<div class="grid g3">
-      <div class="card"><h3>📐 Saiz kedudukan</h3>
-        <div class="field"><label>Modal (RM)</label><input type="number" id="cCap" value="10000"></div>
-        <div class="field"><label>Risiko per dagangan (%)</label><input type="number" id="cRisk" value="1" step="0.1"></div>
-        <div class="field"><label>Harga masuk</label><input type="number" id="cEntry" value="2.00" step="0.01"></div>
-        <div class="field"><label>Stop loss</label><input type="number" id="cStop" value="1.80" step="0.01"></div>
+    box.innerHTML = `<div class="calc-grid">
+      <div class="card"><h3>Saiz kedudukan</h3>
+        <div class="field"><label for="cCap">Modal (RM)</label><input type="number" inputmode="decimal" id="cCap" value="10000"></div>
+        <div class="field"><label for="cRisk">Risiko per dagangan (%)</label><input type="number" inputmode="decimal" id="cRisk" value="1" step="0.1"></div>
+        <div class="field"><label for="cEntry">Harga masuk</label><input type="number" inputmode="decimal" id="cEntry" value="2.00" step="0.01"></div>
+        <div class="field"><label for="cStop">Stop loss</label><input type="number" inputmode="decimal" id="cStop" value="1.80" step="0.01"></div>
         <div class="calc-out" id="cOut1"></div><div class="muted small" id="cOut1b"></div></div>
-      <div class="card"><h3>📈 DCA & faedah kompaun</h3>
-        <div class="field"><label>Modal permulaan (RM)</label><input type="number" id="dInit" value="1000"></div>
-        <div class="field"><label>Simpanan bulanan (RM)</label><input type="number" id="dMon" value="300"></div>
-        <div class="field"><label>Pulangan tahunan anggaran (%)</label><input type="number" id="dRate" value="7" step="0.5"></div>
-        <div class="field"><label>Tempoh (tahun)</label><input type="number" id="dYrs" value="10"></div>
+      <div class="card"><h3>DCA & pulangan kompaun</h3>
+        <div class="field"><label for="dInit">Modal permulaan (RM)</label><input type="number" inputmode="decimal" id="dInit" value="1000"></div>
+        <div class="field"><label for="dMon">Simpanan bulanan (RM)</label><input type="number" inputmode="decimal" id="dMon" value="300"></div>
+        <div class="field"><label for="dRate">Pulangan tahunan anggaran (%)</label><input type="number" inputmode="decimal" id="dRate" value="7" step="0.5"></div>
+        <div class="field"><label for="dYrs">Tempoh (tahun)</label><input type="number" inputmode="decimal" id="dYrs" value="10"></div>
         <div class="calc-out" id="cOut2"></div><div class="muted small" id="cOut2b"></div>
         <svg id="dChart" viewBox="0 0 300 90" style="width:100%;height:90px;margin-top:8px"></svg></div>
-      <div class="card"><h3>💵 Untung/rugi saham AS</h3>
-        <div class="field"><label>Bilangan unit</label><input type="number" id="pQty" value="10"></div>
-        <div class="field"><label>Harga beli (USD)</label><input type="number" id="pBuy" value="150" step="0.01"></div>
-        <div class="field"><label>Harga jual (USD)</label><input type="number" id="pSell" value="180" step="0.01"></div>
-        <div class="field"><label>Kadar USD/MYR</label><input type="number" id="pFx" value="4.20" step="0.01"></div>
+      <div class="card"><h3>Untung rugi saham AS</h3>
+        <div class="field"><label for="pQty">Bilangan unit</label><input type="number" inputmode="decimal" id="pQty" value="10"></div>
+        <div class="field"><label for="pBuy">Harga beli (USD)</label><input type="number" inputmode="decimal" id="pBuy" value="150" step="0.01"></div>
+        <div class="field"><label for="pSell">Harga jual (USD)</label><input type="number" inputmode="decimal" id="pSell" value="180" step="0.01"></div>
+        <div class="field"><label for="pFx">Kadar USD/MYR</label><input type="number" inputmode="decimal" id="pFx" value="4.20" step="0.01"></div>
         <div class="calc-out" id="cOut3"></div><div class="muted small" id="cOut3b"></div></div>
     </div><p class="muted small" style="margin-top:10px">Kalkulator tidak mengambil kira yuran broker, cukai atau caj tukaran mata wang.</p>`;
     const v = id => parseFloat($('#' + id).value) || 0;
@@ -345,13 +352,14 @@
     const show = () => {
       if (idx >= QUIZ.length) {
         const best = Math.max(store.get('quizBest', 0), score); store.set('quizBest', best);
-        box.innerHTML = `<div class="card pad-lg" style="text-align:center"><div style="font-size:3rem">${score >= 8 ? '🏆' : score >= 5 ? '👍' : '📚'}</div>
-          <h2>Markah: ${score}/${QUIZ.length}</h2><p class="muted">Markah terbaik: ${best}/${QUIZ.length}</p>
+        const msg = score >= 8 ? 'Cemerlang. Anda faham asasnya dengan baik.' : score >= 5 ? 'Bagus. Ulang kaji modul yang anda kurang yakin.' : 'Teruskan belajar, kemudian cuba lagi.';
+        box.innerHTML = `<div class="card center" style="padding:28px 16px"><p class="eyebrow">Keputusan</p>
+          <div class="calc-out" style="font-size:2.6rem">${score}/${QUIZ.length}</div><p>${msg}</p><p class="muted small">Markah terbaik: ${best}/${QUIZ.length}</p>
           <button class="btn" id="qAgain">Cuba lagi</button></div>`;
         $('#qAgain').onclick = () => renderQuiz(box); return;
       }
       const q = QUIZ[idx];
-      box.innerHTML = `<div class="card pad-lg"><div class="muted small">Soalan ${idx + 1} daripada ${QUIZ.length}</div>
+      box.innerHTML = `<div class="card"><div class="muted small num">Soalan ${idx + 1} daripada ${QUIZ.length}</div>
         <div class="progress-bar" style="margin:8px 0 16px"><div style="width:${idx / QUIZ.length * 100}%"></div></div>
         <h3>${esc(q.q)}</h3>${q.o.map((o, i) => `<button class="quiz-opt" data-i="${i}">${esc(o)}</button>`).join('')}</div>`;
       box.querySelectorAll('.quiz-opt').forEach(b => b.onclick = () => {
