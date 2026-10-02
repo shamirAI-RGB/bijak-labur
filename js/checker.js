@@ -350,6 +350,7 @@
     const read = Math.max(1, Math.round(ws.length / 200));
     const items = [[ws.length.toLocaleString(), 'Patah perkataan'], [sents.length, 'Ayat'], [avgS.toFixed(1), 'Purata perkataan/ayat'],
       [Math.round(uniq.size / (ws.length || 1) * 100) + '%', 'Kepelbagaian kosa kata'], [read + ' min', 'Masa membaca'], [state.lang === 'ms' ? 'Bahasa Melayu' : 'English', 'Bahasa']];
+    state.statItems = items;
     $('#stats').innerHTML = items.map(([v, k]) => `<div class="stat"><div class="v">${v}</div><div class="k">${k}</div></div>`).join('');
   }
 
@@ -357,6 +358,7 @@
     const a = state.ai, p = state.plag;
     const nIssues = state.sugg.filter(s => s.cat !== 'gaya').length, n = words(state.orig).length || 1;
     const quality = Math.round(clamp(1 - (nIssues / n * 100) / 16) * 100);
+    state.quality = quality;
     const aiSub = !a.confident ? 'Teks pendek: keyakinan rendah' : a.pct < 25 ? 'Kemungkinan besar tulisan manusia' : a.pct < 55 ? 'Bercampur / tidak pasti' : 'Banyak ciri tulisan AI';
     const plSub = p.checked ? (p.pct < 10 ? 'Rendah' : p.pct < 25 ? 'Sederhana: semak petikan' : 'Tinggi: perlu rujukan/parafrasa') : 'Tiada sumber disemak';
     $('#gauges').innerHTML = gauge(a.pct, 'Anggaran AI', 'var(--purple)', aiSub) + gauge(p.checked ? p.pct : null, 'Plagiarisme', 'var(--down)', plSub)
@@ -399,6 +401,13 @@
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([state.text], { type: 'text/plain;charset=utf-8' }));
     a.download = 'kertas-kerja-dibetulkan.txt'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   });
+
+  // Ringkasan untuk laporan PDF (Premium)
+  window.CheckerReport = () => state.ai && {
+    ai: state.ai.pct, plag: state.plag.checked ? state.plag.pct : null, quality: state.quality, text: state.text,
+    stats: state.statItems || [], signals: state.ai.signals, sources: state.plag.perSource,
+    sugg: state.sugg.filter(s => !s.dismissed).map(s => ({ cat: CATS[s.cat].name, from: s.orig, to: s.rep === null ? '(semak semula ayat)' : s.applied ? s.rep + ' (diterima)' : s.rep || '(buang)', why: s.msg }))
+  };
 
   async function run() {
     const text = $('#paper').value.replace(/\r\n/g, '\n').trim();

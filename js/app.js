@@ -82,7 +82,7 @@ function paintThemeIcon() {
 })();
 
 /* Navigasi berasaskan hash */
-const VIEWS = ['utama', 'belajar', 'pasaran', 'solat', 'semak'];
+const VIEWS = ['utama', 'belajar', 'pasaran', 'solat', 'semak'].concat(Native ? [] : ['premium']);
 let currentView = null;
 function route() {
   const v = (location.hash || '#utama').slice(1);
