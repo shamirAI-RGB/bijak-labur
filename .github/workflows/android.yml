@@ -24,6 +24,7 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
+      - uses: gradle/actions/setup-gradle@v4
       - run: npm ci
       - name: Muat turun data waktu solat sandaran
         run: npm run solat-data || echo "Data sandaran dilangkau"
