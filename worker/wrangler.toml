@@ -4,8 +4,8 @@ main = "src/index.js"
 compatibility_date = "2026-09-01"
 
 [vars]
-SITE_URL = "https://aceacademy.my/"
-ALLOWED_ORIGINS = "https://aceacademy.my,https://www.aceacademy.my,https://shamirai-rgb.github.io,capacitor://localhost,https://localhost,http://localhost:8080"
+SITE_URL = "https://bijaklabur.my/"
+ALLOWED_ORIGINS = "https://bijaklabur.my,https://www.bijaklabur.my,https://shamirai-rgb.github.io,capacitor://localhost,https://localhost,http://localhost:8080"
 # Tukar ke https://dev.toyyibpay.com untuk ujian sandbox
 TOYYIBPAY_BASE = "https://toyyibpay.com"
 # 0 = FPX sahaja, 1 = kad sahaja, 2 = FPX dan kad
