@@ -18,6 +18,13 @@ Semua API yang digunakan percuma dan tidak memerlukan kunci.
 2. Settings → Pages → Source: *Deploy from a branch* → `main` / root → Save.
 3. Laman akan tersedia di `https://<nama-pengguna>.github.io/<repo>/`.
 
+## App Android & iOS
+Projek app asli dijana dengan Capacitor (`android/`, `ios/`) dan membungkus fail laman yang sama.
+- `npm run sync`: salin laman ke `www/` dan kemas kini projek asli
+- GitHub Actions `Android` membina APK (cuba terus) dan AAB (Google Play)
+- GitHub Actions `iOS` menyemak binaan dan, jika rahsia App Store Connect ada, memuat naik ke TestFlight
+- `npm run solat-data`: muat turun data waktu solat sandaran ke `data/solat/`
+
 ## Uji di komputer
 ```
 npx http-server .

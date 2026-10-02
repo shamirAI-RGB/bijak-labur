@@ -262,11 +262,11 @@
 
   /* ---------- Paparan ---------- */
   function gauge(pct, label, color, sub) {
-    const r = 54, c = 2 * Math.PI * r, off = c * (1 - pct / 100);
+    const r = 54, c = 2 * Math.PI * r, off = pct == null ? c : c * (1 - pct / 100);
     return `<div class="gauge"><svg viewBox="0 0 140 140" role="img" aria-label="${label} ${pct}%">
-      <circle cx="70" cy="70" r="${r}" fill="none" stroke="var(--surface-2)" stroke-width="14"/>
-      <circle cx="70" cy="70" r="${r}" fill="none" stroke="${color}" stroke-width="14" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${c}" transform="rotate(-90 70 70)" style="transition:stroke-dashoffset 1.1s cubic-bezier(.2,.8,.2,1)" data-off="${off}"/>
-      <text x="70" y="78" text-anchor="middle" font-size="28" font-weight="800" fill="currentColor">${pct}%</text></svg>
+      <circle cx="70" cy="70" r="${r}" fill="none" stroke="var(--surface-2)" stroke-width="10"/>
+      <circle cx="70" cy="70" r="${r}" fill="none" stroke="${color}" stroke-width="10" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${c}" transform="rotate(-90 70 70)" style="transition:stroke-dashoffset 1.1s cubic-bezier(.2,.8,.2,1)" data-off="${off}"/>
+      <text x="70" y="79" text-anchor="middle" font-size="27" font-weight="700" fill="currentColor" style="font-variant-numeric:tabular-nums">${pct == null ? '–' : pct + '%'}</text></svg>
       <div class="lbl">${label}</div><div class="sub">${sub}</div></div>`;
   }
 
@@ -312,14 +312,14 @@
   function renderSugg() {
     const pending = state.sugg.filter(s => !s.applied && !s.dismissed);
     $('#suggCount').textContent = pending.length;
-    if (!state.sugg.length) { $('#suggList').innerHTML = '<p class="muted">🎉 Tiada isu ditemui. Tulisan anda kemas!</p>'; return; }
+    if (!state.sugg.length) { $('#suggList').innerHTML = '<p class="muted">Tiada isu bahasa ditemui.</p>'; return; }
     $('#suggList').innerHTML = state.sugg.map(s => {
       const c = CATS[s.cat];
       const diff = s.rep === null ? `<div class="diff"><i class="muted">“${esc(s.orig.length > 90 ? s.orig.slice(0, 90) + '…' : s.orig)}”</i></div>`
         : `<div class="diff"><del>${esc(vis(s.orig)) || '␣'}</del> → <ins>${esc(vis(s.rep)) || '(buang)'}</ins></div>`;
-      const acts = s.applied ? '<span class="pill">✓ Diterima</span>' : s.dismissed ? '<span class="pill" style="background:var(--surface-2);color:var(--muted)">Diabaikan</span>'
+      const acts = s.applied ? 'Diterima' : s.dismissed ? 'Diabaikan'
         : `${s.rep !== null ? `<button class="btn sm" data-apply="${s.id}">Terima</button>` : ''}<button class="btn sm ghost" data-dismiss="${s.id}">Abaikan</button>`;
-      return `<div class="sugg ${s.applied || s.dismissed ? 'done' : ''}" id="sg-${s.id}" style="--c:${c.c}"><div class="cat">${c.name}${s.src === 'LanguageTool' ? ' · LT' : ''}</div>${diff}<div class="small muted">${esc(s.msg)}</div><div class="acts">${acts}</div></div>`;
+      return `<div class="sugg ${s.applied || s.dismissed ? 'done' : ''}" id="sg-${s.id}" style="--c:${c.c}"><div class="cat">${c.name}${s.src === 'LanguageTool' ? ' · LT' : ''}</div>${diff}<div class="why">${esc(s.msg)}</div><div class="acts">${acts}</div></div>`;
     }).join('');
   }
 
@@ -359,8 +359,8 @@
     const quality = Math.round(clamp(1 - (nIssues / n * 100) / 16) * 100);
     const aiSub = !a.confident ? 'Teks pendek: keyakinan rendah' : a.pct < 25 ? 'Kemungkinan besar tulisan manusia' : a.pct < 55 ? 'Bercampur / tidak pasti' : 'Banyak ciri tulisan AI';
     const plSub = p.checked ? (p.pct < 10 ? 'Rendah' : p.pct < 25 ? 'Sederhana: semak petikan' : 'Tinggi: perlu rujukan/parafrasa') : 'Tiada sumber disemak';
-    $('#gauges').innerHTML = gauge(a.pct, 'Anggaran AI', 'var(--purple)', aiSub) + gauge(p.pct, 'Plagiarisme', 'var(--down)', plSub)
-      + gauge(100 - p.pct, 'Keaslian', 'var(--up)', 'Teks yang tidak sepadan sumber') + gauge(quality, 'Kualiti bahasa', 'var(--brand)', `${nIssues} isu bahasa ditemui`);
+    $('#gauges').innerHTML = gauge(a.pct, 'Anggaran AI', 'var(--purple)', aiSub) + gauge(p.checked ? p.pct : null, 'Plagiarisme', 'var(--down)', plSub)
+      + gauge(p.checked ? 100 - p.pct : null, 'Keaslian', 'var(--up)', 'Teks yang tidak sepadan sumber') + gauge(quality, 'Kualiti bahasa', 'var(--brand)', `${nIssues} isu bahasa ditemui`);
     requestAnimationFrame(() => setTimeout(() => $$('#gauges circle[data-off]').forEach(c => c.style.strokeDashoffset = c.dataset.off), 30));
     $('#aiBars').innerHTML = a.signals.map(([k, v]) => `<div class="bar"><span>${k}</span><div class="track"><div style="width:${Math.round(v * 100)}%;background:${v > .6 ? 'var(--purple)' : v > .35 ? 'var(--warn)' : 'var(--up)'}"></div></div><span class="mono">${Math.round(v * 100)}%</span></div>`).join('')
       + '<p class="muted small" style="margin-top:8px">Bar lebih panjang = lebih menyerupai corak tulisan AI.</p>';
@@ -369,10 +369,10 @@
     renderStats(state.orig, state.sents); renderSugg(); renderAnnotated();
   }
 
-  $('#viewTabs').innerHTML = [['fix', 'Pembetulan'], ['ai', 'Peta AI'], ['plag', 'Plagiarisme']].map(([k, v]) => `<button class="tab ${k === 'fix' ? 'active' : ''}" data-v="${k}">${v}</button>`).join('');
+  $('#viewTabs').innerHTML = [['fix', 'Pembetulan'], ['ai', 'Peta AI'], ['plag', 'Plagiarisme']].map(([k, v]) => `<button class="seg ${k === 'fix' ? 'active' : ''}" data-v="${k}">${v}</button>`).join('');
   $('#viewTabs').addEventListener('click', e => {
     const b = e.target.closest('[data-v]'); if (!b) return;
-    state.view = b.dataset.v; $$('#viewTabs .tab').forEach(t => t.classList.toggle('active', t === b)); renderAnnotated();
+    state.view = b.dataset.v; $$('#viewTabs .seg').forEach(t => t.classList.toggle('active', t === b)); renderAnnotated();
   });
   const focusSugg = id => {
     $$('.sugg.focus, mark.fix.focus').forEach(x => x.classList.remove('focus'));
@@ -389,8 +389,8 @@
   });
   $('#applyAll').addEventListener('click', () => {
     [...state.sugg].sort((x, y) => y.start - x.start).forEach(s => { if (!s.dismissed && s.rep !== null) applySugg(s.id); });
-    renderSugg(); state.view = 'fix'; $$('#viewTabs .tab').forEach(t => t.classList.toggle('active', t.dataset.v === 'fix')); renderAnnotated();
-    toast('Semua pembetulan diterima ✨');
+    renderSugg(); state.view = 'fix'; $$('#viewTabs .seg').forEach(t => t.classList.toggle('active', t.dataset.v === 'fix')); renderAnnotated();
+    toast('Semua pembetulan diterima');
   });
   $('#copyFixed').addEventListener('click', async () => {
     try { await navigator.clipboard.writeText(state.text); toast('Teks disalin'); } catch { toast('Tidak dapat menyalin.'); }
@@ -420,11 +420,11 @@
       const sources = $('#sources').value.split(/\n-{3,}\n/).map((t, i) => ({ name: `Sumber anda #${i + 1}`, text: t.trim() })).filter(s => words(s.text).length >= 5);
       if ($('#optWeb').checked) { prog('Mencari sumber…'); try { sources.push(...await wikiSources(state.sents, lang, prog)); } catch {} }
       state.plag = Object.assign(plagiarism(text, state.sents, sources), { checked: sources.length > 0 });
-      state.view = 'fix'; $$('#viewTabs .tab').forEach(t => t.classList.toggle('active', t.dataset.v === 'fix'));
+      state.view = 'fix'; $$('#viewTabs .seg').forEach(t => t.classList.toggle('active', t.dataset.v === 'fix'));
       $('#results').classList.remove('hidden'); renderAll();
       $('#results').scrollIntoView({ behavior: 'smooth' });
     } catch (e) { console.error(e); toast('Ralat semasa menganalisis.'); }
-    btn.disabled = false; btn.textContent = '✨ Semak sekarang';
+    btn.disabled = false; btn.textContent = 'Semak sekarang';
   }
   $('#checkBtn').addEventListener('click', run);
 
@@ -435,12 +435,12 @@
     const name = f.name.toLowerCase();
     try {
       if (name.endsWith('.docx')) {
-        await loadScript('https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js');
+        await loadScript('js/vendor/mammoth.min.js');
         const r = await mammoth.extractRawText({ arrayBuffer: await f.arrayBuffer() });
         $('#paper').value = r.value.replace(/\n{3,}/g, '\n\n').trim();
       } else if (name.endsWith('.pdf')) {
-        await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        await loadScript('js/vendor/pdf.min.js');
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'js/vendor/pdf.worker.min.js';
         const pdf = await pdfjsLib.getDocument({ data: await f.arrayBuffer() }).promise; let out = [];
         for (let i = 1; i <= pdf.numPages; i++) {
           const c = await (await pdf.getPage(i)).getTextContent();

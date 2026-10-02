@@ -1,0 +1,24 @@
+{
+  "name": "bijak-labur",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Belajar melabur di Moomoo, harga pasaran masa nyata, waktu solat Malaysia dan penyemak kertas kerja.",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build-web.mjs",
+    "sync": "node scripts/build-web.mjs && cap sync",
+    "serve": "npx http-server . -c-1",
+    "solat-data": "node scripts/fetch-solat.mjs"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.0.0",
+    "@capacitor/app": "^8.0.0",
+    "@capacitor/core": "^8.0.0",
+    "@capacitor/ios": "^8.0.0",
+    "@capacitor/local-notifications": "^8.0.0",
+    "@capacitor/status-bar": "^8.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.0.0"
+  }
+}

@@ -1,24 +1,55 @@
 {
-  "name": "Bijak Labur: Moomoo, Pasaran & Waktu Solat",
+  "name": "Bijak Labur",
   "short_name": "Bijak Labur",
-  "description": "Belajar melabur di Moomoo, harga saham & kripto masa nyata, waktu solat Malaysia, dan penyemak kertas kerja.",
+  "description": "Belajar melabur di Moomoo, harga saham dan kripto masa nyata, waktu solat Malaysia, dan penyemak kertas kerja.",
   "lang": "ms",
   "start_url": "./#utama",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#0b1412",
-  "theme_color": "#0f766e",
-  "categories": ["education", "finance", "lifestyle"],
+  "background_color": "#f6f5f1",
+  "theme_color": "#0b5d4b",
+  "categories": [
+    "education",
+    "finance",
+    "lifestyle"
+  ],
   "icons": [
-    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
-    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
   ],
   "shortcuts": [
-    { "name": "Waktu Solat", "url": "./#solat" },
-    { "name": "Pasaran Live", "url": "./#pasaran" },
-    { "name": "Semak Kertas", "url": "./#semak" }
-  ]
+    {
+      "name": "Waktu Solat",
+      "url": "./#solat"
+    },
+    {
+      "name": "Pasaran Live",
+      "url": "./#pasaran"
+    },
+    {
+      "name": "Semak Kertas",
+      "url": "./#semak"
+    }
+  ],
+  "id": "./"
 }
