@@ -1,6 +1,6 @@
 // Ujian pelayan Tanya AI Fiqh tanpa rangkaian: node worker-fiqh/test.mjs
 import assert from 'node:assert/strict';
-import worker, { verify, collectRetrieved, norm, normUrl, parseAnswer, MODEL, GEMINI_MODEL, DOMAINS } from './src/index.js';
+import worker, { verify, collectRetrieved, norm, normUrl, parseAnswer, MODEL, GEMINI_MODEL, GEMINI_FALLBACKS, DOMAINS } from './src/index.js';
 import { BY_ID, CORPUS_TEXT } from './src/corpus.js';
 
 const env = { ANTHROPIC_API_KEY: 'sk-test', ALLOWED_ORIGINS: 'https://bijaklabur.my' };
@@ -150,6 +150,17 @@ for (const st of [429, 503]) {
   greply = () => new Response('{"error":{"code":' + st + '}}', { status: st });
   assert.equal((await call({ q: 'Hukum emas digital?' }, 'https://bijaklabur.my', genv)).status, 429);
 }
+// Model pertama kehabisan kuota: model sandaran digunakan
+const tried = [];
+globalThis.fetch = async (u, init) => {
+  tried.push(String(u).match(/models\/([^:]+):/)[1]);
+  return tried.length === 1 ? new Response('{"error":{"code":429,"status":"RESOURCE_EXHAUSTED"}}', { status: 429 })
+    : gem({ status: 'jawab', ringkasan: 'Ok.', sumber: [{ id: 'quran:2:275' }] });
+};
+d = await (await call({ q: 'Hukum emas digital fizikal?' }, 'https://bijaklabur.my', genv)).json();
+assert.deepEqual(tried, [GEMINI_MODEL, GEMINI_FALLBACKS[0]]);
+assert.equal(d.status, 'jawab');
+globalThis.fetch = async (u, init) => { gurl = String(u); return greply(); };
 greply = () => new Response('{"error":{"code":400}}', { status: 400 });
 assert.equal((await call({ q: 'Hukum emas digital?' }, 'https://bijaklabur.my', genv)).status, 502);
 
