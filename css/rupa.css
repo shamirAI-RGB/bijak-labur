@@ -1,0 +1,66 @@
+/* Bijak Labur: lapisan rupa (editorial).
+   Dimuatkan paling akhir. Tajuk serif Fraunces, label berhuruf kecil dengan garis emas,
+   jubin rata berwarna lembut (tanpa kecerunan berkilat), dan kad bergaris halus. */
+@font-face { font-family: "Fraunces"; src: url("../fonts/Fraunces-Variable.woff2") format("woff2"); font-weight: 300 900; font-style: normal; font-display: swap; }
+:root {
+  --display: "Fraunces", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --gold-line: color-mix(in srgb, var(--gold) 70%, transparent);
+  --shadow: 0 1px 0 color-mix(in srgb, #14201b 4%, transparent);
+}
+::selection { background: color-mix(in srgb, var(--gold) 32%, transparent); }
+
+/* ---------- Tipografi ---------- */
+h1, .founders-head h2, .plan-price .num, .pc-name {
+  font-family: var(--display); font-optical-sizing: auto; font-variation-settings: "SOFT" 30, "WONK" 0;
+}
+h1 { font-weight: 560; letter-spacing: -0.025em; line-height: 1.08; font-size: clamp(2rem, 6vw, 3rem); }
+.founders-head h2 { font-weight: 560; letter-spacing: -0.02em; font-size: clamp(1.6rem, 4.4vw, 2.2rem); line-height: 1.12; }
+.block-head h2, .card > h2 { letter-spacing: -0.015em; }
+.lead { font-size: 1.04rem; line-height: 1.6; }
+
+/* Label kecil: huruf besar kecil berjarak, didahului garis emas */
+.eyebrow {
+  display: flex; align-items: center; gap: 10px; text-transform: uppercase;
+  font-size: 0.72rem; font-weight: 650; letter-spacing: 0.12em; color: var(--muted); margin-bottom: 10px;
+}
+.eyebrow::before { content: ""; width: 22px; height: 1px; background: var(--gold-line); flex: none; }
+
+/* Logo: tanda + nama dalam serif */
+.logo { font-family: var(--display); font-weight: 600; font-size: 1.12rem; letter-spacing: -0.015em; gap: 9px; }
+.logo img { border-radius: 7px; }
+
+/* ---------- Kad dan permukaan ---------- */
+.card { box-shadow: none; }
+.card.shortcut:hover, a.card:hover { border-color: color-mix(in srgb, var(--brand) 30%, var(--border)); }
+.page-head { margin: 22px 0 24px; }
+.page-head .lead { max-width: 600px; }
+.site-footer { border-top-color: var(--gold-line); }
+
+/* ---------- Jubin ikon: rata, warna lembut, tanpa kilauan ---------- */
+.app-ic {
+  --t: var(--b, var(--brand));
+  --tile-bg: color-mix(in srgb, var(--t) 13%, var(--surface));
+  background: var(--tile-bg);
+  color: color-mix(in srgb, var(--t) 82%, var(--text));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--t) 16%, transparent);
+}
+.app-ic .ic { color: currentColor; }
+/* Glif Ibadah dilukis putih untuk latar gelap: bentuk utama ikut tona jubin,
+   butiran dalaman (asalnya currentColor) menjadi potongan berwarna latar jubin */
+.app-ic svg [fill="#fff"] { fill: currentColor; }
+.app-ic svg [stroke="#fff"] { stroke: currentColor; }
+.app-ic svg [fill="currentColor"] { fill: var(--tile-bg); opacity: 1; }
+.app-ic svg [stroke="currentColor"] { stroke: var(--tile-bg); opacity: 1; }
+.app-ic svg g[fill="currentColor"] > * { fill: var(--tile-bg); }
+.app-ic.cal { --t: #1a8fbf; color: color-mix(in srgb, var(--t) 80%, var(--text)); }
+.quick-row a, .ib-tile { font-weight: 600; }
+
+/* Kecerunan berkilat lain diganti warna rata */
+.fq-hero { background: color-mix(in srgb, var(--c) 86%, #0b1a14); }
+.step-n { background: var(--text); color: var(--bg); }
+.avatar { background: var(--brand); color: var(--brand-ink); }
+.cal-hero { background: color-mix(in srgb, #1a8fbf 12%, var(--surface)); color: var(--text); border: 1px solid color-mix(in srgb, #1a8fbf 22%, var(--border)); }
+
+/* ---------- Butang ---------- */
+.btn { border-radius: 10px; letter-spacing: -0.005em; }
+.btn:not(.ghost) { box-shadow: inset 0 -1px 0 rgba(0, 0, 0, .14); }
