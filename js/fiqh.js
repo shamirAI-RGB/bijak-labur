@@ -51,7 +51,7 @@
     el.innerHTML = head + `
       <p class="lead">Setiap jawapan dipautkan terus kepada sumbernya. Teks ayat dan hadis dimuat daripada pangkalan data asal semasa anda membukanya, bukan ditulis semula oleh AI. Rujukan yang tidak dapat disahkan tidak dimasukkan.</p>
       ${chainVisual()}
-      <div class="search-in"><svg class="ic"><use href="#i-search"/></svg><input id="fqFind" placeholder="Cari masalah, cth. riba, wuduk, kripto" aria-label="Cari masalah fiqh" autocomplete="off"></div>
+      <div class="search-in"><svg class="ic"><use href="#i-search"/></svg><input id="fqFind" placeholder="Cari masalah, cth. riba, forex, CFD, kripto" aria-label="Cari masalah fiqh" autocomplete="off"></div>
       <div id="fqHits"></div>
       <h2 class="grid-title">Bab</h2>
       <div class="fq-babs">${D.BAB.map(b => `<a class="fq-bab card" href="#ibadah/fiqh/${b.k}" style="--c:${b.color}"><span class="fq-bab-ar" lang="ar" dir="rtl">${b.ar}</span><b>${esc(b.name)}</b><small>${esc(b.desc)}</small><span class="fq-count num">${counts[b.k]} masalah</span></a>`).join('')}</div>
@@ -60,7 +60,7 @@
         <div class="card"><h3>Lima hukum taklifi</h3>${scale()}<dl class="fq-defs">${SCALE.map(k => `<div><dt>${badge(k)}</dt><dd>${D.HUKUM[k][1]}</dd></div>`).join('')}</dl></div>
       </div>
       <div class="card"><h3>Cari dalil terus dari sumber</h3>
-        <div class="fq-q"><input id="fqDalil" placeholder="Perkataan, cth. riba atau solat" aria-label="Kata kunci dalil" autocomplete="off"><button class="btn sm" data-fq-ayat>Cari ayat</button></div>
+        <div class="fq-q"><input id="fqDalil" placeholder="Perkataan, cth. riba, forex atau solat" aria-label="Kata kunci dalil" autocomplete="off"><button class="btn sm" data-fq-ayat>Cari dalil</button></div>
         <div id="fqAyat"></div>
         <div class="fq-out" id="fqOut">${outLinks('')}</div></div>
       <h2 class="grid-title">Perpustakaan kitab muktabar</h2>
@@ -75,16 +75,30 @@
   }
   const refCount = m => (m.q || []).length + (m.h || []).length + (m.f || []).length + BAB[m.bab].kitab.length;
 
+  // Carian ayat: tiada padanan = 404 daripada API, bukan ralat rangkaian
+  const quranFind = w => getJSON(`${QAPI}/search/${encodeURIComponent(w)}/all/ms.basmeih`)
+    .then(j => (j.code === 200 && j.data ? j.data.matches : []))
+    .catch(e => { if (e.message === '404') return []; throw e; });
+  const wordRe = w => new RegExp(`(^|[^\\p{L}])${w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}($|[^\\p{L}])`, 'iu');
+  const findMasalah = q => { q = q.toLowerCase(); return D.MASALAH.filter(m => (m.t + ' ' + (m.alias || '') + ' ' + m.ringkas + ' ' + BAB[m.bab].name).toLowerCase().includes(q)); };
+
   async function searchAyat() {
     const kw = ($('#fqDalil').value || '').trim(), box = $('#fqAyat');
-    if (kw.length < 3) { box.innerHTML = '<p class="muted small">Masukkan sekurang-kurangnya 3 huruf.</p>'; return; }
-    box.innerHTML = '<p class="muted small">Mencari dalam terjemahan Basmeih</p>';
-    try {
-      const j = await getJSON(`${QAPI}/search/${encodeURIComponent(kw)}/all/ms.basmeih`);
-      const re = new RegExp(`(^|[^\\p{L}])${kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}($|[^\\p{L}])`, 'iu');
-      const hits = j.code === 200 && j.data ? j.data.matches.filter(m => re.test(m.text)) : [];
-      box.innerHTML = hits.length ? `<p class="muted small">${hits.length} ayat mengandungi "${esc(kw)}"</p><div class="list fq-ayat-list">${hits.slice(0, 25).map(m => `<a class="fq-row" href="#ibadah/quran/${m.surah.number}/${m.numberInSurah}"><span class="q-main"><b>${esc(m.surah.englishName)} ${m.surah.number}:${m.numberInSurah}</b><small>${esc(m.text.length > 160 ? m.text.slice(0, 160) + '…' : m.text)}</small></span>${icon('chev', 'ic chev')}</a>`).join('')}</div>` : `<p class="muted small">Tiada ayat dengan perkataan "${esc(kw)}". Cuba ejaan lain.</p>`;
-    } catch { box.innerHTML = '<p class="muted small">Carian perlukan sambungan internet.</p>'; }
+    if (kw.length < 2) { box.innerHTML = '<p class="muted small">Masukkan sekurang-kurangnya 2 huruf.</p>'; return; }
+    const rel = findMasalah(kw);
+    const mapped = [...new Set(D.ISTILAH.filter(([re]) => re.test(kw)).flatMap(([, w]) => w))].filter(w => w.toLowerCase() !== kw.toLowerCase());
+    const relHtml = rel.length ? `<p class="muted small">Masalah fiqh berkaitan "${esc(kw)}" dengan dalil dan fatwa:</p><div class="list">${rel.slice(0, 6).map(hitRow).join('')}</div>` : '';
+    box.innerHTML = relHtml + '<p class="muted small">Mencari dalam terjemahan Basmeih</p>';
+    const words = [kw, ...mapped];
+    let res;
+    try { res = await Promise.all(words.map(w => quranFind(w).then(ms => ms.filter(m => wordRe(w).test(m.text)).map(m => ({ ...m, w }))))); }
+    catch { box.innerHTML = relHtml + '<p class="muted small">Carian ayat perlukan sambungan internet.</p>'; return; }
+    const seen = new Set(), hits = res.flat().filter(m => { const k = m.surah.number + ':' + m.numberInSurah; return !seen.has(k) && seen.add(k); });
+    const direct = res[0].length;
+    const intro = direct ? `${direct} ayat mengandungi "${esc(kw)}"` + (mapped.length ? `, dan ayat tentang ${mapped.map(w => `"${esc(w)}"`).join(', ')}` : '')
+      : mapped.length ? `Perkataan "${esc(kw)}" tiada dalam Al-Quran kerana ia istilah moden. Hukumnya diambil daripada ayat tentang ${mapped.map(w => `"${esc(w)}"`).join(' dan ')}:` : '';
+    box.innerHTML = relHtml + (hits.length ? `<p class="muted small">${intro}</p><div class="list fq-ayat-list">${hits.slice(0, 25).map(m => `<a class="fq-row" href="#ibadah/quran/${m.surah.number}/${m.numberInSurah}"><span class="q-main"><b>${esc(m.surah.englishName)} ${m.surah.number}:${m.numberInSurah}${m.w !== kw ? ` <span class="fq-w">${esc(m.w)}</span>` : ''}</b><small>${esc(m.text.length > 160 ? m.text.slice(0, 160) + '…' : m.text)}</small></span>${icon('chev', 'ic chev')}</a>`).join('')}</div>`
+      : `<p class="muted small">Tiada ayat dengan perkataan "${esc(kw)}" dalam terjemahan Basmeih.${rel.length ? ' Lihat masalah berkaitan di atas.' : ' Cuba perkataan asas seperti riba, judi atau hutang, atau gunakan pautan sumber di bawah.'}</p>`);
   }
 
   /* ---------- Bab ---------- */
@@ -174,7 +188,7 @@
     if (e.target.id === 'fqFind') {
       const q = e.target.value.toLowerCase().trim(), box = $('#fqHits');
       if (!q) { box.innerHTML = ''; return; }
-      const hits = D.MASALAH.filter(m => (m.t + ' ' + m.ringkas + ' ' + BAB[m.bab].name).toLowerCase().includes(q));
+      const hits = findMasalah(q);
       box.innerHTML = hits.length ? `<div class="list">${hits.map(hitRow).join('')}</div>` : `<p class="muted small">Tiada masalah sepadan. Cuba cari dalil terus dari sumber di bawah.</p>`;
     } else if (e.target.id === 'fqDalil') $('#fqOut').innerHTML = outLinks(e.target.value.trim());
   });
