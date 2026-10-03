@@ -1,15 +1,18 @@
 /*
  * Bijak Labur: pelayan pembayaran Premium (Cloudflare Worker, pelan percuma)
  *
- * POST /checkout  { plan, period, name, email, phone }  -> { url }   cipta bil ToyyibPay
+ * POST /checkout  { plan, period, name, email, phone }  -> { url }   cipta bil ToyyibPay (perlu log masuk)
  * GET  /return    (ToyyibPay hantar pembeli ke sini)    -> 302 ke laman web dengan kod bil
  * POST /callback  (pemberitahuan pelayan ToyyibPay)     -> "OK"
- * POST /claim     { billcode, email }                   -> { token, plan, exp }  lesen bertandatangan
+ * POST /claim     { billcode, email, device }           -> { licence, plan, exp }  (perlu log masuk)
+ * POST /akaun/... akaun dan had satu peranti, lihat akaun.js
  * GET  /tts?t=teks&v=ms-f&r=1                          -> audio/mpeg  Suara HD (Azure Speech neural, peringkat F0 percuma)
  *
- * Tiada pangkalan data: setiap tuntutan disahkan terus dengan ToyyibPay, kemudian
- * lesen ditandatangani (ECDSA P-256) supaya app boleh mengesahkannya tanpa talian.
+ * Setiap tuntutan disahkan terus dengan ToyyibPay. Hak Premium disimpan pada akaun (Durable Object),
+ * dan lesen untuk peranti aktif ditandatangani (ECDSA P-256) supaya app boleh mengesahkannya tanpa talian.
  */
+import { Akaun, handleAkaun, authed, callDO, licenceFor } from './akaun.js';
+export { Akaun };
 
 export const PLANS = {
   pelajar: { name: 'Pelajar', m1: 500, y1: 3900 },
@@ -24,7 +27,7 @@ function cors(req, env) {
   const origin = req.headers.get('origin') || '';
   const allowed = (env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
   if (!allowed.includes(origin)) return {};
-  return { 'access-control-allow-origin': origin, 'access-control-allow-methods': 'POST, GET, OPTIONS', 'access-control-allow-headers': 'content-type', 'access-control-max-age': '86400', vary: 'origin' };
+  return { 'access-control-allow-origin': origin, 'access-control-allow-methods': 'POST, GET, OPTIONS', 'access-control-allow-headers': 'content-type, authorization', 'access-control-max-age': '86400', vary: 'origin' };
 }
 
 const b64url = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -40,6 +43,8 @@ async function toyyib(env, path, fields) {
 }
 
 async function checkout(req, env, url) {
+  const who = await authed(req, env);
+  if (who.error) return who.error;
   const b = await req.json().catch(() => ({}));
   const plan = PLANS[b.plan], period = PERIODS[b.period];
   const name = String(b.name || '').replace(/[^\p{L}\p{N} .'@-]/gu, '').trim().slice(0, 60);
@@ -95,8 +100,11 @@ async function sign(env, payload) {
 }
 
 async function claim(req, env) {
+  const who = await authed(req, env);
+  if (who.error) return who.error;
   const b = await req.json().catch(() => ({}));
   const code = billCodeOf(b.billcode), email = cleanEmail(b.email);
+  const device = String(b.device || '');
   if (!code) return { status: 400, data: { error: 'Kod bil tidak sah.' } };
   if (!email) return { status: 400, data: { error: 'Sila isi e-mel yang digunakan semasa membayar.' } };
   const tx = await toyyib(env, 'getBillTransactions', { billCode: code });
@@ -117,8 +125,13 @@ async function claim(req, env) {
   const start = parseDate(paid.billPaymentDate) || Date.now();
   const exp = Math.floor((start + PERIODS[period].days * 864e5) / 1000);
   if (exp * 1000 < Date.now()) return { status: 410, data: { error: 'Langganan untuk bil ini telah tamat.', exp } };
-  const token = await sign(env, { v: 1, p: plan, x: exp, b: code });
-  return { status: 200, data: { token, plan, exp } };
+  // Satu bil untuk satu akaun sahaja, kemudian hak disimpan pada akaun pembeli
+  const own = await callDO(env, `b:${code}`, { op: 'milik', uid: who.uid });
+  if (own.status !== 200) return own;
+  const r = await callDO(env, `u:${who.uid}`, { op: 'tambah', device, ent: { p: plan, x: exp, b: code } });
+  if (r.status !== 200) return r;
+  const licence = await licenceFor(env, sign, who.uid, device, r.data);
+  return { status: 200, data: { licence, plan: r.data.plan, exp: r.data.exp } };
 }
 
 /* ---------- Suara HD: Azure Speech (neural). Peringkat F0 percuma 0.5 juta aksara sebulan dan berhenti, tidak dicaj ---------- */
@@ -174,8 +187,12 @@ export default {
         const r = url.pathname === '/checkout' ? await checkout(req, env, url) : await claim(req, env);
         return json(r.data, r.status, h);
       }
+      if (req.method === 'POST' && url.pathname.startsWith('/akaun/')) {
+        const r = await handleAkaun(req, env, url.pathname, sign);
+        return json(r.data, r.status, h);
+      }
       if (req.method === 'GET' && url.pathname === '/tts') return await tts(req, env, url, h);
-      if (url.pathname === '/') return json({ ok: true, service: 'bijak-labur-premium', tts: !!env.AZURE_SPEECH_KEY }, 200, h);
+      if (url.pathname === '/') return json({ ok: true, service: 'bijak-labur-premium', tts: !!env.AZURE_SPEECH_KEY, akaun: !!(env.FIREBASE_PROJECT_ID && env.AKAUN) }, 200, h);
       return json({ error: 'Tidak dijumpai' }, 404, h);
     } catch (e) {
       console.log('ralat', e && e.stack || e);

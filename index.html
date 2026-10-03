@@ -2,7 +2,7 @@
 <html lang="ms">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://s3.tradingview.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://data-api.binance.vision wss://data-stream.binance.vision https://api.coingecko.com https://api.waktusolat.app https://api.alquran.cloud https://api.quran.com https://cdn.jsdelivr.net https://ms.wikipedia.org https://en.wikipedia.org https://api.languagetool.org https://open.er-api.com https://api.openalex.org https://api.crossref.org https://api.semanticscholar.org https://doaj.org https://www.ebi.ac.uk https://*.workers.dev https://jadual.bijaklabur.my; media-src 'self' blob: data: https://cdn.islamic.network; frame-src https://*.tradingview.com https://*.tradingview-widget.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://s3.tradingview.com https://apis.google.com https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://data-api.binance.vision wss://data-stream.binance.vision https://api.coingecko.com https://api.waktusolat.app https://api.alquran.cloud https://api.quran.com https://cdn.jsdelivr.net https://ms.wikipedia.org https://en.wikipedia.org https://api.languagetool.org https://open.er-api.com https://api.openalex.org https://api.crossref.org https://api.semanticscholar.org https://doaj.org https://www.ebi.ac.uk https://*.workers.dev https://jadual.bijaklabur.my https://identitytoolkit.googleapis.com https://securetoken.googleapis.com; media-src 'self' blob: data: https://cdn.islamic.network; frame-src https://*.tradingview.com https://*.tradingview-widget.com https://*.firebaseapp.com https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Bijak Labur</title>
@@ -35,6 +35,7 @@
   <link rel="stylesheet" href="css/pustaka.css">
   <link rel="stylesheet" href="css/suara.css">
   <link rel="stylesheet" href="css/jadual.css">
+  <link rel="stylesheet" href="css/akaun.css">
 </head>
 <body>
   <a class="skip-link" href="#main">Langkau ke kandungan</a>
@@ -102,6 +103,8 @@
       <symbol id="i-food" viewBox="0 0 24 24"><path d="M3 2v7a3 3 0 0 0 6 0V2M6 2v20M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></symbol>
       <symbol id="i-beads" viewBox="0 0 24 24"><circle cx="12" cy="4" r="1.6"/><circle cx="17.5" cy="6.5" r="1.6"/><circle cx="19.5" cy="12" r="1.6"/><circle cx="17.5" cy="17.5" r="1.6"/><circle cx="6.5" cy="6.5" r="1.6"/><circle cx="4.5" cy="12" r="1.6"/><circle cx="6.5" cy="17.5" r="1.6"/><path d="M12 18v4"/><circle cx="12" cy="17" r="1.6"/></symbol>
       <symbol id="i-sunmoon" viewBox="0 0 24 24"><path d="M12 8a2.8 2.8 0 0 0 4 4 4 4 0 1 1-4-4Z"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M6.3 17.7l-1.4 1.4M19.1 4.9l-1.4 1.4"/></symbol>
+      <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+      <symbol id="i-mail" viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-10 6L2 7"/></symbol>
     </defs>
   </svg>
 
@@ -121,6 +124,7 @@
       </nav>
       <button class="icon-btn" id="sayBtn" aria-label="Bacakan halaman ini" aria-pressed="false" title="Bacakan halaman ini"><svg class="ic"><use href="#i-volume"/></svg></button>
       <button class="icon-btn" id="themeBtn" aria-label="Tukar tema cerah atau gelap"><svg class="ic"><use href="#i-moon"/></svg></button>
+      <button class="icon-btn ak-btn" id="akaunBtn" aria-label="Log masuk atau daftar" title="Log masuk atau daftar"><svg class="ic"><use href="#i-user"/></svg></button>
     </div>
   </header>
 
@@ -470,6 +474,10 @@
       </div>
       <div class="pro-wrap" id="proWrap">
         <div class="card toggle-row hidden" id="proStatus"></div>
+        <div class="card trial-card hidden" id="proGuest">
+          <div class="sc-body"><div class="sc-title">Premium memerlukan akaun</div><div class="sc-sub" id="proGuestText"></div></div>
+          <button class="btn" id="proGuestGo" type="button">Log masuk atau daftar</button>
+        </div>
 
         <div id="toolsBlock">
           <div id="toolGrid" class="tool-grid"></div>
@@ -582,7 +590,7 @@
         <div id="plansBlock">
           <div class="block-head"><h2 id="plansTitle">Pilih pelan</h2><div class="segmented small" id="periodSeg" role="tablist" aria-label="Tempoh"></div></div>
           <div class="card trial-card hidden" id="trialCard" data-web-only>
-            <div class="sc-body"><div class="sc-title">Cuba semua alat Premium percuma selama 3 hari</div><div class="sc-sub">Tiada bayaran dan tiada butiran kad. Selepas 3 hari, alat dikunci semula sehingga anda memilih pelan.</div></div>
+            <div class="sc-body"><div class="sc-title">Cuba semua alat Premium percuma selama 3 hari</div><div class="sc-sub">Sekali bagi setiap akaun. Tiada bayaran dan tiada butiran kad. Selepas 3 hari, alat dikunci semula sehingga anda memilih pelan.</div></div>
             <button class="btn" id="trialGo" type="button">Mula percubaan</button>
           </div>
           <div class="plan-grid" id="planGrid"></div>
@@ -593,7 +601,7 @@
           </div>
           <p class="muted small" data-web-only>Bayaran diproses dengan selamat oleh ToyyibPay melalui FPX (RHB, Maybank, CIMB, Bank Islam dan bank lain) atau kad debit dan kredit. Bijak Labur tidak menyimpan butiran bank atau kad anda. <a href="terma.html">Terma dan polisi bayaran balik</a>.</p>
           <details class="card restore" id="restore" data-web-only>
-            <summary>Sudah membayar? Aktifkan Premium pada peranti ini</summary>
+            <summary>Sudah membayar? Aktifkan Premium pada akaun anda</summary>
             <form id="restoreForm" class="form-grid" autocomplete="on">
               <div class="field"><label for="restoreCode">Kod bil ToyyibPay</label><input id="restoreCode" placeholder="Dalam resit e-mel, cth. 8x2kf1ab" autocapitalize="off"></div>
               <div class="field"><label for="restoreEmail">E-mel semasa membayar</label><input id="restoreEmail" type="email" autocomplete="email"></div>
@@ -650,6 +658,7 @@
   <script src="js/fiqh.js"></script>
   <script src="js/ibadah.js"></script>
   <script src="js/checker.js"></script>
+  <script src="js/akaun.js"></script>
   <script src="js/premium.js"></script>
   <script src="js/pustaka-data.js"></script>
   <script src="js/pustaka.js"></script>

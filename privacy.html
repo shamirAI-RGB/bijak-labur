@@ -2,7 +2,7 @@
 <html lang="ms">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://s3.tradingview.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://data-api.binance.vision wss://data-stream.binance.vision https://api.coingecko.com https://api.waktusolat.app https://ms.wikipedia.org https://en.wikipedia.org https://api.languagetool.org https://open.er-api.com https://api.openalex.org https://api.crossref.org https://api.semanticscholar.org https://doaj.org https://www.ebi.ac.uk https://*.workers.dev https://jadual.bijaklabur.my; frame-src https://*.tradingview.com https://*.tradingview-widget.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://s3.tradingview.com https://apis.google.com https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://data-api.binance.vision wss://data-stream.binance.vision https://api.coingecko.com https://api.waktusolat.app https://ms.wikipedia.org https://en.wikipedia.org https://api.languagetool.org https://open.er-api.com https://api.openalex.org https://api.crossref.org https://api.semanticscholar.org https://doaj.org https://www.ebi.ac.uk https://*.workers.dev https://jadual.bijaklabur.my https://identitytoolkit.googleapis.com https://securetoken.googleapis.com; frame-src https://*.tradingview.com https://*.tradingview-widget.com https://*.firebaseapp.com https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Dasar Privasi · Bijak Labur</title>
@@ -19,9 +19,9 @@
 <body>
   <main class="doc">
     <p><a href="./">← Kembali ke Bijak Labur</a></p>
-    <p class="eyebrow">Dikemas kini 2 Oktober 2026</p>
+    <p class="eyebrow">Dikemas kini 3 Oktober 2026</p>
     <h1>Dasar privasi</h1>
-    <p class="lead">Bijak Labur tidak memerlukan akaun, tidak memaparkan iklan dan tidak mengumpul data peribadi anda. Satu-satunya pengecualian ialah apabila anda membeli Premium di laman web, seperti yang diterangkan di bawah.</p>
+    <p class="lead">Semua ciri percuma boleh digunakan sebagai tetamu tanpa akaun. Bijak Labur tidak memaparkan iklan. Data peribadi hanya digunakan apabila anda membuat akaun (diperlukan untuk Premium) atau membeli Premium, seperti yang diterangkan di bawah.</p>
 
     <h2>Data yang disimpan dalam peranti</h2>
     <p>Tetapan berikut disimpan dalam storan tempatan peranti anda sahaja, dan tidak dihantar kepada kami: zon waktu solat, tema, senarai kripto, amaran harga, kemajuan pelajaran, markah kuiz, data alat Premium (portfolio, jurnal dagangan, PNGK, rujukan, muka depan dan sejarah semakan), lesen Premium dan salinan jadual waktu solat untuk kegunaan luar talian. Anda boleh memadamnya dengan mengosongkan data app atau data laman dalam pelayar.</p>
@@ -40,8 +40,11 @@
     </ul>
     <p>Fail yang anda muat naik ke penyemak kertas kerja dibaca dalam peranti anda dan tidak dimuat naik ke mana-mana pelayan.</p>
 
+    <h2>Akaun</h2>
+    <p>Akaun diuruskan oleh <b>Firebase Authentication</b> (Google). Apabila anda log masuk dengan Google, Facebook, nombor telefon atau e-mel, Firebase menyimpan e-mel, nama, nombor telefon (jika digunakan) dan kata laluan anda dalam bentuk cincang; Bijak Labur tidak pernah melihat kata laluan anda. Untuk had satu akaun satu peranti, pelayan Bijak Labur (Cloudflare) menyimpan ID akaun, ID rawak peranti aktif, nama pelayar dan sistem peranti (cth. "Chrome, Android"), tarikh pertukaran peranti, status percubaan percuma dan pelan Premium anda. Anda boleh meminta akaun dipadam melalui halaman hubungi di bawah.</p>
+
     <h2>Pembelian Premium (laman web sahaja)</h2>
-    <p>Apabila anda membeli Premium, nama, e-mel dan nombor telefon yang anda isi dihantar melalui pelayan pembayaran Bijak Labur kepada <b>ToyyibPay</b> untuk mencipta bil dan menghantar resit. Pembayaran dibuat di halaman ToyyibPay; Bijak Labur tidak pernah menerima butiran bank atau kad anda. Pelayan kami tidak menyimpan pangkalan data pembeli: ia hanya bertanya kepada ToyyibPay sama ada bil telah dibayar, kemudian memberikan lesen yang disimpan dalam peranti anda. Rekod transaksi disimpan oleh ToyyibPay mengikut <a href="https://toyyibpay.com/">dasar privasinya</a> dan undang-undang Malaysia.</p>
+    <p>Apabila anda membeli Premium, nama, e-mel dan nombor telefon yang anda isi dihantar melalui pelayan pembayaran Bijak Labur kepada <b>ToyyibPay</b> untuk mencipta bil dan menghantar resit. Pembayaran dibuat di halaman ToyyibPay; Bijak Labur tidak pernah menerima butiran bank atau kad anda. Pelayan kami bertanya kepada ToyyibPay sama ada bil telah dibayar, kemudian merekodkan kod bil, pelan dan tarikh tamat pada akaun anda, dan memberikan lesen untuk peranti aktif anda. Rekod transaksi disimpan oleh ToyyibPay mengikut <a href="https://toyyibpay.com/">dasar privasinya</a> dan undang-undang Malaysia.</p>
 
     <h2>Langganan dalam app (Android dan iOS)</h2>
     <p>Langganan dalam app diproses sepenuhnya oleh Google Play atau Apple. Bijak Labur tidak menerima nama, e-mel atau butiran bayaran anda; app hanya bertanya kepada kedai sama ada langganan anda aktif.</p>
@@ -53,7 +56,7 @@
     </ul>
 
     <h2>Kanak-kanak</h2>
-    <p>App ini tidak mengumpul data peribadi daripada sesiapa, termasuk kanak-kanak.</p>
+    <p>Tetamu boleh menggunakan app tanpa memberikan sebarang data peribadi. Akaun dan Premium ditujukan kepada pengguna berumur 13 tahun ke atas, atau dengan kebenaran ibu bapa.</p>
 
     <h2>Bukan nasihat kewangan</h2>
     <p>Semua kandungan pelaburan adalah untuk pendidikan. Bijak Labur tidak bergabung dengan Moomoo, Futu, JAKIM, Binance atau TradingView.</p>
@@ -63,7 +66,7 @@
 
     <hr style="border:0;border-top:1px solid var(--border);margin:32px 0">
     <h2 lang="en">Privacy policy (English summary)</h2>
-    <p lang="en">Bijak Labur has no accounts, no ads and no analytics, and collects no personal data, except that buying Premium on the website sends the name, email and phone number you enter to ToyyibPay through our payment server so a bill and receipt can be issued. We never see your bank or card details and keep no customer database; your licence is stored on your device. Settings are stored only on your device. Prices, prayer times, charts, grammar checks and source searches are fetched directly from public services (Binance, CoinGecko, TradingView, api.waktusolat.app, LanguageTool, Wikipedia). Text is sent to LanguageTool or Wikipedia only when you enable those options. Location is used only when you tap the locate button, to look up your JAKIM prayer zone, and is not stored.</p>
+    <p lang="en">Bijak Labur works without an account (guest mode) and has no ads or analytics. Accounts, required for Premium, are handled by Firebase Authentication (email, name, phone if used, hashed password); our Cloudflare server stores your account ID, the random ID and name of your one active device, device switch dates, trial status and Premium plan. Buying Premium on the website sends the name, email and phone number you enter to ToyyibPay through our payment server so a bill and receipt can be issued. We never see your bank or card details; the bill code, plan and expiry are recorded on your account. Settings are stored only on your device. Prices, prayer times, charts, grammar checks and source searches are fetched directly from public services (Binance, CoinGecko, TradingView, api.waktusolat.app, LanguageTool, Wikipedia). Text is sent to LanguageTool or Wikipedia only when you enable those options. Location is used only when you tap the locate button, to look up your JAKIM prayer zone, and is not stored.</p>
   </main>
 </body>
 </html>
