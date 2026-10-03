@@ -95,6 +95,8 @@ function route() {
   document.dispatchEvent(new CustomEvent('viewchange', { detail: name }));
 }
 window.addEventListener('hashchange', route);
+// Pautan langkau: fokus ke kandungan tanpa menukar hash (hash digunakan untuk navigasi)
+document.addEventListener('click', e => { const a = e.target.closest('.skip-link'); if (a) { e.preventDefault(); $('#main').focus(); } });
 window.addEventListener('DOMContentLoaded', route);
 window.addEventListener('scroll', () => $('.topbar').classList.toggle('scrolled', scrollY > 4), { passive: true });
 

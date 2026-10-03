@@ -1,4 +1,5 @@
 /* Bijak Labur: gaya utama */
+@font-face { font-family: "Geist"; src: url("../fonts/Geist-Variable.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
 :root {
   --bg: #f6f5f1;
   --surface: #ffffff;
@@ -20,7 +21,8 @@
   --panel-ink: #f3efe2;
   --radius: 14px;
   --tab-h: 58px;
-  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --shadow: 0 1px 2px color-mix(in srgb, #14201b 6%, transparent), 0 6px 18px -10px color-mix(in srgb, #0b5d4b 22%, transparent);
+  --font: "Geist", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
@@ -489,3 +491,31 @@ dialog h2 { margin-bottom: 14px; }
 }
 .pf-row.hs { grid-template-columns: minmax(0, 1fr) 36px; grid-template-areas: "main del" "val del" "sub del"; }
 .hs .pf-val { justify-content: flex-start; max-width: none; }
+
+/* Kemasan reka bentuk (audit taste-skill) */
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+h1, h2, h3, .sc-title, .plan h3 { text-wrap: balance; }
+p, .lead, .sc-sub { text-wrap: pretty; }
+h1 { font-weight: 650; letter-spacing: -0.035em; }
+.num, .mono, .q-price, .q-chg, .pc-count, .pc-row li b { font-feature-settings: "tnum" 1; }
+.pc-count { font-weight: 500; letter-spacing: -0.02em; }
+.lead { max-width: 62ch; }
+/* Kad: bayang bertint, sempadan lebih lembut, angkat sedikit apabila boleh diklik */
+.card, .list, .tool-card { border-color: color-mix(in srgb, var(--border) 70%, transparent); box-shadow: var(--shadow); }
+:root[data-theme="dark"] .card, :root[data-theme="dark"] .list, :root[data-theme="dark"] .tool-card { box-shadow: none; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .card, :root:not([data-theme="light"]) .list, :root:not([data-theme="light"]) .tool-card { box-shadow: none; } }
+a.card, .shortcut, .tool-card { transition: transform .2s cubic-bezier(.2,.8,.2,1), border-color .2s, box-shadow .2s; }
+a.card:hover, .shortcut:hover, .tool-card:hover { transform: translateY(-1px); }
+a.card:active, .shortcut:active, .tool-card:active { transform: translateY(0) scale(.995); }
+.btn { transition: filter .2s, transform .12s, background-color .2s; }
+.btn.ghost:hover { background: var(--surface-2); filter: none; }
+.desk-nav a { transition: color .2s, background-color .2s; }
+.qrow { transition: background-color .25s; }
+/* Lencana koin: warna jenama dilembutkan supaya tidak bersaing dengan warna utama */
+.coin { --c: var(--brand); color: color-mix(in srgb, var(--c) 82%, var(--text)); background: color-mix(in srgb, var(--c) 14%, var(--surface)); font-weight: 700; }
+/* Pautan langkau untuk papan kekunci */
+.skip-link { position: absolute; left: 12px; top: -48px; z-index: 50; background: var(--text); color: var(--bg); padding: 8px 14px; border-radius: 9px; font-weight: 600; text-decoration: none; transition: top .15s; }
+.skip-link:focus { top: calc(8px + env(safe-area-inset-top)); }
+#main:focus { outline: none; }
