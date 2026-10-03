@@ -34,3 +34,10 @@ Kemudian buka http://localhost:8080 (service worker memerlukan http/https, bukan
 ## Nota
 - Peratus AI dan plagiarisme ialah anggaran heuristik, bukan pengganti Turnitin.
 - Kandungan pelaburan untuk pendidikan sahaja, bukan nasihat kewangan.
+
+## Premium (laman web sahaja)
+
+Pelan berbayar Pelajar, Pelabur dan Lengkap dijual melalui ToyyibPay (FPX dan kad). Pelayan pembayaran kecil dalam `worker/` berjalan di Cloudflare Workers (percuma) dan dipasang oleh `.github/workflows/worker.yml` apabila rahsia ditetapkan. Ia mencipta bil, mengesahkan bayaran dengan ToyyibPay, dan memberikan lesen bertandatangan (ECDSA P-256) yang disahkan dalam peranti oleh `js/premium.js`. Dalam app Android dan iOS, Premium disembunyikan kerana peraturan kedai app.
+
+- Ujian pelayan: `node worker/test.mjs`
+- Kunci lesen baharu: `node scripts/gen-license-key.mjs`

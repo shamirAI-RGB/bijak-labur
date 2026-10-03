@@ -39,6 +39,19 @@
       <symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/></symbol>
       <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
       <symbol id="i-link" viewBox="0 0 24 24"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></symbol>
+      <symbol id="i-lock" viewBox="0 0 24 24"><rect width="16" height="11" x="4" y="11" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+      <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 2 10 5-10 5L2 7z"/><path d="m2 17 10 5 10-5M2 12l10 5 10-5"/></symbol>
+      <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M19 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></symbol>
+      <symbol id="i-quote" viewBox="0 0 24 24"><path d="M3 21c3 0 7-1 7-8V5H3v7h4c0 4-2 5-4 5z"/><path d="M14 21c3 0 7-1 7-8V5h-7v7h4c0 4-2 5-4 5z"/></symbol>
+      <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></symbol>
+      <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="M12 8v4M12 16h.01"/></symbol>
+      <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8H8M16 12H8M13 16H8"/></symbol>
+      <symbol id="i-coins" viewBox="0 0 24 24"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/></symbol>
+      <symbol id="i-bars" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M8 17V11M13 17V7M18 17v-4"/></symbol>
+      <symbol id="i-cap" viewBox="0 0 24 24"><path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></symbol>
+      <symbol id="i-diff" viewBox="0 0 24 24"><path d="M12 3v14M5 10h14"/><path d="M5 21h14"/></symbol>
+      <symbol id="i-history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5M12 7v5l4 2"/></symbol>
+      <symbol id="i-cover" viewBox="0 0 24 24"><rect width="16" height="20" x="4" y="2" rx="2"/><path d="M8 7h8M8 11h8M10 17h4"/></symbol>
       <symbol id="i-phone" viewBox="0 0 24 24"><rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/></symbol>
     </defs>
   </svg>
@@ -52,6 +65,7 @@
         <a href="#pasaran" data-nav="pasaran">Pasaran</a>
         <a href="#solat" data-nav="solat">Waktu Solat</a>
         <a href="#semak" data-nav="semak">Semak Kertas</a>
+        <a href="#premium" data-nav="premium" data-premium-entry class="hidden">Premium</a>
       </nav>
       <button class="icon-btn" id="themeBtn" aria-label="Tukar tema cerah atau gelap"><svg class="ic"><use href="#i-moon"/></svg></button>
     </div>
@@ -85,6 +99,11 @@
             <a class="card shortcut" href="#semak">
               <span class="sc-ico"><svg class="ic"><use href="#i-file"/></svg></span>
               <div class="sc-body"><div class="sc-title">Semak kertas kerja</div><div class="sc-sub">Anggaran AI, plagiarisme dan pembetulan bahasa</div></div>
+              <svg class="ic chev"><use href="#i-chev"/></svg>
+            </a>
+            <a class="card shortcut hidden" href="#premium" data-premium-entry>
+              <span class="sc-ico gold"><svg class="ic"><use href="#i-layers"/></svg></span>
+              <div class="sc-body"><div class="sc-title">Bijak Labur Premium</div><div class="sc-sub">15 alat untuk pelabur dan pelajar. Cuba percuma 3 hari</div></div>
               <svg class="ic chev"><use href="#i-chev"/></svg>
             </a>
           </div>
@@ -270,6 +289,7 @@
               <button class="btn sm" id="applyAll"><svg class="ic"><use href="#i-check"/></svg>Terima semua</button>
               <button class="btn sm ghost" id="copyFixed"><svg class="ic"><use href="#i-copy"/></svg>Salin</button>
               <button class="btn sm ghost" id="dlFixed"><svg class="ic"><use href="#i-download"/></svg>Muat turun</button>
+              <button class="btn sm ghost hidden" id="reportBtn" data-premium-entry><svg class="ic"><use href="#i-file"/></svg>Laporan PDF<svg class="ic lock"><use href="#i-lock"/></svg></button>
             </div>
           </div>
           <div class="card">
@@ -280,11 +300,172 @@
         <div class="card"><h3>Sumber yang sepadan</h3><div id="sourceList"></div></div>
       </div>
     </section>
+
+    <!-- PREMIUM (laman web sahaja) -->
+    <section class="view" id="view-premium" aria-labelledby="h-premium">
+      <div class="page-head">
+        <p class="eyebrow">Bijak Labur Premium</p>
+        <h1 id="h-premium">Alat untuk langkah seterusnya</h1>
+        <p class="lead">15 alat untuk melabur dengan lebih teratur dan menyiapkan tugasan dengan lebih kemas. Cuba percuma selama 3 hari. Semua ciri percuma kekal percuma.</p>
+      </div>
+      <div class="pro-wrap" id="proWrap">
+        <div class="card toggle-row hidden" id="proStatus"></div>
+
+        <div id="toolsBlock">
+          <div id="toolGrid" class="tool-grid"></div>
+          <div class="tool-head hidden" id="toolHead">
+            <button type="button" class="link-btn back" id="toolBack"><svg class="ic"><use href="#i-chev"/></svg>Semua alat</button>
+            <h2 id="toolTitle"></h2>
+          </div>
+
+          <div class="tool hidden" id="tool-portfolio">
+            <div class="tool-body">
+              <div class="stat-row two" id="pfSummary"></div>
+              <div id="pfAlloc"></div>
+              <div class="list pf-list" id="pfTable"></div>
+              <p class="source" id="pfFx"></p>
+              <div class="card">
+                <h3>Tambah pegangan</h3>
+                <form id="pfForm" class="form-grid" autocomplete="off">
+                  <div class="field"><label for="pfType">Jenis</label><select id="pfType"><option value="crypto">Kripto</option><option value="stock">Saham</option></select></div>
+                  <div class="field"><label for="pfSym">Simbol</label><input id="pfSym" maxlength="20" autocapitalize="characters" placeholder="Cth. BTC"></div>
+                  <div class="field"><label for="pfQty">Kuantiti (unit)</label><input id="pfQty" type="number" step="any" min="0" inputmode="decimal"></div>
+                  <div class="field"><label for="pfCost">Kos purata seunit</label><input id="pfCost" type="number" step="any" min="0" inputmode="decimal"></div>
+                  <div class="field"><label for="pfCur">Mata wang</label><select id="pfCur"><option value="USD">USD</option><option value="MYR">RM</option></select></div>
+                  <div class="field hidden" id="pfPriceWrap"><label for="pfPrice">Harga semasa seunit</label><input id="pfPrice" type="number" step="any" min="0" inputmode="decimal"></div>
+                  <button class="btn" type="submit"><svg class="ic"><use href="#i-plus"/></svg>Tambah</button>
+                </form>
+                <p class="muted small">Harga kripto dikemas kini secara langsung dari Binance. Harga saham anda kemas kini sendiri dalam jadual (semak dalam Moomoo). Data disimpan dalam peranti ini sahaja.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="tool hidden" id="tool-dca">
+            <div class="tool-body">
+              <div class="card">
+                <form id="dcaForm" class="form-grid" autocomplete="off">
+                  <div class="field"><label for="dcaSym">Aset</label><select id="dcaSym"></select></div>
+                  <div class="field"><label for="dcaAmt">Jumlah sebulan (RM)</label><input id="dcaAmt" type="number" min="1" step="any" inputmode="decimal"></div>
+                  <div class="field"><label for="dcaStart">Mula</label><input id="dcaStart" type="month" min="2017-09"></div>
+                  <button class="btn" id="dcaGo" type="submit">Kira</button>
+                </form>
+              </div>
+              <div id="dcaOut" class="hidden">
+                <div class="stat-row four" id="dcaStats"></div>
+                <div class="card chart-card"><div class="chart-head"><h3>Nilai pelaburan</h3><span class="legend"><span style="--c:var(--brand)">Nilai</span><span style="--c:var(--faint)">Modal dilabur</span></span></div><div id="dcaChart" class="chart-box"></div></div>
+                <p class="source" id="dcaNote"></p>
+              </div>
+            </div>
+          </div>
+
+          <div class="tool hidden" id="tool-zakat">
+            <div class="tool-body">
+              <div class="card">
+                <form id="zkForm" class="form-grid" autocomplete="off">
+                  <div class="field"><label for="zkGold">Harga emas segram (RM)</label><input id="zkGold" type="number" min="0" step="any" inputmode="decimal" placeholder="Rujuk harga emas hari ini"></div>
+                  <div class="field"><label for="zkCash">Simpanan tunai (RM)</label><input id="zkCash" type="number" min="0" step="any" inputmode="decimal"></div>
+                  <div class="field"><label for="zkStock">Nilai saham (RM)</label><input id="zkStock" type="number" min="0" step="any" inputmode="decimal"></div>
+                  <div class="field"><label for="zkCrypto">Nilai kripto (RM)</label><input id="zkCrypto" type="number" min="0" step="any" inputmode="decimal"></div>
+                  <div class="field"><label for="zkDebt">Tolak hutang segera (RM)</label><input id="zkDebt" type="number" min="0" step="any" inputmode="decimal"></div>
+                  <label class="check"><input type="checkbox" id="zkHaul" checked><span>Dimiliki cukup setahun (haul)</span></label>
+                </form>
+                <button type="button" class="btn sm ghost" id="zkFromPf">Guna nilai daripada portfolio</button>
+              </div>
+              <div class="card" id="zkOut" aria-live="polite"></div>
+              <p class="source">Kaedah ringkas: 2.5% atas nilai pasaran pada tarikh haul, nisab 85 g emas. Kaedah dan kadar boleh berbeza mengikut negeri. Rujuk pusat zakat negeri anda sebelum membayar.</p>
+            </div>
+          </div>
+
+          <div class="tool hidden" id="tool-rujukan">
+            <div class="tool-body">
+              <div class="two-col">
+                <div class="card">
+                  <form id="rfForm" autocomplete="off">
+                    <div class="form-grid">
+                      <div class="field"><label for="rfStyle">Gaya</label><select id="rfStyle"><option value="apa">APA 7</option><option value="mla">MLA 9</option><option value="harvard">Harvard</option></select></div>
+                      <div class="field"><label for="rfType">Jenis sumber</label><select id="rfType"><option value="book">Buku</option><option value="journal">Artikel jurnal</option><option value="web">Laman web</option></select></div>
+                    </div>
+                    <div class="field"><label for="rf-authors">Pengarang <span class="muted">(satu setiap baris: Nama Keluarga, Nama Pertama)</span></label><textarea id="rf-authors" class="short" rows="2" placeholder="Abdullah, Siti Aminah"></textarea></div>
+                    <div class="form-grid">
+                      <div class="field"><label for="rf-year">Tahun</label><input id="rf-year" inputmode="numeric" maxlength="10"></div>
+                      <div class="field" data-f="publisher"><label for="rf-publisher">Penerbit</label><input id="rf-publisher"></div>
+                      <div class="field" data-f="site"><label for="rf-site">Nama laman</label><input id="rf-site"></div>
+                    </div>
+                    <div class="field"><label for="rf-title">Tajuk</label><input id="rf-title"></div>
+                    <div class="field" data-f="container"><label for="rf-container">Nama jurnal</label><input id="rf-container"></div>
+                    <div class="form-grid">
+                      <div class="field" data-f="volume"><label for="rf-volume">Jilid</label><input id="rf-volume"></div>
+                      <div class="field" data-f="issue"><label for="rf-issue">Bilangan</label><input id="rf-issue"></div>
+                      <div class="field" data-f="pages"><label for="rf-pages">Halaman</label><input id="rf-pages" placeholder="45-62"></div>
+                    </div>
+                    <div class="field" data-f="doi"><label for="rf-doi">DOI</label><input id="rf-doi" placeholder="10.1000/xyz123"></div>
+                    <div class="form-grid">
+                      <div class="field" data-f="url"><label for="rf-url">URL</label><input id="rf-url" type="url" inputmode="url"></div>
+                      <div class="field" data-f="accessed"><label for="rf-accessed">Tarikh diakses</label><input id="rf-accessed" type="date"></div>
+                    </div>
+                    <div class="ref-preview" id="rfPreview" aria-live="polite"></div>
+                    <div class="actions">
+                      <button class="btn sm" type="submit"><svg class="ic"><use href="#i-plus"/></svg>Simpan ke senarai</button>
+                      <button class="btn sm ghost" type="button" id="rfCopy"><svg class="ic"><use href="#i-copy"/></svg>Salin</button>
+                    </div>
+                  </form>
+                </div>
+                <div class="card">
+                  <div class="row-between"><h3 id="rfListTitle">References</h3><button class="btn sm ghost" id="rfCopyAll"><svg class="ic"><use href="#i-copy"/></svg>Salin semua</button></div>
+                  <ol class="ref-list" id="rfList"></ol>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="plansBlock">
+          <div class="block-head"><h2 id="plansTitle">Pilih pelan</h2><div class="segmented small" id="periodSeg" role="tablist" aria-label="Tempoh"></div></div>
+          <div class="card trial-card hidden" id="trialCard" data-web-only>
+            <div class="sc-body"><div class="sc-title">Cuba semua alat Premium percuma selama 3 hari</div><div class="sc-sub">Tiada bayaran dan tiada butiran kad. Selepas 3 hari, alat dikunci semula sehingga anda memilih pelan.</div></div>
+            <button class="btn" id="trialGo" type="button">Mula percubaan</button>
+          </div>
+          <div class="plan-grid" id="planGrid"></div>
+          <p class="muted small store-terms" id="storeTerms" data-native-only></p>
+          <div class="actions" data-native-only>
+            <button class="btn sm ghost" type="button" id="storeRestore">Pulihkan pembelian</button>
+            <button class="btn sm ghost" type="button" id="storeManage">Urus langganan</button>
+          </div>
+          <p class="muted small" data-web-only>Bayaran diproses dengan selamat oleh ToyyibPay melalui FPX (RHB, Maybank, CIMB, Bank Islam dan bank lain) atau kad debit dan kredit. Bijak Labur tidak menyimpan butiran bank atau kad anda. <a href="terma.html">Terma dan polisi bayaran balik</a>.</p>
+          <details class="card restore" id="restore" data-web-only>
+            <summary>Sudah membayar? Aktifkan Premium pada peranti ini</summary>
+            <form id="restoreForm" class="form-grid" autocomplete="on">
+              <div class="field"><label for="restoreCode">Kod bil ToyyibPay</label><input id="restoreCode" placeholder="Dalam resit e-mel, cth. 8x2kf1ab" autocapitalize="off"></div>
+              <div class="field"><label for="restoreEmail">E-mel semasa membayar</label><input id="restoreEmail" type="email" autocomplete="email"></div>
+              <button class="btn" id="restoreGo" type="submit">Aktifkan</button>
+            </form>
+          </details>
+        </div>
+      </div>
+    </section>
   </main>
+
+  <dialog id="payDlg" aria-labelledby="payTitle" data-web-only>
+    <form id="payForm" autocomplete="on">
+      <p class="eyebrow">Bijak Labur Premium</p>
+      <h2 id="payTitle">Pelan</h2>
+      <div class="pay-amt"><span>Jumlah</span><b class="num" id="payAmount">RM0.00</b></div>
+      <div class="field"><label for="payName">Nama penuh</label><input id="payName" autocomplete="name" required maxlength="60"></div>
+      <div class="field"><label for="payEmail">E-mel</label><input id="payEmail" type="email" autocomplete="email" required maxlength="100"></div>
+      <div class="field"><label for="payPhone">No. telefon</label><input id="payPhone" type="tel" autocomplete="tel" inputmode="tel" required placeholder="0123456789"></div>
+      <p class="muted small">Anda akan dibawa ke halaman ToyyibPay untuk membayar melalui FPX atau kad. Resit dan kod bil dihantar ke e-mel anda.</p>
+      <p class="err" id="payErr" role="alert"></p>
+      <div class="actions end">
+        <button class="btn ghost" type="button" id="payCancel">Batal</button>
+        <button class="btn" type="submit" id="payGo">Teruskan ke pembayaran</button>
+      </div>
+    </form>
+  </dialog>
+  <div id="printArea" aria-hidden="true"></div>
 
   <footer class="site-footer">
     <p>Bijak Labur ialah projek pendidikan percuma dan bukan nasihat kewangan. Tidak bergabung dengan Moomoo, Futu, JAKIM atau Binance.</p>
-    <p><a href="privacy.html">Dasar privasi</a> · Data: Binance, CoinGecko, TradingView, api.waktusolat.app, LanguageTool, Wikipedia.</p>
+    <p><a href="privacy.html">Dasar privasi</a> · <a href="terma.html">Terma</a> · Data: Binance, CoinGecko, TradingView, api.waktusolat.app, LanguageTool, Wikipedia.</p>
   </footer>
 
   <nav class="tabbar" aria-label="Navigasi">
@@ -300,5 +481,9 @@
   <script src="js/market.js"></script>
   <script src="js/solat.js"></script>
   <script src="js/checker.js"></script>
+  <script src="js/premium.js"></script>
+  <script src="js/pro.js"></script>
+  <script src="js/pro-invest.js"></script>
+  <script src="js/pro-study.js"></script>
 </body>
 </html>

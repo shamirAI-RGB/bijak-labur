@@ -1,0 +1,306 @@
+/* Bijak Labur Premium: pelan, percubaan 3 hari, bayaran web (ToyyibPay) dan langganan app (Google Play / App Store) */
+const Premium = (function () {
+  // URL pelayan pembayaran web (Cloudflare Worker). Kosong = jualan web belum dibuka.
+  const PAY_API = '';
+  // Kunci awam untuk mengesahkan lesen web yang ditandatangani pelayan
+  const PUBLIC_JWK = { kty: 'EC', crv: 'P-256', x: 'PopJd-wOskBgsjXRhkdKZwZDEXnwp4JMC3CiOeZNIJs', y: 'BElaqIRYXzSQ595i_PjTkwPSwL6lMCd9Ei2WCyWWdHY' };
+  const TRIAL_DAYS = 3;
+
+  const PLANS = {
+    pelajar: { name: 'Pelajar', m1: 5, y1: 39, blurb: 'Untuk pelajar kolej dan universiti.',
+      feats: ['Laporan semakan PDF', 'Penjana rujukan APA, MLA dan Harvard', 'Kalkulator PNGK dan sasaran', 'Penjana muka depan tugasan', 'Bandingkan dua draf', 'Sejarah semakan'] },
+    pelabur: { name: 'Pelabur', m1: 12, y1: 89, blurb: 'Untuk yang sudah mula melabur.',
+      feats: ['Portfolio dalam Ringgit', 'Simulator DCA dengan harga sebenar', 'Saiz posisi dan risiko', 'Jurnal dagangan', 'Kos dagangan Bursa', 'Dividen dan DRIP', 'Perancang matlamat', 'Bandingkan ASB, KWSP, FD dan emas', 'Kalkulator zakat pelaburan'] },
+    lengkap: { name: 'Lengkap', m1: 15, y1: 109, blurb: 'Semua alat Pelajar dan Pelabur.',
+      feats: ['Semua 6 alat pelan Pelajar', 'Semua 9 alat pelan Pelabur', 'Ciri Premium baharu tanpa caj tambahan'] }
+  };
+  const PERIOD = { m1: '30 hari', y1: 'setahun' };
+  const PERIOD_STORE = { m1: 'bulan', y1: 'tahun' };
+
+  /* Langganan app: ID produk yang perlu dicipta dalam Play Console dan App Store Connect */
+  const PLATFORM = Native ? Native.getPlatform() : 'web';
+  const IAP = plugin('NativePurchases');
+  const IOS_ID = (p, per) => `bl.${p}.${per === 'y1' ? 'tahunan' : 'bulanan'}`;
+  const ANDROID_ID = p => `bl_${p}`;
+  const BASE_PLAN = { m1: 'bulanan', y1: 'tahunan' };
+  const TRIAL_OFFER = 'percuma-3-hari';
+  const isNative = !!Native;
+
+  let lic = null;            // lesen web { p, x, b }
+  let storePlans = [];       // langganan app aktif, cth. ['lengkap']
+  let storeTrial = false;
+  let products = {};         // products[plan][period] = { priceString, trial, ... }
+  const now = () => Date.now() / 1000;
+  const unb64 = s => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
+  const dateMs = sec => new Intl.DateTimeFormat('ms-MY', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kuala_Lumpur' }).format(new Date(sec * 1000));
+
+  async function verify(token) {
+    try {
+      const [body, sig] = String(token).split('.');
+      const key = await crypto.subtle.importKey('jwk', PUBLIC_JWK, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['verify']);
+      const ok = await crypto.subtle.verify({ name: 'ECDSA', hash: 'SHA-256' }, key, unb64(sig), new TextEncoder().encode(body));
+      if (!ok) return null;
+      const p = JSON.parse(new TextDecoder().decode(unb64(body)));
+      return PLANS[p.p] && p.x > now() ? p : null;
+    } catch { return null; }
+  }
+
+  // Percubaan web: sekali bagi setiap peranti, akses Lengkap selama 3 hari
+  const trial = () => { const t = store.get('trial', null); return t && t.s <= now() + 60 && now() < t.s + TRIAL_DAYS * 86400 ? t : null; };
+
+  const api = {
+    available: true,
+    native: isNative,
+    get plan() {
+      if (isNative) return storePlans.includes('lengkap') || (storePlans.includes('pelajar') && storePlans.includes('pelabur')) ? 'lengkap' : storePlans[0] || null;
+      if (lic && lic.x > now()) return lic.p;
+      return trial() ? 'lengkap' : null;
+    },
+    get trialing() { return isNative ? storeTrial : !(lic && lic.x > now()) && !!trial(); },
+    has(feature) { const p = this.plan; return !!p && (p === 'lengkap' || p === feature); },
+    require(feature) {
+      if (this.has(feature)) return true;
+      toast(`Ciri ini sebahagian daripada pelan ${PLANS[feature].name}.`, 3200);
+      location.hash = '#premium';
+      return false;
+    },
+    PLANS
+  };
+
+  function announce() { document.dispatchEvent(new CustomEvent('premiumchange')); render(); }
+
+  /* ---------- Paparan ---------- */
+  let period = 'y1';
+  // Web: percubaan 3 hari sentiasa ada, jadi Premium dipaparkan walaupun bayaran belum dibuka
+  const salesOpen = () => isNative ? Object.keys(products).length > 0 : true;
+
+  function statusHTML() {
+    const p = api.plan; if (!p) return '';
+    let sub;
+    if (isNative) sub = storeTrial ? 'Dalam tempoh percubaan percuma. Urus atau batal dalam tetapan langganan.' : 'Langganan aktif. Urus atau batal dalam tetapan langganan.';
+    else if (api.trialing) {
+      const left = trial().s + TRIAL_DAYS * 86400 - now(), d = Math.floor(left / 86400), h = Math.floor(left % 86400 / 3600);
+      sub = `Percubaan percuma: tinggal ${d ? d + ' hari ' : ''}${h} jam. Pilih pelan di bawah untuk terus menggunakan alat ini.`;
+    } else sub = `Sah hingga ${dateMs(lic.x)}. Kod bil ${esc(lic.b)}`;
+    return `<span class="sc-ico">${icon('check')}</span><div class="sc-body"><div class="sc-title">${api.trialing ? 'Percubaan Lengkap aktif' : `Pelan ${PLANS[p].name} aktif`}</div><div class="sc-sub">${sub}</div></div>`;
+  }
+
+  function priceHTML(k) {
+    const pl = PLANS[k];
+    if (isNative) {
+      const pr = products[k] && products[k][period];
+      if (!pr) return `<div class="plan-price"><span class="muted">Tidak tersedia</span></div><div class="plan-per">&nbsp;</div>`;
+      return `<div class="plan-price"><span class="num">${esc(pr.priceString)}</span><span class="muted">/${PERIOD_STORE[period]}</span></div>
+        <div class="plan-per">${pr.trial ? `Percuma ${TRIAL_DAYS} hari, kemudian ${esc(pr.priceString)} se${PERIOD_STORE[period]}` : 'Diperbaharui secara automatik, batal bila-bila masa'}</div>`;
+    }
+    const price = pl[period], saving = Math.round((1 - pl.y1 / (pl.m1 * 12)) * 100);
+    return `<div class="plan-price"><span class="num">RM${price}</span><span class="muted">/${PERIOD[period]}</span></div>
+      <div class="plan-per">${period === 'y1' ? `RM${(price / 12).toFixed(2)} sebulan, jimat ${saving}%` : 'Bayar sekali, tiada caj automatik'}</div>`;
+  }
+
+  function render() {
+    const p = api.plan, open = salesOpen() || !!p;
+    $$('[data-premium-entry]').forEach(el => el.classList.toggle('hidden', !open));
+
+    $('#proStatus').innerHTML = statusHTML();
+    $('#proStatus').classList.toggle('hidden', !p);
+    $('#plansBlock').classList.toggle('hidden', p === 'lengkap' && !api.trialing && !isNative);
+    $('#plansTitle').textContent = p && !api.trialing ? 'Naik taraf atau sambung' : 'Pilih pelan';
+
+    // Kad percubaan web
+    const canTrial = !isNative && !store.get('trial', null) && !(lic && lic.x > now());
+    if ($('#trialCard')) $('#trialCard').classList.toggle('hidden', !canTrial);
+
+    $('#periodSeg').innerHTML = Object.keys(PERIOD).map(k =>
+      `<button class="seg ${k === period ? 'active' : ''}" data-period="${k}" role="tab" aria-selected="${k === period}">${k === 'y1' ? (isNative ? 'Tahunan' : 'Setahun') : (isNative ? 'Bulanan' : '30 hari')}</button>`).join('');
+    $('#planGrid').innerHTML = Object.entries(PLANS).map(([k, pl]) => {
+      const cur = p === k && !api.trialing, pr = isNative && products[k] && products[k][period];
+      const label = isNative ? (cur ? 'Langganan aktif' : pr && pr.trial ? `Cuba percuma ${TRIAL_DAYS} hari` : 'Langgan') : !PAY_API ? 'Bayaran dibuka tidak lama lagi' : (cur ? 'Sambung' : 'Pilih ' + pl.name);
+      return `<article class="plan ${k === 'lengkap' ? 'featured' : ''}">
+        <header><h3>${pl.name}</h3>${k === 'lengkap' ? '<span class="plan-tag">Paling berbaloi</span>' : ''}</header>
+        <p class="muted small">${pl.blurb}</p>
+        ${priceHTML(k)}
+        <ul class="plan-feats">${pl.feats.map(f => `<li>${icon('check')}<span>${f}</span></li>`).join('')}</ul>
+        <button class="btn ${k === 'lengkap' ? '' : 'ghost'} block" data-buy="${k}" ${(isNative ? (!pr || (cur && storePlans.includes(k))) : !PAY_API) ? 'disabled' : ''}>${label}</button>
+      </article>`;
+    }).join('');
+    if (isNative) $('#storeTerms').innerHTML = storeTermsHTML();
+  }
+
+  function storeTermsHTML() {
+    const store = PLATFORM === 'ios' ? 'Apple ID' : 'akaun Google Play';
+    const eula = PLATFORM === 'ios' ? 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/' : 'terma-app.html';
+    return `Bayaran dicaj kepada ${store} anda apabila pembelian disahkan, atau pada akhir tempoh percubaan percuma ${TRIAL_DAYS} hari jika ada. Langganan diperbaharui secara automatik pada harga yang sama melainkan dibatalkan sekurang-kurangnya 24 jam sebelum tempoh semasa tamat. Urus atau batal dalam tetapan langganan ${PLATFORM === 'ios' ? 'App Store' : 'Google Play'}. Percubaan percuma untuk pelanggan baharu sahaja. <a href="${eula}" target="_blank" rel="noopener">Terma penggunaan</a> · <a href="privacy.html">Dasar privasi</a>`;
+  }
+
+  /* ---------- Langganan app (Google Play / App Store) ---------- */
+  async function loadProducts() {
+    if (!IAP) return;
+    try {
+      const { isBillingSupported } = await IAP.isBillingSupported();
+      if (!isBillingSupported) return;
+      products = {};
+      const plans = Object.keys(PLANS);
+      if (PLATFORM === 'ios') {
+        const ids = plans.flatMap(p => ['m1', 'y1'].map(per => IOS_ID(p, per)));
+        const { products: list } = await IAP.getProducts({ productIdentifiers: ids, productType: 'subs' });
+        list.forEach(pr => {
+          const m = pr.identifier.match(/^bl\.(\w+)\.(bulanan|tahunan)$/); if (!m) return;
+          const per = m[2] === 'tahunan' ? 'y1' : 'm1';
+          (products[m[1]] = products[m[1]] || {})[per] = { id: pr.identifier, priceString: pr.priceString, trial: !!(pr.introductoryPrice && pr.introductoryPrice.price === 0) };
+        });
+      } else {
+        const { products: list } = await IAP.getProducts({ productIdentifiers: plans.map(ANDROID_ID), productType: 'subs' });
+        list.forEach(pr => {
+          const plan = String(pr.planIdentifier || '').replace(/^bl_/, ''), per = pr.identifier === BASE_PLAN.y1 ? 'y1' : pr.identifier === BASE_PLAN.m1 ? 'm1' : null;
+          if (!PLANS[plan] || !per) return;
+          const slot = (products[plan] = products[plan] || {}), cur = slot[per] || {};
+          const isTrial = pr.offerId === TRIAL_OFFER;
+          // Harga asas datang daripada tawaran asas; percubaan guna token tawaran percuma jika layak
+          slot[per] = Object.assign(cur, { id: ANDROID_ID(plan), basePlan: pr.identifier },
+            isTrial ? { trial: true, offerToken: pr.offerToken } : { priceString: pr.priceString, baseToken: pr.offerToken });
+        });
+        Object.values(products).forEach(s => Object.values(s).forEach(v => { if (!v.priceString) v.priceString = ''; }));
+      }
+    } catch (e) { console.warn('Produk kedai tidak dapat dimuatkan', e); }
+  }
+
+  async function refreshEntitlements() {
+    if (!IAP) return;
+    try {
+      const { purchases } = await IAP.getPurchases({ productType: 'subs', onlyCurrentEntitlements: true });
+      const active = purchases.filter(t => PLATFORM === 'ios'
+        ? (t.isActive === true || (t.expirationDate && Date.parse(t.expirationDate) > Date.now())) && !t.revocationDate
+        : String(t.purchaseState) === '1');
+      storePlans = [...new Set(active.map(t => (String(t.productIdentifier).match(/(pelajar|pelabur|lengkap)/) || [])[1]).filter(Boolean))];
+      storeTrial = active.some(t => t.isTrialPeriod);
+    } catch (e) { console.warn('Langganan tidak dapat disemak', e); }
+  }
+
+  async function buyNative(plan) {
+    const pr = products[plan] && products[plan][period]; if (!pr) return;
+    const btn = $(`[data-buy="${plan}"]`); btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Membuka';
+    try {
+      if (PLATFORM === 'ios') await IAP.purchaseProduct({ productIdentifier: pr.id, productType: 'subs' });
+      else await IAP.purchaseProduct({ productIdentifier: pr.id, planIdentifier: pr.basePlan, offerToken: pr.offerToken || pr.baseToken, productType: 'subs' });
+      await refreshEntitlements();
+      announce();
+      if (api.plan) toast(`Pelan ${PLANS[api.plan].name} aktif. Terima kasih!`, 4000);
+    } catch (e) {
+      if (!/cancel/i.test(String(e && (e.message || e.code)))) toast('Pembelian tidak selesai. Tiada caj dikenakan.', 4000);
+      render();
+    }
+  }
+
+  /* ---------- Pembayaran web ---------- */
+  async function post(path, body) {
+    const r = await fetch(PAY_API.replace(/\/$/, '') + path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) { const e = new Error(d.error || 'Ralat pelayan pembayaran.'); e.data = d; throw e; }
+    return d;
+  }
+
+  function openCheckout(plan) {
+    if (!PAY_API) return toast('Pembayaran belum dibuka. Sila cuba lagi kemudian.');
+    const pl = PLANS[plan], dlg = $('#payDlg'), saved = store.get('payer', {});
+    dlg.dataset.plan = plan;
+    $('#payTitle').textContent = `Pelan ${pl.name}, ${PERIOD[period]}`;
+    $('#payAmount').textContent = `RM${pl[period]}.00`;
+    $('#payName').value = saved.name || ''; $('#payEmail').value = saved.email || ''; $('#payPhone').value = saved.phone || '';
+    $('#payErr').textContent = '';
+    dlg.showModal();
+  }
+
+  async function submitCheckout(e) {
+    e.preventDefault();
+    const dlg = $('#payDlg'), btn = $('#payGo');
+    const body = { plan: dlg.dataset.plan, period, name: $('#payName').value.trim(), email: $('#payEmail').value.trim(), phone: $('#payPhone').value.trim() };
+    store.set('payer', { name: body.name, email: body.email, phone: body.phone });
+    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Menyediakan bil';
+    try {
+      const d = await post('/checkout', body);
+      store.set('pendingBill', { code: d.billcode, email: body.email });
+      location.href = d.url;
+    } catch (err) {
+      $('#payErr').textContent = err.message;
+      btn.disabled = false; btn.textContent = 'Teruskan ke pembayaran';
+    }
+  }
+
+  async function claim(code, email, quiet) {
+    const d = await post('/claim', { billcode: code, email });
+    const v = await verify(d.token);
+    if (!v) throw new Error('Lesen tidak dapat disahkan.');
+    if (!lic || v.x >= lic.x || v.p === 'lengkap') { lic = v; store.set('license', d.token); }
+    store.set('pendingBill', null);
+    announce();
+    if (!quiet) toast(`Pelan ${PLANS[v.p].name} aktif hingga ${dateMs(v.x)}.`, 4500);
+    return v;
+  }
+
+  // Pembeli kembali dari ToyyibPay: ?bill=KOD&status=1#premium
+  async function handleReturn() {
+    const q = new URLSearchParams(location.search), code = q.get('bill');
+    if (!code) return;
+    history.replaceState(null, '', location.pathname + location.hash);
+    const pend = store.get('pendingBill', null), email = pend && pend.code === code ? pend.email : (store.get('payer', {}).email || '');
+    if (q.get('status') !== '1') { toast('Pembayaran tidak selesai. Tiada caj dikenakan.', 4500); return; }
+    if (!email) { $('#restoreCode').value = code; $('#restore').open = true; toast('Masukkan e-mel pembayaran untuk mengaktifkan Premium.', 4500); return; }
+    toast('Mengesahkan pembayaran…', 8000);
+    for (let i = 0; i < 4; i++) {
+      try { await claim(code, email); return; }
+      catch (err) {
+        if (!(err.data && err.data.pending) || i === 3) { toast(err.message, 6000); $('#restoreCode').value = code; $('#restoreEmail').value = email; $('#restore').open = true; return; }
+        await new Promise(r => setTimeout(r, 4000));
+      }
+    }
+  }
+
+  async function submitRestore(e) {
+    e.preventDefault();
+    if (!PAY_API) return toast('Pembayaran belum dibuka.');
+    const btn = $('#restoreGo'); btn.disabled = true;
+    try { await claim($('#restoreCode').value, $('#restoreEmail').value.trim()); $('#restore').open = false; }
+    catch (err) { toast(err.message, 5000); }
+    btn.disabled = false;
+  }
+
+  /* ---------- Peristiwa ---------- */
+  $('#periodSeg').addEventListener('click', e => { const b = e.target.closest('[data-period]'); if (b) { period = b.dataset.period; render(); } });
+  $('#planGrid').addEventListener('click', e => { const b = e.target.closest('[data-buy]'); if (b) isNative ? buyNative(b.dataset.buy) : openCheckout(b.dataset.buy); });
+  $('#trialGo').addEventListener('click', () => {
+    if (store.get('trial', null)) return;
+    store.set('trial', { s: Math.floor(now()) });
+    announce();
+    toast(`Percubaan Lengkap aktif selama ${TRIAL_DAYS} hari. Semua alat Premium kini dibuka.`, 4500);
+    $('#toolsBlock').scrollIntoView({ behavior: 'smooth' });
+  });
+  if (isNative) {
+    // Peraturan kedai app: tiada sebutan bayaran luar dalam app
+    $$('[data-web-only]').forEach(el => el.remove());
+    $('#storeRestore').addEventListener('click', async () => {
+      try { await IAP.restorePurchases(); } catch {}
+      await refreshEntitlements(); announce();
+      toast(api.plan ? `Pelan ${PLANS[api.plan].name} dipulihkan.` : 'Tiada langganan aktif ditemui untuk akaun ini.', 4000);
+    });
+    $('#storeManage').addEventListener('click', () => IAP && IAP.manageSubscriptions().catch(() => toast('Buka tetapan langganan dalam kedai app.')));
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshEntitlements().then(announce); });
+  } else {
+    $$('[data-native-only]').forEach(el => el.remove());
+    $('#payForm').addEventListener('submit', submitCheckout);
+    $('#payCancel').addEventListener('click', () => $('#payDlg').close());
+    $('#restoreForm').addEventListener('submit', submitRestore);
+    window.addEventListener('pageshow', () => { const b = $('#payGo'); b.disabled = false; b.textContent = 'Teruskan ke pembayaran'; });
+  }
+  // Kemas kini kiraan masa percubaan
+  setInterval(() => { if (api.trialing && !isNative) { if (!trial()) announce(); else $('#proStatus').innerHTML = statusHTML(); } }, 60000);
+
+  async function load() {
+    if (isNative) { await Promise.all([loadProducts(), refreshEntitlements()]); return; }
+    const t = store.get('license', null);
+    lic = t ? await verify(t) : null;
+    if (t && !lic) store.set('license', null);
+  }
+  api.ready = load().then(() => { announce(); if (!isNative) handleReturn(); });
+  return api;
+})();
