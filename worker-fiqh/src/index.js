@@ -17,8 +17,9 @@ import Anthropic from '@anthropic-ai/sdk';
 import { BY_ID, CORPUS_TEXT } from './corpus.js';
 
 export const MODEL = 'claude-opus-5-5';
-// Alias Google untuk model Flash terkini (peringkat percuma). Boleh ditukar dengan pemboleh ubah GEMINI_MODEL.
-export const GEMINI_MODEL = 'gemini-flash-latest';
+// Alias Google untuk model Flash-Lite terkini (peringkat percuma). Diagnosis menunjukkan Flash penuh kerap
+// memulangkan 503 "high demand", manakala Flash-Lite menjawab dalam ~2 saat. Boleh ditukar dengan GEMINI_MODEL.
+export const GEMINI_MODEL = 'gemini-flash-lite-latest';
 export const DOMAINS = ['shamela.ws', 'quran.com', 'sunnah.com', 'muftiwp.gov.my', 'muftiselangor.gov.my', 'islam.gov.my', 'sc.com.my', 'iifa-aifi.org', 'zakat.com.my'];
 const MAX_Q = 500;
 const CACHE_DAYS = 7;
@@ -161,7 +162,7 @@ const provider = env => env.ANTHROPIC_API_KEY ? 'claude' : env.GEMINI_API_KEY ? 
 const NO_ANSWER = { status: 'luar_skop', ringkasan: 'Soalan ini tidak dapat dijawab.', huraian: [], khilaf: '', nasihat: '', sumber: [] };
 
 // Jika model pertama kehabisan kuota percuma (429), tiada (404) atau sibuk (5xx), cuba model seterusnya
-export const GEMINI_FALLBACKS = ['gemini-flash-lite-latest', 'gemini-3.5-flash-lite', 'gemini-3.8-flash'];
+export const GEMINI_FALLBACKS = ['gemini-3.5-flash-lite', 'gemini-flash-latest', 'gemini-3.8-flash'];
 const RETRY_NEXT = new Set([404, 429, 500, 503, 504]);
 
 export const geminiModels = env => [...new Set([env.GEMINI_MODEL || GEMINI_MODEL, ...GEMINI_FALLBACKS])];
