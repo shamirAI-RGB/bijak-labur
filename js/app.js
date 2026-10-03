@@ -90,6 +90,7 @@ function route() {
   const name = VIEWS.includes(v) ? v : 'utama';
   if (location.hash === currentHash && name === currentView) return;
   currentView = name; currentHash = location.hash;
+  document.documentElement.dataset.view = name;
   $$('.view').forEach(el => el.classList.toggle('active', el.id === 'view-' + name));
   $$('[data-nav]').forEach(a => { const on = a.dataset.nav === name; a.classList.toggle('active', on); on ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'); });
   window.scrollTo({ top: 0 });
@@ -111,9 +112,9 @@ if (AppPlugin) AppPlugin.addListener('backButton', () => {
 
 /* Ucapan & tarikh pada halaman utama */
 function greet() {
-  const h = +new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Kuala_Lumpur', hour: 'numeric', hour12: false }).format(new Date());
-  const nama = store.get('nama', '');
-  $('#greet').textContent = (h < 12 ? 'Selamat pagi' : h < 14 ? 'Selamat tengah hari' : h < 19 ? 'Selamat petang' : 'Selamat malam') + (nama ? ', ' + nama : '');
+  // Teks dikira dalam js/boot.js; tukar hanya jika berbeza supaya tajuk tidak dilukis semula tanpa sebab
+  const el = $('#greet'), t = greetText();
+  if (el.textContent !== t) el.textContent = t;
 }
 greet(); setInterval(greet, 60000);
 

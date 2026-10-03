@@ -7,8 +7,20 @@ const Akaun = (function () {
   const API = 'https://bijak-labur-premium.khanz-amir.workers.dev';
   const enabled = !!(FIREBASE.apiKey && FIREBASE.projectId && API);
   // Kaedah yang dihidupkan dalam Firebase > Authentication > Sign-in method (e-mel sentiasa ada).
-  // facebook: perlukan app Meta (App ID dan secret) dalam Firebase. phone: perlukan pelan Blaze untuk SMS.
+  // facebook: dikesan automatik (butang muncul sebaik sahaja Facebook dihidupkan dalam Firebase).
+  // phone: perlukan pelan Blaze untuk SMS.
   const METHODS = { google: true, facebook: false, phone: false };
+  // Tanya Firebase sama ada penyedia ini sudah dihidupkan; OPERATION_NOT_ALLOWED bermaksud belum
+  async function detectProvider(id) {
+    if (!FIREBASE.apiKey) return false;
+    try {
+      const r = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:createAuthUri?key=${FIREBASE.apiKey}`, {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ providerId: id, continueUri: location.origin + '/' })
+      });
+      return r.ok && !!(await r.json()).authUri;
+    } catch { return false; }
+  }
   // Google dan Facebook menyekat log masuk dalam WebView app; dalam app guna e-mel atau telefon
   const SOCIAL = !Native;
   // reCAPTCHA untuk SMS hanya berfungsi pada http/https: app Android (https://localhost) boleh, app iOS (capacitor://) tidak
@@ -295,7 +307,14 @@ const Akaun = (function () {
   function showErr(m) { const el = $('#akErr', dlg); if (el) el.textContent = m || ''; else if (m) toast(m, 5000); }
   function busy(on, text) { const b = $('#akGo', dlg) || $('#akTake', dlg); if (!b) return; b.disabled = on; if (on) { b.dataset.t = b.textContent; b.innerHTML = `<span class="spinner"></span> ${text || 'Sebentar'}`; } else if (b.dataset.t) b.textContent = b.dataset.t; }
 
-  function open(p) { if (p) pane = p; renderPane(); if (!dlg.open) dlg.showModal(); }
+  let fbChecked = false;
+  function open(p) {
+    if (p) pane = p; renderPane(); if (!dlg.open) dlg.showModal();
+    if (SOCIAL && enabled && !METHODS.facebook && !fbChecked) {
+      fbChecked = true;
+      detectProvider('facebook.com').then(on => { if (on) { METHODS.facebook = true; if (dlg.open) renderPane(); } });
+    }
+  }
   function close() { if (dlg.open) dlg.close(); }
 
   dlg.addEventListener('click', async e => {
