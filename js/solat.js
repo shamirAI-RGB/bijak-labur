@@ -275,26 +275,34 @@ WLY02|Wilayah Persekutuan|Labuan`.split('\n').map(l => { const [jakimCode, neger
 
   /* Rekod solat harian dan bilangan hari berturut-turut */
   const keyOf = d => { const p = partsKL(d); return `${p.year}-${String(p.month).padStart(2, '0')}-${String(p.day).padStart(2, '0')}`; };
+  // Hari dalam mod uzur (haid/nifas) tidak memutuskan rantaian
+  function uzurDay(key) {
+    const u = store.get('uzur', { on: false, log: [] });
+    if (u.on && key >= u.start) return true;
+    return (u.log || []).some(l => key >= l.s && key <= l.e);
+  }
   function streak() {
     let n = 0;
     for (let i = 0; i < 400; i++) {
-      const done = rekod[keyOf(new Date(Date.now() - i * 86400000))] || [];
+      const key = keyOf(new Date(Date.now() - i * 86400000)), done = rekod[key] || [];
       if (done.length >= 5) n++;
+      else if (uzurDay(key)) continue;
       else if (i > 0) break;
     }
     return n;
   }
   function renderTracker() {
     const d = dayRow(0); if (!d) return;
-    const now = Date.now() / 1000, done = rekod[keyOf(new Date())] || [];
+    rekod = store.get('rekod', {});
+    const now = Date.now() / 1000, done = rekod[keyOf(new Date())] || [], uzur = uzurDay(keyOf(new Date()));
     $('#trackRow').innerHTML = MAIN.map(([k, n]) => {
       const on = done.includes(k), open = d[k] <= now;
-      return `<button type="button" class="track-btn" data-k="${k}" aria-pressed="${on}" ${open || on ? '' : 'disabled'} aria-label="${n}${open ? '' : ', belum masuk waktu'}"><span class="tb-dot">${icon('check')}</span>${n}</button>`;
+      return `<button type="button" class="track-btn" data-k="${k}" aria-pressed="${on}" ${(open || on) && !uzur ? '' : 'disabled'} aria-label="${n}${open ? '' : ', belum masuk waktu'}"><span class="tb-dot">${icon('check')}</span>${n}</button>`;
     }).join('');
     const s = streak();
     $('#streak .num').textContent = s;
     $('#streak').setAttribute('aria-label', `${s} hari berturut-turut`);
-    $('#trackerSub').textContent = done.length >= 5 ? 'Alhamdulillah, lima waktu lengkap hari ini.' : `${done.length} daripada 5 waktu ditanda. Disimpan dalam peranti ini sahaja.`;
+    $('#trackerSub').textContent = uzur ? 'Mod uzur aktif. Rekod dijeda dan rantaian hari tidak terputus.' : done.length >= 5 ? 'Alhamdulillah, lima waktu lengkap hari ini.' : `${done.length} daripada 5 waktu ditanda. Disimpan dalam peranti ini sahaja.`;
   }
   $('#trackRow').addEventListener('click', e => {
     const b = e.target.closest('.track-btn'); if (!b || b.disabled) return;
@@ -350,6 +358,7 @@ WLY02|Wilayah Persekutuan|Labuan`.split('\n').map(l => { const [jakimCode, neger
     }, () => toast('Kebenaran lokasi ditolak.'), { timeout: 15000, maximumAge: 600000 });
   });
   paintQibla();
+  document.addEventListener('uzurchange', () => { if (month) renderTracker(); });
 
   function renderMonth() {
     const today = partsKL(new Date()).day;

@@ -82,13 +82,14 @@ function paintThemeIcon() {
 })();
 
 /* Navigasi berasaskan hash */
-const VIEWS = ['utama', 'belajar', 'pasaran', 'solat', 'semak', 'premium'];
-let currentView = null;
+const VIEWS = ['utama', 'belajar', 'pasaran', 'solat', 'ibadah', 'semak', 'premium'];
+let currentView = null, currentHash = null;
 function route() {
-  const v = (location.hash || '#utama').slice(1);
+  // Hash boleh mempunyai sub-laluan, cth. #ibadah/quran/36
+  const v = (location.hash || '#utama').slice(1).split('/')[0];
   const name = VIEWS.includes(v) ? v : 'utama';
-  if (name === currentView) return;
-  currentView = name;
+  if (location.hash === currentHash && name === currentView) return;
+  currentView = name; currentHash = location.hash;
   $$('.view').forEach(el => el.classList.toggle('active', el.id === 'view-' + name));
   $$('[data-nav]').forEach(a => { const on = a.dataset.nav === name; a.classList.toggle('active', on); on ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'); });
   window.scrollTo({ top: 0 });
@@ -104,13 +105,15 @@ window.addEventListener('scroll', () => $('.topbar').classList.toggle('scrolled'
 const AppPlugin = plugin('App');
 if (AppPlugin) AppPlugin.addListener('backButton', () => {
   if (window.ProTools && ProTools.back()) return;
-  if (currentView && currentView !== 'utama') location.hash = '#utama'; else AppPlugin.exitApp();
+  if (location.hash.includes('/')) location.hash = '#' + location.hash.slice(1).split('/').slice(0, -1).join('/');
+  else if (currentView && currentView !== 'utama') location.hash = '#utama'; else AppPlugin.exitApp();
 });
 
 /* Ucapan & tarikh pada halaman utama */
 function greet() {
   const h = +new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Kuala_Lumpur', hour: 'numeric', hour12: false }).format(new Date());
-  $('#greet').textContent = h < 12 ? 'Selamat pagi' : h < 14 ? 'Selamat tengah hari' : h < 19 ? 'Selamat petang' : 'Selamat malam';
+  const nama = store.get('nama', '');
+  $('#greet').textContent = (h < 12 ? 'Selamat pagi' : h < 14 ? 'Selamat tengah hari' : h < 19 ? 'Selamat petang' : 'Selamat malam') + (nama ? ', ' + nama : '');
 }
 greet(); setInterval(greet, 60000);
 
