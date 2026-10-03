@@ -1,0 +1,168 @@
+/* Bijak Labur: langit waktu solat, kiblat, rekod solat dan kemasan navigasi */
+
+/* Langit mengikut waktu: warna berubah dari Subuh hingga Isyak */
+.sky {
+  --s1: #1d5aa0; --s2: #3d86c6; --s3: #86bde3;
+  --orb: #fff6d8; --orb-glow: rgba(255, 236, 170, .55); --orb-x: 88%; --orb-y: 34%; --orb-size: 38px;
+  --hill1: rgba(9, 52, 43, .38); --hill2: rgba(7, 42, 35, .62); --hill3: #08281f;
+  --stars: 0;
+  position: relative; isolation: isolate; overflow: hidden; color: #fff;
+  background: linear-gradient(180deg, var(--s1) 0%, var(--s2) 58%, var(--s3) 100%);
+  transition: background .8s ease;
+}
+.sky[data-sky="night"]     { --s1: #070b1f; --s2: #121a3d; --s3: #253462; --orb: #f2ecd9; --orb-glow: rgba(242, 236, 217, .28); --orb-x: 12%; --orb-y: 34%; --orb-size: 30px; --stars: 1; }
+.sky[data-sky="dawn"]      { --s1: #182452; --s2: #5a4c8a; --s3: #e0957a; --orb: #ffd9a8; --orb-glow: rgba(255, 190, 140, .55); --orb-x: 12%; --orb-y: 86%; --stars: .35; }
+.sky[data-sky="morning"]   { --s1: #1f5c9f; --s2: #4a91cc; --s3: #a6d0ea; --orb-x: 12%; --orb-y: 40%; }
+.sky[data-sky="day"]       { --s1: #164f93; --s2: #2f7fc4; --s3: #78b6e2; --orb-x: 88%; --orb-y: 30%; }
+.sky[data-sky="afternoon"] { --s1: #23508a; --s2: #6f8fb0; --s3: #e5b673; --orb: #fff1c9; --orb-glow: rgba(255, 210, 130, .55); --orb-x: 88%; --orb-y: 52%; }
+.sky[data-sky="dusk"]      { --s1: #1c1840; --s2: #6c3767; --s3: #e47157; --orb: #ffc38a; --orb-glow: rgba(255, 140, 90, .5); --orb-x: 88%; --orb-y: 86%; --stars: .5; }
+.sky-stars, .sky-orb, .skyline { position: absolute; pointer-events: none; z-index: -1; }
+.sky-stars {
+  inset: 0; opacity: var(--stars); transition: opacity .8s;
+  background-image:
+    radial-gradient(1.2px 1.2px at 12% 18%, #fff 50%, transparent 51%), radial-gradient(1px 1px at 28% 42%, #fff 50%, transparent 51%),
+    radial-gradient(1.4px 1.4px at 44% 12%, #fff 50%, transparent 51%), radial-gradient(1px 1px at 61% 30%, #fff 50%, transparent 51%),
+    radial-gradient(1.2px 1.2px at 78% 10%, #fff 50%, transparent 51%), radial-gradient(1px 1px at 90% 36%, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 8% 52%, #fff 50%, transparent 51%), radial-gradient(1.3px 1.3px at 36% 26%, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 70% 50%, #fff 50%, transparent 51%), radial-gradient(1px 1px at 54% 56%, rgba(255,255,255,.7) 50%, transparent 51%);
+}
+.sky-orb {
+  width: var(--orb-size); height: var(--orb-size); border-radius: 50%; left: var(--orb-x); top: var(--orb-y);
+  transform: translate(-50%, -50%); background: var(--orb);
+  box-shadow: 0 0 0 10px color-mix(in srgb, var(--orb-glow) 40%, transparent), 0 0 60px 26px var(--orb-glow);
+  transition: left 1s ease, top 1s ease, background .8s;
+}
+.sky[data-sky="night"] .sky-orb { box-shadow: inset -9px -4px 0 0 #c9c2ad, 0 0 40px 10px var(--orb-glow); }
+.skyline { left: 0; right: 0; bottom: 0; width: 100%; height: 92px; }
+.sky-body { position: relative; }
+.sky .num { text-shadow: 0 1px 12px rgba(0, 0, 0, .18); }
+
+/* Kad solat di halaman utama */
+.prayer-card.sky { color: #fff; padding: 18px 18px 14px; border-radius: 22px; box-shadow: 0 18px 40px -22px rgba(14, 40, 80, .55); }
+.prayer-card.sky .pc-top { opacity: .9; }
+.prayer-card.sky .sky-orb { left: 50%; top: 24%; width: 24px; height: 24px; }
+.prayer-card.sky[data-sky="night"] .sky-orb { box-shadow: inset -6px -3px 0 0 #c9c2ad, 0 0 30px 8px var(--orb-glow); }
+.pc-zone { display: inline-flex; align-items: center; gap: 4px; }
+.pc-zone .ic { width: 14px; height: 14px; }
+.prayer-card.sky .pc-main { margin: 10px 0 22px; }
+.prayer-card.sky .pc-count { color: #fff; font-weight: 600; }
+.prayer-card.sky .pc-row { border-top: 0; padding: 8px 4px; border-radius: 14px; background: rgba(0, 0, 0, .22); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.prayer-card.sky .pc-row li { opacity: .78; }
+.prayer-card.sky .pc-row li.past { opacity: .5; }
+.prayer-card.sky .pc-row li.next { opacity: 1; color: #ffe2a0; }
+
+/* Halaman Solat */
+.solat-layout { display: grid; gap: 0 20px; margin-top: 10px; }
+@media (min-width: 900px) { .solat-layout { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); align-items: start; } }
+.solat-hero { border-radius: 26px; padding: 16px 16px 92px; margin-bottom: 14px; min-height: 330px; box-shadow: 0 22px 50px -28px rgba(14, 40, 80, .6); }
+@media (max-width: 600px) { .solat-hero { margin: 0 -8px 14px; } }
+.sh-top { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
+.loc-pill {
+  position: relative; display: inline-flex; align-items: center; gap: 6px; min-width: 0; max-width: 62%;
+  height: 38px; padding: 0 12px; margin: 0; border-radius: 99px; font-weight: 600; font-size: .9rem; color: #fff; cursor: pointer;
+  background: rgba(255, 255, 255, .16); border: 1px solid rgba(255, 255, 255, .22); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+}
+.loc-pill > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.loc-pill .ic { width: 16px; height: 16px; }
+.loc-pill .ic.sm { width: 14px; height: 14px; opacity: .8; }
+.loc-pill select { position: absolute; inset: 0; opacity: 0; cursor: pointer; height: 100%; width: 100%; }
+.loc-pill:focus-within { outline: 2px solid #fff; outline-offset: 2px; }
+.glass-btn {
+  display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 12px; border-radius: 99px; cursor: pointer;
+  font-weight: 600; font-size: .86rem; color: #fff; background: rgba(255, 255, 255, .16); border: 1px solid rgba(255, 255, 255, .22);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); flex: none;
+}
+.glass-btn .ic { width: 16px; height: 16px; }
+.glass-btn:hover, .loc-pill:hover { background: rgba(255, 255, 255, .24); }
+.glass-btn:focus-visible { outline-color: #fff; }
+@media (max-width: 380px) { .glass-btn span { display: none; } .glass-btn { width: 38px; padding: 0; justify-content: center; } }
+.sh-main { text-align: center; padding: 26px 4px 0; }
+.sh-label { font-weight: 600; font-size: 1rem; margin: 0; opacity: .95; }
+.sh-count { font-size: clamp(3rem, 15vw, 4.4rem); font-weight: 600; line-height: 1.05; letter-spacing: -.03em; margin: 6px 0 12px; }
+.sh-track { width: min(220px, 70%); height: 4px; margin: 0 auto 14px; border-radius: 99px; background: rgba(255, 255, 255, .22); overflow: hidden; }
+.sh-track > div { height: 100%; width: 0; background: #fff; border-radius: 99px; transition: width 1s linear; }
+.sh-date { font-size: .9rem; margin: 0; opacity: .92; }
+.sh-zone { font-size: .8rem; margin: 2px 0 0; opacity: .72; }
+
+/* Jalur hari */
+.day-strip { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin: 0 0 12px; }
+.day-strip button {
+  display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 8px 0 7px; border-radius: 14px; cursor: pointer;
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent); background: var(--surface); color: var(--muted); font-size: .72rem; font-weight: 600;
+  transition: background-color .2s, color .2s, border-color .2s;
+}
+.day-strip button b { font-size: 1.05rem; color: var(--text); font-weight: 650; font-variant-numeric: tabular-nums; }
+.day-strip button[aria-selected="true"] { background: var(--brand); border-color: var(--brand); color: color-mix(in srgb, var(--brand-ink) 80%, transparent); }
+.day-strip button[aria-selected="true"] b { color: var(--brand-ink); }
+.day-strip button:disabled { opacity: .4; cursor: default; }
+
+/* Senarai waktu */
+.prayer-rows { list-style: none; margin: 0 0 14px; padding: 4px; background: var(--surface); border: 1px solid color-mix(in srgb, var(--border) 70%, transparent); border-radius: 20px; box-shadow: var(--shadow); }
+.prayer-rows li { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto 40px; align-items: center; gap: 10px; padding: 8px 8px 8px 10px; border-radius: 16px; transition: background-color .3s; }
+.prayer-rows li + li { margin-top: 1px; }
+.pr-ico { width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center; background: var(--surface-2); color: var(--muted); }
+.pr-ico .ic { width: 19px; height: 19px; }
+.pr-name { font-weight: 600; display: flex; flex-direction: column; line-height: 1.25; }
+.pr-name small { font-size: .74rem; font-weight: 600; color: var(--brand); }
+.pr-time { font-weight: 650; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+.pr-bell { width: 36px; height: 36px; border-radius: 11px; border: 0; background: none; color: var(--faint); display: grid; place-items: center; cursor: pointer; }
+.pr-bell:hover { background: var(--surface-2); color: var(--text); }
+.pr-bell[aria-pressed="true"] { color: var(--brand); }
+.pr-bell .ic { width: 19px; height: 19px; }
+.prayer-rows li.minor .pr-name, .prayer-rows li.minor .pr-time { color: var(--muted); font-weight: 500; font-size: .94rem; }
+.prayer-rows li.minor .pr-ico { background: none; }
+.prayer-rows li.past .pr-name, .prayer-rows li.past .pr-time { color: var(--faint); }
+.prayer-rows li.next { background: var(--brand-soft); }
+.prayer-rows li.next .pr-ico { background: var(--brand); color: var(--brand-ink); }
+.prayer-rows li.next .pr-name, .prayer-rows li.next .pr-time { color: var(--brand); font-weight: 700; }
+
+/* Rekod solat */
+.tracker h2, .qibla h2 { font-size: 1.02rem; }
+.tracker .muted.small { margin: 4px 0 12px; }
+.streak { display: inline-flex; align-items: center; gap: 4px; font-weight: 700; color: var(--gold); background: color-mix(in srgb, var(--gold) 13%, var(--surface)); padding: 3px 10px 3px 7px; border-radius: 99px; font-size: .88rem; }
+.streak .ic { width: 16px; height: 16px; }
+.track-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.track-btn { display: flex; flex-direction: column; align-items: center; gap: 6px; background: none; border: 0; padding: 4px 0; cursor: pointer; font-size: .75rem; font-weight: 600; color: var(--muted); }
+.track-btn .tb-dot { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; border: 2px dashed color-mix(in srgb, var(--faint) 60%, transparent); color: transparent; transition: background-color .25s, border-color .25s, transform .15s; }
+.track-btn .tb-dot .ic { width: 20px; height: 20px; stroke-width: 2.6; }
+.track-btn:not(:disabled):hover .tb-dot { border-color: var(--brand); }
+.track-btn:active .tb-dot { transform: scale(.94); }
+.track-btn[aria-pressed="true"] { color: var(--text); }
+.track-btn[aria-pressed="true"] .tb-dot { background: var(--up); border: 2px solid var(--up); color: #fff; }
+.track-btn:disabled { cursor: default; opacity: .45; }
+
+/* Kiblat */
+.qibla-dial { width: min(220px, 70%); margin: 6px auto 8px; aspect-ratio: 1; }
+.qibla-dial svg { width: 100%; height: 100%; display: block; overflow: visible; }
+#qiblaRose { transform-origin: 100px 100px; transition: transform .35s ease-out; }
+#qiblaNeedle { transform-origin: 100px 100px; transition: transform .6s cubic-bezier(.2, .8, .2, 1); }
+.qd-ring { fill: var(--surface-2); stroke: var(--border); stroke-width: 1.5; }
+.qd-ticks line { stroke: var(--faint); stroke-width: 1.2; }
+.qd-ticks line.maj { stroke: var(--muted); stroke-width: 2; }
+.qd-n, .qd-c { font: 700 13px var(--font); text-anchor: middle; fill: var(--muted); }
+.qd-n { fill: var(--down); }
+.qd-needle { stroke: var(--brand); stroke-width: 4; stroke-linecap: round; }
+.qd-kaabah { fill: #1a1a1a; stroke: var(--surface); stroke-width: 1.5; }
+.qd-band { stroke: #c9a14a; stroke-width: 2; }
+.qd-hub { fill: var(--brand); stroke: var(--surface); stroke-width: 2.5; }
+.qd-mark { fill: var(--text); }
+.qibla.aligned .qd-ring { fill: var(--brand-soft); stroke: var(--brand); }
+.qibla .btn.block { margin-top: 4px; }
+.qibla #qiblaSub { margin: 0 0 8px; }
+
+/* Doa dan ayat */
+.inspire { background: linear-gradient(160deg, color-mix(in srgb, var(--gold) 9%, var(--surface)), var(--surface) 60%); }
+.inspire .eyebrow { display: flex; align-items: center; gap: 6px; color: var(--gold); }
+.inspire .eyebrow .ic { width: 15px; height: 15px; }
+.inspire .ar { font-family: "Amiri", "Scheherazade New", "Noto Naskh Arabic", "Geeza Pro", "Traditional Arabic", serif; font-size: 1.45rem; line-height: 2; direction: rtl; text-align: right; margin: 6px 0 8px; color: var(--text); }
+.inspire .tr { font-size: .95rem; margin: 0 0 6px; }
+.inspire .ref { font-size: .78rem; color: var(--muted); margin: 0; }
+
+/* Bar tab: penanda pil di belakang ikon aktif */
+.tabbar a { position: relative; isolation: isolate; transition: color .2s; }
+.tabbar a::before { content: ""; position: absolute; top: 6px; left: 50%; width: 52px; height: 30px; border-radius: 99px; background: var(--brand-soft); z-index: -1; transform: translateX(-50%) scaleX(.4); opacity: 0; transition: transform .25s cubic-bezier(.2, .8, .2, 1), opacity .2s; }
+.tabbar a.active::before { transform: translateX(-50%) scaleX(1); opacity: 1; }
+.tabbar a .ic { width: 22px; height: 22px; margin-top: 2px; }
+.tabbar a.active .ic { stroke-width: 2.2; }
+
+@media (prefers-reduced-motion: reduce) { .sky, .sky-orb, .sky-stars, #qiblaRose, #qiblaNeedle, .sh-track > div { transition: none; } }
