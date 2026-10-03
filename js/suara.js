@@ -75,23 +75,65 @@
     return out.filter(s => /[\p{L}\p{N}]/u.test(s));
   }
 
-  /* ---------- Enjin suara ---------- */
-  function voiceFor(lang) {
-    const vs = synth.getVoices(), base = lang.split('-')[0];
-    return vs.find(v => v.lang.replace('_', '-').toLowerCase() === lang.toLowerCase()) || vs.find(v => v.lang.toLowerCase().startsWith(base)) || null;
+  /* ---------- Enjin suara: setiap bahasa ada senarai ganti (cth. Melayu → Indonesia) ---------- */
+  const LANGS = [
+    { k: 'ms', name: 'Bahasa Melayu', chain: ['ms-MY', 'ms', 'id-ID', 'id', 'in-ID'], sample: 'Selamat datang ke Bijak Labur. Mari belajar melabur dengan bijak.', soft: true },
+    { k: 'en', name: 'English', chain: ['en-GB', 'en-MY', 'en-US', 'en-AU', 'en-IN', 'en'], sample: 'Welcome to Bijak Labur. Let us learn to invest wisely.', soft: true },
+    { k: 'zh', name: '中文 (华语)', chain: ['zh-CN', 'cmn-CN', 'zh-SG', 'cmn-Hans-CN', 'zh-TW', 'cmn-TW', 'zh-HK', 'yue-HK', 'zh'], sample: '欢迎来到 Bijak Labur。我们一起学习投资。' },
+    { k: 'ta', name: 'தமிழ்', chain: ['ta-IN', 'ta-MY', 'ta-SG', 'ta-LK', 'ta'], sample: 'பிஜாக் லாபூருக்கு வரவேற்கிறோம். முதலீடு செய்யக் கற்போம்.' },
+    { k: 'ar', name: 'العربية', chain: ['ar-SA', 'ar-001', 'ar-AE', 'ar-EG', 'ar-XA', 'ar'], sample: 'بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ' }
+  ];
+  const LK = Object.fromEntries(LANGS.map(l => [l.k, l]));
+  const keyOf = lang => { const b = String(lang).toLowerCase().replace('_', '-').split('-')[0]; return { id: 'ms', in: 'ms', cmn: 'zh', yue: 'zh' }[b] || b; };
+  const norm = l => String(l).toLowerCase().replace('_', '-');
+
+  let dlg = null;
+  let voices = [];          // [{ name, lang, i }] i = indeks untuk plugin asli
+  let nativeLangs = null;
+  async function loadVoices() {
+    if (NATIVE_TTS) {
+      try { voices = ((await NATIVE_TTS.getSupportedVoices()).voices || []).map((v, i) => ({ name: v.name, lang: v.lang, i })); } catch { voices = []; }
+      try { nativeLangs = ((await NATIVE_TTS.getSupportedLanguages()).languages || []).map(norm); } catch { nativeLangs = null; }
+    } else voices = synth.getVoices().map(v => ({ name: v.name, lang: v.lang, v }));
+    if (dlg && dlg.open) renderDlg();
   }
-  // Bahasa tanpa suara pada peranti dilangkau (kecuali Melayu dan Inggeris, yang guna suara lalai)
-  function canSpeak(lang) {
-    if (NATIVE_TTS || !synth.getVoices().length) return true;
-    return !!voiceFor(lang) || /^(ms|en)/.test(lang);
+  loadVoices();
+  if (synth && !NATIVE_TTS && 'onvoiceschanged' in synth) synth.addEventListener('voiceschanged', loadVoices);
+
+  const chosen = () => store.get('sayVoice', {});
+  const voicesFor = k => voices.filter(v => keyOf(v.lang) === k);
+  // Pilih suara: pilihan pengguna, kemudian ikut turutan senarai ganti
+  function resolve(lang) {
+    const k = keyOf(lang), L = LK[k];
+    if (!L) return { lang };
+    const list = voicesFor(k), pick = chosen()[k];
+    let v = pick && list.find(x => x.name === pick);
+    if (!v) for (const c of L.chain) { v = list.find(x => norm(x.lang) === norm(c)); if (v) break; }
+    if (!v) v = list[0];
+    if (v) return { lang: v.lang.replace('_', '-'), voice: v };
+    if (nativeLangs) { const c = L.chain.find(c => nativeLangs.includes(norm(c))); if (c) return { lang: c }; }
+    return null;
+  }
+  // Tiada suara: Melayu dan Inggeris masih guna suara lalai; bahasa lain dilangkau dengan makluman
+  const warned = new Set();
+  function plan(lang) {
+    const r = resolve(lang);
+    if (r) return r;
+    const k = keyOf(lang), L = LK[k];
+    if (!voices.length && !NATIVE_TTS) return { lang };
+    if (L && L.soft) return { lang: L.chain[0] };
+    if (L && !warned.has(k)) { warned.add(k); toast(`Suara ${L.name} tiada pada peranti ini. Buka Tetapan suara untuk memasangnya.`, 4500); }
+    return null;
   }
 
   function say(text, lang) {
-    if (NATIVE_TTS) return NATIVE_TTS.speak({ text, lang, rate, pitch: 1, volume: 1, category: 'playback' });
+    const r = plan(lang);
+    if (!r) return Promise.resolve('skip');
+    if (NATIVE_TTS) return NATIVE_TTS.speak(Object.assign({ text, lang: r.lang, rate, pitch: 1, volume: 1, category: 'playback' }, r.voice ? { voice: r.voice.i } : {}));
     return new Promise((res, rej) => {
       const u = new SpeechSynthesisUtterance(text);
-      u.lang = lang; u.rate = rate;
-      const v = voiceFor(lang); if (v) try { u.voice = v; } catch {}
+      u.lang = r.lang; u.rate = rate;
+      if (r.voice && r.voice.v) try { u.voice = r.voice.v; } catch {}
       u.onend = res;
       u.onerror = e => rej(e.error || 'error');
       synth.speak(u);
@@ -107,13 +149,11 @@
     while (t === token && state === 'playing' && idx < queue.length) {
       const q = queue[idx];
       mark(q.el); paint();
-      if (canSpeak(q.lang)) {
-        try { await say(q.text, q.lang); }
-        catch (e) {
-          if (t !== token) return;
-          // Dibatalkan oleh pembaca lain (cth. butang Dengar di Pustaka)
-          if (/interrupt|cancel/i.test(String(e))) { stop(); return; }
-        }
+      try { await say(q.text, q.lang); }
+      catch (e) {
+        if (t !== token) return;
+        // Dibatalkan oleh pembaca lain (cth. butang Dengar di Pustaka)
+        if (/interrupt|cancel/i.test(String(e))) { stop(); return; }
       }
       if (t !== token) return;
       idx++;
@@ -168,6 +208,7 @@
     <button class="say-c" data-say="next" aria-label="Bahagian seterusnya"><svg class="ic"><use href="#i-chev"/></svg></button>
     <span class="say-txt" aria-live="polite">Membaca</span>
     <button class="say-rate" data-say="rate" aria-label="Kelajuan bacaan"></button>
+    <button class="say-c" data-say="settings" aria-label="Tetapan suara"><svg class="ic"><use href="#i-sliders"/></svg></button>
     <button class="say-c" data-say="stop" aria-label="Berhenti"><svg class="ic"><use href="#i-x"/></svg></button>`;
   document.body.appendChild(bar);
 
@@ -193,6 +234,7 @@
     else if (a === 'stop') stop();
     else if (a === 'next') skip(1);
     else if (a === 'prev') skip(-1);
+    else if (a === 'settings') openDlg();
     else if (a === 'rate') {
       rate = RATES[(RATES.indexOf(rate) + 1) % RATES.length]; store.set('sayRate', rate); paint();
       if (state === 'playing') { hushEngine(); run(++token); }
@@ -201,8 +243,60 @@
   // Tukar halaman: hentikan bacaan
   document.addEventListener('viewchange', () => { if (state !== 'idle') stop(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && state !== 'idle') stop(); });
-  if (synth && 'onvoiceschanged' in synth) synth.addEventListener('voiceschanged', () => {});
   window.addEventListener('pagehide', () => { if (state !== 'idle') stop(); });
+
+  /* ---------- Tetapan suara: pilih suara setiap bahasa, cuba, dan cara memasang ---------- */
+  const UA = navigator.userAgent;
+  const OS = Native ? Native.getPlatform() : /android/i.test(UA) ? 'android' : /iphone|ipad|ipod/i.test(UA) || (/macintosh/i.test(UA) && navigator.maxTouchPoints > 1) ? 'ios' : /windows/i.test(UA) ? 'windows' : /macintosh/i.test(UA) ? 'mac' : 'other';
+  const HELP = {
+    android: 'Android: buka Tetapan, kemudian Sistem, Bahasa & input, Output teks-ke-pertuturan. Pilih enjin Speech Services by Google, tekan ikon tetapan dan Pasang data suara. Muat turun Bahasa Melayu (atau Indonesia), Cina (Mandarin), Tamil dan Arab.',
+    ios: 'iPhone dan iPad: buka Tetapan, kemudian Kebolehcapaian, Kandungan Dituturkan, Suara. Pilih bahasa (Melayu, Cina, Tamil, Arab) dan muat turun suara yang tersedia. Kemudian buka semula Bijak Labur.',
+    windows: 'Windows: buka Tetapan, kemudian Masa & bahasa, Pertuturan, Tambah suara. Pilih bahasa yang anda perlukan. Chrome dan Edge juga ada suara dalam talian.',
+    mac: 'Mac: buka Tetapan Sistem, kemudian Kebolehcapaian, Kandungan Dituturkan, Suara Sistem, Urus Suara. Tandakan bahasa yang anda perlukan.',
+    other: 'Pasang suara bahasa itu dalam tetapan teks-ke-pertuturan peranti anda, kemudian buka semula laman ini.'
+  };
+  const LBL = { ms: 'ms', en: 'en', zh: 'zh-Hans', ta: 'ta', ar: 'ar' };
+
+  function renderDlg() {
+    const pick = chosen();
+    dlg.innerHTML = `
+      <h2 id="sayDlgT">Tetapan suara</h2>
+      <p class="muted small">Suara datang daripada peranti anda. Pilih suara bagi setiap bahasa dan tekan Cuba untuk mendengar.</p>
+      <div class="say-langs">${LANGS.map(L => {
+        const list = voicesFor(L.k), r = resolve(L.k), ok = !!r || L.soft || (!voices.length && !NATIVE_TTS);
+        const tag = r && r.voice ? `${esc(r.voice.name)}${/^(id|in)/i.test(r.voice.lang) && !/indonesia/i.test(r.voice.name) ? ' (Indonesia)' : ''}` : ok ? 'Suara lalai peranti' : 'Tiada suara';
+        return `<div class="say-lang">
+          <div class="say-lh"><b lang="${LBL[L.k]}">${L.name}</b><span class="say-pill ${r ? 'ok' : ok ? 'mid' : 'no'}">${tag}</span></div>
+          <div class="say-lr">${list.length > 1 ? `<select data-sayvoice="${L.k}" aria-label="Suara ${L.name}"><option value="">Automatik</option>${list.map(v => `<option value="${esc(v.name)}" ${v.name === pick[L.k] ? 'selected' : ''}>${esc(v.name)} (${esc(v.lang)})</option>`).join('')}</select>` : `<span class="muted small">${list.length ? 'Satu suara tersedia.' : ok ? 'Guna suara lalai peranti.' : 'Pasang suara bahasa ini. Lihat cara di bawah.'}</span>`}
+          <button type="button" class="btn sm ghost" data-saytest="${L.k}"><svg class="ic"><use href="#i-play"/></svg>Cuba</button></div>
+        </div>`;
+      }).join('')}</div>
+      <div class="say-rate-row"><span>Kelajuan</span>${RATES.map(r => `<button type="button" class="chip ${r === rate ? 'active' : ''}" data-sayrate="${r}">${r}×</button>`).join('')}</div>
+      <details class="say-help" ${LANGS.some(L => !L.soft && !resolve(L.k)) && voices.length ? 'open' : ''}><summary>Tiada suara untuk sesuatu bahasa?</summary><p class="small">${HELP[OS] || HELP.other}</p>
+        ${NATIVE_TTS && OS === 'android' ? '<button type="button" class="btn sm" data-sayinstall>Buka pemasangan suara</button>' : ''}</details>
+      <form method="dialog"><button class="btn block">Selesai</button></form>`;
+  }
+  function openDlg() {
+    if (!dlg) {
+      dlg = document.createElement('dialog');
+      dlg.className = 'say-dlg'; dlg.setAttribute('aria-labelledby', 'sayDlgT');
+      document.body.appendChild(dlg);
+      dlg.addEventListener('click', e => {
+        let b;
+        if ((b = e.target.closest('[data-saytest]'))) { const L = LK[b.dataset.saytest]; warned.delete(L.k); read(L.sample, L.chain[0]); }
+        else if ((b = e.target.closest('[data-sayrate]'))) { rate = +b.dataset.sayrate; store.set('sayRate', rate); renderDlg(); paint(); }
+        else if (e.target.closest('[data-sayinstall]')) NATIVE_TTS.openInstall().catch(() => toast('Buka Tetapan, kemudian cari Output teks-ke-pertuturan.', 4000));
+      });
+      dlg.addEventListener('change', e => {
+        const sel = e.target.closest('[data-sayvoice]'); if (!sel) return;
+        const c = chosen(); if (sel.value) c[sel.dataset.sayvoice] = sel.value; else delete c[sel.dataset.sayvoice];
+        store.set('sayVoice', c); renderDlg();
+      });
+      dlg.addEventListener('close', () => { if (state !== 'idle' && !queue.some(q => q.el)) stop(); });
+    }
+    renderDlg(); dlg.showModal(); loadVoices();
+  }
+  $$('[data-say-settings]').forEach(b => b.addEventListener('click', openDlg));
 
   // Untuk ciri lain (cth. butang Dengar di Pustaka): bacakan teks tertentu
   function read(text, lang) {
@@ -210,5 +304,5 @@
     if (!queue.length) return;
     hushEngine(); idx = 0; state = 'playing'; paint(); run(++token);
   }
-  window.Suara = { read, stop, get active() { return state !== 'idle'; } };
+  window.Suara = { read, stop, settings: openDlg, get active() { return state !== 'idle'; } };
 })();
