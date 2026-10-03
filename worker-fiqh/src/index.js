@@ -161,16 +161,18 @@ const provider = env => env.ANTHROPIC_API_KEY ? 'claude' : env.GEMINI_API_KEY ? 
 const NO_ANSWER = { status: 'luar_skop', ringkasan: 'Soalan ini tidak dapat dijawab.', huraian: [], khilaf: '', nasihat: '', sumber: [] };
 
 // Jika model pertama kehabisan kuota percuma (429), tiada (404) atau sibuk (5xx), cuba model seterusnya
-export const GEMINI_FALLBACKS = ['gemini-flash-lite-latest', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'];
+export const GEMINI_FALLBACKS = ['gemini-flash-lite-latest', 'gemini-3.5-flash-lite', 'gemini-3.8-flash'];
 const RETRY_NEXT = new Set([404, 429, 500, 503, 504]);
 
+export const geminiModels = env => [...new Set([env.GEMINI_MODEL || GEMINI_MODEL, ...GEMINI_FALLBACKS])];
+export const geminiBody = question => JSON.stringify({
+  systemInstruction: { parts: [{ text: SYSTEM_KORPUS }] },
+  contents: [{ role: 'user', parts: [{ text: `Korpus rujukan Bijak Labur (telah disemak):\n\n${CORPUS_TEXT}` }, { text: `Soalan pengguna:\n${question}` }] }],
+  generationConfig: { responseMimeType: 'application/json', temperature: 0.2, maxOutputTokens: 8192 }
+});
+
 export async function askGemini(env, question) {
-  const models = [...new Set([env.GEMINI_MODEL || GEMINI_MODEL, ...GEMINI_FALLBACKS])];
-  const body = JSON.stringify({
-    systemInstruction: { parts: [{ text: SYSTEM_KORPUS }] },
-    contents: [{ role: 'user', parts: [{ text: `Korpus rujukan Bijak Labur (telah disemak):\n\n${CORPUS_TEXT}` }, { text: `Soalan pengguna:\n${question}` }] }],
-    generationConfig: { responseMimeType: 'application/json', temperature: 0.2, maxOutputTokens: 8192 }
-  });
+  const models = geminiModels(env), body = geminiBody(question);
   let r, err;
   for (const model of models) {
     r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {

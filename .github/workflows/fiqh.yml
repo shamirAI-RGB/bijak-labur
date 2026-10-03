@@ -29,7 +29,7 @@ jobs:
       - run: npm ci
       - name: Uji
         run: node test.mjs
-      # Semak kunci Gemini dan model yang boleh digunakan (tanpa mendedahkan kunci)
+      # Semak kunci Gemini dan uji setiap model dengan permintaan Tanya AI sebenar (tanpa mendedahkan kunci)
       - name: Semak Gemini
         if: env.HAS_GEMINI == 'true'
         continue-on-error: true
@@ -39,12 +39,7 @@ jobs:
           G=https://generativelanguage.googleapis.com/v1beta/models
           echo "Model Flash yang tersedia:"
           curl -sS "$G?pageSize=200" -H "x-goog-api-key: $GEMINI_API_KEY" | jq -r '.models[]?.name | select(test("flash"))' | head -30
-          for m in $(node -e "import('./src/index.js').then(m=>console.log([m.GEMINI_MODEL,...m.GEMINI_FALLBACKS].join(' ')))"); do
-            code=$(curl -sS -o out.json -w '%{http_code}' "$G/$m:generateContent" -H "x-goog-api-key: $GEMINI_API_KEY" -H 'content-type: application/json' \
-              -d '{"contents":[{"parts":[{"text":"Balas dengan satu perkataan: ok"}]}]}')
-            echo "$m -> $code $(jq -c '[.error.status, (.error.message // "" | .[0:200])]' out.json 2>/dev/null)"
-          done
-          rm -f out.json
+          node diag.mjs
       # Cuba dengan domain fiqh.bijaklabur.my dahulu. Jika gagal, pasang ke alamat workers.dev sahaja.
       - name: Pasang ke Cloudflare (domain fiqh.bijaklabur.my)
         id: domain

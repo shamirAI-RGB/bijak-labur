@@ -3,13 +3,15 @@ const Akaun = (function () {
   // Isi daripada Firebase Console > Tetapan projek > Apl anda (web). Nilai ini memang awam.
   // Selagi kosong, laman berjalan dalam mod tetamu sahaja dan butang akaun menunjukkan "akan dibuka".
   const FIREBASE = { apiKey: '', authDomain: '', projectId: '', appId: '' };
-  // URL pelayan Premium (Cloudflare Worker), cth. https://bijak-labur-premium.NAMA.workers.dev
-  const API = '';
+  // URL pelayan akaun dan Premium (Cloudflare Worker, worker/)
+  const API = 'https://bijak-labur-premium.khanz-amir.workers.dev';
   const enabled = !!(FIREBASE.apiKey && FIREBASE.projectId && API);
   // Kaedah yang dihidupkan dalam Firebase > Authentication > Sign-in method (e-mel sentiasa ada)
   const METHODS = { google: true, facebook: true, phone: true };
   // Google dan Facebook menyekat log masuk dalam WebView app; dalam app guna e-mel atau telefon
   const SOCIAL = !Native;
+  // reCAPTCHA untuk SMS hanya berfungsi pada http/https: app Android (https://localhost) boleh, app iOS (capacitor://) tidak
+  const PHONE = !Native || Native.getPlatform() === 'android';
   const PW_RULE = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
 
   // ID peranti rawak yang kekal dalam peranti ini
@@ -141,7 +143,15 @@ const Akaun = (function () {
     'auth/quota-exceeded': 'Had SMS harian telah dicapai. Cuba kaedah lain atau esok.',
     'auth/requires-recent-login': 'Sila log masuk semula, kemudian tetapkan kata laluan.',
     'auth/unauthorized-domain': 'Domain ini belum dibenarkan dalam Firebase.',
-    'auth/operation-not-allowed': 'Kaedah log masuk ini belum dihidupkan.'
+    'auth/operation-not-allowed': 'Kaedah log masuk ini belum dihidupkan.',
+    'auth/billing-not-enabled': 'Log masuk dengan SMS belum dibuka. Guna Google, Facebook atau e-mel buat masa ini.',
+    'auth/invalid-app-credential': 'Pengesahan keselamatan gagal. Muat semula halaman dan cuba lagi.',
+    'auth/captcha-check-failed': 'Pengesahan keselamatan gagal. Muat semula halaman dan cuba lagi.',
+    'auth/missing-phone-number': 'Masukkan nombor telefon.',
+    'auth/popup-blocked': 'Tetingkap log masuk disekat oleh pelayar. Benarkan pop-up untuk laman ini.',
+    'auth/web-storage-unsupported': 'Pelayar ini menyekat storan. Matikan mod peribadi atau guna pelayar lain.',
+    'auth/operation-not-supported-in-this-environment': 'Kaedah ini tidak disokong di sini. Guna e-mel dan kata laluan.',
+    'auth/internal-error': 'Log masuk gagal. Cuba lagi sebentar.'
   };
   function authError(e) {
     if (!e) return;
@@ -207,7 +217,7 @@ const Akaun = (function () {
       <div class="ak-list">
         ${SOCIAL && METHODS.google ? `<button type="button" class="btn ghost block ak-prov" data-ak="google">${GOOGLE}Teruskan dengan Google</button>` : ''}
         ${SOCIAL && METHODS.facebook ? `<button type="button" class="btn ghost block ak-prov" data-ak="facebook">${FB}Teruskan dengan Facebook</button>` : ''}
-        ${METHODS.phone ? `<button type="button" class="btn ghost block ak-prov" data-ak-pane="telefon">${icon('phone')}Teruskan dengan nombor telefon</button>` : ''}
+        ${PHONE && METHODS.phone ? `<button type="button" class="btn ghost block ak-prov" data-ak-pane="telefon">${icon('phone')}Teruskan dengan nombor telefon</button>` : ''}
         <button type="button" class="btn ghost block ak-prov" data-ak-pane="emel">${icon('mail')}Teruskan dengan e-mel</button>
       </div>
       <p class="err" id="akErr" role="alert"></p>
