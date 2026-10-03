@@ -62,7 +62,9 @@
   };
 
   async function api(path) {
-    const r = await fetch(API + path, { headers: { accept: 'application/json' } });
+    let r;
+    try { r = await fetch(API + path, { headers: { accept: 'application/json' } }); }
+    catch { throw new Error(navigator.onLine === false ? 'Tiada sambungan internet.' : 'Pelayan jadual belum dapat dihubungi. Cuba lagi sebentar.'); }
     const j = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(j.error || 'Pelayan jadual tidak dapat dihubungi.');
     return j;
@@ -286,7 +288,10 @@
       if (!ui.campuses) { ui.campuses = await api('/campuses'); refreshSelects(); }
       if (S.campus === 'B' && !ui.faculties) { ui.faculties = await api('/faculties'); refreshSelects(); }
       if (S.campus) loadCourses();
-    } catch (err) { const el = $('#jdCampErr'); if (el) el.textContent = err.message + ' Anda masih boleh melihat jadual contoh.'; }
+    } catch (err) {
+      const el = $('#jdCampErr'); if (el) el.textContent = err.message + ' Anda masih boleh melihat jadual contoh di bawah.';
+      const o = $('#jdCampus option[value=""]'); if (o && !ui.campuses) o.textContent = 'Senarai kampus tidak dapat dimuatkan';
+    }
   }
   function refreshSelects() {
     if (!ui.editing) return;
