@@ -1,6 +1,6 @@
 /* Service worker: simpan app shell untuk kegunaan luar talian */
-const CACHE = 'bijak-labur-v14';
-const SHELL = ['./', 'index.html', 'css/style.css', 'css/langit.css', 'css/ibadah.css', 'css/belajar-visual.css', 'css/fiqh.css', 'css/pustaka.css', 'js/ibadah-data.js', 'js/ibadah.js', 'js/fiqh-data.js', 'js/fiqh.js', 'fonts/Geist-Variable.woff2', 'js/app.js', 'js/learn-visuals.js', 'js/learn.js', 'js/market.js', 'js/solat.js', 'js/checker.js', 'js/premium.js', 'js/pustaka-data.js', 'js/pustaka.js', 'js/pro.js', 'js/pro-invest.js', 'js/pro-study.js', 'js/vendor/lightweight-charts.js',
+const CACHE = 'bijak-labur-v15';
+const SHELL = ['./', 'index.html', 'css/style.css', 'css/langit.css', 'css/ibadah.css', 'css/belajar-visual.css', 'css/fiqh.css', 'css/pustaka.css', 'css/suara.css', 'js/ibadah-data.js', 'js/ibadah.js', 'js/fiqh-data.js', 'js/fiqh.js', 'fonts/Geist-Variable.woff2', 'js/app.js', 'js/suara.js', 'js/learn-visuals.js', 'js/learn.js', 'js/market.js', 'js/solat.js', 'js/checker.js', 'js/premium.js', 'js/pustaka-data.js', 'js/pustaka.js', 'js/pro.js', 'js/pro-invest.js', 'js/pro-study.js', 'js/vendor/lightweight-charts.js',
   'manifest.webmanifest', 'privacy.html', 'terma.html', 'terma-app.html', 'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-180.png'];
 
 self.addEventListener('install', e => {

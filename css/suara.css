@@ -1,0 +1,21 @@
+/* Bijak Labur: Suara (butang bacakan halaman, bar kawalan, sorotan bahagian yang sedang dibaca) */
+#sayBtn + #themeBtn { margin-left: 8px; }
+#sayBtn.on { background: var(--brand); border-color: var(--brand); color: var(--brand-ink, #fff); }
+.tts-now { background: color-mix(in srgb, var(--gold) 18%, transparent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--gold) 18%, transparent); border-radius: 6px; transition: background .2s, box-shadow .2s; }
+.say-bar {
+  position: fixed; z-index: 70; left: 50%; transform: translateX(-50%); bottom: calc(var(--tab-h) + 12px + env(safe-area-inset-bottom));
+  display: flex; align-items: center; gap: 4px; padding: 6px; border-radius: 999px; max-width: calc(100% - 24px);
+  background: var(--surface); border: 1px solid var(--border); box-shadow: 0 10px 30px -10px rgba(0, 0, 0, .35); animation: sayIn .2s ease-out;
+}
+@media (min-width: 900px) { .say-bar { bottom: 24px; } }
+.say-bar.hidden { display: none; }
+.say-c, .say-rate { border: 0; background: none; color: var(--text); cursor: pointer; height: 40px; min-width: 40px; border-radius: 999px; display: grid; place-items: center; font: inherit; font-weight: 700; font-size: .84rem; }
+.say-c:hover, .say-rate:hover { background: var(--surface-2); }
+.say-c .ic { width: 18px; height: 18px; }
+.say-c.main { background: var(--brand); color: var(--brand-ink, #fff); }
+.say-c.main .ic { width: 16px; height: 16px; }
+.say-txt { font-size: .82rem; font-weight: 600; color: var(--muted); padding: 0 6px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.say-rate { padding: 0 8px; font-variant-numeric: tabular-nums; }
+body.saying .toast { bottom: calc(var(--tab-h) + 76px + env(safe-area-inset-bottom)); }
+@media (prefers-reduced-motion: reduce) { .tts-now { transition: none; } .say-bar { animation: none; } }
+@keyframes sayIn { from { opacity: 0; transform: translate(-50%, 6px); } }
