@@ -1,5 +1,8 @@
 /* Bijak Labur: Ibadah (grid ciri, Al-Quran, doa, tasbih, kalendar, panduan) */
-:root { --ar-size: 28px; --ar-font: "Amiri", "Scheherazade New", "Noto Naskh Arabic", "Geeza Pro", "Traditional Arabic", serif; }
+/* Fon Al-Quran dibundel (Amiri Quran, OFL) supaya tanda Uthmani (alif wasla, mad, hamzah)
+   tidak rosak pada Windows/Android yang tiada fon Arab sesuai */
+@font-face { font-family: "Amiri Quran"; src: url("../fonts/AmiriQuran-Arabic.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+200C-200E, U+FB50-FDFF, U+FE70-FEFC; }
+:root { --ar-size: 28px; --ar-font: "Amiri Quran", "Amiri", "Scheherazade New", "Noto Naskh Arabic", "Geeza Pro", "Traditional Arabic", serif; }
 .tabbar { grid-template-columns: repeat(6, 1fr); }
 .tabbar a { font-size: 0.64rem; }
 
