@@ -87,7 +87,7 @@ WLY02|Wilayah Persekutuan|Labuan`.split('\n').map(l => { const [jakimCode, neger
   function renderZones() {
     const byState = {};
     zones.forEach(z => (byState[z.negeri] = byState[z.negeri] || []).push(z));
-    $('#zoneSel').innerHTML = Object.keys(byState).sort().map(n => `<optgroup label="${esc(n)}">${byState[n].map(z => `<option value="${z.jakimCode}" ${z.jakimCode === zone ? 'selected' : ''}>${esc(z.daerah)} (${z.jakimCode})</option>`).join('')}</optgroup>`).join('');
+    $('#zoneSel').innerHTML = Object.keys(byState).sort().map(n => `<optgroup label="${esc(n)}">${byState[n].map(z => `<option value="${esc(z.jakimCode)}" ${z.jakimCode === zone ? 'selected' : ''}>${esc(z.daerah)} (${esc(z.jakimCode)})</option>`).join('')}</optgroup>`).join('');
   }
   const zoneInfo = () => zones.find(z => z.jakimCode === zone) || { daerah: zone, negeri: '' };
 
@@ -202,7 +202,7 @@ WLY02|Wilayah Persekutuan|Labuan`.split('\n').map(l => { const [jakimCode, neger
     const cols = PRAYERS.filter(p => p[0] !== 'dhuha');
     $('#monthTitle').textContent = `Jadual ${new Intl.DateTimeFormat('ms-MY', { month: 'long', year: 'numeric', timeZone: TZ }).format(new Date())}`;
     $('#monthTable').innerHTML = `<thead><tr><th>Tarikh</th>${cols.map(p => `<th>${p[1]}</th>`).join('')}</tr></thead><tbody>` + month.prayers.map(d =>
-      `<tr class="${d.day === today ? 'today' : ''}"><td>${d.day} <span class="muted small">${hijriStr(d.hijri).replace(/ \d+H$/, '')}</span></td>${cols.map(([k]) => `<td>${fmtT(d[k]).replace(/ (pg|ptg|mlm)$/, '')}</td>`).join('')}</tr>`).join('') + '</tbody>';
+      `<tr class="${d.day === today ? 'today' : ''}"><td>${+d.day || ''} <span class="muted small">${hijriStr(d.hijri).replace(/ \d+H$/, '')}</span></td>${cols.map(([k]) => `<td>${fmtT(d[k]).replace(/ (pg|ptg|mlm)$/, '')}</td>`).join('')}</tr>`).join('') + '</tbody>';
   }
 
   $('#zoneSel').addEventListener('change', e => { zone = e.target.value; store.set('zone', zone); nextMonth = null; load(); });

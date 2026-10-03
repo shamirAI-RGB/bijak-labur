@@ -78,7 +78,7 @@
           $('#jnCurve').innerHTML = `<svg class="curve" viewBox="0 0 100 60" preserveAspectRatio="none"><line x1="0" x2="100" y1="${zero}" y2="${zero}" stroke="var(--border)" stroke-width="0.6" vector-effect="non-scaling-stroke"/><polyline points="${path}" fill="none" stroke="${net >= 0 ? 'var(--up)' : 'var(--down)'}" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></svg>`;
         }
         $('#jnList').innerHTML = done.length ? done.map((t, i) => ({ t, i })).sort((a, b) => b.t.date.localeCompare(a.t.date)).map(({ t, i }) => `<div class="pf-row">
-          <div class="pf-main"><b>${esc(t.sym)}</b><span class="muted small">${esc(t.date)} · ${t.side === 'short' ? 'Jual dahulu' : 'Beli'} ${t.qty.toLocaleString('en-US')} unit · ${t.inP} → ${t.outP}</span></div>
+          <div class="pf-main"><b>${esc(t.sym)}</b><span class="muted small">${esc(t.date)} · ${t.side === 'short' ? 'Jual dahulu' : 'Beli'} ${(+t.qty).toLocaleString('en-US')} unit · ${+t.inP} → ${+t.outP}</span></div>
           <div class="pf-val num ${sign(t.pl)}">${t.pl >= 0 ? '+' : '−'}${fmtRM(Math.abs(t.pl))}</div>
           ${t.note ? `<div class="pf-sub muted small">${esc(t.note)}</div>` : ''}
           <button class="icon-btn plain pf-del" data-jdel="${i}" aria-label="Buang">${icon('x')}</button></div>`).join('')
@@ -99,9 +99,10 @@
         trades.splice(+d.dataset.jdel, 1); store.set('journal', trades); render();
       });
       $('#jnCsv').addEventListener('click', () => {
-        const q = s => `"${String(s).replace(/"/g, '""')}"`;
+        // Petik setiap medan dan neutralkan formula hamparan (=, +, -, @)
+        const q = s => { s = String(s); if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; return `"${s.replace(/"/g, '""')}"`; };
         const csv = ['Tarikh,Simbol,Arah,Unit,Masuk,Keluar,Caj,Untung,Nota'].concat(trades.map(t =>
-          [t.date, t.sym, t.side, t.qty, t.inP, t.outP, t.fee || 0, ((t.side === 'short' ? t.inP - t.outP : t.outP - t.inP) * t.qty - (t.fee || 0)).toFixed(2), q(t.note || '')].join(','))).join('\n');
+          [q(t.date), q(t.sym), t.side, +t.qty, +t.inP, +t.outP, +t.fee || 0, ((t.side === 'short' ? t.inP - t.outP : t.outP - t.inP) * t.qty - (t.fee || 0)).toFixed(2), q(t.note || '')].join(','))).join('\n');
         const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv' })); a.download = 'jurnal-dagangan.csv'; a.click();
       });
       render();

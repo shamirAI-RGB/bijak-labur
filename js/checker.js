@@ -453,7 +453,7 @@
       } else if (name.endsWith('.pdf')) {
         await loadScript('js/vendor/pdf.min.js');
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'js/vendor/pdf.worker.min.js';
-        const pdf = await pdfjsLib.getDocument({ data: await f.arrayBuffer() }).promise; let out = [];
+        const pdf = await pdfjsLib.getDocument({ data: await f.arrayBuffer(), isEvalSupported: false }).promise; let out = [];
         for (let i = 1; i <= pdf.numPages; i++) {
           const c = await (await pdf.getPage(i)).getTextContent();
           out.push(c.items.map(it => it.str + (it.hasEOL ? '\n' : ' ')).join(''));

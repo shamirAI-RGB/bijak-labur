@@ -220,6 +220,8 @@ const Premium = (function () {
     try {
       const d = await post('/checkout', body);
       store.set('pendingBill', { code: d.billcode, email: body.email });
+      // Hanya halaman bayaran ToyyibPay yang sah
+      if (!/^https:\/\/(dev\.)?toyyibpay\.com\//.test(d.url)) throw new Error('Alamat pembayaran tidak sah. Sila cuba lagi.');
       location.href = d.url;
     } catch (err) {
       $('#payErr').textContent = err.message;
