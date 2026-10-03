@@ -1,0 +1,15 @@
+# Pelayan kedai nota IC220 Bijak Labur (Cloudflare Workers + Workers KV, pelan percuma)
+name = "bijak-labur-nota"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+workers_dev = true
+
+# Domain tetap yang digunakan oleh laman dan app (zon bijaklabur.my dalam akaun Cloudflare yang sama).
+routes = [{ pattern = "nota.bijaklabur.my", custom_domain = true }]
+
+[vars]
+ALLOWED_ORIGINS = "https://bijaklabur.my,https://www.bijaklabur.my,https://shamirai-rgb.github.io,capacitor://localhost,https://localhost,http://localhost:8080"
+# Cincang SHA-256 kunci pemilik (bukan kunci itu sendiri). Kunci boleh ditukar dari ruang pemilik.
+OWNER_KEY_HASH = "ba63c8003b26e061933c6529ee7e103940ec510c1aa7aa6438f5ecf2e221d4ef"
+
+# Ruang nama KV "bijak-labur-nota" dicipta dan diikat oleh .github/workflows/nota.yml semasa dipasang.
