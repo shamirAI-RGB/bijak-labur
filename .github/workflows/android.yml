@@ -36,7 +36,18 @@ jobs:
         env:
           KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: |
-          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+          # Buang ruang dan baris baharu yang mungkin terikut semasa salin dan tampal
+          if ! printf '%s' "$KEYSTORE_B64" | tr -d ' \r\n\t' | base64 -d > "$RUNNER_TEMP/upload.jks"; then
+            echo "::error::Rahsia ANDROID_KEYSTORE_BASE64 rosak (bukan base64 yang sah). Tampal semula seluruh isi ANDROID_KEYSTORE_BASE64.txt."
+            exit 1
+          fi
+          # Cap jari fail kunci yang betul bermula dengan a400d297cc80 (bukan rahsia)
+          SUM=$(sha256sum "$RUNNER_TEMP/upload.jks" | cut -c1-12)
+          echo "Cap jari kunci: $SUM"
+          if [ "$SUM" != "a400d297cc80" ]; then
+            echo "::error::Rahsia ANDROID_KEYSTORE_BASE64 tidak lengkap atau tersalah. Tampal semula seluruh isi ANDROID_KEYSTORE_BASE64.txt (2868 aksara)."
+            exit 1
+          fi
           echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
 
       - name: Bina APK dan AAB
