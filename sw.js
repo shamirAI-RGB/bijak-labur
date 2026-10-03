@@ -1,8 +1,6 @@
 /* Service worker: simpan app shell untuk kegunaan luar talian */
-const CACHE = 'bijak-labur-v9';
-const SHELL = ['./', 'index.html', 'css/style.css', 'css/langit.css', 'fonts/Geist-Variable.woff2', 'js/app.js', 'js/learn.js', 'js/market.js', 'js/solat.js', 'js/checker.js', 'js/premium.js', 'js/pro.js', 'js/pro-invest.js', 'js/pro-study.js', 'js/vendor/lightweight-charts.js',
-const CACHE = 'bijak-labur-v10';
-const SHELL = ['./', 'index.html', 'css/style.css', 'fonts/Geist-Variable.woff2', 'js/app.js', 'js/learn.js', 'js/market.js', 'js/solat.js', 'js/checker.js', 'js/premium.js', 'js/pro.js', 'js/pro-invest.js', 'js/pro-study.js', 'js/vendor/lightweight-charts.js',
+const CACHE = 'bijak-labur-v11';
+const SHELL = ['./', 'index.html', 'css/style.css', 'css/langit.css', 'css/ibadah.css', 'js/ibadah-data.js', 'js/ibadah.js', 'fonts/Geist-Variable.woff2', 'js/app.js', 'js/learn.js', 'js/market.js', 'js/solat.js', 'js/checker.js', 'js/premium.js', 'js/pro.js', 'js/pro-invest.js', 'js/pro-study.js', 'js/vendor/lightweight-charts.js',
   'manifest.webmanifest', 'privacy.html', 'terma.html', 'terma-app.html', 'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-180.png'];
 
 self.addEventListener('install', e => {
@@ -19,7 +17,7 @@ self.addEventListener('fetch', e => {
     e.respondWith(fetch(e.request).then(r => {
       const copy = r.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); return r;
     }).catch(() => caches.match(e.request, { ignoreSearch: true }).then(r => r || caches.match('index.html'))));
-  } else if (/cdn\.jsdelivr\.net|cdnjs\.cloudflare\.com/.test(url.host)) {
+  } else if (/cdn\.jsdelivr\.net|cdnjs\.cloudflare\.com|api\.alquran\.cloud/.test(url.host)) {
     e.respondWith(caches.match(e.request).then(r => r || fetch(e.request).then(res => {
       const copy = res.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); return res;
     })));

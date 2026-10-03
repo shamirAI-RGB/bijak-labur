@@ -2,7 +2,7 @@
 <html lang="ms">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://s3.tradingview.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://data-api.binance.vision wss://data-stream.binance.vision https://api.coingecko.com https://api.waktusolat.app https://ms.wikipedia.org https://en.wikipedia.org https://api.languagetool.org https://open.er-api.com https://api.openalex.org https://api.crossref.org https://api.semanticscholar.org https://doaj.org https://www.ebi.ac.uk https://*.workers.dev; frame-src https://*.tradingview.com https://*.tradingview-widget.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://s3.tradingview.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://data-api.binance.vision wss://data-stream.binance.vision https://api.coingecko.com https://api.waktusolat.app https://api.alquran.cloud https://ms.wikipedia.org https://en.wikipedia.org https://api.languagetool.org https://open.er-api.com https://api.openalex.org https://api.crossref.org https://api.semanticscholar.org https://doaj.org https://www.ebi.ac.uk https://*.workers.dev; media-src 'self' https://cdn.islamic.network; frame-src https://*.tradingview.com https://*.tradingview-widget.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Bijak Labur</title>
@@ -29,6 +29,7 @@
   <link rel="preload" href="fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/langit.css">
+  <link rel="stylesheet" href="css/ibadah.css">
 </head>
 <body>
   <a class="skip-link" href="#main">Langkau ke kandungan</a>
@@ -76,6 +77,20 @@
       <symbol id="i-flame" viewBox="0 0 24 24"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></symbol>
       <symbol id="i-chev-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
       <symbol id="langit-bukit" viewBox="0 0 400 90" preserveAspectRatio="xMidYMax slice"><path style="fill:var(--hill1)" d="M0 58c40-14 82-20 128-10 34 7 58 4 92-8 46-16 96-18 180 4v46H0z"/><path style="fill:var(--hill2)" d="M278 44h3v-8a14 14 0 0 1 9-13l3-6 3 6a14 14 0 0 1 9 13v8h3v46h-30zM262 30h5v60h-5zM264.5 24l2 6h-4zM321 34h5v56h-5zM323.5 28l2 6h-4zM240 50h96v40h-96z"/><path style="fill:var(--hill3)" d="M0 74c56-12 104-12 156-4 50 8 96 6 140-4 40-9 76-8 104-2v26H0z"/></symbol>
+      <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></symbol>
+      <symbol id="i-play" viewBox="0 0 24 24"><path fill="currentColor" d="M7 4.5v15l12-7.5z"/></symbol>
+      <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 4.5v15M16 4.5v15"/></symbol>
+      <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/></symbol>
+      <symbol id="i-bed" viewBox="0 0 24 24"><path d="M2 19V6M2 15h20v4M22 15v-3a3 3 0 0 0-3-3h-8v6"/><circle cx="6.5" cy="11.5" r="2"/></symbol>
+      <symbol id="i-door" viewBox="0 0 24 24"><path d="M5 21V4a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v17M3 21h18"/><path d="M15 12h.01"/></symbol>
+      <symbol id="i-drops" viewBox="0 0 24 24"><path d="M12 3s-5 5.4-5 9a5 5 0 0 0 10 0c0-3.6-5-9-5-9Z"/><path d="M5 2.5S3 4.6 3 6a2 2 0 0 0 4 0c0-1.4-2-3.5-2-3.5ZM19 2.5S17 4.6 17 6a2 2 0 0 0 4 0c0-1.4-2-3.5-2-3.5Z"/></symbol>
+      <symbol id="i-mosque" viewBox="0 0 24 24"><path d="M4 21V12a8 6 0 0 1 16 0v9M2 21h20M12 2v3M10 21v-4a2 2 0 0 1 4 0v4"/></symbol>
+      <symbol id="i-pray" viewBox="0 0 24 24"><circle cx="9" cy="4.5" r="2"/><path d="M9 8c-1.5 0-2.5 1-2.5 2.5V15l3 2.5V21M6.5 13.5l4 .5 2.5-3M4 21h16"/></symbol>
+      <symbol id="i-shirt" viewBox="0 0 24 24"><path d="M20.4 6.6 16 3a4 4 0 0 1-8 0L3.6 6.6a1 1 0 0 0-.3 1.3l1.6 2.7a1 1 0 0 0 1.3.4L8 10v10a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V10l1.8 1a1 1 0 0 0 1.3-.4l1.6-2.7a1 1 0 0 0-.3-1.3Z"/></symbol>
+      <symbol id="i-plane" viewBox="0 0 24 24"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2Z"/></symbol>
+      <symbol id="i-food" viewBox="0 0 24 24"><path d="M3 2v7a3 3 0 0 0 6 0V2M6 2v20M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></symbol>
+      <symbol id="i-beads" viewBox="0 0 24 24"><circle cx="12" cy="4" r="1.6"/><circle cx="17.5" cy="6.5" r="1.6"/><circle cx="19.5" cy="12" r="1.6"/><circle cx="17.5" cy="17.5" r="1.6"/><circle cx="6.5" cy="6.5" r="1.6"/><circle cx="4.5" cy="12" r="1.6"/><circle cx="6.5" cy="17.5" r="1.6"/><path d="M12 18v4"/><circle cx="12" cy="17" r="1.6"/></symbol>
+      <symbol id="i-sunmoon" viewBox="0 0 24 24"><path d="M12 8a2.8 2.8 0 0 0 4 4 4 4 0 1 1-4-4Z"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M6.3 17.7l-1.4 1.4M19.1 4.9l-1.4 1.4"/></symbol>
     </defs>
   </svg>
 
@@ -87,6 +102,7 @@
         <a href="#belajar" data-nav="belajar">Belajar</a>
         <a href="#pasaran" data-nav="pasaran">Pasaran</a>
         <a href="#solat" data-nav="solat">Waktu Solat</a>
+        <a href="#ibadah" data-nav="ibadah">Ibadah</a>
         <a href="#semak" data-nav="semak">Semak Kertas</a>
         <a href="#premium" data-nav="premium" data-premium-entry class="hidden">Premium</a>
       </nav>
@@ -116,6 +132,13 @@
               <ol class="pc-row" id="homeRow"></ol>
             </div>
           </a>
+          <nav class="quick-row" aria-label="Ibadah pantas">
+            <a href="#ibadah/quran"><span class="app-ic" style="--a:#1f9d63;--b:#0e7a4c"><svg class="ic"><use href="#i-book"/></svg></span>Al-Quran</a>
+            <a href="#ibadah/doa"><span class="app-ic" style="--a:#7b5cf0;--b:#5a3fd1"><svg class="ic"><use href="#i-quote"/></svg></span>Doa</a>
+            <a href="#ibadah/tasbih"><span class="app-ic" style="--a:#2bb8f0;--b:#1192d6"><svg class="ic"><use href="#i-beads"/></svg></span>Tasbih</a>
+            <a href="#ibadah/kiblat"><span class="app-ic" style="--a:#8fd14f;--b:#4caf2a"><svg class="ic"><use href="#i-compass"/></svg></span>Kiblat</a>
+            <a href="#ibadah"><span class="app-ic" style="--a:#8d98b8;--b:#66718f"><svg class="ic"><use href="#i-grid"/></svg></span>Semua</a>
+          </nav>
 
           <div class="shortcut-row">
             <a class="card shortcut" href="#belajar">
@@ -301,6 +324,12 @@
       <div class="block-head"><h2 id="monthTitle">Jadual bulanan</h2></div>
       <div class="card flush"><div class="tbl-wrap"><table id="monthTable" class="month"></table></div></div>
       <p class="source">Data waktu solat rasmi JAKIM melalui api.waktusolat.app. Disimpan dalam peranti untuk kegunaan luar talian. Arah kiblat dikira daripada koordinat Kaabah (21.4225° U, 39.8262° T).</p>
+    </section>
+
+    <!-- IBADAH -->
+    <section class="view" id="view-ibadah" aria-label="Ibadah">
+      <div id="ibHub"></div>
+      <div id="ibPanel" class="hidden"></div>
     </section>
 
     <!-- SEMAK -->
@@ -528,6 +557,7 @@
     </form>
   </dialog>
   <div id="printArea" aria-hidden="true"></div>
+  <div class="q-mini hidden" id="qMini" role="region" aria-label="Pemain Al-Quran"></div>
 
   <footer class="site-footer">
     <p>Bijak Labur ialah projek pendidikan percuma dan bukan nasihat kewangan. Tidak bergabung dengan Moomoo, Futu, JAKIM atau Binance.</p>
@@ -539,6 +569,7 @@
     <a href="#belajar" data-nav="belajar"><svg class="ic"><use href="#i-book"/></svg><span>Belajar</span></a>
     <a href="#pasaran" data-nav="pasaran"><svg class="ic"><use href="#i-chart"/></svg><span>Pasaran</span></a>
     <a href="#solat" data-nav="solat"><svg class="ic"><use href="#i-moon"/></svg><span>Solat</span></a>
+    <a href="#ibadah" data-nav="ibadah"><svg class="ic"><use href="#i-grid"/></svg><span>Ibadah</span></a>
     <a href="#semak" data-nav="semak"><svg class="ic"><use href="#i-file"/></svg><span>Semak</span></a>
   </nav>
 
@@ -546,6 +577,8 @@
   <script src="js/learn.js"></script>
   <script src="js/market.js"></script>
   <script src="js/solat.js"></script>
+  <script src="js/ibadah-data.js"></script>
+  <script src="js/ibadah.js"></script>
   <script src="js/checker.js"></script>
   <script src="js/premium.js"></script>
   <script src="js/pro.js"></script>
