@@ -1,0 +1,104 @@
+/* Bijak Labur: Fiqh (hanya kelas fq- dan hk-; tiada perubahan gaya global) */
+.hk { display: inline-flex; align-items: center; flex: none; font-size: .74rem; font-weight: 700; padding: 4px 10px; border-radius: 99px; color: var(--hk); background: color-mix(in srgb, var(--hk) 13%, var(--surface)); border: 1px solid color-mix(in srgb, var(--hk) 30%, transparent); white-space: nowrap; }
+.hk-wajib { --hk: #0f8a5f; } .hk-fk { --hk: #2f7d6b; } .hk-sunat { --hk: #1192d6; } .hk-harus { --hk: #6a5cff; }
+.hk-makruh { --hk: #c67a00; } .hk-haram { --hk: #c8402f; } .hk-info { --hk: #66718f; }
+
+/* Rantaian rujukan */
+.fq-chain { display: flex; align-items: stretch; gap: 6px; margin: 16px 0; padding: 0; }
+.fq-node { flex: 1; min-width: 0; background: var(--surface); border: 1px solid var(--border); border-top: 3px solid var(--c); border-radius: 12px; padding: 10px 8px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.fq-node b { font-size: .8rem; line-height: 1.2; }
+.fq-node small { font-size: .7rem; color: var(--muted); line-height: 1.25; }
+.fq-dot { width: 24px; height: 24px; border-radius: 50%; background: var(--c); color: #fff; font-size: .75rem; font-weight: 700; display: grid; place-items: center; margin-bottom: 4px; }
+.fq-arrow { flex: none; width: 10px; align-self: center; height: 10px; border-top: 2px solid var(--faint); border-right: 2px solid var(--faint); transform: rotate(45deg); margin-left: -3px; }
+@media (max-width: 420px) { .fq-node small { display: none; } .fq-chain { gap: 3px; } }
+
+/* Bab */
+.fq-babs { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr)); gap: 10px; margin-bottom: 18px; }
+.fq-bab { position: relative; display: flex; flex-direction: column; gap: 3px; text-decoration: none; color: inherit; margin: 0; overflow: hidden; border-left: 4px solid var(--c); transition: transform .15s ease, border-color .15s ease; }
+.fq-bab:hover { transform: translateY(-2px); border-color: var(--c); }
+.fq-bab b { font-size: 1.02rem; }
+.fq-bab small { color: var(--muted); font-size: .82rem; }
+.fq-bab-ar { position: absolute; right: 12px; top: 6px; font-family: var(--ar-font); font-size: 1.7rem; color: var(--c); opacity: .22; }
+.fq-count { margin-top: 6px; font-size: .74rem; font-weight: 600; color: var(--c); }
+
+/* Piramid sumber hukum */
+.fq-pyr { display: flex; flex-direction: column; align-items: center; gap: 5px; margin-top: 10px; }
+.fq-lvl { width: var(--w); text-align: center; padding: 8px 10px; border-radius: 10px; background: color-mix(in srgb, var(--brand) 14%, var(--surface)); border: 1px solid color-mix(in srgb, var(--brand) 22%, transparent); }
+.fq-lvl:first-child { background: var(--brand); color: var(--brand-ink); }
+.fq-lvl:first-child small { color: color-mix(in srgb, var(--brand-ink) 80%, transparent); }
+.fq-lvl b { display: block; font-size: .9rem; }
+.fq-lvl small { font-size: .74rem; color: var(--muted); }
+
+/* Skala hukum */
+.fq-scale { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; margin: 10px 0 12px; }
+.fq-seg { text-align: center; padding: 8px 2px; background: var(--hk); color: #fff; font-size: .72rem; transition: opacity .2s, transform .2s; }
+.fq-seg:first-child { border-radius: 10px 0 0 10px; } .fq-seg:last-child { border-radius: 0 10px 10px 0; }
+.fq-seg.dim { opacity: .22; }
+.fq-seg.on { transform: scaleY(1.18); box-shadow: 0 4px 12px -4px var(--hk); }
+.fq-defs { margin: 0; display: grid; gap: 8px; }
+.fq-defs div { display: flex; gap: 10px; align-items: baseline; }
+.fq-defs dt { flex: none; width: 74px; }
+.fq-defs dd { margin: 0; font-size: .84rem; color: var(--muted); }
+
+/* Carian */
+.fq-q { display: flex; gap: 8px; margin: 8px 0 10px; }
+.fq-q input { flex: 1; min-width: 0; }
+.fq-out { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); gap: 8px; margin-top: 10px; }
+.fq-out-link { display: grid; grid-template-columns: 1fr auto; align-items: center; column-gap: 8px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; text-decoration: none; color: inherit; background: var(--surface-2); }
+.fq-out-link b { font-size: .86rem; } .fq-out-link small { grid-column: 1; font-size: .74rem; color: var(--muted); }
+.fq-out-link .ic { grid-row: 1 / span 2; grid-column: 2; width: 16px; height: 16px; color: var(--faint); }
+.fq-ayat-list { margin-top: 6px; }
+#fqHits .list { margin-top: -4px; }
+
+/* Senarai */
+.fq-row, .fq-kitab { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-top: 1px solid var(--border); text-decoration: none; color: inherit; }
+.fq-row:first-child, .fq-kitab:first-child { border-top: 0; }
+.fq-row:hover, .fq-kitab:hover { background: var(--surface-2); }
+.fq-row .q-main b, .fq-kitab .q-main b { color: var(--text); }
+.fq-row .chev { width: 16px; height: 16px; color: var(--faint); flex: none; }
+.fq-kitab > .ic { width: 16px; height: 16px; color: var(--faint); flex: none; }
+.fq-kitab-ar { font-family: var(--ar-font); font-size: 1.05rem; color: var(--brand); flex: none; max-width: 42%; text-align: right; line-height: 1.5; }
+.fq-lvl-tag { font-size: .7rem; font-weight: 600; color: var(--muted); border: 1px solid var(--border); border-radius: 99px; padding: 2px 8px; flex: none; }
+
+/* Bab dan masalah */
+.fq-crumb { display: flex; align-items: center; gap: 6px; font-size: .84rem; color: var(--muted); margin: -6px 0 12px; }
+.fq-crumb a { color: var(--brand); text-decoration: none; font-weight: 600; }
+.fq-crumb .ic { width: 14px; height: 14px; }
+.fq-hero { display: flex; align-items: center; gap: 16px; padding: 18px; border-radius: var(--radius); margin-bottom: 14px; color: #fff; background: linear-gradient(135deg, var(--c), color-mix(in srgb, var(--c) 60%, #111)); }
+.fq-hero span { font-family: var(--ar-font); font-size: 2.4rem; line-height: 1.4; }
+.fq-hero h2 { margin: 0; color: #fff; } .fq-hero p { margin: 2px 0 0; opacity: .88; font-size: .9rem; }
+.fq-title { align-items: flex-start; margin-bottom: 4px; }
+.fq-title h2 { margin: 0; font-size: 1.35rem; }
+.fq-sum { font-size: 1rem; line-height: 1.65; margin: 8px 0 14px; }
+.fq-flow { list-style: none; padding: 0; margin: 0 0 16px; display: flex; flex-wrap: wrap; gap: 8px; counter-reset: none; }
+.fq-flow li { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 6px; background: var(--brand-soft); border-radius: 99px; font-size: .84rem; font-weight: 600; color: var(--text); }
+.fq-flow li span { width: 22px; height: 22px; border-radius: 50%; background: var(--brand); color: var(--brand-ink); display: grid; place-items: center; font-size: .72rem; }
+.fq-sec { margin: 22px 0 10px; }
+.fq-refs { list-style: none; padding: 0; margin: 0 0 14px; }
+.fq-refs > li { position: relative; padding: 0 0 18px 26px; }
+.fq-refs > li::before { content: ""; position: absolute; left: 6px; top: 6px; width: 12px; height: 12px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 4px color-mix(in srgb, var(--c) 18%, transparent); }
+.fq-refs > li:not(:last-child)::after { content: ""; position: absolute; left: 11px; top: 24px; bottom: 0; width: 2px; background: var(--border); }
+.fq-refs h4 { margin: 0 0 8px; font-size: .95rem; color: var(--c); }
+.fq-refs .list { margin-bottom: 0; }
+.fq-src { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; }
+.fq-src p { margin: 4px 0; }
+.fq-links { display: inline-flex; gap: 12px; flex: none; }
+.fq-src .link-btn, .fq-links .link-btn { display: inline-flex; align-items: center; gap: 4px; text-decoration: none; padding: 2px 0; }
+.fq-src .link-btn .ic, .fq-links .link-btn .ic { width: 13px; height: 13px; }
+.fq-ar { font-family: var(--ar-font); font-size: calc(var(--ar-size) * .82); line-height: 2; text-align: right; color: var(--text); }
+.fq-hadis { font-size: calc(var(--ar-size) * .66); max-height: 12em; overflow: auto; padding-left: 4px; }
+.fq-tr { font-size: .9rem; color: var(--muted); line-height: 1.6; }
+.fq-isi { font-size: .9rem; background: var(--surface-2); border-radius: 8px; padding: 8px 10px; }
+.fq-isi span { display: block; font-size: .7rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--faint); margin-bottom: 2px; }
+.fq-grades { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.fq-grade { font-size: .72rem; padding: 3px 8px; border-radius: 99px; background: var(--surface-2); color: var(--muted); }
+.fq-grade.ok { background: color-mix(in srgb, var(--up) 14%, var(--surface)); color: var(--up); }
+.fq-grade.weak { background: color-mix(in srgb, var(--warn) 14%, var(--surface)); color: var(--warn); }
+.fq-detail .actions { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+.fq-detail .actions .link-btn { display: inline-flex; gap: 4px; align-items: center; text-decoration: none; }
+.fq-detail .actions .link-btn .ic { width: 13px; height: 13px; }
+@media (max-width: 560px) {
+  .fq-kitab { flex-wrap: wrap; row-gap: 2px; }
+  .fq-kitab-ar { order: -1; flex-basis: 100%; max-width: none; text-align: right; font-size: .95rem; }
+  .fq-lvl-tag { display: none; }
+}
