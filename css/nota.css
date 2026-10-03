@@ -1,0 +1,93 @@
+/* Bijak Labur: kedai nota IC220 */
+.nt-head-acts { display: flex; gap: 8px; align-items: center; }
+.nt-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; font-weight: 650; color: var(--gold); background: color-mix(in srgb, var(--gold) 12%, var(--surface)); border-radius: 999px; padding: 5px 11px; }
+.nt-badge .ic { width: 14px; height: 14px; }
+.nt-msg { display: flex; gap: 10px; align-items: center; font-size: 0.88rem; border-radius: 12px; padding: 10px 14px; background: color-mix(in srgb, var(--warn) 10%, var(--surface)); border: 1px solid color-mix(in srgb, var(--warn) 25%, transparent); }
+.nt-msg .ic { color: var(--warn); width: 18px; height: 18px; flex: none; }
+.nt-hint { color: var(--muted); font-size: 0.86rem; margin: 6px 0 12px; }
+.nt-mt { margin-top: 12px; }
+.nt-danger { color: var(--down) !important; }
+.nt-err { color: var(--down); font-size: 0.88rem; margin: 0 0 8px; }
+
+/* Cara membeli */
+.nt-buy { display: grid; gap: 18px; align-items: center; padding: 20px; background: linear-gradient(135deg, color-mix(in srgb, var(--brand) 7%, var(--surface)), var(--surface) 60%); }
+@media (min-width: 720px) { .nt-buy:not(.in-dialog):has(.nt-qr) { grid-template-columns: minmax(0, 1fr) 210px; } }
+.nt-buy.in-dialog { padding: 0; border: 0; background: none; box-shadow: none; margin: 0; }
+.nt-buy h2 { margin: 0 0 10px; }
+.nt-steps { margin: 0; padding: 0; list-style: none; counter-reset: s; display: grid; gap: 8px; }
+.nt-steps li { counter-increment: s; display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: baseline; font-size: 0.93rem; }
+.nt-steps li::before { content: counter(s); width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 0.78rem; font-weight: 700; background: var(--brand-soft); color: var(--brand); }
+.nt-paynote { color: var(--muted); font-size: 0.86rem; margin: 12px 0 0; }
+.nt-wa { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.nt-wa-btn { background: #1c8f4f; color: #fff; height: auto; min-height: 48px; padding: 6px 16px; }
+.nt-wa-btn span { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2; }
+.nt-wa-btn small { font-weight: 500; font-size: 0.78rem; opacity: 0.85; font-variant-numeric: tabular-nums; }
+.nt-qr { margin: 0; justify-self: center; text-align: center; }
+.nt-qr img { width: 190px; height: 190px; object-fit: contain; background: #fff; border-radius: 14px; padding: 8px; border: 1px solid var(--border); }
+.in-dialog .nt-qr { margin-top: 14px; }
+.nt-qr figcaption { font-size: 0.8rem; color: var(--muted); margin-top: 6px; }
+
+/* Senarai */
+.nt-search { max-width: 240px; height: 38px; font-size: 0.9rem; }
+.nt-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+.nt-card { padding: 0; overflow: hidden; display: flex; flex-direction: column; margin: 0; }
+.nt-card.is-hidden { opacity: 0.7; border-style: dashed; }
+.nt-skel { min-height: 320px; background: linear-gradient(90deg, var(--surface), var(--surface-2), var(--surface)); background-size: 200% 100%; animation: nt-sh 1.4s infinite linear; }
+@keyframes nt-sh { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .nt-skel { animation: none; } }
+.nt-cover { position: relative; aspect-ratio: 4 / 3; background: var(--surface-2); overflow: hidden; border-bottom: 1px solid var(--border); }
+.nt-cover img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
+.nt-ph { height: 100%; display: grid; place-content: center; text-align: center; gap: 4px; background: linear-gradient(150deg, var(--brand), color-mix(in srgb, var(--brand) 55%, #0a1f19)); color: #fff; }
+.nt-ph b { font-size: 1.6rem; letter-spacing: 0.02em; }
+.nt-ph span { font-size: 0.78rem; opacity: 0.8; font-weight: 600; }
+.nt-code { position: absolute; left: 10px; top: 10px; font-size: 0.74rem; font-weight: 700; background: color-mix(in srgb, var(--surface) 92%, transparent); color: var(--text); padding: 3px 8px; border-radius: 7px; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.nt-code.nt-hid { left: auto; right: 10px; color: var(--warn); }
+.nt-body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.nt-body h3 { margin: 0; font-size: 1rem; line-height: 1.35; }
+.nt-desc { margin: 0; color: var(--muted); font-size: 0.86rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.nt-meta { margin: 0; color: var(--faint); font-size: 0.78rem; }
+.nt-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: auto; padding-top: 8px; }
+.nt-price { font-weight: 750; font-size: 1.1rem; color: var(--brand); }
+.nt-price.big { font-size: 1.6rem; margin: 4px 0 12px; }
+.nt-admin-acts { display: flex; flex-wrap: wrap; gap: 6px; border-top: 1px dashed var(--border); padding-top: 10px; margin-top: 6px; }
+.nt-admin-acts .btn { height: 32px; font-size: 0.8rem; padding: 0 10px; }
+.nt-empty { display: flex; gap: 12px; align-items: center; color: var(--muted); }
+.nt-empty .ic { width: 28px; height: 28px; color: var(--brand); flex: none; }
+.nt-empty p { margin: 0; }
+.nt-owner-link { text-align: center; margin: 22px 0 6px; }
+.nt-owner-link .link-btn { display: inline-flex; align-items: center; gap: 6px; color: var(--faint); font-size: 0.84rem; }
+.nt-owner-link .ic { width: 14px; height: 14px; }
+
+/* Ruang pemilik */
+.nt-admin { border: 1px solid color-mix(in srgb, var(--gold) 40%, var(--border)); padding: 18px; }
+.nt-admin-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+.nt-admin-top h2 { margin: 0; }
+.nt-admin h3 { font-size: 0.95rem; margin: 0 0 10px; }
+.nt-drop { display: flex; align-items: center; gap: 14px; border: 2px dashed var(--border); border-radius: 14px; padding: 18px; cursor: pointer; font-weight: 500; margin-bottom: 16px; transition: border-color .15s, background-color .15s; }
+.nt-drop:hover, .nt-drop.over { border-color: var(--brand); background: var(--brand-soft); }
+.nt-drop > .ic { width: 28px; height: 28px; color: var(--brand); flex: none; }
+.nt-drop span { display: flex; flex-direction: column; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
+.nt-drop small { color: var(--muted); font-size: 0.8rem; }
+.nt-drop input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.nt-form-grid { display: grid; gap: 16px; }
+@media (min-width: 720px) { .nt-form-grid { grid-template-columns: 200px minmax(0, 1fr); } }
+.nt-prev { aspect-ratio: 3 / 4; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border); display: grid; place-items: center; overflow: hidden; color: var(--faint); font-size: 0.84rem; }
+.nt-prev img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+.nt-prev-wrap { max-width: 200px; }
+.nt-cover-btn { display: inline-block; font-size: 0.84rem; margin-top: 8px; cursor: pointer; }
+.nt-row { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); }
+.nt-progress { height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; margin-top: 12px; }
+.nt-progress span { display: block; height: 100%; width: 0; background: var(--brand); transition: width .2s; }
+.nt-shop-grid { display: grid; gap: 22px; }
+@media (min-width: 760px) { .nt-shop-grid { grid-template-columns: minmax(0, 1fr) 220px; } }
+.nt-wa-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.nt-qr-edit { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.nt-qr-box { width: 190px; height: 190px; border-radius: 14px; border: 1px dashed var(--border); display: grid; place-items: center; background: #fff; overflow: hidden; color: #888; font-size: 0.84rem; }
+.nt-qr-box img { width: 100%; height: 100%; object-fit: contain; }
+.nt-key { max-width: 420px; }
+
+/* Dialog */
+.nt-dialog { width: min(480px, calc(100% - 32px)); max-height: calc(100dvh - 40px); overflow: auto; }
+.nt-dialog h2 { padding-right: 34px; }
+.nt-x { position: absolute; right: 12px; top: 12px; }
+.nt-dialog .nt-meta { margin-top: -8px; }
