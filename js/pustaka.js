@@ -12,7 +12,7 @@
   const U = {
     title: ['Pustaka Kanak-kanak', 'Kids Library', '儿童图书馆', 'குழந்தைகள் நூலகம்'],
     eyebrow: ['Untuk umur 4 hingga 12 tahun', 'For ages 4 to 12', '适合4至12岁儿童', '4 முதல் 12 வயது வரை'],
-    lead: ['20 subjek mengikut kurikulum KPM (KSPK dan KSSR), ditambah Bijak Wang untuk ilmu menabung dan melabur. Baca, dengar dan jawab kuiz untuk kumpul bintang.', '20 subjects following the KPM curriculum (KSPK and KSSR), plus Money Smart for saving and investing. Read, listen and answer quizzes to collect stars.', '20个科目依据教育部课程（KSPK和KSSR），另加“理财小达人”学习储蓄与投资。阅读、聆听、答题，收集星星。', 'கல்வி அமைச்சின் பாடத்திட்டப்படி (KSPK, KSSR) 20 பாடங்கள், சேமிப்பும் முதலீடும் கற்க "பணப் புத்திசாலி" கூடுதலாக. வாசி, கேள், வினாடி வினாவுக்குப் பதில் சொல்லி நட்சத்திரங்களைச் சேகரி.'],
+    lead: ['19 subjek mengikut kurikulum KPM (KSPK dan KSSR), ditambah Bijak Wang untuk ilmu menabung dan melabur. Baca, dengar dan jawab kuiz untuk kumpul bintang.', '19 subjects following the KPM curriculum (KSPK and KSSR), plus Money Smart for saving and investing. Read, listen and answer quizzes to collect stars.', '19个科目依据教育部课程（KSPK和KSSR），另加“理财小达人”学习储蓄与投资。阅读、聆听、答题，收集星星。', 'கல்வி அமைச்சின் பாடத்திட்டப்படி (KSPK, KSSR) 19 பாடங்கள், சேமிப்பும் முதலீடும் கற்க "பணப் புத்திசாலி" கூடுதலாக. வாசி, கேள், வினாடி வினாவுக்குப் பதில் சொல்லி நட்சத்திரங்களைச் சேகரி.'],
     all: ['Semua', 'All', '全部', 'அனைத்தும்'],
     shelf: ['Rak buku', 'Bookshelf', '书架', 'புத்தக அலமாரி'],
     chapter: ['Bab', 'Chapter', '第', 'அத்தியாயம்'],
