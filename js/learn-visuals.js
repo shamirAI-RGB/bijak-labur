@@ -440,5 +440,61 @@
     return fig(360, 188, 'Cukai dividen AS dan zakat saham', s, 'Angka ialah contoh untuk faham kiraan. Peraturan cukai dan zakat boleh berubah.');
   })();
 
+  /* ---------- Jenis dagangan & hukum ---------- */
+  V.jn1 = (() => {
+    const tag = (cx, cy, w, s, k) => pill(cx, cy, w, s, { ok: 'f-u o2 s-u', syarat: 'f-g o2 s-g', khilaf: 'f-p o2 s-p', no: 'f-d o2 s-d' }[k], 'h');
+    let s = R(4, 4, 170, 196, 'bx') + R(186, 4, 170, 196, 'bx');
+    s += Tm(89, 24, 'Anda miliki aset', 'h') + Tm(89, 38, 'aset berpindah kepada anda', 'mu');
+    s += Tm(271, 24, 'Kontrak sahaja', 'h') + Tm(271, 38, 'derivatif, tiada aset', 'mu');
+    s += tag(89, 70, 140, 'Spot (tunai)', 'syarat') + tag(89, 110, 140, 'Margin berfaedah', 'no');
+    s += Tm(89, 150, 'Hukum ikut aset:', 'mu') + Tm(89, 164, 'saham patuh, kripto lulus,', 'mu') + Tm(89, 178, 'emas serah segera', 'mu');
+    s += tag(271, 64, 140, 'Niaga hadapan', 'khilaf') + tag(271, 100, 140, 'Opsyen', 'no') + tag(271, 136, 140, 'CFD', 'no') + tag(271, 172, 140, 'Forex runcit', 'no');
+    s += A(176, 102, 184, 102);
+    return fig(360, 204, 'Peta jenis dagangan: milik aset atau kontrak', s, 'Kiri: anda memiliki aset. Kanan: anda hanya memegang kontrak. Warna ialah label hukum umum.');
+  })();
+
+  V.jn2 = (() => {
+    let s = R(4, 30, 96, 52, 'bx') + Tm(52, 52, 'Anda', 'h') + Tm(52, 68, 'bayar 100%', 'mu');
+    s += A(104, 46, 150, 46, 'b') + T(110, 40, 'RM', 'mu');
+    s += R(154, 30, 96, 52, 'bx') + Tm(202, 52, 'Penjual', 'h') + Tm(202, 68, 'melalui bursa', 'mu');
+    s += A(150, 70, 104, 70, 'u') + T(112, 86, 'aset', 'mu');
+    s += R(262, 22, 94, 68, 'f-u o2 s-u') + Tm(309, 46, '✓ Milik anda', 'h') + Tm(309, 62, 'tiada hutang', 'mu') + Tm(309, 76, 'tiada luput', 'mu');
+    s += R(4, 104, 352, 30, 'f-s1 s-mu', 6) + Tm(180, 123, 'Harga jatuh 30% → rugi 30% atas kertas, tetapi aset masih ada', 'sm h');
+    return fig(360, 140, 'Dagangan spot: bayar penuh, terima aset', s, 'Dalam spot, wang bertukar dengan aset sebenar. Hukumnya bergantung pada aset itu halal atau tidak.');
+  })();
+
+  V.jn3 = (() => {
+    const W = 330, x0 = 18;
+    let s = T(4, 14, 'Leverage 1:10', 'h');
+    s += R(x0, 24, W / 10, 26, 'f-b', 4) + T(x0 + W / 10 + 6, 42, '← Modal anda RM1,000', 'sm h');
+    s += R(x0, 58, W / 10, 26, 'f-b', 4) + R(x0 + W / 10, 58, W * 0.9, 26, 'f-d o2 s-d', 4) + Tm(x0 + W * 0.55, 75, 'Pinjaman broker RM9,000 (berfaedah)', 'sm h');
+    s += Tm(x0 + W / 2, 100, 'Posisi dikawal: RM10,000', 'mu');
+    s += L(4, 112, 356, 112, 'ln');
+    s += T(4, 132, 'Harga bergerak', 'h') + T(260, 132, 'Modal anda', 'h');
+    const row = (y, mv, res, c) => T(4, y, mv, 'sm') + R(118, y - 13, 130 * Math.min(2, Math.max(0, res)) / 2, 18, c, 4) + T(260, y, (res >= 1 ? '+' : '') + Math.round((res - 1) * 100) + '%', 'sm h');
+    s += row(154, 'Naik 5%', 1.5, 'f-u') + row(178, 'Turun 5%', 0.5, 'f-w') + row(202, 'Turun 10%', 0, 'f-d') + T(118, 202, 'HABIS · tutup paksa', 'f-d sm h');
+    return fig(360, 212, 'Leverage menggandakan untung dan rugi', s, 'Dengan leverage 1:10, pergerakan 10% melawan anda menghabiskan seluruh modal.');
+  })();
+
+  V.jn4 = (() => {
+    let s = R(4, 24, 100, 56, 'bx') + Tm(54, 48, 'Anda', 'h') + Tm(54, 64, 'deposit kecil', 'mu');
+    s += R(256, 24, 100, 56, 'bx') + Tm(306, 48, 'Broker', 'h') + Tm(306, 64, 'pihak lawan', 'mu');
+    s += A(108, 42, 252, 42, 'b') + Tm(180, 36, 'rugi anda → untung broker', 'sm');
+    s += A(252, 64, 108, 64, 'u') + Tm(180, 78, 'beza harga sahaja', 'sm');
+    s += R(116, 96, 128, 42, 'f-d o1 s-d dash') + Tm(180, 114, 'Saham / emas sebenar', 'sm h') + Tm(180, 129, '✗ tidak berpindah', 'f-d sm h');
+    s += R(4, 150, 352, 28, 'f-d o1 s-d', 6) + Tm(180, 168, 'Setiap malam: caj swap (faedah) + leverage (hutang)', 'sm h');
+    return fig(360, 184, 'CFD: kontrak beza harga antara anda dan broker', s, 'Dalam CFD, aset tidak pernah menjadi milik anda. Yang ditukar hanya beza harga, dengan leverage dan caj semalaman.');
+  })();
+
+  V.jn5 = (() => {
+    let s = L(30, 60, 330, 60, 's-b w2');
+    [[30, 'Hari ini', 'akad, harga tetap'], [180, 'Setiap hari', 'untung rugi dikira'], [330, 'Tarikh luput', 'serah / selesai']].forEach(([x, a, b], i) => {
+      s += C(x, 60, 9, i === 1 ? 'f-g' : 'f-b') + Tm(x, 36, a, 'h') + Tm(x, 86, b, 'mu');
+    });
+    s += R(4, 104, 172, 46, 'f-p o1 s-p') + Tm(90, 122, 'Niaga hadapan', 'h') + Tm(90, 138, 'wajib beli/jual', 'mu');
+    s += R(184, 104, 172, 46, 'f-d o1 s-d') + Tm(270, 122, 'Opsyen', 'h') + Tm(270, 138, 'hak sahaja, bayar premium', 'mu');
+    return fig(360, 156, 'Garis masa niaga hadapan dan opsyen', s, 'Niaga hadapan mengikat kedua-dua pihak; opsyen hanya hak yang dibeli dengan premium.');
+  })();
+
   window.LEARN_VIS = V;
 })();
