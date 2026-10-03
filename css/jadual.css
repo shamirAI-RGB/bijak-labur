@@ -142,10 +142,24 @@
 .jd-lg b { color: var(--h); }
 .jd-lg .small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
+/* Simpan dan kongsi */
+.jd-save { margin-top: 18px; }
+.jd-save h3 { margin-bottom: 12px; }
+.jd-save-g { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (min-width: 700px) { .jd-save-g { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 1000px) { .jd-save-g { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+.jd-save-g button { display: grid; justify-items: start; align-content: start; gap: 2px; text-align: left; padding: 14px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface-2); cursor: pointer; transition: transform .12s, background-color .2s; }
+.jd-save-g button:hover { background: var(--brand-soft); }
+.jd-save-g button:active { transform: scale(.98); }
+.jd-save-g button:disabled { opacity: .6; cursor: progress; }
+.jd-save-g .sc-ico { margin-bottom: 8px; }
+.jd-save-g b { font-size: 0.92rem; }
+.jd-save-g small { font-size: 0.76rem; color: var(--muted); line-height: 1.3; }
+
 /* Cetak: grid minggu sahaja */
 @media print {
   body.jd-printing .topbar, body.jd-printing .tabbar, body.jd-printing .site-footer, body.jd-printing .view:not(#view-jadual),
-  body.jd-printing .jd-bar, body.jd-printing .jd-top, body.jd-printing .jd-head-acts, body.jd-printing .note, body.jd-printing .jd-demo, body.jd-printing .skip-link { display: none !important; }
+  body.jd-printing .jd-bar, body.jd-printing .jd-top, body.jd-printing .jd-head-acts, body.jd-printing .note, body.jd-printing .jd-demo, body.jd-printing .jd-save, body.jd-printing .skip-link { display: none !important; }
   body.jd-printing { background: #fff; padding: 0; }
   body.jd-printing .jd-week { overflow: visible; border: 1px solid #ccc; box-shadow: none; }
   body.jd-printing .jd-wh, body.jd-printing .jd-wb { min-width: 0; }

@@ -135,6 +135,14 @@ $('#installBtn').addEventListener('click', async () => {
   await deferredPrompt.userChoice;
   deferredPrompt = null; $('#installCard').classList.add('hidden');
 });
+// Digunakan oleh halaman lain (cth. Jadual) untuk menawarkan pemasangan ke skrin utama
+window.installApp = async () => {
+  if (!deferredPrompt) return false;
+  deferredPrompt.prompt();
+  const r = await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  return r.outcome === 'accepted';
+};
 $('#installClose').addEventListener('click', () => { $('#installCard').classList.add('hidden'); store.set('installHidden', true); });
 
 if ('serviceWorker' in navigator && location.protocol === 'https:' && !Native) {

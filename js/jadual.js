@@ -189,7 +189,6 @@
         <div class="jd-acts">
           <button class="icon-btn" data-act="refresh" aria-label="Kemas kini daripada iCress" title="Kemas kini daripada iCress">${icon('refresh')}</button>
           <button class="icon-btn" data-act="ics" aria-label="Simpan ke kalendar telefon" title="Simpan ke kalendar">${icon('calendar')}</button>
-          <button class="icon-btn" data-act="print" aria-label="Cetak jadual" title="Cetak">${icon('printer')}</button>
         </div>
       </div>
       ${ui.mode === 'minggu' ? weekHTML(cl) : dayHTML(cl)}
@@ -198,7 +197,18 @@
         <div><b>${esc(it.course)}</b> <span class="muted">${esc(it.group)}</span><div class="small muted">${esc(nice(it.name))}</div></div>
         <span class="small muted num">${dur(it.slots.reduce((a, s) => a + s.e - s.s, 0))}</span>
       </div>`).join('')}</div>
-      ${S.updated && !S.demo ? `<p class="source">Dikemas kini ${new Date(S.updated).toLocaleString('ms-MY', { dateStyle: 'medium', timeStyle: 'short' })} daripada iCress UiTM</p>` : ''}`;
+      ${S.updated && !S.demo ? `<p class="source">Dikemas kini ${new Date(S.updated).toLocaleString('ms-MY', { dateStyle: 'medium', timeStyle: 'short' })} daripada iCress UiTM</p>` : ''}
+      <div class="card jd-save">
+        <h3>Simpan dan kongsi jadual</h3>
+        <div class="jd-save-g">
+          <button data-act="jpg"><span class="sc-ico">${icon('download')}</span><b>Gambar JPG</b><small>Simpan ke galeri</small></button>
+          <button data-act="pdf"><span class="sc-ico">${icon('file')}</span><b>PDF</b><small>Untuk cetak atau hantar</small></button>
+          <button data-act="wall"><span class="sc-ico">${icon('phone')}</span><b>Wallpaper</b><small>Skrin utama dan skrin kunci</small></button>
+          <button data-act="home"><span class="sc-ico">${icon('home')}</span><b>Skrin utama</b><small>Ikon terus ke jadual</small></button>
+          <button data-act="ics"><span class="sc-ico">${icon('calendar')}</span><b>Kalendar</b><small>Dengan peringatan kelas</small></button>
+          <button data-act="print"><span class="sc-ico">${icon('printer')}</span><b>Cetak</b><small>Grid minggu</small></button>
+        </div>
+      </div>`;
   }
 
   function weekHTML(cl) {
@@ -279,6 +289,8 @@
     }
     else if (a === 'ics') ics();
     else if (a === 'print') printTable();
+    else if (a === 'jpg' || a === 'pdf' || a === 'wall') exportImage(a, b);
+    else if (a === 'home') addHome();
   }
 
   async function loadCampuses() {
@@ -429,6 +441,143 @@
     const done = () => { document.body.classList.remove('jd-printing'); ui.mode = prevMode; render(); removeEventListener('afterprint', done); };
     addEventListener('afterprint', done);
     setTimeout(() => print(), 60);
+  }
+
+  /* ---------- Eksport gambar, PDF dan wallpaper (lukisan kanvas sendiri, tanpa pustaka luar) ---------- */
+  const PAL = {
+    light: ['#0b7a5c', '#2f62d1', '#b4581f', '#7a4bd0', '#b8326a', '#0d7fa0', '#8a6a00', '#4f6b2a'],
+    dark: ['#4fcfa4', '#7ea6ff', '#f0a066', '#b597ff', '#f586b4', '#5ccbea', '#e3c45a', '#a7cf72']
+  };
+  const FONT = (w, px) => `${w} ${px}px Geist, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+  function mix(hex, other, t) {
+    const a = hex.match(/\w\w/g).map(x => parseInt(x, 16)), b = other.match(/\w\w/g).map(x => parseInt(x, 16));
+    return '#' + a.map((v, i) => Math.round(v * t + b[i] * (1 - t)).toString(16).padStart(2, '0')).join('');
+  }
+  function rr(x, c, X, Y, W, H, R) { x.beginPath(); x.roundRect ? x.roundRect(X, Y, W, H, R) : x.rect(X, Y, W, H); if (c) { x.fillStyle = c; x.fill(); } }
+  function fitText(x, t, w) { if (x.measureText(t).width <= w) return t; while (t.length > 1 && x.measureText(t + '…').width > w) t = t.slice(0, -1); return t + '…'; }
+
+  /** Lukis grid minggu dalam segi empat (gx, gy, gw, gh) */
+  function drawGrid(x, gx, gy, gw, gh, dark, k) {
+    const ds = days(), all = slotsAll(), cl = clashes(), pal = PAL[dark ? 'dark' : 'light'];
+    const bg = dark ? '#161c19' : '#ffffff', line = dark ? '#2a332f' : '#e6e3da', muted = dark ? '#9aa49f' : '#646d68', text = dark ? '#e8ece9' : '#14201b';
+    const lo = Math.min(8 * 60, ...all.map(s => Math.floor(s.s / 60) * 60)), hi = Math.max(17 * 60, ...all.map(s => Math.ceil(s.e / 60) * 60));
+    const tc = 64 * k, head = 52 * k, cw = (gw - tc) / ds.length, ph = (gh - head) / ((hi - lo) / 60);
+    const Y = m => gy + head + (m - lo) / 60 * ph;
+    rr(x, bg, gx, gy, gw, gh, 22 * k);
+    x.textAlign = 'center'; x.textBaseline = 'middle';
+    ds.forEach((d, i) => { x.font = FONT(700, 17 * k); x.fillStyle = muted; x.fillText(cw > 150 * k ? DAY[d] : DAY3[d], gx + tc + cw * (i + .5), gy + head / 2); });
+    x.strokeStyle = line; x.lineWidth = 1.5 * k;
+    for (let m = lo; m < hi; m += 60) {
+      x.beginPath(); x.moveTo(gx + tc, Y(m)); x.lineTo(gx + gw - 14 * k, Y(m)); x.setLineDash(m === lo ? [] : [4 * k, 5 * k]); x.stroke();
+      { x.font = FONT(500, 13 * k); x.fillStyle = muted; x.textAlign = 'right'; x.fillText(`${fmtShort(m)} ${m < 720 ? 'pg' : m < 840 ? 'tgh' : m < 1140 ? 'ptg' : 'mlm'}`, gx + tc - 10 * k, Y(m) + 12 * k); }
+    }
+    x.setLineDash([]);
+    ds.forEach((d, i) => {
+      const ss = all.filter(s => s.d === d).sort((a, b) => a.s - b.s);
+      let lanes = [], end = -1, cluster = [];
+      const close = () => { cluster.forEach(c => c.n = lanes.length); cluster = []; lanes = []; };
+      for (const s of ss) { if (s.s >= end) close(); let l = lanes.findIndex(e => e <= s.s); if (l < 0) { l = lanes.length; lanes.push(0); } lanes[l] = s.e; s.lane = l; cluster.push(s); end = Math.max(end, s.e); }
+      close();
+      for (const s of ss) {
+        const h = pal[s.hue], w = (cw - 10 * k) / s.n, bx = gx + tc + cw * i + 5 * k + s.lane * w, by = Y(s.s) + 3 * k, bh = Y(s.e) - Y(s.s) - 6 * k, bw = w - 4 * k;
+        rr(x, mix(h, bg, dark ? .22 : .14), bx, by, bw, bh, 12 * k);
+        rr(x, cl.has(s) ? (dark ? '#f0715f' : '#c8402f') : h, bx, by, 5 * k, bh, 3 * k);
+        x.textAlign = 'left'; x.textBaseline = 'top';
+        const tx = bx + 14 * k, tw = bw - 20 * k;
+        x.font = FONT(750, 17 * k); x.fillStyle = h; x.fillText(fitText(x, s.it.course, tw), tx, by + 10 * k);
+        x.font = FONT(500, 13.5 * k); x.fillStyle = muted;
+        if (bh > 52 * k) x.fillText(fitText(x, `${fmtShort(s.s)} - ${fmtShort(s.e)}`, tw), tx, by + 34 * k);
+        x.fillStyle = text;
+        if (bh > 78 * k && s.room) x.fillText(fitText(x, s.room, tw), tx, by + 54 * k);
+        if (bh > 104 * k && s.it.name) { x.fillStyle = muted; x.fillText(fitText(x, nice(s.it.name), tw), tx, by + 74 * k); }
+      }
+    });
+  }
+
+  function drawExport(kind) {
+    const wall = kind === 'wall', W = wall ? 1170 : 2480, H = wall ? 2532 : 1754;
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const x = c.getContext('2d'), dark = wall;
+    if (wall) {
+      const g = x.createLinearGradient(0, 0, W, H); g.addColorStop(0, '#0f3d33'); g.addColorStop(1, '#06120e');
+      x.fillStyle = g; x.fillRect(0, 0, W, H);
+      x.fillStyle = 'rgba(255,255,255,.04)'; x.beginPath(); x.arc(W * .9, H * .12, 420, 0, 7); x.fill();
+      // Ruang atas dibiarkan kosong untuk jam skrin kunci
+      x.textAlign = 'left'; x.textBaseline = 'alphabetic'; x.fillStyle = '#f3efe2';
+      x.font = FONT(750, 64); x.fillText('Jadual kelas', 70, 760);
+      x.font = FONT(500, 32); x.fillStyle = 'rgba(243,239,226,.7)'; x.fillText(fitText(x, `${S.campusName || 'UiTM'}${S.label ? ' · ' + S.label : ''}`, W - 140), 70, 812);
+      drawGrid(x, 40, 860, W - 80, H - 860 - 250, true, 1.55);
+      x.font = FONT(600, 26); x.fillStyle = 'rgba(243,239,226,.55)'; x.textAlign = 'center'; x.fillText('bijaklabur.my', W / 2, H - 150);
+    } else {
+      x.fillStyle = '#f6f5f1'; x.fillRect(0, 0, W, H);
+      x.textAlign = 'left'; x.textBaseline = 'alphabetic'; x.fillStyle = '#14201b';
+      x.font = FONT(750, 64); x.fillText('Jadual kelas', 110, 150);
+      x.font = FONT(500, 30); x.fillStyle = '#646d68'; x.fillText(`${S.campusName || 'UiTM'}${S.label ? ' · ' + S.label : ''}`, 110, 200);
+      x.textAlign = 'right'; x.font = FONT(600, 26); x.fillStyle = '#0b5d4b'; x.fillText('bijaklabur.my', W - 110, 150);
+      const legH = 70 * Math.ceil(S.items.length / 3);
+      drawGrid(x, 90, 250, W - 180, H - 250 - legH - 110, false, 1.7);
+      S.items.forEach((it, i) => {
+        const col = i % 3, row = Math.floor(i / 3), lx = 110 + col * ((W - 220) / 3), ly = H - legH - 50 + row * 70;
+        x.fillStyle = PAL.light[i % HUES]; x.beginPath(); x.arc(lx + 10, ly + 22, 10, 0, 7); x.fill();
+        x.textAlign = 'left'; x.font = FONT(750, 28); x.fillText(it.course, lx + 34, ly + 32);
+        const cw = x.measureText(it.course).width;
+        x.font = FONT(500, 24); x.fillStyle = '#646d68'; x.fillText(fitText(x, `${it.group} · ${nice(it.name || '')}`, (W - 220) / 3 - cw - 60), lx + 46 + cw, ly + 32);
+      });
+    }
+    return c;
+  }
+
+  /** PDF satu halaman A4 melintang yang membungkus gambar JPEG (DCTDecode) */
+  function jpegToPdf(bytes, iw, ih) {
+    const enc = new TextEncoder(), parts = [], offs = [];
+    let len = 0;
+    const put = p => { const b = typeof p === 'string' ? enc.encode(p) : p; parts.push(b); len += b.length; };
+    const obj = (n, body) => { offs[n] = len; put(`${n} 0 obj\n`); body(); put('\nendobj\n'); };
+    const PW = 842, PH = 595, sc = Math.min(PW / iw, PH / ih), dw = iw * sc, dh = ih * sc;
+    const content = `q ${dw.toFixed(2)} 0 0 ${dh.toFixed(2)} ${((PW - dw) / 2).toFixed(2)} ${((PH - dh) / 2).toFixed(2)} cm /Im0 Do Q`;
+    put('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');
+    obj(1, () => put('<< /Type /Catalog /Pages 2 0 R >>'));
+    obj(2, () => put('<< /Type /Pages /Kids [3 0 R] /Count 1 >>'));
+    obj(3, () => put(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PW} ${PH}] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>`));
+    obj(4, () => { put(`<< /Type /XObject /Subtype /Image /Width ${iw} /Height ${ih} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${bytes.length} >>\nstream\n`); put(bytes); put('\nendstream'); });
+    obj(5, () => put(`<< /Length ${content.length} >>\nstream\n${content}\nendstream`));
+    obj(6, () => put(`<< /Title (Jadual kelas UiTM) /Producer (Bijak Labur) >>`));
+    const xref = len;
+    put(`xref\n0 7\n0000000000 65535 f \n${offs.slice(1).map(o => String(o).padStart(10, '0') + ' 00000 n \n').join('')}trailer\n<< /Size 7 /Root 1 0 R /Info 6 0 R >>\nstartxref\n${xref}\n%%EOF\n`);
+    return new Blob(parts, { type: 'application/pdf' });
+  }
+
+  async function saveBlob(blob, name, msg) {
+    const file = new File([blob], name, { type: blob.type });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: 'Jadual kelas' }); return; } catch (e) { if (e.name === 'AbortError') return; }
+    }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    toast(msg, 4000);
+  }
+
+  async function exportImage(kind, btn) {
+    btn.disabled = true;
+    try {
+      if (document.fonts && document.fonts.ready) await document.fonts.ready;
+      const c = drawExport(kind);
+      const jpg = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.92));
+      if (kind === 'pdf') await saveBlob(jpegToPdf(new Uint8Array(await jpg.arrayBuffer()), c.width, c.height), 'jadual-kelas-uitm.pdf', 'PDF dimuat turun.');
+      else if (kind === 'wall') await saveBlob(jpg, 'wallpaper-jadual-kelas.jpg', 'Wallpaper dimuat turun. Buka Galeri atau Foto, kemudian pilih Tetapkan sebagai wallpaper.');
+      else await saveBlob(jpg, 'jadual-kelas-uitm.jpg', 'Gambar jadual dimuat turun.');
+    } catch (e) { toast('Gagal menyimpan: ' + e.message, 4000); }
+    btn.disabled = false;
+  }
+
+  async function addHome() {
+    if (Native) { toast('Dalam app, tekan lama ikon Bijak Labur di skrin utama dan pilih Jadual kelas.', 5000); return; }
+    if (window.installApp && await window.installApp()) return;
+    const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    toast(matchMedia('(display-mode: standalone)').matches || navigator.standalone
+      ? 'Bijak Labur sudah ada di skrin utama. Tekan lama ikonnya dan pilih Jadual kelas untuk terus ke jadual.'
+      : ios ? 'Di Safari, tekan butang Kongsi, kemudian Add to Home Screen. Jadual anda terbuka tanpa talian.'
+        : 'Di Chrome, tekan menu ⋮, kemudian Add to Home screen atau Install app.', 6000);
   }
 
   /* Kad di halaman utama */
