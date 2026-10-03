@@ -214,3 +214,5 @@ const FiqhData = (() => {
 
   return { KITAB, shamela, H, KOLEKSI, F, HUKUM, BAB, MASALAH, CARI, ISTILAH };
 })();
+// Pelayan Tanya AI (worker-fiqh) memuat fail yang sama sebagai korpus rujukan yang telah disemak
+if (typeof globalThis !== 'undefined') globalThis.FiqhData = FiqhData;
