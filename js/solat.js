@@ -68,6 +68,17 @@ WLY02|Wilayah Persekutuan|Labuan`.split('\n').map(l => { const [jakimCode, neger
     ['dhuhr', 'Zohor', true], ['asr', 'Asar', true], ['maghrib', 'Maghrib', true], ['isha', 'Isyak', true]
   ];
   const MAIN = PRAYERS.filter(p => p[2]);
+  const ICON = { imsak: 'moon-star', fajr: 'sunrise', syuruk: 'sun-dim', dhuha: 'sun-dim', dhuhr: 'sun', asr: 'cloud-sun', maghrib: 'sunset', isha: 'moon' };
+  const KAABAH = [21.4225, 39.8262];
+  /* Ayat dan doa ringkas yang bertukar setiap hari */
+  const INSPIRE = [
+    ['رَبِّ زِدْنِي عِلْمًا', 'Ya Tuhanku, tambahkanlah ilmu kepadaku.', 'Surah Taha, 20:114'],
+    ['وَأَحَلَّ اللَّهُ الْبَيْعَ وَحَرَّمَ الرِّبَا', 'Allah telah menghalalkan jual beli dan mengharamkan riba.', 'Surah Al-Baqarah, 2:275'],
+    ['فَإِنَّ مَعَ الْعُسْرِ يُسْرًا', 'Maka sesungguhnya bersama kesulitan itu ada kemudahan.', 'Surah Al-Insyirah, 94:5'],
+    ['رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ', 'Wahai Tuhan kami, berikanlah kami kebaikan di dunia dan kebaikan di akhirat, dan peliharalah kami daripada azab neraka.', 'Surah Al-Baqarah, 2:201'],
+    ['وَمَن يَتَّقِ اللَّهَ يَجْعَل لَّهُ مَخْرَجًا وَيَرْزُقْهُ مِنْ حَيْثُ لَا يَحْتَسِبُ', 'Sesiapa yang bertakwa kepada Allah, nescaya Allah memberinya jalan keluar dan rezeki dari arah yang tidak disangka.', 'Surah At-Talaq, 65:2-3'],
+    ['اللَّهُمَّ إِنِّي أَسْأَلُكَ عِلْمًا نَافِعًا وَرِزْقًا طَيِّبًا وَعَمَلًا مُتَقَبَّلًا', 'Ya Allah, aku memohon kepada-Mu ilmu yang bermanfaat, rezeki yang baik dan amalan yang diterima.', 'Doa selepas Subuh, riwayat Ibnu Majah']
+  ];
   const HIJRI = ['Muharram', 'Safar', 'Rabiulawal', 'Rabiulakhir', 'Jamadilawal', 'Jamadilakhir', 'Rejab', 'Syaaban', 'Ramadan', 'Syawal', 'Zulkaedah', 'Zulhijjah'];
   const tFmt = new Intl.DateTimeFormat('en-GB', { timeZone: TZ, hour: 'numeric', minute: '2-digit', hour12: true });
   const dFmt = new Intl.DateTimeFormat('ms-MY', { timeZone: TZ, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
@@ -83,6 +94,8 @@ WLY02|Wilayah Persekutuan|Labuan`.split('\n').map(l => { const [jakimCode, neger
 
   let zones = FALLBACK_ZONES, zone = store.get('zone', 'WLY01'), month = null, nextMonth = null;
   let notified = store.get('notified', {}), notifOn = store.get('azanNotif', false);
+  let azanOff = store.get('azanOff', []), dayOff = 0, listSig = '', homeSig = '';
+  let rekod = store.get('rekod', {});
 
   function renderZones() {
     const byState = {};
@@ -151,6 +164,9 @@ WLY02|Wilayah Persekutuan|Labuan`.split('\n').map(l => { const [jakimCode, neger
     $('#todayLine').textContent = `${date} · ${hj}`;
     $('#zoneName').textContent = `${z.daerah}${z.negeri ? ', ' + z.negeri : ''}`;
     $('#homeZone').textContent = z.daerah.split(',')[0];
+    $('#zoneShort').textContent = z.daerah.split(',')[0];
+    listSig = homeSig = '';
+    renderDays(); renderTracker(); renderInspire();
     tick();
   }
 
@@ -160,19 +176,41 @@ WLY02|Wilayah Persekutuan|Labuan`.split('\n').map(l => { const [jakimCode, neger
     // Selepas Isyak, paparkan jadual esok supaya senarai tidak kelihatan "tamat"
     const show = (nx && nx.off === 1 && dayRow(1)) || d;
     const state = k => (nx && nx.k === k) ? 'next' : show[k] <= now ? 'past' : '';
-    $('#todayGrid').innerHTML = PRAYERS.map(([k, n, main]) => `<li class="${main ? '' : 'minor'} ${main ? state(k) : (show[k] <= now ? 'past' : '')}"><span>${n}</span><span>${fmtT(show[k])}</span></li>`).join('');
-    $('#homeRow').innerHTML = MAIN.map(([k, n]) => `<li class="${state(k)}">${n}<b>${fmtT(show[k]).replace(/ (pg|ptg|mlm)$/, '')}</b></li>`).join('');
+    // Hari lain yang dipilih pada jalur hari: tiada keadaan "seterusnya" atau "lepas"
+    const pick = dayOff ? dayRow(dayOff) : show;
+    const st = (k, main) => dayOff ? '' : main ? state(k) : (show[k] <= now ? 'past' : '');
+    if (pick) {
+      const sig = dayOff + PRAYERS.map(([k, , main]) => st(k, main)).join() + azanOff.join() + notifOn + pick.day;
+      if (sig !== listSig) {
+        listSig = sig;
+        $('#todayGrid').innerHTML = PRAYERS.map(([k, n, main]) => {
+          const s = st(k, main), on = notifOn && !azanOff.includes(k);
+          return `<li class="${main ? '' : 'minor'} ${s}"><span class="pr-ico">${icon(ICON[k])}</span><span class="pr-name">${n}${s === 'next' ? '<small>Seterusnya</small>' : ''}</span><span class="pr-time">${fmtT(pick[k])}</span>${main ? `<button type="button" class="pr-bell" data-k="${k}" aria-pressed="${on}" aria-label="Azan ${n} ${on ? 'aktif' : 'tidak aktif'}">${icon(on ? 'bell' : 'bell-off')}</button>` : '<span></span>'}</li>`;
+        }).join('');
+      }
+    }
+    const hsig = MAIN.map(([k]) => state(k)).join() + show.day;
+    if (hsig !== homeSig) {
+      homeSig = hsig;
+      $('#homeRow').innerHTML = MAIN.map(([k, n]) => `<li class="${state(k)}">${n}<b>${fmtT(show[k]).replace(/ (pg|ptg|mlm)$/, '')}</b></li>`).join('');
+      renderTracker();
+    }
+    paintSky(d, now);
     if (nx) {
       const s = Math.max(0, Math.round(nx.ts - now)), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), sec = s % 60;
       const cd = [h, m, sec].map(v => String(v).padStart(2, '0')).join(':');
-      $('#nextName').textContent = `${nx.n} pada ${fmtT(nx.ts)}${nx.off ? ' esok' : ''}`;
+      $('#nextName').textContent = `${nx.n} pada ${fmtT(nx.ts)}${nx.off ? ' esok' : ''} · lagi`;
       $('#countdown').textContent = cd;
+      // Kemajuan dari waktu sebelumnya hingga waktu seterusnya
+      const prev = [...MAIN].reverse().map(([k]) => d[k]).find(t => t <= now) || (dayRow(-1) || {}).isha;
+      $('#phaseBar').style.width = prev ? Math.min(100, Math.max(0, (now - prev) / (nx.ts - prev) * 100)).toFixed(1) + '%' : '0%';
       $('#homeNextName').textContent = nx.n;
       $('#homeNextTime').textContent = fmtT(nx.ts) + (nx.off ? ', esok' : '');
       $('#homeCount').textContent = cd;
     }
     if (notifOn && !plugin('LocalNotifications')) {
       for (const [k, n] of MAIN) {
+        if (azanOff.includes(k)) continue;
         const key = `${zone}_${d[k]}`;
         if (now >= d[k] && now - d[k] < 120 && !notified[key]) {
           notified = { [key]: 1 }; store.set('notified', notified);
@@ -191,11 +229,127 @@ WLY02|Wilayah Persekutuan|Labuan`.split('\n').map(l => { const [jakimCode, neger
       if (!notifOn) return;
       const now = Date.now() / 1000, list = [];
       [month, nextMonth].filter(Boolean).forEach(src => src.prayers.forEach(d => MAIN.forEach(([k, n]) => {
-        if (d[k] > now && list.length < 60) list.push({ id: d[k] % 2147483647, title: `Waktu ${n}`, body: `Telah masuk waktu ${n} (${fmtT(d[k])}) · ${zoneInfo().daerah}`, schedule: { at: new Date(d[k] * 1000), allowWhileIdle: true } });
+        if (!azanOff.includes(k) && d[k] > now && list.length < 60) list.push({ id: d[k] % 2147483647, title: `Waktu ${n}`, body: `Telah masuk waktu ${n} (${fmtT(d[k])}) · ${zoneInfo().daerah}`, schedule: { at: new Date(d[k] * 1000), allowWhileIdle: true } });
       })));
       if (list.length) await LN.schedule({ notifications: list });
     } catch {}
   }
+
+  /* Warna langit mengikut fasa hari */
+  function paintSky(d, now) {
+    const sky = now < d.fajr ? 'night' : now < d.syuruk ? 'dawn' : now < d.dhuhr ? 'morning' : now < d.asr ? 'day'
+      : now < d.maghrib ? 'afternoon' : now < d.isha ? 'dusk' : 'night';
+    $$('.sky').forEach(el => { if (el.dataset.sky !== sky) el.dataset.sky = sky; });
+  }
+
+  /* Jalur 7 hari */
+  const wdFmt = new Intl.DateTimeFormat('ms-MY', { timeZone: TZ, weekday: 'short' });
+  function renderDays() {
+    $('#dayStrip').innerHTML = [0, 1, 2, 3, 4, 5, 6].map(o => {
+      const dt = new Date(Date.now() + o * 86400000), row = dayRow(o);
+      return `<button type="button" role="tab" data-o="${o}" aria-selected="${o === dayOff}" ${row ? '' : 'disabled'} aria-label="${o === 0 ? 'Hari ini' : dFmt.format(dt)}">${o === 0 ? 'Hari ini' : esc(wdFmt.format(dt))}<b>${partsKL(dt).day}</b></button>`;
+    }).join('');
+  }
+  $('#dayStrip').addEventListener('click', e => {
+    const b = e.target.closest('button[data-o]'); if (!b || b.disabled) return;
+    dayOff = +b.dataset.o; listSig = '';
+    $$('#dayStrip button').forEach(x => x.setAttribute('aria-selected', String(x === b)));
+    const row = dayRow(dayOff);
+    if (row) $('#solatDate').textContent = `${dFmt.format(new Date(Date.now() + dayOff * 86400000))} · ${hijriStr(row.hijri)}`;
+    tick();
+  });
+
+  /* Loceng azan setiap waktu */
+  $('#todayGrid').addEventListener('click', async e => {
+    const b = e.target.closest('.pr-bell'); if (!b) return;
+    const k = b.dataset.k;
+    if (!notifOn) {
+      notifOn = await Notify.request(); store.set('azanNotif', notifOn); paintSwitch();
+      if (!notifOn) return;
+      azanOff = azanOff.filter(x => x !== k);
+    } else azanOff = azanOff.includes(k) ? azanOff.filter(x => x !== k) : [...azanOff, k];
+    store.set('azanOff', azanOff); listSig = ''; tick(); scheduleNative();
+    const n = MAIN.find(p => p[0] === k)[1];
+    toast(azanOff.includes(k) ? `Peringatan ${n} dimatikan` : `Peringatan ${n} diaktifkan`);
+  });
+
+  /* Rekod solat harian dan bilangan hari berturut-turut */
+  const keyOf = d => { const p = partsKL(d); return `${p.year}-${String(p.month).padStart(2, '0')}-${String(p.day).padStart(2, '0')}`; };
+  function streak() {
+    let n = 0;
+    for (let i = 0; i < 400; i++) {
+      const done = rekod[keyOf(new Date(Date.now() - i * 86400000))] || [];
+      if (done.length >= 5) n++;
+      else if (i > 0) break;
+    }
+    return n;
+  }
+  function renderTracker() {
+    const d = dayRow(0); if (!d) return;
+    const now = Date.now() / 1000, done = rekod[keyOf(new Date())] || [];
+    $('#trackRow').innerHTML = MAIN.map(([k, n]) => {
+      const on = done.includes(k), open = d[k] <= now;
+      return `<button type="button" class="track-btn" data-k="${k}" aria-pressed="${on}" ${open || on ? '' : 'disabled'} aria-label="${n}${open ? '' : ', belum masuk waktu'}"><span class="tb-dot">${icon('check')}</span>${n}</button>`;
+    }).join('');
+    const s = streak();
+    $('#streak .num').textContent = s;
+    $('#streak').setAttribute('aria-label', `${s} hari berturut-turut`);
+    $('#trackerSub').textContent = done.length >= 5 ? 'Alhamdulillah, lima waktu lengkap hari ini.' : `${done.length} daripada 5 waktu ditanda. Disimpan dalam peranti ini sahaja.`;
+  }
+  $('#trackRow').addEventListener('click', e => {
+    const b = e.target.closest('.track-btn'); if (!b || b.disabled) return;
+    const key = keyOf(new Date()), done = rekod[key] || [];
+    rekod[key] = done.includes(b.dataset.k) ? done.filter(x => x !== b.dataset.k) : [...done, b.dataset.k];
+    const keep = Object.keys(rekod).sort().slice(-400);
+    rekod = Object.fromEntries(keep.map(k => [k, rekod[k]]));
+    store.set('rekod', rekod); renderTracker();
+  });
+
+  function renderInspire() {
+    const p = partsKL(new Date()), doy = Math.floor((Date.UTC(p.year, p.month - 1, p.day) - Date.UTC(p.year, 0, 0)) / 86400000);
+    const [ar, tr, ref] = INSPIRE[doy % INSPIRE.length];
+    $('#inspire').innerHTML = `<p class="eyebrow">${icon('book')}Renungan hari ini</p><p class="ar" lang="ar">${ar}</p><p class="tr">${esc(tr)}</p><p class="ref">${esc(ref)}</p>`;
+  }
+
+  /* Arah kiblat: bearing bulatan besar ke Kaabah, kompas langsung jika peranti menyokong */
+  const rad = x => x * Math.PI / 180, deg = x => x * 180 / Math.PI;
+  function qiblaOf(lat, lon) {
+    const [kl, ko] = KAABAH.map(rad), la = rad(lat), dl = ko - rad(lon);
+    const b = (deg(Math.atan2(Math.sin(dl), Math.cos(la) * Math.tan(kl) - Math.sin(la) * Math.cos(dl))) + 360) % 360;
+    const km = 6371 * Math.acos(Math.min(1, Math.sin(la) * Math.sin(kl) + Math.cos(la) * Math.cos(kl) * Math.cos(dl)));
+    return { b, km };
+  }
+  let qibla = qiblaOf(3.139, 101.6869), heading = null;
+  $('#qiblaTicks').innerHTML = Array.from({ length: 72 }, (_, i) => {
+    const a = rad(i * 5), maj = i % 18 === 0, r1 = maj ? 76 : 82;
+    return `<line ${maj ? 'class="maj"' : ''} x1="${(100 + Math.sin(a) * r1).toFixed(1)}" y1="${(100 - Math.cos(a) * r1).toFixed(1)}" x2="${(100 + Math.sin(a) * 88).toFixed(1)}" y2="${(100 - Math.cos(a) * 88).toFixed(1)}"/>`;
+  }).join('');
+  function paintQibla() {
+    $('#qiblaNeedle').style.transform = `rotate(${qibla.b}deg)`;
+    $('#qiblaRose').style.transform = heading == null ? '' : `rotate(${-heading}deg)`;
+    $('#qiblaDeg').textContent = `${Math.round(qibla.b)}° dari utara`;
+    const off = heading == null ? null : Math.abs(((qibla.b - heading + 540) % 360) - 180);
+    $('.qibla').classList.toggle('aligned', off != null && off < 5);
+  }
+  function onOrient(e) {
+    const h = e.webkitCompassHeading != null ? e.webkitCompassHeading : (e.absolute && e.alpha != null ? 360 - e.alpha : null);
+    if (h == null) return;
+    heading = h; paintQibla();
+  }
+  $('#qiblaBtn').addEventListener('click', async () => {
+    if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function') {
+      try { await DeviceOrientationEvent.requestPermission(); } catch {}
+    }
+    window.addEventListener('deviceorientationabsolute', onOrient);
+    window.addEventListener('deviceorientation', onOrient);
+    if (!navigator.geolocation) return toast('Lokasi tidak disokong pada peranti ini.');
+    toast('Mengesan lokasi');
+    navigator.geolocation.getCurrentPosition(pos => {
+      qibla = qiblaOf(pos.coords.latitude, pos.coords.longitude); paintQibla();
+      $('#qiblaSub').textContent = `Kaabah ${Math.round(qibla.km).toLocaleString('ms-MY')} km dari lokasi anda. ${heading == null ? 'Halakan bahagian atas telefon mengikut jarum, dengan utara pada U.' : 'Pusingkan telefon sehingga dail bertukar hijau.'}`;
+    }, () => toast('Kebenaran lokasi ditolak.'), { timeout: 15000, maximumAge: 600000 });
+  });
+  paintQibla();
 
   function renderMonth() {
     const today = partsKL(new Date()).day;
@@ -220,7 +374,8 @@ WLY02|Wilayah Persekutuan|Labuan`.split('\n').map(l => { const [jakimCode, neger
   });
   const paintSwitch = () => {
     $('#notifBtn').setAttribute('aria-checked', String(notifOn));
-    $('#notifSub').textContent = notifOn ? 'Aktif untuk zon ' + zone : 'Notifikasi apabila masuk waktu';
+    $('#notifSub').textContent = notifOn ? 'Aktif untuk zon ' + zone + '. Tekan loceng untuk setiap waktu.' : 'Notifikasi apabila masuk waktu';
+    listSig = ''; if (month) tick();
   };
   $('#notifBtn').addEventListener('click', async () => {
     if (notifOn) notifOn = false;
@@ -241,7 +396,7 @@ WLY02|Wilayah Persekutuan|Labuan`.split('\n').map(l => { const [jakimCode, neger
   setInterval(() => {
     const p = partsKL(new Date());
     if (month && p.month !== month.month_number) load();
-    else if (p.day !== lastDay) { lastDay = p.day; renderToday(); renderMonth(); }
+    else if (p.day !== lastDay) { lastDay = p.day; dayOff = 0; renderToday(); renderMonth(); }
     else tick();
   }, 1000);
 })();
