@@ -2,7 +2,7 @@
 <html lang="ms">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://s3.tradingview.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://data-api.binance.vision wss://data-stream.binance.vision https://api.coingecko.com https://api.waktusolat.app https://api.alquran.cloud https://api.quran.com https://cdn.jsdelivr.net https://ms.wikipedia.org https://en.wikipedia.org https://api.languagetool.org https://open.er-api.com https://api.openalex.org https://api.crossref.org https://api.semanticscholar.org https://doaj.org https://www.ebi.ac.uk https://*.workers.dev https://jadual.bijaklabur.my; media-src 'self' blob: data: https://cdn.islamic.network; frame-src https://*.tradingview.com https://*.tradingview-widget.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://s3.tradingview.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://nota.bijaklabur.my https://*.workers.dev; font-src 'self' data:; connect-src 'self' https://data-api.binance.vision wss://data-stream.binance.vision https://api.coingecko.com https://api.waktusolat.app https://api.alquran.cloud https://api.quran.com https://cdn.jsdelivr.net https://ms.wikipedia.org https://en.wikipedia.org https://api.languagetool.org https://open.er-api.com https://api.openalex.org https://api.crossref.org https://api.semanticscholar.org https://doaj.org https://www.ebi.ac.uk https://*.workers.dev https://jadual.bijaklabur.my https://nota.bijaklabur.my https://fiqh.bijaklabur.my; media-src 'self' blob: data: https://cdn.islamic.network; frame-src https://*.tradingview.com https://*.tradingview-widget.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Bijak Labur (bijaklabur.my) · Belajar Melabur Saham &amp; Kripto, Waktu Solat Malaysia</title>
@@ -91,6 +91,7 @@
     ]
   }
   </script>
+  <link rel="stylesheet" href="css/nota.css">
 </head>
 <body>
   <a class="skip-link" href="#main">Langkau ke kandungan</a>
@@ -157,6 +158,8 @@
       <symbol id="i-plane" viewBox="0 0 24 24"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2Z"/></symbol>
       <symbol id="i-food" viewBox="0 0 24 24"><path d="M3 2v7a3 3 0 0 0 6 0V2M6 2v20M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></symbol>
       <symbol id="i-beads" viewBox="0 0 24 24"><circle cx="12" cy="4" r="1.6"/><circle cx="17.5" cy="6.5" r="1.6"/><circle cx="19.5" cy="12" r="1.6"/><circle cx="17.5" cy="17.5" r="1.6"/><circle cx="6.5" cy="6.5" r="1.6"/><circle cx="4.5" cy="12" r="1.6"/><circle cx="6.5" cy="17.5" r="1.6"/><path d="M12 18v4"/><circle cx="12" cy="17" r="1.6"/></symbol>
+      <symbol id="i-chat" viewBox="0 0 24 24"><path d="M3.5 20.5 5 16.3A8.5 8.5 0 1 1 8 19.2Z"/><path d="M9 10.5h.01M12 10.5h.01M15 10.5h.01"/></symbol>
+      <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></symbol>
       <symbol id="i-sunmoon" viewBox="0 0 24 24"><path d="M12 8a2.8 2.8 0 0 0 4 4 4 4 0 1 1-4-4Z"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M6.3 17.7l-1.4 1.4M19.1 4.9l-1.4 1.4"/></symbol>
     </defs>
   </svg>
@@ -173,6 +176,7 @@
         <a href="#ibadah" data-nav="ibadah">Ibadah</a>
         <a href="#semak" data-nav="semak">Semak Kertas</a>
         <a href="#jadual" data-nav="jadual">Jadual</a>
+        <a href="#nota" data-nav="nota">Nota</a>
         <a href="#premium" data-nav="premium" data-premium-entry class="hidden">Premium</a>
       </nav>
       <button class="icon-btn" id="sayBtn" aria-label="Bacakan halaman ini" aria-pressed="false" title="Bacakan halaman ini"><svg class="ic"><use href="#i-volume"/></svg></button>
@@ -224,6 +228,11 @@
             <a class="card shortcut" href="#jadual">
               <span class="sc-ico"><svg class="ic"><use href="#i-calendar"/></svg></span>
               <div class="sc-body"><div class="sc-title">Jadual kelas UiTM</div><div class="sc-sub" id="homeJadual">Susun jadual kuliah UiTM anda dengan cantik</div></div>
+              <svg class="ic chev"><use href="#i-chev"/></svg>
+            </a>
+            <a class="card shortcut" href="#nota">
+              <span class="sc-ico"><svg class="ic"><use href="#i-bookmark"/></svg></span>
+              <div class="sc-body"><div class="sc-title">Nota IC220</div><div class="sc-sub">Nota Pengurusan Industri Halal daripada pengasas. Lihat pratonton dan beli melalui WhatsApp</div></div>
               <svg class="ic chev"><use href="#i-chev"/></svg>
             </a>
             <a class="card shortcut" href="#semak">
@@ -453,6 +462,9 @@
     <!-- SEMAK -->
     <!-- JADUAL KELAS UiTM -->
     <section class="view" id="view-jadual" aria-labelledby="h-jadual"></section>
+
+    <!-- NOTA IC220 -->
+    <section class="view" id="view-nota" aria-labelledby="h-nota"></section>
 
     <section class="view" id="view-semak" aria-labelledby="h-semak">
       <div class="page-head">
@@ -713,5 +725,6 @@
   <script src="js/pro-invest.js"></script>
   <script src="js/pro-study.js"></script>
   <script src="js/jadual.js"></script>
+  <script src="js/nota.js"></script>
 </body>
 </html>
