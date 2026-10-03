@@ -9,8 +9,8 @@ ALLOWED_ORIGINS = "https://bijaklabur.my,https://www.bijaklabur.my,https://shami
 # Tukar ke https://dev.toyyibpay.com untuk ujian sandbox
 TOYYIBPAY_BASE = "https://toyyibpay.com"
 # Projek Firebase untuk log masuk (Tetapan projek > Umum). Kunci API web ini memang awam.
-FIREBASE_PROJECT_ID = ""
-FIREBASE_API_KEY = ""
+FIREBASE_PROJECT_ID = "bijak-labur"
+FIREBASE_API_KEY = "AIzaSyDRwErMFQqREFjBqeztSLdUqCUJbgmlqGw"
 # Berapa kali satu akaun boleh bertukar ke peranti baharu dalam 30 hari
 MAX_DEVICE_SWITCHES = "3"
 # 0 = FPX sahaja, 1 = kad sahaja, 2 = FPX dan kad

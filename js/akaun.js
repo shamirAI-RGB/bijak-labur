@@ -2,12 +2,13 @@
 const Akaun = (function () {
   // Isi daripada Firebase Console > Tetapan projek > Apl anda (web). Nilai ini memang awam.
   // Selagi kosong, laman berjalan dalam mod tetamu sahaja dan butang akaun menunjukkan "akan dibuka".
-  const FIREBASE = { apiKey: '', authDomain: '', projectId: '', appId: '' };
+  const FIREBASE = { apiKey: 'AIzaSyDRwErMFQqREFjBqeztSLdUqCUJbgmlqGw', authDomain: 'bijak-labur.firebaseapp.com', projectId: 'bijak-labur', appId: '1:865639413237:web:f87bbd5a60b894d962dcbc' };
   // URL pelayan akaun dan Premium (Cloudflare Worker, worker/)
   const API = 'https://bijak-labur-premium.khanz-amir.workers.dev';
   const enabled = !!(FIREBASE.apiKey && FIREBASE.projectId && API);
-  // Kaedah yang dihidupkan dalam Firebase > Authentication > Sign-in method (e-mel sentiasa ada)
-  const METHODS = { google: true, facebook: true, phone: true };
+  // Kaedah yang dihidupkan dalam Firebase > Authentication > Sign-in method (e-mel sentiasa ada).
+  // facebook: perlukan app Meta (App ID dan secret) dalam Firebase. phone: perlukan pelan Blaze untuk SMS.
+  const METHODS = { google: true, facebook: false, phone: false };
   // Google dan Facebook menyekat log masuk dalam WebView app; dalam app guna e-mel atau telefon
   const SOCIAL = !Native;
   // reCAPTCHA untuk SMS hanya berfungsi pada http/https: app Android (https://localhost) boleh, app iOS (capacitor://) tidak
@@ -151,7 +152,8 @@ const Akaun = (function () {
     'auth/popup-blocked': 'Tetingkap log masuk disekat oleh pelayar. Benarkan pop-up untuk laman ini.',
     'auth/web-storage-unsupported': 'Pelayar ini menyekat storan. Matikan mod peribadi atau guna pelayar lain.',
     'auth/operation-not-supported-in-this-environment': 'Kaedah ini tidak disokong di sini. Guna e-mel dan kata laluan.',
-    'auth/internal-error': 'Log masuk gagal. Cuba lagi sebentar.'
+    'auth/internal-error': 'Log masuk gagal. Cuba lagi sebentar.',
+    'auth/configuration-not-found': 'Log masuk belum disediakan sepenuhnya. Cuba lagi kemudian.'
   };
   function authError(e) {
     if (!e) return;

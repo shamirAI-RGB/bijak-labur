@@ -129,7 +129,7 @@ const Premium = (function () {
       guest.classList.toggle('hidden', Akaun.active || free);
       $('#proGuestText').textContent = !Akaun.enabled ? 'Log masuk akan dibuka tidak lama lagi. Premium dan percubaan percuma 3 hari memerlukan akaun.'
         : Akaun.user ? 'Lengkapkan log masuk akaun anda untuk menggunakan Premium pada peranti ini.'
-        : 'Log masuk dengan Google, Facebook, nombor telefon atau e-mel. Tetamu boleh menggunakan semua ciri percuma, tetapi tidak Premium.';
+        : 'Log masuk atau daftar dengan Google atau e-mel. Tetamu boleh menggunakan semua ciri percuma, tetapi tidak Premium.';
       $('#proGuestGo').classList.toggle('hidden', !Akaun.enabled);
     }
     const canTrial = !isNative && Akaun.active && Akaun.info.trialUsed === false && !validLic();
