@@ -8,8 +8,22 @@ SITE_URL = "https://bijaklabur.my/"
 ALLOWED_ORIGINS = "https://bijaklabur.my,https://www.bijaklabur.my,https://shamirai-rgb.github.io,capacitor://localhost,https://localhost,http://localhost:8080"
 # Tukar ke https://dev.toyyibpay.com untuk ujian sandbox
 TOYYIBPAY_BASE = "https://toyyibpay.com"
+# Projek Firebase untuk log masuk (Tetapan projek > Umum). Kunci API web ini memang awam.
+FIREBASE_PROJECT_ID = ""
+FIREBASE_API_KEY = ""
+# Berapa kali satu akaun boleh bertukar ke peranti baharu dalam 30 hari
+MAX_DEVICE_SWITCHES = "3"
 # 0 = FPX sahaja, 1 = kad sahaja, 2 = FPX dan kad
 PAYMENT_CHANNEL = "2"
 
 # Rahsia (ditetapkan oleh GitHub Actions, jangan tulis di sini):
 # TOYYIBPAY_SECRET, TOYYIBPAY_CATEGORY, LICENSE_PRIVATE_JWK
+
+# Akaun dan peranti aktif: satu Durable Object (SQLite, pelan percuma) bagi setiap akaun
+[[durable_objects.bindings]]
+name = "AKAUN"
+class_name = "Akaun"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Akaun"]
