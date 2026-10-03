@@ -1,6 +1,6 @@
 /* Service worker: simpan app shell untuk kegunaan luar talian */
-const CACHE = 'bijak-labur-v24';
-const SHELL = ['./', 'index.html', 'css/style.css', 'css/langit.css', 'css/ibadah.css', 'css/belajar-visual.css', 'css/fiqh.css', 'css/pustaka.css', 'css/suara.css', 'css/jadual.css', 'js/ibadah-data.js', 'js/ibadah.js', 'js/fiqh-data.js', 'js/fiqh.js', 'fonts/Geist-Variable.woff2', 'js/app.js', 'js/suara.js', 'js/learn-visuals.js', 'js/learn.js', 'js/market.js', 'js/solat.js', 'js/checker.js', 'js/premium.js', 'js/pustaka-data.js', 'js/pustaka.js', 'js/pro.js', 'js/pro-invest.js', 'js/pro-study.js', 'js/jadual.js', 'js/vendor/lightweight-charts.js',
+const CACHE = 'bijak-labur-v26';
+const SHELL = ['./', 'index.html', 'css/style.css', 'css/langit.css', 'css/ibadah.css', 'css/belajar-visual.css', 'css/fiqh.css', 'css/pustaka.css', 'css/suara.css', 'css/jadual.css', 'js/ibadah-data.js', 'js/ibadah.js', 'js/fiqh-data.js', 'js/fiqh.js', 'js/quran-src.js', 'fonts/Geist-Variable.woff2', 'js/app.js', 'js/suara.js', 'js/learn-visuals.js', 'js/learn.js', 'js/market.js', 'js/solat.js', 'js/checker.js', 'js/premium.js', 'js/pustaka-data.js', 'js/pustaka.js', 'js/pro.js', 'js/pro-invest.js', 'js/pro-study.js', 'js/jadual.js', 'js/vendor/lightweight-charts.js',
   'manifest.webmanifest', 'privacy.html', 'terma.html', 'terma-app.html', 'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-180.png'];
 
 self.addEventListener('install', e => {
@@ -17,9 +17,11 @@ self.addEventListener('fetch', e => {
     e.respondWith(fetch(e.request).then(r => {
       const copy = r.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); return r;
     }).catch(() => caches.match(e.request, { ignoreSearch: true }).then(r => r || caches.match('index.html'))));
-  } else if (/cdn\.jsdelivr\.net|cdnjs\.cloudflare\.com|api\.alquran\.cloud/.test(url.host)) {
+  } else if (/cdn\.jsdelivr\.net|cdnjs\.cloudflare\.com|api\.alquran\.cloud|api\.quran\.com/.test(url.host)) {
+    // Simpan respons yang berjaya sahaja, supaya ralat sementara (cth. 500) tidak tersimpan selama-lamanya
     e.respondWith(caches.match(e.request).then(r => r || fetch(e.request).then(res => {
-      const copy = res.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); return res;
+      if (res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); }
+      return res;
     })));
   }
 });

@@ -2,7 +2,6 @@
 (function () {
   const D = IbadahData;
   const TZ = 'Asia/Kuala_Lumpur';
-  const QAPI = 'https://api.alquran.cloud/v1';
   const AUDIO = (qari, n, br = 128) => `https://cdn.islamic.network/quran/audio/${br}/${qari}/${n}.mp3`;
   const BASMALAH = 'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ';
   const HIJRI_M = ['Muharram', 'Safar', 'Rabiulawal', 'Rabiulakhir', 'Jamadilawal', 'Jamadilakhir', 'Rejab', 'Syaaban', 'Ramadan', 'Syawal', 'Zulkaedah', 'Zulhijjah'];
@@ -91,22 +90,15 @@
   /* ---------- Al-Quran ---------- */
   let qList = store.get('qList', null), qTab = 'surah';
   const qCache = {};
-  const fetchJSON = async u => { const r = await fetch(u); if (!r.ok) throw new Error(r.status); const j = await r.json(); if (j.code !== 200) throw new Error(j.status); return j.data; };
   async function getList() {
     if (qList && qList.length === 114) return qList;
-    qList = (await fetchJSON(`${QAPI}/surah`)).map(s => ({ n: s.number, ar: s.name, en: s.englishName, tr: s.englishNameTranslation, c: s.numberOfAyahs, t: s.revelationType === 'Meccan' ? 'Makkiyah' : 'Madaniyah' }));
+    qList = await QuranSrc.list();
     store.set('qList', qList);
     return qList;
   }
   async function getSurah(n) {
     if (qCache[n]) return qCache[n];
-    const [ar, ms] = await fetchJSON(`${QAPI}/surah/${n}/editions/quran-uthmani,ms.basmeih`);
-    const ayahs = ar.ayahs.map((a, i) => {
-      let t = a.text.replace(/^﻿/, '');
-      if (i === 0 && n !== 1 && n !== 9 && t.startsWith(BASMALAH)) t = t.slice(BASMALAH.length).trim();
-      return { k: a.numberInSurah, g: a.number, ar: t, ms: ms.ayahs[i] ? ms.ayahs[i].text : '' };
-    });
-    return (qCache[n] = { n, ayahs });
+    return (qCache[n] = { n, ayahs: await QuranSrc.surah(n) });
   }
   const bm = () => store.get('qBm', []);
   const isBm = (s, a) => bm().some(b => b.s === s && b.a === a);
@@ -128,7 +120,7 @@
       </div>
       <div class="search-in q-search"><svg class="ic"><use href="#i-search"/></svg><input id="qFind" placeholder="Cari surah, cth. Yasin atau 36" aria-label="Cari surah" autocomplete="off"></div>
       <div class="list q-list" id="qListBox"><div class="pad muted">Memuatkan senarai surah</div></div>
-      <p class="source">Teks Uthmani dan terjemahan Tafsir Pimpinan Ar-Rahman (Abdullah Basmeih) melalui api.alquran.cloud. Audio ${esc(QARI[qari()] || '')} melalui cdn.islamic.network.</p>`;
+      <p class="source">Teks Uthmani dan terjemahan Tafsir Pimpinan Ar-Rahman (Abdullah Basmeih) melalui api.alquran.cloud, dengan Quran.com sebagai sumber sandaran. Audio ${esc(QARI[qari()] || '')} melalui cdn.islamic.network.</p>`;
     paintQTab();
     try { await getList(); paintQTab(); }
     catch { if (!qList) $('#qListBox').innerHTML = offline('Senarai surah perlukan sambungan internet kali pertama.'); }
@@ -165,7 +157,7 @@
     const read = store.get('qRead', []); if (!read.includes(n)) { read.push(n); store.set('qRead', read); }
     $('#qReader').innerHTML = `
       <div class="q-hero"><p class="q-ar-big" lang="ar">${esc(meta.ar)}</p><h2>${esc(meta.en)}</h2><p>${esc(meta.tr)} · ${esc(meta.t)} · ${meta.c} ayat</p>
-        <div class="actions center"><button class="btn sm light" data-play="${n}">${icon('play')}Main dari awal</button></div></div>
+        <div class="actions center"><button class="btn sm light" data-play="${n}">${icon('play')}Main dari awal</button><a class="btn sm light" href="${QuranSrc.web(n)}" target="_blank" rel="noopener">Buka di Quran.com</a></div></div>
       ${n !== 1 && n !== 9 ? `<p class="q-basm" lang="ar">${BASMALAH}</p>` : ''}
       <ol class="ayahs">${s.ayahs.map(a => `<li class="ayah" id="ay-${a.k}" data-k="${a.k}">
         <div class="ay-bar"><span class="ay-n">${n}:${a.k}</span><span class="ay-acts">
