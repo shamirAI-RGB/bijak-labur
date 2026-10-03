@@ -20,6 +20,8 @@
 @media (min-width: 640px) { .jd-cf { grid-template-columns: 1fr 1fr; } }
 .jd-step textarea { height: auto; padding: 10px 12px; resize: vertical; line-height: 1.45; }
 .jd-mt { margin-top: 10px; }
+.jd-ms { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 10px; }
+.jd-ms label { cursor: pointer; }
 .jd-or { display: flex; align-items: center; gap: 10px; color: var(--faint); font-size: 0.8rem; margin: 16px 0 2px; }
 .jd-or::before, .jd-or::after { content: ""; flex: 1; height: 1px; background: var(--border); }
 .jd-add input { flex: 1 1 140px; text-transform: uppercase; }

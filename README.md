@@ -44,7 +44,7 @@ Pelan berbayar Pelajar, Pelabur dan Lengkap dijual melalui ToyyibPay (FPX dan ka
 
 ## Jadual kelas UiTM
 
-Halaman `#jadual` (`js/jadual.js`, `css/jadual.css`) membina jadual mingguan pelajar UiTM daripada senarai awam iCress mengikut kampus, kod kursus dan kumpulan. Pelajar boleh menampal teks slip pendaftaran untuk mengesan kod kursus dan kumpulan sendiri. Jadual disimpan dalam peranti, boleh dicetak dan disimpan ke kalendar telefon (.ics).
+Halaman `#jadual` (`js/jadual.js`, `css/jadual.css`) membina jadual mingguan pelajar UiTM daripada senarai awam iCress mengikut kampus, kod kursus dan kumpulan. Pelajar boleh membuka MyStudent dari halaman ini, kemudian memuat naik slip pendaftaran PDF (dibaca dalam peranti dengan pdf.js) atau menampal teks slip untuk mengesan kod kursus dan kumpulan sendiri. Jadual disimpan dalam peranti, boleh dicetak dan disimpan ke kalendar telefon (.ics).
 
 Pelayan kecil dalam `worker-jadual/` (Cloudflare Workers, percuma) membaca iCress dan menghantar JSON dengan CORS di `https://jadual.bijaklabur.my`. Ia dipasang oleh `.github/workflows/jadual.yml` apabila rahsia `CLOUDFLARE_API_TOKEN` dan `CLOUDFLARE_ACCOUNT_ID` ditetapkan.
 
