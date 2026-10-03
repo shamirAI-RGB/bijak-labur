@@ -1,0 +1,26 @@
+/* Visual pelajaran Belajar (js/learn-visuals.js). Gaya dihadkan dalam .lv sahaja. */
+.lv { margin: 4px 0 14px; padding: 12px 10px 10px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-2); }
+.lv svg { display: block; width: 100%; height: auto; max-width: 480px; margin: 0 auto; overflow: visible; font-family: var(--font); }
+.lv figcaption { margin-top: 8px; font-size: 0.84rem; line-height: 1.45; color: var(--muted); text-align: center; }
+.lv text { font-size: 11px; fill: var(--text); }
+.lv .sm { font-size: 10px; }
+.lv .mu { font-size: 10px; fill: var(--muted); }
+.lv .h { font-weight: 600; }
+.lv .big { font-size: 17px; font-weight: 700; }
+.lv .inv { fill: var(--brand-ink); }
+.lv .mu-inv { font-size: 10px; fill: var(--brand-ink); opacity: .8; }
+.lv .bx { fill: var(--surface); stroke: var(--border); }
+.lv .ln { stroke: var(--border); }
+.lv .dash { stroke-dasharray: 4 3; }
+.lv .w2 { stroke-width: 2; }
+.lv polyline, .lv line, .lv path { stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; }
+.lv polyline.w2, .lv line.w2 { stroke-width: 2.2; }
+.lv .o1 { fill-opacity: .1; } .lv .o2 { fill-opacity: .2; } .lv .o3 { fill-opacity: .3; } .lv .o4 { fill-opacity: .4; }
+.lv .o5 { fill-opacity: .5; } .lv .o6 { fill-opacity: .65; }
+.lv .f-b { fill: var(--brand); } .lv .f-bs { fill: var(--brand-soft); } .lv .f-u { fill: var(--up); } .lv .f-d { fill: var(--down); }
+.lv .f-g { fill: var(--gold); } .lv .f-i { fill: var(--info); } .lv .f-p { fill: var(--purple); } .lv .f-w { fill: var(--warn); }
+.lv .f-mu { fill: var(--muted); } .lv .f-s1 { fill: var(--surface); } .lv .f-s2 { fill: var(--border); }
+.lv .s-b { stroke: var(--brand); } .lv .s-u { stroke: var(--up); } .lv .s-d { stroke: var(--down); } .lv .s-g { stroke: var(--gold); }
+.lv .s-i { stroke: var(--info); } .lv .s-p { stroke: var(--purple); } .lv .s-w { stroke: var(--warn); } .lv .s-mu { stroke: var(--muted); }
+.lv .s-t { stroke: var(--text); } .lv .s-inv { stroke: var(--brand-ink); }
+.lv .xs { font-size: 7.5px; }
