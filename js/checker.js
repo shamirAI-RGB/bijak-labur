@@ -231,14 +231,14 @@
   async function wikiSources(sents, lang, onProgress) {
     const wiki = lang === 'ms' ? 'ms' : 'en';
     const cands = pickSpread(sents.filter(s => words(s.text).length >= 8), 12);
-    const titles = new Map(); let done = 0;
+    const titles = new Map();
     await Promise.all(cands.map(async s => {
       const q = words(s.text).slice(0, 14).join(' ');
       try {
         const j = await getJSON(`https://${wiki}.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(q)}&srlimit=3&format=json&origin=*`);
         (j.query && j.query.search || []).forEach((r, i) => titles.set(r.title, (titles.get(r.title) || 0) + 3 - i));
       } catch {}
-      onProgress(`Mencari di Wikipedia… ${++done}/${cands.length}`);
+      onProgress();
     }));
     const top = [...titles.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8).map(x => x[0]);
     const pages = await Promise.all(top.map(async t => {
@@ -251,22 +251,73 @@
     return pages.filter(p => p && p.text);
   }
 
-  // Artikel akademik (OpenAlex: abstrak jurnal, prosiding dan tesis)
-  async function paperSources(sents, onProgress) {
-    const cands = pickSpread(sents.filter(s => words(s.text).length >= 10), 6);
-    const works = new Map(); let done = 0;
-    await Promise.all(cands.map(async s => {
-      const q = words(s.text).filter(w => !STOP.has(norm(w))).slice(0, 12).join(' ');
-      try {
-        const j = await getJSON(`https://api.openalex.org/works?search=${encodeURIComponent(q)}&per_page=3&select=id,display_name,doi,publication_year,abstract_inverted_index`);
-        (j.results || []).forEach(w => { if (w.abstract_inverted_index && !works.has(w.id)) works.set(w.id, w); });
-      } catch {}
-      onProgress(`Mencari artikel akademik… ${++done}/${cands.length}`);
+  // Artikel akademik dari beberapa pangkalan data terbuka. Setiap pangkalan dicari dengan ayat terpilih,
+  // hasilnya digabung dan diduplikasi mengikut DOI atau tajuk (teks paling panjang disimpan).
+  const keyQ = (s, n) => words(s.text).filter(w => !STOP.has(norm(w))).slice(0, n).join(' ');
+  const plain = h => String(h || '').replace(/<[^>]+>/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
+  const article = (db, title, year, url, doi, text) => ({ name: `Artikel: ${plain(title)}${year ? ` (${year})` : ''}`, kind: `Artikel akademik · ${db}`, url, doi: doi ? String(doi).toLowerCase().replace(/^https?:\/\/(dx\.)?doi\.org\//, '') : '', text: plain(text) });
+  async function searchEach(sents, n, qWords, tick, fn) {
+    const out = [];
+    await Promise.all(pickSpread(sents.filter(s => words(s.text).length >= 10), n).map(async s => {
+      try { out.push(...(await fn(encodeURIComponent(keyQ(s, qWords)))).filter(Boolean)); } catch {}
+      tick();
     }));
-    return [...works.values()].map(w => {
+    return out;
+  }
+  // OpenAlex: abstrak jurnal, prosiding dan tesis (lebih 250 juta rekod)
+  const openAlex = (sents, tick) => searchEach(sents, 6, 12, tick, async q => {
+    const j = await getJSON(`https://api.openalex.org/works?search=${q}&per_page=3&select=id,display_name,doi,publication_year,abstract_inverted_index`);
+    return (j.results || []).filter(w => w.abstract_inverted_index).map(w => {
       const pos = []; Object.entries(w.abstract_inverted_index).forEach(([word, idx]) => idx.forEach(i => { pos[i] = word; }));
-      return { name: `Artikel: ${w.display_name}${w.publication_year ? ` (${w.publication_year})` : ''}`, kind: 'Artikel akademik', url: w.doi || w.id, text: pos.filter(Boolean).join(' ') };
-    }).filter(w => words(w.text).length >= 30);
+      return article('OpenAlex', w.display_name, w.publication_year, w.doi || w.id, w.doi, pos.filter(Boolean).join(' '));
+    });
+  });
+  // Crossref: metadata rasmi DOI daripada penerbit, termasuk abstrak jika penerbit menyediakannya
+  const crossref = (sents, tick) => searchEach(sents, 5, 12, tick, async q => {
+    const j = await getJSON(`https://api.crossref.org/works?query=${q}&rows=4&select=DOI,title,abstract,published,URL`);
+    return (j.message && j.message.items || []).filter(w => w.abstract).map(w =>
+      article('Crossref', (w.title || [''])[0], w.published && w.published['date-parts'] && w.published['date-parts'][0][0], w.URL || `https://doi.org/${w.DOI}`, w.DOI, w.abstract));
+  });
+  // Semantic Scholar: abstrak merentas semua bidang (had kadar ketat, jadi sedikit carian sahaja)
+  const semScholar = (sents, tick) => searchEach(sents, 3, 10, tick, async q => {
+    const j = await getJSON(`https://api.semanticscholar.org/graph/v1/paper/search?query=${q}&limit=4&fields=title,abstract,year,url,externalIds`);
+    return (j.data || []).filter(w => w.abstract).map(w => article('Semantic Scholar', w.title, w.year, w.url, w.externalIds && w.externalIds.DOI, w.abstract));
+  });
+  // DOAJ: jurnal akses terbuka, termasuk banyak jurnal universiti Malaysia
+  const doaj = (sents, tick) => searchEach(sents, 4, 8, tick, async q => {
+    const j = await getJSON(`https://doaj.org/api/search/articles/${q}?pageSize=4`);
+    return (j.results || []).map(r => r.bibjson || {}).filter(b => b.abstract).map(b => {
+      const doi = (b.identifier || []).find(x => /doi/i.test(x.type));
+      return article('DOAJ', b.title, b.year, (b.link || [])[0] && b.link[0].url || (doi && `https://doi.org/${doi.id}`), doi && doi.id, b.abstract);
+    });
+  });
+  // Europe PMC: sains hayat dan kesihatan; teks penuh dimuat turun untuk artikel akses terbuka
+  async function europePmc(sents, tick) {
+    const hits = await searchEach(sents, 4, 6, tick, async q => {
+      const j = await getJSON(`https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=${q}&format=json&resultType=core&pageSize=3`);
+      return (j.resultList && j.resultList.result || []).filter(w => w.abstractText).map(w => Object.assign(
+        article('Europe PMC', w.title, w.pubYear, w.doi ? `https://doi.org/${w.doi}` : `https://europepmc.org/article/${w.source}/${w.id}`, w.doi, w.abstractText),
+        { pmcid: w.isOpenAccess === 'Y' && w.pmcid }));
+    });
+    await Promise.all(hits.filter(h => h.pmcid).slice(0, 3).map(async h => {
+      try {
+        const r = await fetch(`https://www.ebi.ac.uk/europepmc/webservices/rest/${encodeURIComponent(h.pmcid)}/fullTextXML`);
+        if (!r.ok) return;
+        const body = new DOMParser().parseFromString(await r.text(), 'text/xml').querySelector('body');
+        if (body) { h.text = (h.text + ' ' + body.textContent).replace(/\s+/g, ' ').trim(); h.kind += ' (teks penuh)'; }
+      } catch {}
+    }));
+    return hits;
+  }
+  async function paperSources(sents, tick) {
+    const all = (await Promise.all([openAlex, crossref, semScholar, doaj, europePmc].map(f => f(sents, tick).catch(() => [])))).flat();
+    const best = new Map();
+    all.filter(w => words(w.text).length >= 30).forEach(w => {
+      const k = w.doi || norm(w.name).replace(/[^\p{L}\p{N}]+/gu, '');
+      const prev = best.get(k);
+      if (!prev || w.text.length > prev.text.length) best.set(k, w);
+    });
+    return [...best.values()];
   }
 
   // Padanan tepat (rentetan 5 perkataan atau lebih) dan parafrasa hampir sama (ayat berkongsi ≥60% kata isi)
@@ -520,8 +571,9 @@
       state.ai = aiAnalysis(text, lang, state.sents, spellErrs);
       const sources = $('#sources').value.split(/\n-{3,}\n/).map((t, i) => ({ name: `Sumber anda #${i + 1}`, text: t.trim() })).filter(s => words(s.text).length >= 5);
       if ($('#optWeb').checked) {
+        let done = 0; const tick = () => prog(`Mencari dalam 6 pangkalan sumber… ${++done} carian`);
         prog('Mencari sumber…');
-        const [w, a] = await Promise.all([wikiSources(state.sents, lang, prog).catch(() => []), paperSources(state.sents, prog).catch(() => [])]);
+        const [w, a] = await Promise.all([wikiSources(state.sents, lang, tick).catch(() => []), paperSources(state.sents, tick).catch(() => [])]);
         sources.push(...w, ...a);
       }
       state.plag = Object.assign(plagiarism(text, state.sents, sources), { checked: sources.length > 0 });
