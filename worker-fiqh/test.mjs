@@ -1,6 +1,6 @@
 // Ujian pelayan Tanya AI Fiqh tanpa rangkaian: node worker-fiqh/test.mjs
 import assert from 'node:assert/strict';
-import worker, { verify, collectRetrieved, norm, normUrl, parseAnswer, MODEL, DOMAINS } from './src/index.js';
+import worker, { verify, collectRetrieved, norm, normUrl, parseAnswer, MODEL, GEMINI_MODEL, DOMAINS } from './src/index.js';
 import { BY_ID, CORPUS_TEXT } from './src/corpus.js';
 
 const env = { ANTHROPIC_API_KEY: 'sk-test', ALLOWED_ORIGINS: 'https://bijaklabur.my' };
@@ -109,6 +109,54 @@ assert.equal((await call({ q: 'x'.repeat(501) })).status, 400);
 assert.equal((await call({ q: 'Hukum kripto?' }, 'https://jahat.example')).status, 403);
 assert.equal((await call({ q: 'Hukum kripto?' }, 'https://bijaklabur.my', { ALLOWED_ORIGINS: env.ALLOWED_ORIGINS })).status, 503);
 d = await (await worker.fetch(new Request(W + '/'), env)).json();
-assert.deepEqual(d, { ok: true, service: 'bijak-labur-fiqh', ai: true });
+assert.deepEqual(d, { ok: true, service: 'bijak-labur-fiqh', ai: true, penyedia: 'claude' });
+
+// Gemini (percuma) apabila hanya GEMINI_API_KEY ditetapkan: korpus dan ayat Al-Quran sahaja
+const genv = { GEMINI_API_KEY: 'g-test', ALLOWED_ORIGINS: env.ALLOWED_ORIGINS };
+let gurl = null, gkey = null, gsent = null, greply = null;
+globalThis.fetch = async (u, init) => {
+  gurl = String(u); gkey = init.headers['x-goog-api-key']; gsent = JSON.parse(init.body);
+  return greply();
+};
+const gem = (obj, extra = {}) => new Response(JSON.stringify({ candidates: [{ content: { role: 'model', parts: [{ text: 'fikir', thought: true }, { text: JSON.stringify(obj) }] }, finishReason: 'STOP', ...extra }] }), { headers: { 'content-type': 'application/json' } });
+greply = () => gem({ status: 'jawab', ringkasan: 'Forex runcit haram.', huraian: ['Muzakarah memutuskan haram.'], sumber: [
+  { id: 'fatwa:mkiForex', petikan: 'riba melalui pengenaan rollover interest' },
+  { id: 'quran:2:275' },
+  { url: 'https://muftiwp.gov.my/ms/artikel/x', petikan: 'rekaan' } // tiada halaman dibuka: dibuang
+] });
+r = await call({ q: 'Apakah hukum forex runcit?' }, 'https://bijaklabur.my', genv);
+d = await r.json();
+assert.equal(r.status, 200, JSON.stringify(d));
+assert.equal(gurl, `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`);
+assert.equal(gkey, 'g-test');
+assert.equal(gsent.generationConfig.responseMimeType, 'application/json');
+assert.match(gsent.systemInstruction.parts[0].text, /Mod korpus/);
+assert.ok(gsent.contents[0].parts[0].text.includes('fatwa:mkiForex'));
+assert.equal(d.status, 'jawab'); assert.equal(d.sumber.length, 2); assert.equal(d.sumber[0].disahkan, true);
+
+// Model boleh ditukar; jawapan tanpa sumber sah menjadi tidak pasti
+greply = () => gem({ status: 'jawab', ringkasan: 'Harus.', sumber: [{ url: 'https://shamela.ws/book/1/1' }] });
+d = await (await call({ q: 'Hukum saham patuh syariah?' }, 'https://bijaklabur.my', { ...genv, GEMINI_MODEL: 'gemini-x' })).json();
+assert.ok(gurl.includes('/models/gemini-x:generateContent'));
+assert.equal(d.status, 'tidak_pasti');
+
+// Disekat oleh Gemini: luar skop
+greply = () => gem({}, { finishReason: 'SAFETY' });
+d = await (await call({ q: 'Soalan yang disekat' }, 'https://bijaklabur.my', genv)).json();
+assert.equal(d.status, 'luar_skop');
+
+// Kuota percuma habis atau pelayan sibuk: 429
+for (const st of [429, 503]) {
+  greply = () => new Response('{"error":{"code":' + st + '}}', { status: st });
+  assert.equal((await call({ q: 'Hukum emas digital?' }, 'https://bijaklabur.my', genv)).status, 429);
+}
+greply = () => new Response('{"error":{"code":400}}', { status: 400 });
+assert.equal((await call({ q: 'Hukum emas digital?' }, 'https://bijaklabur.my', genv)).status, 502);
+
+// Claude diutamakan jika kedua-dua kunci ada
+d = await (await worker.fetch(new Request(W + '/'), genv)).json();
+assert.deepEqual(d, { ok: true, service: 'bijak-labur-fiqh', ai: true, penyedia: 'gemini' });
+d = await (await worker.fetch(new Request(W + '/'), { ...genv, ...env })).json();
+assert.equal(d.penyedia, 'claude');
 
 console.log('Semua ujian Tanya AI lulus');

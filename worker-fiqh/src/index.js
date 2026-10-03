@@ -4,10 +4,11 @@
  * POST /tanya  { q }  -> { status, ringkasan, huraian[], khilaf, nasihat, sumber[] }
  * GET  /             -> { ok, ai }
  *
- * AI (Claude) hanya boleh menjawab dengan rujukan:
+ * AI (Claude, atau Gemini percuma jika hanya GEMINI_API_KEY ditetapkan) hanya boleh menjawab dengan rujukan:
  *  1. Korpus rujukan Fiqh Bijak Labur yang telah disemak (js/fiqh-data.js).
  *  2. Halaman yang benar-benar dibuka semasa soalan itu dijawab, dari senarai domain yang dibenarkan sahaja
  *     (Shamela untuk kitab muktabar, quran.com, sunnah.com, laman mufti dan fatwa rasmi Malaysia).
+ *     Hanya Claude mempunyai alat web; dengan Gemini, jawapan bersandarkan korpus dan ayat Al-Quran sahaja.
  * Setiap sumber yang dipulangkan model disemak di sini: id mesti wujud dalam korpus, atau URL mesti
  * halaman yang benar-benar dibuka atau ditemui dalam carian. Petikan disemak perkataan demi perkataan
  * dengan teks halaman itu. Sumber yang gagal dibuang; jawapan tanpa sumber sah ditukar kepada "tidak pasti".
@@ -16,6 +17,8 @@ import Anthropic from '@anthropic-ai/sdk';
 import { BY_ID, CORPUS_TEXT } from './corpus.js';
 
 export const MODEL = 'claude-opus-5-5';
+// Alias Google untuk model Flash terkini (peringkat percuma). Boleh ditukar dengan pemboleh ubah GEMINI_MODEL.
+export const GEMINI_MODEL = 'gemini-flash-latest';
 export const DOMAINS = ['shamela.ws', 'quran.com', 'sunnah.com', 'muftiwp.gov.my', 'muftiselangor.gov.my', 'islam.gov.my', 'sc.com.my', 'iifa-aifi.org', 'zakat.com.my'];
 const MAX_Q = 500;
 const CACHE_DAYS = 7;
@@ -148,7 +151,39 @@ export function verify(ans, pages) {
   return res;
 }
 
+// Gemini tidak mempunyai alat web_search/web_fetch dalam pelayan ini, jadi hanya korpus dan ayat Al-Quran dibenarkan
+export const SYSTEM_KORPUS = SYSTEM + `
+
+Mod korpus: alat web_search dan web_fetch TIDAK tersedia. Gunakan hanya sumber 2a (id korpus) dan 2b (quran:SURAH:AYAT), dan biarkan "url" kosong. Jika korpus tidak menjawab soalan, pulangkan status "tidak_pasti".`;
+
 /* ---------- Model ---------- */
+const provider = env => env.ANTHROPIC_API_KEY ? 'claude' : env.GEMINI_API_KEY ? 'gemini' : '';
+const NO_ANSWER = { status: 'luar_skop', ringkasan: 'Soalan ini tidak dapat dijawab.', huraian: [], khilaf: '', nasihat: '', sumber: [] };
+
+export async function askGemini(env, question) {
+  const model = env.GEMINI_MODEL || GEMINI_MODEL;
+  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY },
+    body: JSON.stringify({
+      systemInstruction: { parts: [{ text: SYSTEM_KORPUS }] },
+      contents: [{ role: 'user', parts: [{ text: `Korpus rujukan Bijak Labur (telah disemak):\n\n${CORPUS_TEXT}` }, { text: `Soalan pengguna:\n${question}` }] }],
+      generationConfig: { responseMimeType: 'application/json', temperature: 0.2, maxOutputTokens: 8192 }
+    })
+  });
+  if (!r.ok) {
+    const e = new Error('Gemini ' + r.status + ' ' + (await r.text()).slice(0, 300));
+    e.status = r.status === 503 ? 529 : r.status;
+    throw e;
+  }
+  const d = await r.json(), c = d.candidates && d.candidates[0];
+  if ((d.promptFeedback && d.promptFeedback.blockReason) || (c && ['SAFETY', 'PROHIBITED_CONTENT', 'BLOCKLIST', 'SPII'].includes(c.finishReason))) return NO_ANSWER;
+  const text = (c && c.content && c.content.parts || []).filter(p => !p.thought).map(p => p.text || '').join('');
+  const ans = parseAnswer(text);
+  // Tiada halaman web dibuka, jadi hanya id korpus dan ayat Al-Quran boleh lulus semakan
+  return verify(ans || { status: 'tidak_pasti' }, new Map());
+}
+
 export async function ask(env, question, client) {
   client = client || new Anthropic({ apiKey: env.ANTHROPIC_API_KEY, maxRetries: 1 });
   const tools = [
@@ -171,7 +206,7 @@ export async function ask(env, question, client) {
     if (res.stop_reason !== 'pause_turn') break;
     messages.push({ role: 'assistant', content: res.content });
   }
-  if (res.stop_reason === 'refusal') return { status: 'luar_skop', ringkasan: 'Soalan ini tidak dapat dijawab.', huraian: [], khilaf: '', nasihat: '', sumber: [] };
+  if (res.stop_reason === 'refusal') return NO_ANSWER;
   const text = res.content.filter(b => b.type === 'text').map(b => b.text).join('');
   const ans = parseAnswer(text);
   if (!ans) return verify({ status: 'tidak_pasti' }, new Map());
@@ -179,7 +214,7 @@ export async function ask(env, question, client) {
 }
 
 async function tanya(req, env, url, h) {
-  if (!env.ANTHROPIC_API_KEY) return json({ error: 'Tanya AI belum diaktifkan.' }, 503, h);
+  if (!provider(env)) return json({ error: 'Tanya AI belum diaktifkan.' }, 503, h);
   // Hanya laman dan app Bijak Labur (elak orang lain menghabiskan kredit API)
   if (!h['access-control-allow-origin']) return json({ error: 'Tidak dibenarkan.' }, 403, h);
   let body;
@@ -198,9 +233,9 @@ async function tanya(req, env, url, h) {
     if (!success) return json({ error: 'Terlalu banyak soalan. Cuba lagi sebentar.' }, 429, h);
   }
   let out;
-  try { out = await ask(env, q); }
+  try { out = provider(env) === 'claude' ? await ask(env, q) : await askGemini(env, q); }
   catch (e) {
-    console.log('Claude', e && e.status, e && e.message);
+    console.log(provider(env), e && e.status, e && e.message);
     const busy = e && (e.status === 429 || e.status === 529);
     return json({ error: busy ? 'Tanya AI sibuk. Cuba lagi sebentar.' : 'Tanya AI tidak tersedia buat masa ini.' }, busy ? 429 : 502, h);
   }
@@ -214,7 +249,7 @@ export default {
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: h });
     try {
       if (req.method === 'POST' && url.pathname === '/tanya') return await tanya(req, env, url, h);
-      if (url.pathname === '/') return json({ ok: true, service: 'bijak-labur-fiqh', ai: !!env.ANTHROPIC_API_KEY }, 200, h);
+      if (url.pathname === '/') return json({ ok: true, service: 'bijak-labur-fiqh', ai: !!provider(env), penyedia: provider(env) }, 200, h);
       return json({ error: 'Tidak dijumpai' }, 404, h);
     } catch (e) {
       console.log('ralat', e && e.stack || e);
