@@ -4,7 +4,9 @@
   const NATIVE_TTS = plugin('TextToSpeech');
   const synth = 'speechSynthesis' in window ? window.speechSynthesis : null;
   const btn = $('#sayBtn');
-  if (!NATIVE_TTS && !synth) { btn.remove(); return; }
+  // Suara HD: alamat pelayan Bijak Labur (Cloudflare Worker) dengan laluan /tts. Kosong = guna suara peranti sahaja.
+  const HD_API = '';
+  if (!NATIVE_TTS && !synth && !HD_API) { btn.remove(); return; }
 
   const BASE = { ms: 'ms-MY', en: 'en-GB', 'zh-Hans': 'zh-CN', zh: 'zh-CN', ta: 'ta-IN', ar: 'ar-SA' };
   const SCRIPTS = [[/[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿]/, 'ar-SA'], [/[㐀-鿿　-〿＀-￯]/, 'zh-CN'], [/[஀-௿]/, 'ta-IN']];
@@ -103,13 +105,25 @@
   const chosen = () => store.get('sayVoice', {});
   const voicesFor = k => voices.filter(v => keyOf(v.lang) === k);
   // Pilih suara: pilihan pengguna, kemudian ikut turutan senarai ganti
+  // Utamakan suara berkualiti (Natural/Neural, Enhanced/Premium, Google) dan elak suara robot atau suara hiburan
+  function quality(v) {
+    const n = v.name || '';
+    let q = 0;
+    if (/natural|neural|online/i.test(n)) q += 6;
+    if (/premium|enhanced|\(plus\)|wavenet|studio/i.test(n)) q += 5;
+    if (/google/i.test(n)) q += 3;
+    if (/microsoft/i.test(n)) q += 1;
+    if (/espeak|compact|eloquence|novelty|bad news|bells|bubbles|cellos|jester|organ|trinoids|whisper|zarvox|albert|fred|hysterical|superstar|wobble|boing|bahh|junior|ralph/i.test(n)) q -= 8;
+    return q;
+  }
+  const best = list => list.length ? list.slice().sort((a, b) => quality(b) - quality(a))[0] : null;
   function resolve(lang) {
     const k = keyOf(lang), L = LK[k];
     if (!L) return { lang };
     const list = voicesFor(k), pick = chosen()[k];
     let v = pick && list.find(x => x.name === pick);
-    if (!v) for (const c of L.chain) { v = list.find(x => norm(x.lang) === norm(c)); if (v) break; }
-    if (!v) v = list[0];
+    if (!v) for (const c of L.chain) { v = best(list.filter(x => norm(x.lang) === norm(c))); if (v) break; }
+    if (!v) v = best(list);
     if (v) return { lang: v.lang.replace('_', '-'), voice: v };
     if (nativeLangs) { const c = L.chain.find(c => nativeLangs.includes(norm(c))); if (c) return { lang: c }; }
     return null;
@@ -126,7 +140,61 @@
     return null;
   }
 
-  function say(text, lang) {
+  /* ---------- Suara HD (neural, melalui pelayan) ---------- */
+  const HD_OK = !!HD_API;
+  const hdOn = () => HD_OK && store.get('sayHD', true) && navigator.onLine !== false && !hdDown;
+  const hdGender = () => store.get('sayHDg', 'f');
+  let hdDown = false, hdPending = new Map();
+  const audio = new Audio();
+  audio.preload = 'auto';
+  // iOS: buka kunci audio dalam sentuhan pengguna supaya bahagian seterusnya boleh dimainkan
+  function unlockAudio() {
+    if (!HD_OK || audio.dataset.ok) return;
+    audio.dataset.ok = '1';
+    audio.src = 'data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tAwAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAAYYoRBqpAAAAAAD/+xDEAAPAAAGkAAAAIAAANIAAAARMQU1FMy4xMDBVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/7EMQpg8AAAaQAAAAgAAA0gAAABFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV';
+    audio.play().catch(() => {});
+  }
+  const hdUrl = (text, k) => `${HD_API.replace(/\/$/, '')}/tts?v=${k}-${hdGender()}&r=${rate}&t=${encodeURIComponent(text)}`;
+  function hdFetch(text, k) {
+    const u = hdUrl(text, k);
+    if (!hdPending.has(u)) {
+      const p = fetch(u).then(async r => {
+        if (!r.ok) { const e = await r.json().catch(() => ({})); throw Object.assign(new Error(e.error || 'HD'), { status: r.status }); }
+        return URL.createObjectURL(await r.blob());
+      });
+      p.catch(() => hdPending.delete(u));
+      hdPending.set(u, p);
+      if (hdPending.size > 24) { const [old, op] = hdPending.entries().next().value; hdPending.delete(old); op.then(URL.revokeObjectURL, () => {}); }
+    }
+    return hdPending.get(u);
+  }
+  const hdKey = lang => { const k = keyOf(lang); return LK[k] ? k : null; };
+  function prefetch(q) { if (q && hdOn() && hdKey(q.lang)) hdFetch(q.text, hdKey(q.lang)).catch(() => {}); }
+  async function sayHD(text, k) {
+    const src = await hdFetch(text, k);
+    return new Promise((res, rej) => {
+      audio.onended = () => res();
+      audio.onerror = () => rej('error');
+      audio.onpause = () => { if (!audio.ended) rej('interrupted-hd'); };
+      audio.src = src;
+      audio.play().catch(rej);
+    });
+  }
+
+  async function say(text, lang) {
+    const k = hdKey(lang);
+    if (k && hdOn()) {
+      try { return await sayHD(text, k); }
+      catch (e) {
+        if (String(e) === 'interrupted-hd') throw e;
+        // Pelayan tiada atau kuota habis: guna suara peranti untuk baki sesi ini
+        if (e && e.status) { hdDown = true; toast(e.status === 429 ? 'Kuota Suara HD bulan ini habis. Guna suara peranti.' : 'Suara HD tidak tersedia. Guna suara peranti.', 3500); }
+      }
+    }
+    return sayDevice(text, lang);
+  }
+  function sayDevice(text, lang) {
+    if (!NATIVE_TTS && !synth) return Promise.resolve('skip');
     const r = plan(lang);
     if (!r) return Promise.resolve('skip');
     if (NATIVE_TTS) return NATIVE_TTS.speak(Object.assign({ text, lang: r.lang, rate, pitch: 1, volume: 1, category: 'playback' }, r.voice ? { voice: r.voice.i } : {}));
@@ -140,20 +208,21 @@
     });
   }
   function hushEngine() {
+    if (HD_OK && !audio.paused) { audio.onpause = null; audio.pause(); }
     if (NATIVE_TTS) NATIVE_TTS.stop().catch(() => {});
-    else synth.cancel();
+    else if (synth) synth.cancel();
   }
 
   /* ---------- Main ---------- */
   async function run(t) {
     while (t === token && state === 'playing' && idx < queue.length) {
       const q = queue[idx];
-      mark(q.el); paint();
+      mark(q.el); paint(); prefetch(queue[idx + 1]);
       try { await say(q.text, q.lang); }
       catch (e) {
         if (t !== token) return;
         // Dibatalkan oleh pembaca lain (cth. butang Dengar di Pustaka)
-        if (/interrupt|cancel/i.test(String(e))) { stop(); return; }
+        if (/interrupt|cancel/i.test(String(e))) { if (String(e) === 'interrupted-hd') { pause(); return; } stop(); return; }
       }
       if (t !== token) return;
       idx++;
@@ -226,7 +295,7 @@
     $('.say-rate', bar).textContent = rate + '×';
   }
 
-  btn.addEventListener('click', () => state === 'idle' ? start() : stop());
+  btn.addEventListener('click', () => { unlockAudio(); state === 'idle' ? start() : stop(); });
   bar.addEventListener('click', e => {
     const b = e.target.closest('[data-say]'); if (!b) return;
     const a = b.dataset.say;
@@ -264,13 +333,18 @@
       <p class="muted small">Suara datang daripada peranti anda. Pilih suara bagi setiap bahasa dan tekan Cuba untuk mendengar.</p>
       <div class="say-langs">${LANGS.map(L => {
         const list = voicesFor(L.k), r = resolve(L.k), ok = !!r || L.soft || (!voices.length && !NATIVE_TTS);
-        const tag = r && r.voice ? `${esc(r.voice.name)}${/^(id|in)/i.test(r.voice.lang) && !/indonesia/i.test(r.voice.name) ? ' (Indonesia)' : ''}` : ok ? 'Suara lalai peranti' : 'Tiada suara';
+        const tag = r && r.voice ? `${esc(r.voice.name)}${/^(id|in)/i.test(r.voice.lang) && !/indonesia/i.test(r.voice.name) ? ' (Indonesia)' : ''}` : ok ? 'Suara lalai peranti' : hdOn() ? 'Suara HD' : 'Tiada suara';
         return `<div class="say-lang">
-          <div class="say-lh"><b lang="${LBL[L.k]}">${L.name}</b><span class="say-pill ${r ? 'ok' : ok ? 'mid' : 'no'}">${tag}</span></div>
-          <div class="say-lr">${list.length > 1 ? `<select data-sayvoice="${L.k}" aria-label="Suara ${L.name}"><option value="">Automatik</option>${list.map(v => `<option value="${esc(v.name)}" ${v.name === pick[L.k] ? 'selected' : ''}>${esc(v.name)} (${esc(v.lang)})</option>`).join('')}</select>` : `<span class="muted small">${list.length ? 'Satu suara tersedia.' : ok ? 'Guna suara lalai peranti.' : 'Pasang suara bahasa ini. Lihat cara di bawah.'}</span>`}
+          <div class="say-lh"><b lang="${LBL[L.k]}">${L.name}</b><span class="say-pill ${r || (!ok && hdOn()) ? 'ok' : ok ? 'mid' : 'no'}">${tag}</span></div>
+          <div class="say-lr">${list.length > 1 ? `<select data-sayvoice="${L.k}" aria-label="Suara ${L.name}"><option value="">Automatik</option>${list.map(v => `<option value="${esc(v.name)}" ${v.name === pick[L.k] ? 'selected' : ''}>${esc(v.name)} (${esc(v.lang)})</option>`).join('')}</select>` : `<span class="muted small">${list.length ? 'Satu suara tersedia.' : ok ? 'Guna suara lalai peranti.' : hdOn() ? 'Guna Suara HD dalam talian.' : 'Pasang suara bahasa ini. Lihat cara di bawah.'}</span>`}
           <button type="button" class="btn sm ghost" data-saytest="${L.k}"><svg class="ic"><use href="#i-play"/></svg>Cuba</button></div>
         </div>`;
       }).join('')}</div>
+      ${HD_OK ? `<div class="say-hd">
+        <div><b>Suara HD</b><p class="muted small">Suara neural yang lebih semula jadi untuk semua 5 bahasa, termasuk Tamil Malaysia. Perlu internet.</p></div>
+        <div class="say-hd-row"><span class="segmented small">${[['1', 'Hidup'], ['0', 'Mati']].map(([v, t]) => `<button type="button" class="seg ${String(+store.get('sayHD', true)) === v ? 'active' : ''}" data-sayhd="${v}">${t}</button>`).join('')}</span>
+        <span class="segmented small">${[['f', 'Perempuan'], ['m', 'Lelaki']].map(([v, t]) => `<button type="button" class="seg ${hdGender() === v ? 'active' : ''}" data-sayhdg="${v}">${t}</button>`).join('')}</span></div>
+      </div>` : ''}
       <div class="say-rate-row"><span>Kelajuan</span>${RATES.map(r => `<button type="button" class="chip ${r === rate ? 'active' : ''}" data-sayrate="${r}">${r}×</button>`).join('')}</div>
       <details class="say-help" ${LANGS.some(L => !L.soft && !resolve(L.k)) && voices.length ? 'open' : ''}><summary>Tiada suara untuk sesuatu bahasa?</summary><p class="small">${HELP[OS] || HELP.other}</p>
         ${NATIVE_TTS && OS === 'android' ? '<button type="button" class="btn sm" data-sayinstall>Buka pemasangan suara</button>' : ''}</details>
@@ -283,7 +357,9 @@
       document.body.appendChild(dlg);
       dlg.addEventListener('click', e => {
         let b;
-        if ((b = e.target.closest('[data-saytest]'))) { const L = LK[b.dataset.saytest]; warned.delete(L.k); read(L.sample, L.chain[0]); }
+        if ((b = e.target.closest('[data-saytest]'))) { unlockAudio(); const L = LK[b.dataset.saytest]; warned.delete(L.k); read(L.sample, L.chain[0]); }
+        else if ((b = e.target.closest('[data-sayhd]'))) { store.set('sayHD', b.dataset.sayhd === '1'); hdDown = false; renderDlg(); }
+        else if ((b = e.target.closest('[data-sayhdg]'))) { store.set('sayHDg', b.dataset.sayhdg); renderDlg(); }
         else if ((b = e.target.closest('[data-sayrate]'))) { rate = +b.dataset.sayrate; store.set('sayRate', rate); renderDlg(); paint(); }
         else if (e.target.closest('[data-sayinstall]')) NATIVE_TTS.openInstall().catch(() => toast('Buka Tetapan, kemudian cari Output teks-ke-pertuturan.', 4000));
       });

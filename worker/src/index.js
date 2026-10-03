@@ -5,6 +5,7 @@
  * GET  /return    (ToyyibPay hantar pembeli ke sini)    -> 302 ke laman web dengan kod bil
  * POST /callback  (pemberitahuan pelayan ToyyibPay)     -> "OK"
  * POST /claim     { billcode, email }                   -> { token, plan, exp }  lesen bertandatangan
+ * GET  /tts?t=teks&v=ms-f&r=1                          -> audio/mpeg  Suara HD (Azure Speech neural, peringkat F0 percuma)
  *
  * Tiada pangkalan data: setiap tuntutan disahkan terus dengan ToyyibPay, kemudian
  * lesen ditandatangani (ECDSA P-256) supaya app boleh mengesahkannya tanpa talian.
@@ -120,6 +121,43 @@ async function claim(req, env) {
   return { status: 200, data: { token, plan, exp } };
 }
 
+/* ---------- Suara HD: Azure Speech (neural). Peringkat F0 percuma 0.5 juta aksara sebulan dan berhenti, tidak dicaj ---------- */
+export const TTS_VOICES = {
+  'ms-f': ['ms-MY', 'ms-MY-YasminNeural'], 'ms-m': ['ms-MY', 'ms-MY-OsmanNeural'],
+  'en-f': ['en-GB', 'en-GB-SoniaNeural'], 'en-m': ['en-GB', 'en-GB-RyanNeural'],
+  'zh-f': ['zh-CN', 'zh-CN-XiaoxiaoNeural'], 'zh-m': ['zh-CN', 'zh-CN-YunxiNeural'],
+  'ta-f': ['ta-MY', 'ta-MY-KaniNeural'], 'ta-m': ['ta-MY', 'ta-MY-SuryaNeural'],
+  'ar-f': ['ar-SA', 'ar-SA-ZariyahNeural'], 'ar-m': ['ar-SA', 'ar-SA-HamedNeural']
+};
+const TTS_RATES = { '0.8': '-20%', '1': '0%', '1.2': '+20%' };
+const xml = s => s.replace(/[<>&'"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', "'": '&apos;', '"': '&quot;' }[c]));
+
+async function tts(req, env, url, h) {
+  if (!env.AZURE_SPEECH_KEY) return json({ error: 'Suara HD belum disediakan.' }, 503, h);
+  // Hanya laman dan app Bijak Labur (elak orang lain menghabiskan kuota)
+  if (!h['access-control-allow-origin']) return json({ error: 'Tidak dibenarkan.' }, 403, h);
+  const text = String(url.searchParams.get('t') || '').replace(/\s+/g, ' ').trim();
+  const v = TTS_VOICES[url.searchParams.get('v')], rate = TTS_RATES[url.searchParams.get('r') || '1'];
+  if (!text || text.length > 300 || !v || !rate) return json({ error: 'Permintaan tidak sah.' }, 400, h);
+
+  const key = new Request(`${url.origin}/tts-cache?v=${v[1]}&r=${rate}&t=${encodeURIComponent(text)}`);
+  const cache = typeof caches !== 'undefined' ? caches.default : null;
+  let hit = cache && await cache.match(key);
+  if (!hit) {
+    const ssml = `<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="${v[0]}"><voice name="${v[1]}"><prosody rate="${rate}">${xml(text)}</prosody></voice></speak>`;
+    const r = await fetch(`https://${env.AZURE_SPEECH_REGION || 'southeastasia'}.tts.speech.microsoft.com/cognitiveservices/v1`, {
+      method: 'POST',
+      headers: { 'Ocp-Apim-Subscription-Key': env.AZURE_SPEECH_KEY, 'Content-Type': 'application/ssml+xml', 'X-Microsoft-OutputFormat': 'audio-24khz-48kbitrate-mono-mp3', 'User-Agent': 'bijak-labur' },
+      body: ssml
+    });
+    if (!r.ok) { console.log('Azure TTS', r.status, (await r.text()).slice(0, 200)); return json({ error: r.status === 429 ? 'Kuota suara HD bulan ini telah habis.' : 'Suara HD tidak tersedia.' }, r.status === 429 ? 429 : 502, h); }
+    hit = new Response(await r.arrayBuffer(), { headers: { 'content-type': 'audio/mpeg', 'cache-control': 'public, max-age=2592000' } });
+    if (cache) await cache.put(key, hit.clone());
+  }
+  const out = new Response(hit.body, { headers: { 'content-type': 'audio/mpeg', 'cache-control': 'public, max-age=2592000', ...h } });
+  return out;
+}
+
 export default {
   async fetch(req, env) {
     const url = new URL(req.url), h = cors(req, env);
@@ -136,7 +174,8 @@ export default {
         const r = url.pathname === '/checkout' ? await checkout(req, env, url) : await claim(req, env);
         return json(r.data, r.status, h);
       }
-      if (url.pathname === '/') return json({ ok: true, service: 'bijak-labur-premium' }, 200, h);
+      if (req.method === 'GET' && url.pathname === '/tts') return await tts(req, env, url, h);
+      if (url.pathname === '/') return json({ ok: true, service: 'bijak-labur-premium', tts: !!env.AZURE_SPEECH_KEY }, 200, h);
       return json({ error: 'Tidak dijumpai' }, 404, h);
     } catch (e) {
       console.log('ralat', e && e.stack || e);

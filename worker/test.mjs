@@ -65,4 +65,19 @@ assert.equal((await call('/claim', { billcode: 'abc12345', email: 'ali@mail.com'
 Object.assign(tx[0], { billpaymentAmount: '5.00', billExternalReferenceNo: 'BL-pelajar-m1-1', billPaymentDate: '01-01-2025 10:00:00' });
 assert.equal((await call('/claim', { billcode: 'abc12345', email: 'ali@mail.com' })).status, 410);
 
+// Suara HD
+let ssml = null;
+globalThis.fetch = async (u, init) => { assert.match(u, /^https:\/\/southeastasia\.tts\.speech\.microsoft\.com\//); ssml = init.body; return new Response(new Uint8Array([1, 2, 3])); };
+const tts = (q, origin = 'https://shamirai-rgb.github.io', e = env) => worker.fetch(new Request(W + '/tts?' + q, { headers: { origin } }), e);
+assert.equal((await tts('t=Hai&v=ms-f')).status, 503);
+const envT = { ...env, AZURE_SPEECH_KEY: 'k' };
+r = await tts('t=' + encodeURIComponent('Selamat <pagi> & "salam"') + '&v=ms-f&r=1.2', undefined, envT);
+assert.equal(r.status, 200); assert.equal(r.headers.get('content-type'), 'audio/mpeg');
+assert.equal(r.headers.get('access-control-allow-origin'), 'https://shamirai-rgb.github.io');
+assert.ok(ssml.includes('ms-MY-YasminNeural') && ssml.includes('+20%') && ssml.includes('&lt;pagi&gt; &amp; &quot;salam&quot;'), ssml);
+r = await tts('t=வணக்கம்&v=ta-m', undefined, envT); assert.equal(r.status, 200); assert.ok(ssml.includes('ta-MY-SuryaNeural'));
+assert.equal((await tts('t=Hai&v=fr-f', undefined, envT)).status, 400);
+assert.equal((await tts('t=' + 'a'.repeat(301) + '&v=ms-f', undefined, envT)).status, 400);
+assert.equal((await tts('t=Hai&v=ms-f', 'https://jahat.example', envT)).status, 403);
+
 console.log('Semua ujian pelayan pembayaran lulus');

@@ -36,6 +36,9 @@ footer .link-btn[data-say-settings] { padding: 0; font-size: inherit; text-decor
 .say-lr select, .say-lr > span { flex: 1; min-width: 0; }
 .say-lr .btn { flex: none; gap: 5px; }
 .say-lr .btn .ic { width: 13px; height: 13px; }
+.say-hd { display: grid; gap: 8px; padding: 12px; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 12px; }
+.say-hd p { margin: 2px 0 0; }
+.say-hd-row { display: flex; gap: 8px; flex-wrap: wrap; }
 .say-rate-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; font-weight: 600; font-size: .9rem; }
 .say-rate-row span { margin-right: 4px; }
 .say-help { border-top: 1px solid var(--border); padding: 12px 0; margin-bottom: 8px; }
