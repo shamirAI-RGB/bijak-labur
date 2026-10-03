@@ -221,45 +221,100 @@
   }
 
   /* ---------- Plagiarisme ---------- */
+  const STOP = new Set(('yang dan di ini untuk dengan adalah dalam tidak kepada pada akan ke dari daripada itu oleh juga ialah merupakan bagi serta kerana boleh telah sebagai mereka kita saya lebih banyak atau ada satu ia ' +
+    'the and of to is in that it for with as are this was be by on not or from have has which an they their can will a its were been also more than such into these other').split(' '));
+  function toks(t) { const out = []; const re = new RegExp(WORD_RE.source, 'gu'); let m; while ((m = re.exec(t))) out.push({ w: norm(m[0]), s: m.index, e: m.index + m[0].length }); return out; }
+  const pickSpread = (arr, n) => arr.length <= n ? arr : Array.from({ length: n }, (_, i) => arr[Math.floor(i * arr.length / n)]);
+  async function getJSON(u) { const r = await fetch(u); if (!r.ok) throw new Error(r.status); return r.json(); }
+
+  // Wikipedia (bahasa kertas kerja)
   async function wikiSources(sents, lang, onProgress) {
     const wiki = lang === 'ms' ? 'ms' : 'en';
-    const cands = sents.filter(s => words(s.text).length >= 8).sort((a, b) => b.text.length - a.text.length).slice(0, 8);
-    const titles = new Map();
-    let done = 0;
+    const cands = pickSpread(sents.filter(s => words(s.text).length >= 8), 12);
+    const titles = new Map(); let done = 0;
     await Promise.all(cands.map(async s => {
       const q = words(s.text).slice(0, 14).join(' ');
       try {
-        const j = await (await fetch(`https://${wiki}.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(q)}&srlimit=2&format=json&origin=*`)).json();
-        (j.query && j.query.search || []).forEach(r => titles.set(r.title, (titles.get(r.title) || 0) + 1));
+        const j = await getJSON(`https://${wiki}.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(q)}&srlimit=3&format=json&origin=*`);
+        (j.query && j.query.search || []).forEach((r, i) => titles.set(r.title, (titles.get(r.title) || 0) + 3 - i));
       } catch {}
-      onProgress(`Mencari sumber… ${++done}/${cands.length}`);
+      onProgress(`Mencari di Wikipedia… ${++done}/${cands.length}`);
     }));
-    const top = [...titles.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6).map(x => x[0]);
+    const top = [...titles.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8).map(x => x[0]);
     const pages = await Promise.all(top.map(async t => {
       try {
-        const j = await (await fetch(`https://${wiki}.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&redirects=1&titles=${encodeURIComponent(t)}&format=json&origin=*`)).json();
+        const j = await getJSON(`https://${wiki}.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&redirects=1&titles=${encodeURIComponent(t)}&format=json&origin=*`);
         const p = Object.values(j.query.pages)[0];
-        return { name: 'Wikipedia: ' + p.title, url: `https://${wiki}.wikipedia.org/wiki/${encodeURIComponent(p.title.replace(/ /g, '_'))}`, text: p.extract || '' };
+        return { name: 'Wikipedia: ' + p.title, kind: 'Wikipedia', url: `https://${wiki}.wikipedia.org/wiki/${encodeURIComponent(p.title.replace(/ /g, '_'))}`, text: p.extract || '' };
       } catch { return null; }
     }));
-    return pages.filter(Boolean);
+    return pages.filter(p => p && p.text);
   }
 
+  // Artikel akademik (OpenAlex: abstrak jurnal, prosiding dan tesis)
+  async function paperSources(sents, onProgress) {
+    const cands = pickSpread(sents.filter(s => words(s.text).length >= 10), 6);
+    const works = new Map(); let done = 0;
+    await Promise.all(cands.map(async s => {
+      const q = words(s.text).filter(w => !STOP.has(norm(w))).slice(0, 12).join(' ');
+      try {
+        const j = await getJSON(`https://api.openalex.org/works?search=${encodeURIComponent(q)}&per_page=3&select=id,display_name,doi,publication_year,abstract_inverted_index`);
+        (j.results || []).forEach(w => { if (w.abstract_inverted_index && !works.has(w.id)) works.set(w.id, w); });
+      } catch {}
+      onProgress(`Mencari artikel akademik… ${++done}/${cands.length}`);
+    }));
+    return [...works.values()].map(w => {
+      const pos = []; Object.entries(w.abstract_inverted_index).forEach(([word, idx]) => idx.forEach(i => { pos[i] = word; }));
+      return { name: `Artikel: ${w.display_name}${w.publication_year ? ` (${w.publication_year})` : ''}`, kind: 'Artikel akademik', url: w.doi || w.id, text: pos.filter(Boolean).join(' ') };
+    }).filter(w => words(w.text).length >= 30);
+  }
+
+  // Padanan tepat (rentetan 5 perkataan atau lebih) dan parafrasa hampir sama (ayat berkongsi ≥60% kata isi)
   function plagiarism(text, sents, sources) {
-    const docSh = shingles(text);
-    const srcSh = sources.map(s => ({ ...s, sh: shingles(s.text) }));
-    const matched = new Set();
-    const perSource = srcSh.map(s => {
-      let c = 0; docSh.forEach(x => { if (s.sh.has(x)) { c++; matched.add(x); } });
-      return { name: s.name, url: s.url, pct: docSh.size ? Math.round(c / docSh.size * 100) : 0 };
-    }).filter(s => s.pct > 0).sort((a, b) => b.pct - a.pct);
-    const perSent = sents.map(s => {
-      const sh = shingles(s.text); if (!sh.size) return { frac: 0 };
-      let best = 0, src = null;
-      srcSh.forEach(x => { let c = 0; sh.forEach(y => { if (x.sh.has(y)) c++; }); if (c / sh.size > best) { best = c / sh.size; src = x.name; } });
-      return { frac: best, src };
+    const N = 5, dt = toks(text), nW = dt.length || 1;
+    const owner = new Array(dt.length).fill(-1);   // sumber pertama yang menuntut setiap perkataan
+    const content = ws => ws.filter(w => w.length > 3 && !STOP.has(w));
+    const perSource = sources.map((src, si) => {
+      const st = toks(src.text), gram = new Map();
+      for (let j = 0; j + N <= st.length; j++) { const k = st.slice(j, j + N).map(x => x.w).join(' '); const l = gram.get(k); l ? l.length < 6 && l.push(j) : gram.set(k, [j]); }
+      const covered = new Set(), matches = [];
+      for (let i = 0; i + N <= dt.length;) {
+        const starts = gram.get(dt.slice(i, i + N).map(x => x.w).join(' '));
+        if (!starts) { i++; continue; }
+        let best = 0, bj = 0;
+        starts.forEach(j => { let k = 0; while (i + k < dt.length && j + k < st.length && dt[i + k].w === st[j + k].w) k++; if (k > best) { best = k; bj = j; } });
+        for (let k = 0; k < best; k++) covered.add(i + k);
+        matches.push({ type: 'tepat', di: i, dl: best, ds: dt[i].s, de: dt[i + best - 1].e, ss: st[bj].s, se: st[bj + best - 1].e, src: src.text });
+        i += best;
+      }
+      // Parafrasa: ayat yang belum dipadankan tepat
+      const srcSents = sentences(src.text).map(x => ({ ...x, set: new Set(content(words(x.text).map(norm))) })).filter(x => x.set.size >= 4);
+      sents.forEach(s => {
+        const ti = dt.findIndex(t => t.s >= s.start), idx = []; for (let k = ti; k >= 0 && k < dt.length && dt[k].e <= s.end; k++) idx.push(k);
+        if (idx.length < 8 || idx.filter(k => covered.has(k)).length > idx.length / 2) return;
+        const A = new Set(content(idx.map(k => dt[k].w))); if (A.size < 4) return;
+        let best = 0, bs = null;
+        srcSents.forEach(x => { let c = 0; A.forEach(w => { if (x.set.has(w)) c++; }); const r = c / A.size; if (r > best) { best = r; bs = x; } });
+        if (best >= 0.6) {
+          // Padanan tepat kecil dalam ayat ini diserap ke dalam padanan parafrasa
+          for (let q = matches.length - 1; q >= 0; q--) if (matches[q].ds >= s.start && matches[q].de <= s.end) matches.splice(q, 1);
+          idx.forEach(k => covered.add(k)); matches.push({ type: 'parafrasa', di: idx[0], dl: idx.length, ds: s.start, de: s.end, ss: bs.start, se: bs.end, src: src.text, sim: Math.round(best * 100), shared: [...A].filter(w => bs.set.has(w)) }); }
+      });
+      covered.forEach(k => { if (owner[k] < 0) owner[k] = si; });
+      matches.sort((a, b) => a.ds - b.ds);
+      return { name: src.name, kind: src.kind || 'Sumber anda', url: src.url, words: covered.size, pct: Math.round(covered.size / nW * 100), matches, si };
     });
-    return { pct: docSh.size ? Math.round(matched.size / docSh.size * 100) : 0, perSource, perSent };
+    const ranked = perSource.filter(s => s.words > 0).sort((a, b) => b.words - a.words);
+    ranked.forEach((s, r) => { s.rank = r + 1; });
+    const rankOf = si => (perSource[si] && perSource[si].rank) || 0;
+    const total = owner.filter(o => o >= 0).length;
+    // Tanda peringkat ayat untuk pita AI/eksport lama
+    const perSent = sents.map(s => {
+      const idx = dt.map((t, k) => k).filter(k => dt[k].s >= s.start && dt[k].e <= s.end);
+      const hit = idx.filter(k => owner[k] >= 0);
+      return { frac: idx.length ? hit.length / idx.length : 0, src: hit.length ? perSource[owner[hit[0]]].name : null };
+    });
+    return { pct: Math.round(total / nW * 100), perSource: ranked, perSent, owner, toks: dt, rankOf, nSearched: sources.length };
   }
 
   /* ---------- Paparan ---------- */
@@ -295,8 +350,16 @@
       L.innerHTML = `<span style="--c:color-mix(in srgb,var(--purple) 15%,transparent)">Rendah</span><span style="--c:color-mix(in srgb,var(--purple) 40%,transparent)">Sederhana</span><span style="--c:color-mix(in srgb,var(--purple) 65%,transparent)">Tinggi kemungkinan AI</span>`;
       box.innerHTML = paintSents((s, i) => { const v = state.ai.perSent[i]; return v > 0.25 ? `<span class="s-ai" style="--a:${Math.round(8 + v * 60)}%" title="Anggaran AI ayat ini: ${Math.round(v * 100)}%">` : null; });
     } else {
-      L.innerHTML = `<span style="--c:color-mix(in srgb,var(--down) 30%,transparent)">Sepadan dengan sumber</span>`;
-      box.innerHTML = paintSents((s, i) => { const p = state.plag.perSent[i]; return p && p.frac >= 0.25 ? `<span class="s-plag" title="${Math.round(p.frac * 100)}% sepadan: ${esc(p.src)}">` : null; });
+      L.innerHTML = `<span style="--c:color-mix(in srgb,var(--down) 30%,transparent)">Sama dengan sumber (nombor = sumber dalam senarai)</span>`;
+      const p = state.plag, t = state.orig, T = p.toks; let html = '', pos = 0;
+      for (let k = 0; k < T.length;) {
+        const o = p.owner[k]; if (o < 0) { k++; continue; }
+        let e = k; while (e + 1 < T.length && p.owner[e + 1] === o) e++;
+        const r = p.rankOf(o), src = p.perSource.find(x => x.rank === r);
+        html += esc(t.slice(pos, T[k].s)) + `<span class="s-plag" data-rank="${r}" title="Sama dengan: ${esc(src ? src.name : '')}">${esc(t.slice(T[k].s, T[e].e))}<sup>${r}</sup></span>`;
+        pos = T[e].e; k = e + 1;
+      }
+      box.innerHTML = (html + esc(t.slice(pos))).replace(/\n/g, '<br>');
     }
   }
   function paintSents(open) {
@@ -356,6 +419,34 @@
     $('#stats').innerHTML = items.map(([v, k]) => `<div class="stat"><div class="v">${v}</div><div class="k">${k}</div></div>`).join('');
   }
 
+
+  // Senarai sumber: peratus setiap sumber dan petikan yang sama, sebelah-menyebelah
+  function snippet(src, ss, se, shared, ctx = 70) {
+    const a = ctx ? Math.max(0, src.lastIndexOf(' ', Math.max(0, ss - ctx))) : ss, b = ctx ? src.indexOf(' ', Math.min(src.length, se + ctx)) : se;
+    const mid = shared ? esc(src.slice(ss, se)).replace(new RegExp(`\\b(${shared.map(escRe).join('|')})\\b`, 'giu'), '<mark>$1</mark>') : `<mark>${esc(src.slice(ss, se))}</mark>`;
+    if (!ctx) return mid;
+    return (a > 0 ? '… ' : '') + esc(src.slice(a, ss)) + mid + esc(src.slice(se, b < 0 ? src.length : b)) + (b > 0 && b < src.length ? ' …' : '');
+  }
+  function renderSources() {
+    const p = state.plag, t = state.orig;
+    if (!p.perSource.length) {
+      $('#sourceList').innerHTML = `<p class="muted small">${p.checked ? `Tiada padanan ketara ditemui dalam ${p.nSearched} sumber yang disemak.` : 'Aktifkan carian dalam talian atau tampal teks sumber untuk semakan plagiarisme.'} Nota: semakan ini meliputi Wikipedia, abstrak artikel akademik (OpenAlex) dan teks yang anda tampal, bukan pangkalan data tertutup seperti Turnitin.</p>`;
+      return;
+    }
+    $('#sourceList').innerHTML = `<p class="muted small src-sum">${p.perSource.length} daripada ${p.nSearched} sumber yang disemak mempunyai teks yang sama. Klik sumber untuk melihat petikan sebelah-menyebelah.</p>` + p.perSource.map(s => {
+      const ex = s.matches.filter(m => m.type === 'tepat').length, pa = s.matches.length - ex;
+      return `<details class="src">
+        <summary><span class="src-rank">${s.rank}</span><span class="src-main"><span class="src-name">${esc(s.name)}</span><span class="muted small">${esc(s.kind)} · ${ex} petikan sama${pa ? ` · ${pa} parafrasa hampir sama` : ''}</span></span><span class="src-pct num">${s.pct}%</span></summary>
+        <div class="src-bar"><div style="width:${Math.max(2, s.pct)}%"></div></div>
+        ${s.url ? `<a class="small" href="${esc(s.url)}" target="_blank" rel="noopener">Buka sumber</a>` : ''}
+        <div class="cmp-list">${s.matches.slice(0, 25).map(m => `<div class="cmp">
+          <div><div class="cmp-k">Kertas anda${m.type === 'parafrasa' ? ` · parafrasa ${m.sim}% sama` : ` · ${m.dl} perkataan sama`}</div><p>${m.type === 'parafrasa' ? snippet(t, m.ds, m.de, m.shared, 0) : `<mark>${esc(t.slice(m.ds, m.de))}</mark>`}</p></div>
+          <div><div class="cmp-k">Sumber</div><p>${snippet(m.src, m.ss, m.se, m.type === 'parafrasa' ? m.shared : null)}</p></div>
+        </div>`).join('')}${s.matches.length > 25 ? `<p class="muted small">+${s.matches.length - 25} padanan lagi</p>` : ''}</div>
+      </details>`;
+    }).join('');
+  }
+
   function renderAll() {
     const a = state.ai, p = state.plag;
     const nIssues = state.sugg.filter(s => s.cat !== 'gaya').length, n = words(state.orig).length || 1;
@@ -368,8 +459,7 @@
     requestAnimationFrame(() => setTimeout(() => $$('#gauges circle[data-off]').forEach(c => c.style.strokeDashoffset = c.dataset.off), 30));
     $('#aiBars').innerHTML = a.signals.map(([k, v]) => `<div class="bar"><span>${k}</span><div class="track"><div style="width:${Math.round(v * 100)}%;background:${v > .6 ? 'var(--purple)' : v > .35 ? 'var(--warn)' : 'var(--up)'}"></div></div><span class="mono">${Math.round(v * 100)}%</span></div>`).join('')
       + '<p class="muted small" style="margin-top:8px">Bar lebih panjang = lebih menyerupai corak tulisan AI.</p>';
-    $('#sourceList').innerHTML = p.perSource.length ? p.perSource.map(s => `<div class="source-item"><b class="down">${s.pct}%</b> · ${s.url ? `<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a>` : esc(s.name)}</div>`).join('')
-      : `<p class="muted small">${p.checked ? 'Tiada padanan ketara ditemui dalam sumber yang disemak.' : 'Aktifkan carian Wikipedia atau tampal teks sumber untuk semakan plagiarisme.'} Nota: semakan ini tidak meliputi pangkalan data tertutup seperti Turnitin.</p>`;
+    renderSources();
     renderStats(state.orig, state.sents); renderSugg(); renderAnnotated();
   }
 
@@ -407,7 +497,7 @@
   // Ringkasan untuk laporan PDF (Premium)
   window.CheckerReport = () => state.ai && {
     ai: state.ai.pct, plag: state.plag.checked ? state.plag.pct : null, quality: state.quality, text: state.text,
-    stats: state.statItems || [], signals: state.ai.signals, sources: state.plag.perSource,
+    stats: state.statItems || [], signals: state.ai.signals, sources: state.plag.perSource.map(s => ({ name: s.name, url: s.url, pct: s.pct })),
     sugg: state.sugg.filter(s => !s.dismissed).map(s => ({ cat: CATS[s.cat].name, from: s.orig, to: s.rep === null ? '(semak semula ayat)' : s.applied ? s.rep + ' (diterima)' : s.rep || '(buang)', why: s.msg }))
   };
 
@@ -429,7 +519,11 @@
       const spellErrs = state.sugg.filter(s => s.cat === 'ejaan' || s.cat === 'tandabaca').length;
       state.ai = aiAnalysis(text, lang, state.sents, spellErrs);
       const sources = $('#sources').value.split(/\n-{3,}\n/).map((t, i) => ({ name: `Sumber anda #${i + 1}`, text: t.trim() })).filter(s => words(s.text).length >= 5);
-      if ($('#optWeb').checked) { prog('Mencari sumber…'); try { sources.push(...await wikiSources(state.sents, lang, prog)); } catch {} }
+      if ($('#optWeb').checked) {
+        prog('Mencari sumber…');
+        const [w, a] = await Promise.all([wikiSources(state.sents, lang, prog).catch(() => []), paperSources(state.sents, prog).catch(() => [])]);
+        sources.push(...w, ...a);
+      }
       state.plag = Object.assign(plagiarism(text, state.sents, sources), { checked: sources.length > 0 });
       state.view = 'fix'; $$('#viewTabs .seg').forEach(t => t.classList.toggle('active', t.dataset.v === 'fix'));
       $('#results').classList.remove('hidden'); renderAll();
