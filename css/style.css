@@ -540,3 +540,6 @@ a.card:active, .shortcut:active, .tool-card:active { transform: translateY(0) sc
 .cmp-k { font-size: 0.72rem; font-weight: 650; color: var(--muted); margin-bottom: 3px; }
 .cmp p { margin: 0; font-size: 0.88rem; line-height: 1.6; overflow-wrap: anywhere; }
 .cmp mark { background: color-mix(in srgb, var(--down) 18%, transparent); color: inherit; border-radius: 3px; padding: 0 1px; }
+/* Logo kripto sebenar */
+.coin.logo { background: var(--surface-2); overflow: hidden; }
+.coin.logo img { width: 100%; height: 100%; display: block; }

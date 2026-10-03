@@ -4,6 +4,8 @@
   const WS = 'wss://data-stream.binance.vision/stream?streams=';
   const GECKO_IDS = { BTC: 'bitcoin', ETH: 'ethereum', SOL: 'solana', BNB: 'binancecoin', XRP: 'ripple', DOGE: 'dogecoin', ADA: 'cardano', LINK: 'chainlink', AVAX: 'avalanche-2', TRX: 'tron', DOT: 'polkadot', LTC: 'litecoin', SHIB: 'shiba-inu', TON: 'the-open-network', SUI: 'sui', PEPE: 'pepe' };
   const COLORS = { BTC: '#f7931a', ETH: '#627eea', SOL: '#9945ff', BNB: '#d9a40c', XRP: '#3a3f45', DOGE: '#b8962f', ADA: '#1f4fbf', LINK: '#2a5ada', AVAX: '#e84142', TRX: '#d8262f', DOT: '#e6007a', LTC: '#345d9d', TON: '#0098ea', SUI: '#4da2ff' };
+  // Logo rasmi dalam icons/kripto (web3icons, MIT); simbol lain guna bulatan huruf
+  const LOGOS = ['BTC', 'ETH', 'SOL', 'BNB', 'XRP', 'DOGE', 'ADA', 'LINK', 'AVAX', 'TRX', 'DOT', 'LTC', 'SHIB', 'TON', 'SUI', 'PEPE'];
   const NAMES = { BTC: 'Bitcoin', ETH: 'Ethereum', SOL: 'Solana', BNB: 'BNB', XRP: 'XRP', DOGE: 'Dogecoin', ADA: 'Cardano', LINK: 'Chainlink', AVAX: 'Avalanche', TRX: 'Tron', DOT: 'Polkadot', LTC: 'Litecoin', SHIB: 'Shiba Inu', TON: 'Toncoin', SUI: 'Sui', PEPE: 'Pepe' };
   const DEFAULT = ['BTC', 'ETH', 'SOL', 'BNB', 'XRP', 'DOGE', 'ADA', 'LINK'];
 
@@ -24,7 +26,7 @@
   function rowHTML(s, prefix, removable) {
     const c = COLORS[s] || 'var(--brand)';
     return `<div class="qrow" role="button" tabindex="0" data-sym="${s}" id="${prefix}-${s}">
-      <span class="coin" style="--c:${c}">${esc(s.slice(0, 1))}</span>
+      ${LOGOS.includes(s) ? `<span class="coin logo"><img src="icons/kripto/${s.toLowerCase()}.svg" alt="" width="34" height="34" loading="lazy" decoding="async"></span>` : `<span class="coin" style="--c:${c}">${esc(s.slice(0, 1))}</span>`}
       <span style="min-width:0"><div class="q-sym">${esc(s)}</div><div class="q-name">${esc(NAMES[s] || s + '/USDT')}</div></span>
       <svg class="spark" viewBox="0 0 64 28" preserveAspectRatio="none" aria-hidden="true"></svg>
       <span class="q-right"><div class="q-price"><span class="skeleton"></span></div><div class="q-chg">&nbsp;</div></span>
