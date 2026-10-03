@@ -21,10 +21,34 @@ jobs:
           node-version: 22
       - name: Uji
         run: node worker-jadual/test.mjs
-      - name: Pasang ke Cloudflare
+      # Cuba dengan domain jadual.bijaklabur.my dahulu. Jika zon bijaklabur.my belum aktif di Cloudflare,
+      # pasang ke alamat workers.dev sahaja supaya pelayan tetap hidup.
+      - name: Pasang ke Cloudflare (domain jadual.bijaklabur.my)
+        id: domain
         if: github.ref == 'refs/heads/main' && env.HAS_CF == 'true'
+        continue-on-error: true
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: worker-jadual
+      - name: Pasang ke Cloudflare (workers.dev sahaja)
+        id: devonly
+        if: steps.domain.outcome == 'failure'
+        run: sed -i '/^routes = /d' worker-jadual/wrangler.toml
+      - if: steps.domain.outcome == 'failure'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: worker-jadual
+      - name: Ringkasan
+        if: github.ref == 'refs/heads/main'
+        run: |
+          if [ "$HAS_CF" != "true" ]; then
+            echo "Rahsia CLOUDFLARE_API_TOKEN dan CLOUDFLARE_ACCOUNT_ID belum ditetapkan, jadi pelayan jadual tidak dipasang." >> "$GITHUB_STEP_SUMMARY"
+          elif [ "${{ steps.domain.outcome }}" = "success" ]; then
+            echo "Pelayan jadual dipasang di https://jadual.bijaklabur.my" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Domain jadual.bijaklabur.my belum boleh digunakan (zon Cloudflare belum aktif?). Pelayan dipasang di alamat workers.dev; lihat log langkah di atas untuk URL." >> "$GITHUB_STEP_SUMMARY"
+          fi
