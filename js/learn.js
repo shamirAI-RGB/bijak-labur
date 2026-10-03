@@ -280,7 +280,7 @@
     box.innerHTML = m.lessons.map((l, i) => `
       <details class="lesson ${done.has(l.id) ? 'done' : ''}" data-id="${l.id}" ${i === 0 ? 'open' : ''}>
         <summary><span class="dot">${icon('check')}</span>${esc(l.t)}${icon('chev', 'ic chev')}</summary>
-        <div class="lesson-body">${l.h}
+        <div class="lesson-body">${(window.LEARN_VIS || {})[l.id] || ''}${l.h}
           <button class="btn sm ${done.has(l.id) ? 'ghost' : ''}" data-mark="${l.id}">${done.has(l.id) ? 'Tandakan belum selesai' : 'Tandakan selesai'}</button>
         </div>
       </details>`).join('');
