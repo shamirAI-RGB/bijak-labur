@@ -2,7 +2,6 @@
    Teks ayat dan hadis dimuat terus daripada sumber, bukan ditulis semula, supaya rujukan tidak tersasar. */
 (function () {
   const D = FiqhData;
-  const QAPI = 'https://api.alquran.cloud/v1';
   const HAPI = 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions';
   const BAB = Object.fromEntries(D.BAB.map(b => [b.k, b]));
   const SCALE = ['wajib', 'sunat', 'harus', 'makruh', 'haram'];
@@ -16,12 +15,7 @@
   /* ---------- Muat sumber ---------- */
   const cache = {};
   const getJSON = u => cache[u] || (cache[u] = fetch(u).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).catch(e => { delete cache[u]; throw e; }));
-  async function ayah(ref) {
-    const j = await getJSON(`${QAPI}/ayah/${ref}/editions/quran-uthmani,ms.basmeih`);
-    if (j.code !== 200) throw new Error(j.status);
-    const [ar, ms] = j.data;
-    return { ar: ar.text.replace(/^﻿/, ''), ms: ms.text, surah: ar.surah.englishName, s: ar.surah.number, a: ar.numberInSurah };
-  }
+  const ayah = ref => QuranSrc.ayah(ref);
   async function hadith(h) {
     const [ar, en] = await Promise.all([`ara-${h.c}`, `eng-${h.c}`].map(ed => getJSON(`${HAPI}/${ed}/${h.i}.json`)));
     const a = ar.hadiths[0], e = en.hadiths[0];
@@ -75,10 +69,8 @@
   }
   const refCount = m => (m.q || []).length + (m.h || []).length + (m.f || []).length + BAB[m.bab].kitab.length;
 
-  // Carian ayat: tiada padanan = 404 daripada API, bukan ralat rangkaian
-  const quranFind = w => getJSON(`${QAPI}/search/${encodeURIComponent(w)}/all/ms.basmeih`)
-    .then(j => (j.code === 200 && j.data ? j.data.matches : []))
-    .catch(e => { if (e.message === '404') return []; throw e; });
+  // Carian ayat (sumber utama dan sandaran dalam js/quran-src.js); tiada padanan = senarai kosong
+  const quranFind = w => QuranSrc.search(w).then(ms => ms.map(m => ({ surah: { number: m.s, englishName: m.surah }, numberInSurah: m.a, text: m.text })));
   const wordRe = w => new RegExp(`(^|[^\\p{L}])${w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}($|[^\\p{L}])`, 'iu');
   const findMasalah = q => { q = q.toLowerCase(); return D.MASALAH.filter(m => (m.t + ' ' + (m.alias || '') + ' ' + m.ringkas + ' ' + BAB[m.bab].name).toLowerCase().includes(q)); };
 
@@ -136,7 +128,7 @@
           ${(m.f || []).length ? `<li style="--c:#1192d6"><h4>Fatwa dan keputusan rasmi Malaysia</h4>${m.f.map(fatwaCard).join('')}</li>` : ''}
         </ol>
         <div class="actions"><button class="btn sm ghost" data-fq-copy="${m.k}">${icon('copy')}Salin senarai rujukan</button>${ext('https://github.com/shamirAI-RGB/bijak-labur/issues', 'Laporkan kesilapan')}</div>
-        <p class="source">Teks ayat dan terjemahan Tafsir Pimpinan Ar-Rahman melalui api.alquran.cloud. Teks hadis dan gred melalui hadith-api (data sunnah.com) di jsDelivr. Kitab melalui Al-Maktabah al-Shamela.</p>
+        <p class="source">Teks ayat dan terjemahan Tafsir Pimpinan Ar-Rahman melalui api.alquran.cloud (sandaran: Quran.com). Teks hadis dan gred melalui hadith-api (data sunnah.com) di jsDelivr. Kitab melalui Al-Maktabah al-Shamela.</p>
       </article>`;
     fillSources(my);
   }
