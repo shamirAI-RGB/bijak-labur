@@ -9,6 +9,27 @@
       <div class="small muted">${label}</div></div>`;
   };
 
+  // Label hukum: ok = harus, syarat = harus bersyarat, khilaf = khilaf ulama, no = tidak patuh, na = belum disahkan
+  const HK = { ok: 'Harus', syarat: 'Harus bersyarat', khilaf: 'Khilaf', no: 'Tidak patuh', na: 'Belum disahkan' };
+  const hk = (k, label) => `<span class="hl hl-${k}">${label || HK[k]}</span>`;
+  const matrix = () => {
+    const cols = ['Saham patuh Syariah', 'Saham tidak patuh', 'Kripto diluluskan MPS SC [6]', 'Emas', 'Mata wang', 'Komoditi (sawit)'];
+    const rows = [
+      ['Spot (tunai)', ['ok', 'no', 'ok', ['syarat', 'Serah segera [5]'], ['syarat', 'Tukaran sebenar sahaja [4]'], 'ok']],
+      ['Margin berfaedah', ['no', 'no', 'no', 'no', 'no', 'no']],
+      ['CFD', ['no', 'no', 'no', 'no', 'no', 'no']],
+      ['Forex runcit / MetaTrader', ['no', 'no', 'no', ['no', 'XAU/USD [1]'], ['no', 'Haram [1]'], 'no']],
+      ['Niaga hadapan', [['khilaf', 'FKLI: MPS SC harus [2]'], 'no', 'na', 'no', ['no', '[3]'], ['khilaf', 'FCPO: MPS SC harus [2]']]],
+      ['Opsyen', [['no', '[3]'], 'no', 'no', 'no', 'no', 'no']],
+      ['Jualan singkat', [['no', '[3]'], 'no', 'no', 'no', 'no', 'no']]
+    ];
+    const cell = c => { const [k, note] = Array.isArray(c) ? c : [c]; return `<td>${hk(k)}${note ? `<span class="hl-note">${note}</span>` : ''}</td>`; };
+    return `<div class="tbl-wrap hl-matrix"><table>
+      <tr><th>Cara \\ Aset</th>${cols.map(c => `<th>${c}</th>`).join('')}</tr>
+      ${rows.map(([n, cs]) => `<tr><td><b>${n}</b></td>${cs.map(cell).join('')}</tr>`).join('')}
+    </table></div>`;
+  };
+
   const MODULES = [
     {
       id: 'mula', name: 'Mula di Moomoo', lessons: [
@@ -233,6 +254,110 @@
           </ul>` }
       ]
     },
+    {
+      id: 'jenis', name: 'Jenis dagangan & hukum', lessons: [
+        { id: 'jn1', t: 'Peta jenis dagangan: apa yang anda betul-betul miliki', h: `
+          <p>Sebelum bertanya "halal atau haram", tanya dua soalan: <b>apa asetnya</b>, dan <b>bagaimana akadnya</b>. Saham yang sama boleh jadi harus jika dibeli tunai, tetapi tidak patuh jika didagang melalui CFD.</p>
+          <div class="tbl-wrap"><table>
+            <tr><th>Jenis</th><th class="wrap">Adakah anda memiliki aset?</th><th class="wrap">Contoh</th><th>Hukum umum</th></tr>
+            <tr><td><b>Spot</b> (tunai)</td><td class="wrap">Ya, atas nama anda, dibayar penuh</td><td class="wrap">Beli 1 lot saham di Bursa; beli BTC di bursa kripto berlesen</td><td>${hk('syarat')}</td></tr>
+            <tr><td><b>Margin</b></td><td class="wrap">Ya, tetapi sebahagiannya dibeli dengan pinjaman broker</td><td class="wrap">Akaun margin</td><td>${hk('no', 'Berfaedah: tidak patuh')}</td></tr>
+            <tr><td><b>CFD</b></td><td class="wrap">Tidak. Hanya kontrak beza harga dengan broker</td><td class="wrap">"Gold CFD", "US500", "NAS100"</td><td>${hk('no')}</td></tr>
+            <tr><td><b>Niaga hadapan</b></td><td class="wrap">Kontrak untuk beli/jual pada tarikh akan datang</td><td class="wrap">FCPO, FKLI di Bursa Malaysia Derivatives</td><td>${hk('khilaf')}</td></tr>
+            <tr><td><b>Opsyen</b></td><td class="wrap">Hak (bukan kewajipan) untuk beli/jual pada harga tetap</td><td class="wrap">Call/put saham AS</td><td>${hk('no')}</td></tr>
+            <tr><td><b>Forex runcit</b></td><td class="wrap">Tidak. Posisi mata wang dengan leverage di platform</td><td class="wrap">MetaTrader, broker luar negara</td><td>${hk('no', 'Haram (fatwa)')}</td></tr>
+            <tr><td><b>Jualan singkat</b></td><td class="wrap">Tidak. Anda jual saham pinjaman yang belum dimiliki</td><td class="wrap">Short sell</td><td>${hk('no')}</td></tr>
+          </table></div>
+          <div class="tip"><b>Label dalam modul ini:</b> ${hk('ok')} ${hk('syarat')} ${hk('khilaf')} ${hk('no')} ${hk('na')}</div>` },
+        { id: 'jn2', t: 'Dagangan spot: beli tunai, terima aset', h: `
+          ${hk('syarat', 'Harus jika asetnya patuh Syariah')}
+          <p><b>Spot</b> bermaksud anda bayar harga penuh dan aset menjadi milik anda. Tiada pinjaman, tiada tarikh luput. Jika harga jatuh 30%, anda rugi 30% atas kertas, tetapi aset masih ada dan anda boleh terus simpan.</p>
+          <ul>
+            <li><b>Saham</b>: penyelesaian T+2 di Bursa dan T+1 di AS. Saham disimpan atas nama anda (melalui akaun CDS atau penjaga broker).</li>
+            <li><b>Kripto spot</b>: anda memiliki koin itu sendiri. Berbeza dengan "futures" atau "perpetual" kripto yang hanya kontrak.</li>
+            <li><b>Emas fizikal</b>: syiling atau jongkong yang diserahkan, atau akaun emas yang memenuhi syarat serahan segera.</li>
+          </ul>
+          <div class="tip"><b>Syarat halal bergantung pada aset:</b> saham mesti dalam <b>Senarai Sekuriti Patuh Syariah SC</b>; kripto boleh disemak pada <b>Status Syariah</b> di tab Pasaran (senarai yang diluluskan Majlis Penasihat Syariah SC); emas perlu serahan segera tanpa ansuran (lihat pelajaran forex & emas).</div>` },
+        { id: 'jn3', t: 'Leverage dan margin: kenapa untung dan rugi berganda', h: `
+          ${hk('no', 'Leverage berfaedah: tidak patuh')}
+          <p><b>Leverage</b> bermaksud mengawal posisi lebih besar daripada modal sendiri. Leverage 1:10 bermaksud RM1,000 anda mengawal posisi RM10,000. Baki RM9,000 ialah pinjaman daripada broker.</p>
+          <ul>
+            <li>Harga naik 5% → posisi untung RM500 = <b>+50% modal</b>.</li>
+            <li>Harga turun 5% → rugi RM500 = <b>−50% modal</b>.</li>
+            <li>Harga turun 10% → modal <b>habis</b>. Broker akan buat <b>margin call</b> (minta tambah wang) atau <b>tutup paksa</b> (liquidation) lebih awal lagi.</li>
+          </ul>
+          <div class="tbl-wrap"><table>
+            <tr><th>Leverage</th><th class="wrap">Harga cuma perlu bergerak melawan anda sebanyak ini untuk modal habis</th></tr>
+            <tr><td>1:1 (spot)</td><td>100% (aset jadi kosong)</td></tr>
+            <tr><td>1:5</td><td>20%</td></tr><tr><td>1:10</td><td>10%</td></tr>
+            <tr><td>1:50</td><td>2%</td></tr><tr><td>1:100</td><td>1%</td></tr><tr><td>1:500</td><td>0.2%</td></tr>
+          </table></div>
+          <div class="lev-sim" data-levsim>
+            <h4>Cuba sendiri</h4>
+            <div class="field"><label for="lvCap">Modal (RM)</label><input type="number" inputmode="decimal" id="lvCap" value="1000"></div>
+            <div class="field"><label for="lvLev">Leverage: <b id="lvLevT">1:10</b></label><input type="range" id="lvLev" min="0" max="7" step="1" value="2"></div>
+            <div class="field"><label for="lvMove">Pergerakan harga: <b id="lvMoveT">−5%</b></label><input type="range" id="lvMove" min="-20" max="20" step="0.5" value="-5"></div>
+            <div class="lev-bar" aria-hidden="true"><span id="lvFill"></span></div>
+            <div class="calc-out" id="lvOut"></div><div class="muted small" id="lvOutB"></div>
+          </div>
+          <p><b>Hukum:</b> margin dan leverage konvensional ialah <b>pinjaman berfaedah</b> daripada broker, dan faedah itu riba. Muzakarah Jawatankuasa Fatwa MKI kali ke-98 juga menyebut "pensyaratan jual beli dalam pemberian hutang melalui leverage" sebagai salah satu sebab forex runcit diharamkan [1]. Pinjaman bersyarat jual beli inilah yang ada dalam CFD dan forex runcit.</p>
+          <div class="tip"><b>Alternatif:</b> sesetengah institusi di Malaysia menawarkan pembiayaan margin Islam (margin-i) dengan akad Syariah. Semak akadnya dan pengesahan penasihat Syariahnya sebelum guna. Akaun margin biasa di broker antarabangsa (termasuk Moomoo) ialah pinjaman berfaedah.</div>` },
+        { id: 'jn4', t: 'CFD (Contract for Difference)', h: `
+          ${hk('no', 'Tidak patuh, apa pun asetnya')}
+          <p><b>CFD</b> ialah perjanjian antara anda dan broker untuk bertukar <b>beza harga</b> sesuatu aset dari masa buka hingga tutup posisi. Anda tidak pernah memiliki saham, emas atau mata wang itu.</p>
+          <ul>
+            <li><b>Untung/rugi</b> = (harga tutup − harga buka) × saiz kontrak. Boleh "buy" (jangka naik) atau "sell" (jangka turun).</li>
+            <li>Hampir semua CFD guna <b>leverage</b>, jadi deposit kecil mengawal posisi besar.</li>
+            <li>Posisi yang dibiarkan semalaman dikenakan <b>swap / overnight financing</b>, iaitu caj faedah.</li>
+            <li>Kerap kali broker sendiri ialah pihak lawan: kerugian anda ialah keuntungan mereka.</li>
+          </ul>
+          <p><b>Kenapa tidak patuh:</b> masalahnya pada <b>akad</b>, bukan aset. Jadi CFD atas saham patuh Syariah atau emas tetap tidak patuh, kerana:</p>
+          <ol>
+            <li>Tiada pemilikan dan serahan aset; yang didagang hanya beza harga.</li>
+            <li>Caj swap semalaman ialah faedah (riba).</li>
+            <li>Leverage ialah hutang yang disyaratkan bersama jual beli.</li>
+            <li>Pertaruhan atas naik turun harga tanpa aset menyerupai perjudian (maisir).</li>
+          </ol>
+          <div class="tip"><b>Nota:</b> Kami belum menemui fatwa rasmi Malaysia yang menyebut "CFD" secara khusus. Label ini disimpulkan daripada sebab-sebab yang dinyatakan Muzakarah kali ke-98 untuk forex runcit [1] (riba rollover, leverage, qabd tidak jelas, menjual yang tiada dalam pegangan, spekulasi), yang semuanya wujud dalam CFD.</div>` },
+        { id: 'jn5', t: 'Niaga hadapan (futures) dan opsyen (options)', h: `
+          ${hk('khilaf', 'Niaga hadapan: khilaf')} ${hk('no', 'Opsyen: tidak patuh')}
+          <p><b>Niaga hadapan</b> ialah kontrak untuk membeli atau menjual aset pada harga yang dipersetujui hari ini, dengan serahan pada tarikh akan datang. Contoh Malaysia: <b>FCPO</b> (minyak sawit mentah, 25 tan metrik sekontrak) dan <b>FKLI</b> (indeks FBM KLCI) di Bursa Malaysia Derivatives. Pedagang hanya letak <b>margin awal</b>, dan untung rugi dikira setiap hari.</p>
+          <p><b>Hukum niaga hadapan:</b></p>
+          <ul>
+            <li>Majlis Penasihat Syariah SC memutuskan kontrak niaga hadapan <b>FCPO</b> "diharuskan menurut perspektif perundangan Islam" (mesyuarat ke-10 dan ke-11, 1997), begitu juga niaga hadapan <b>indeks komposit KLCI</b> (mesyuarat ke-13, 1998) [2].</li>
+            <li>Akademi Fiqh Islam Antarabangsa (IIFA), Resolusi 63 (1/7) tahun 1992, berpandangan kontrak niaga hadapan komoditi "pada asasnya tidak harus", dan mata wang tidak boleh dijual beli secara niaga hadapan [3].</li>
+            <li>Jadi ia <b>khilaf</b>. Pelabur di Malaysia lazimnya merujuk keputusan MPS SC untuk FCPO dan FKLI. Keputusan itu tidak meliputi futures luar negara, futures emas, futures mata wang atau "perpetual" kripto.</li>
+          </ul>
+          <p><b>Opsyen</b> memberi hak (bukan kewajipan) untuk membeli (<i>call</i>) atau menjual (<i>put</i>) pada harga tetap sebelum tarikh luput, dengan bayaran <b>premium</b>. Jika tidak digunakan, premium hangus. IIFA Resolusi 63 (1/7) memutuskan kontrak opsyen tidak harus, dan "kerana kontrak ini pada asalnya tidak harus, dagangannya juga tidak harus" [3].</p>
+          <div class="tip"><b>Di Moomoo:</b> dagangan opsyen saham AS dan akaun margin tersedia. Kedua-duanya tidak patuh Syariah. Kekal dengan pembelian spot saham patuh Syariah.</div>` },
+        { id: 'jn6', t: 'Forex dan emas', h: `
+          ${hk('no', 'Forex runcit: haram')} ${hk('syarat', 'Emas: harus bersyarat')}
+          <p><b>Forex runcit</b> ialah dagangan pasangan mata wang (cth. EUR/USD, XAU/USD) di platform seperti MetaTrader dengan leverage tinggi.</p>
+          <p>Muzakarah Jawatankuasa Fatwa Majlis Kebangsaan kali ke-98 (13 hingga 15 Februari 2012) memutuskan dagangan forex oleh individu secara lani melalui platform elektronik adalah <b>haram</b>, kerana ada unsur "riba melalui pengenaan rollover interest, pensyaratan jual beli dalam pemberian hutang melalui leverage, qabd (penerimaan) yang tidak jelas ketika transaksi pertukaran, penjualan mata wang yang tiada dalam pegangan dan spekulasi yang melibatkan perjudian" [1].</p>
+          <div class="tip"><b>Yang masih harus:</b> menukar mata wang untuk keperluan sebenar dengan serahan segera, contohnya di bank atau pengurup wang berlesen. Menangguhkan serahan mata wang tidak dibenarkan (IIFA Resolusi 102 (5/11)) [4].</div>
+          <p><b>Emas</b> ialah barang ribawi, jadi syaratnya ketat. Muzakarah kali ke-96 (13 hingga 15 Oktober 2011) menetapkan Parameter Pelaburan Emas [5], antaranya:</p>
+          <ul>
+            <li>Jual beli mesti berlaku <b>serta-merta</b> tanpa penangguhan; beli secara hutang penuh atau <b>ansuran</b> tidak dibenarkan.</li>
+            <li>Emas mesti wujud dan dimiliki sepenuhnya oleh penjual.</li>
+            <li><b>Taqabudh</b> (serah terima) harga dan emas berlaku sebelum kedua-dua pihak berpisah.</li>
+          </ul>
+          <p>Jadi "trade gold" (XAU/USD) di MetaTrader atau CFD emas <b>tidak patuh</b>, walaupun asetnya emas, kerana tiada serah terima dan ada leverage.</p>` },
+        { id: 'jn7', t: 'Ringkasan hukum: bergantung pada aset dan cara', h: `
+          <p>Baca jadual mengikut baris (cara dagang) dan lajur (aset). Satu sel merah sudah cukup untuk mengelak.</p>
+          ${matrix()}
+          <div class="tip"><b>Cara guna:</b> aset halal + akad halal = harus. Aset halal + akad tidak patuh (CFD, margin berfaedah, opsyen) = tidak patuh. Aset tidak halal = tidak patuh walau dibeli tunai.</div>
+          <h4>Rujukan</h4>
+          <ol class="refs small">
+            <li>Muzakarah Jawatankuasa Fatwa Majlis Kebangsaan kali ke-98 (13–15 Feb 2012), hukum forex individu secara lani melalui platform elektronik, seperti dipetik <a href="https://emusykil.muftiselangor.gov.my/index.php/site/jawapan?id=3420" target="_blank" rel="noopener">Jabatan Mufti Negeri Selangor</a>.</li>
+            <li><a href="https://www.sc.com.my/api/documentms/download.ashx?id=b26a16f1-241d-4831-a433-ed2a62d4cadd" target="_blank" rel="noopener">Keputusan Majlis Penasihat Syariah Suruhanjaya Sekuriti, Edisi Kedua</a>: niaga hadapan minyak sawit mentah (hlm. 84) dan indeks komposit KLCI (hlm. 89).</li>
+            <li><a href="https://iifa-aifi.org/en/32438.html" target="_blank" rel="noopener">IIFA Resolusi 63 (1/7), Pasaran Kewangan, 1992</a>: opsyen, niaga hadapan, jualan saham yang tidak dimiliki.</li>
+            <li><a href="https://iifa-aifi.org/en/32566.html" target="_blank" rel="noopener">IIFA Resolusi 102 (5/11), Dagangan Mata Wang, 1998</a>.</li>
+            <li>Muzakarah kali ke-96 (13–15 Okt 2011), Parameter Pelaburan Emas, seperti dipetik <a href="https://www.maybank.com/islamic/en/coe/fatwa/others/gold_investment_parameters.page" target="_blank" rel="noopener">Maybank Islamic</a>.</li>
+            <li><a href="https://www.sc.com.my/digital-assets" target="_blank" rel="noopener">SC: aset digital yang diluluskan MPS</a>.</li>
+          </ol>
+          <p class="muted small">Disemak pada 3 Oktober 2026. Ini ringkasan pendidikan, bukan fatwa. Untuk kes peribadi, rujuk jabatan mufti negeri anda atau penasihat Syariah bertauliah.</p>` }
+      ]
+    },
     { id: 'calc', name: 'Kalkulator', calc: true },
     { id: 'quiz', name: 'Kuiz', quiz: true }
   ];
@@ -247,6 +372,9 @@
     { q: 'FDV yang jauh lebih tinggi daripada market cap bermaksud…', o: ['Projek pasti untung', 'Banyak token belum beredar; risiko tekanan jualan', 'Token sudah habis dikeluarkan', 'Harga akan stabil'], a: 1 },
     { q: 'Borang W-8BEN digunakan untuk…', o: ['Deposit wang', 'Mengisytiharkan status bukan pemastautin AS', 'Membuka akaun Bursa', 'Memohon pinjaman margin'], a: 1 },
     { q: 'DCA bermaksud…', o: ['Membeli semua sekaligus', 'Melabur jumlah tetap secara berkala', 'Menjual ketika rugi', 'Dagangan harian'], a: 1 },
+    { q: 'Dengan leverage 1:10, harga perlu jatuh berapa peratus untuk modal anda habis?', o: ['50%', '20%', '10%', '1%'], a: 2 },
+    { q: 'CFD atas saham patuh Syariah hukumnya…', o: ['Harus kerana sahamnya halal', 'Tidak patuh kerana akadnya (tiada pemilikan, swap, leverage)', 'Harus jika untung kecil', 'Bergantung pada broker'], a: 1 },
+    { q: 'Muzakarah Fatwa Kebangsaan kali ke-98 (2012) memutuskan forex runcit secara lani melalui platform elektronik…', o: ['Harus', 'Makruh', 'Haram', 'Harus jika spot'], a: 2 },
     { q: 'ROE yang tinggi secara konsisten biasanya menunjukkan…', o: ['Hutang tinggi semata-mata', 'Pengurusan yang cekap menjana untung daripada ekuiti', 'Saham murah', 'Dividen tinggi'], a: 1 }
   ];
 
@@ -284,6 +412,26 @@
           <button class="btn sm ${done.has(l.id) ? 'ghost' : ''}" data-mark="${l.id}">${done.has(l.id) ? 'Tandakan belum selesai' : 'Tandakan selesai'}</button>
         </div>
       </details>`).join('');
+    initLev(box);
+  }
+
+  // Simulator leverage dalam pelajaran jn3
+  function initLev(box) {
+    const el = box.querySelector('[data-levsim]'); if (!el) return;
+    const LEV = [1, 5, 10, 20, 50, 100, 200, 500];
+    const q = id => el.querySelector('#' + id);
+    const run = () => {
+      const cap = Math.max(0, parseFloat(q('lvCap').value) || 0), lev = LEV[+q('lvLev').value], mv = +q('lvMove').value;
+      const pos = cap * lev, pl = Math.max(-cap, pos * mv / 100), left = cap + pl, wipe = 100 / lev;
+      q('lvLevT').textContent = '1:' + lev;
+      q('lvMoveT').textContent = (mv > 0 ? '+' : mv < 0 ? '−' : '') + Math.abs(mv) + '%';
+      q('lvOut').innerHTML = `<span class="${pl >= 0 ? 'up' : 'down'}">${pl >= 0 ? '+' : '−'}${rm(Math.abs(pl))}</span>`;
+      q('lvOutB').textContent = left <= 0
+        ? `Modal habis. Posisi ${rm(pos)} ditutup paksa; harga hanya perlu bergerak ${wipe.toFixed(wipe < 1 ? 1 : 0)}% melawan anda.`
+        : `Posisi ${rm(pos)} · Baki modal ${rm(left)} (${(pl / cap * 100 || 0).toFixed(0)}%) · Modal habis jika harga bergerak ${wipe.toFixed(wipe < 1 ? 1 : 0)}% melawan anda`;
+      const f = q('lvFill'); f.style.width = Math.min(200, left / cap * 100 || 0) / 2 + '%'; f.className = left <= 0 ? 'z' : pl < 0 ? 'd' : 'u';
+    };
+    el.querySelectorAll('input').forEach(i => i.addEventListener('input', run)); run();
   }
 
   $('#learnTabs').addEventListener('click', e => {
@@ -352,7 +500,7 @@
     const show = () => {
       if (idx >= QUIZ.length) {
         const best = Math.max(store.get('quizBest', 0), score); store.set('quizBest', best);
-        const msg = score >= 8 ? 'Cemerlang. Anda faham asasnya dengan baik.' : score >= 5 ? 'Bagus. Ulang kaji modul yang anda kurang yakin.' : 'Teruskan belajar, kemudian cuba lagi.';
+        const msg = score >= QUIZ.length * 0.8 ? 'Cemerlang. Anda faham asasnya dengan baik.' : score >= QUIZ.length * 0.5 ? 'Bagus. Ulang kaji modul yang anda kurang yakin.' : 'Teruskan belajar, kemudian cuba lagi.';
         box.innerHTML = `<div class="card center" style="padding:28px 16px"><p class="eyebrow">Keputusan</p>
           <div class="calc-out" style="font-size:2.6rem">${score}/${QUIZ.length}</div><p>${msg}</p><p class="muted small">Markah terbaik: ${best}/${QUIZ.length}</p>
           <button class="btn" id="qAgain">Cuba lagi</button></div>`;
