@@ -24,7 +24,7 @@
   function rowHTML(s, prefix, removable) {
     const c = COLORS[s] || 'var(--brand)';
     return `<div class="qrow" role="button" tabindex="0" data-sym="${s}" id="${prefix}-${s}">
-      <span class="coin" style="background:${c}">${esc(s.slice(0, 1))}</span>
+      <span class="coin" style="--c:${c}">${esc(s.slice(0, 1))}</span>
       <span style="min-width:0"><div class="q-sym">${esc(s)}</div><div class="q-name">${esc(NAMES[s] || s + '/USDT')}</div></span>
       <svg class="spark" viewBox="0 0 64 28" preserveAspectRatio="none" aria-hidden="true"></svg>
       <span class="q-right"><div class="q-price"><span class="skeleton"></span></div><div class="q-chg">&nbsp;</div></span>
@@ -258,7 +258,7 @@
     stockSym = v; store.set('stockSym', v); renderStockTabs(); loadStock();
   });
   $('#bursaList').innerHTML = BURSA.map(([t, code, n]) => `<a class="qrow" href="https://www.tradingview.com/symbols/MYX-${t}/" target="_blank" rel="noopener">
-      <span class="coin" style="background:var(--panel)">${esc(t.slice(0, 1))}</span>
+      <span class="coin" style="--c:var(--brand)">${esc(t.slice(0, 1))}</span>
       <span style="min-width:0"><div class="q-sym">${esc(t)} <span class="muted small num">${code}</span></div><div class="q-name">${esc(n)}</div></span>
       <span></span><span class="q-right muted">${icon('link')}</span></a>`).join('');
   let tvLoaded = false;
