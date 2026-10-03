@@ -519,3 +519,24 @@ a.card:active, .shortcut:active, .tool-card:active { transform: translateY(0) sc
 .skip-link { position: absolute; left: 12px; top: -48px; z-index: 50; background: var(--text); color: var(--bg); padding: 8px 14px; border-radius: 9px; font-weight: 600; text-decoration: none; transition: top .15s; }
 .skip-link:focus { top: calc(8px + env(safe-area-inset-top)); }
 #main:focus { outline: none; }
+
+/* Sumber plagiarisme dan perbandingan sebelah-menyebelah */
+.annotated .s-plag sup { font-size: 0.66em; font-weight: 700; color: var(--down); margin-left: 1px; }
+.src-sum { margin: 0 0 6px; }
+.src { border-top: 1px solid var(--border); padding: 4px 0; }
+.src summary { list-style: none; display: flex; align-items: center; gap: 10px; padding: 10px 0 6px; cursor: pointer; }
+.src summary::-webkit-details-marker { display: none; }
+.src-rank { width: 24px; height: 24px; border-radius: 7px; flex: none; display: grid; place-items: center; font-size: 0.75rem; font-weight: 700; color: var(--down); background: color-mix(in srgb, var(--down) 12%, var(--surface)); }
+.src-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.src-name { font-weight: 600; font-size: 0.92rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.src[open] .src-name { white-space: normal; }
+.src-pct { font-weight: 700; font-size: 1.05rem; color: var(--down); }
+.src-bar { height: 4px; border-radius: 99px; background: var(--surface-2); overflow: hidden; margin: 0 0 8px 34px; }
+.src-bar > div { height: 100%; background: var(--down); border-radius: 99px; }
+.src > a { margin-left: 34px; }
+.cmp-list { display: grid; gap: 10px; margin: 10px 0 8px; }
+.cmp { display: grid; gap: 8px; background: var(--bg); border: 1px solid var(--border); border-radius: 11px; padding: 10px 12px; }
+@media (min-width: 700px) { .cmp { grid-template-columns: 1fr 1fr; gap: 14px; } .cmp > div + div { border-left: 1px solid var(--border); padding-left: 14px; } }
+.cmp-k { font-size: 0.72rem; font-weight: 650; color: var(--muted); margin-bottom: 3px; }
+.cmp p { margin: 0; font-size: 0.88rem; line-height: 1.6; overflow-wrap: anywhere; }
+.cmp mark { background: color-mix(in srgb, var(--down) 18%, transparent); color: inherit; border-radius: 3px; padding: 0 1px; }

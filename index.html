@@ -2,7 +2,7 @@
 <html lang="ms">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://s3.tradingview.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://data-api.binance.vision wss://data-stream.binance.vision https://api.coingecko.com https://api.waktusolat.app https://ms.wikipedia.org https://en.wikipedia.org https://api.languagetool.org https://open.er-api.com https://*.workers.dev; frame-src https://*.tradingview.com https://*.tradingview-widget.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://s3.tradingview.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://data-api.binance.vision wss://data-stream.binance.vision https://api.coingecko.com https://api.waktusolat.app https://ms.wikipedia.org https://en.wikipedia.org https://api.languagetool.org https://open.er-api.com https://api.openalex.org https://api.crossref.org https://api.semanticscholar.org https://doaj.org https://www.ebi.ac.uk https://*.workers.dev; frame-src https://*.tradingview.com https://*.tradingview-widget.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Bijak Labur</title>
@@ -327,10 +327,10 @@
             <label for="sources">Teks sumber untuk dibandingkan <span class="muted">(pilihan)</span></label>
             <textarea id="sources" class="short" placeholder="Tampal teks rujukan atau kerja pelajar lain. Pisahkan setiap sumber dengan baris ---"></textarea>
           </div>
-          <label class="check"><input type="checkbox" id="optWeb" checked><span>Cari padanan dalam Wikipedia</span></label>
+          <label class="check"><input type="checkbox" id="optWeb" checked><span>Cari padanan dalam talian (Wikipedia dan 5 pangkalan artikel akademik)</span></label>
           <label class="check"><input type="checkbox" id="optLT" checked><span>Semakan tatabahasa lanjutan (teks Inggeris)</span></label>
           <button class="btn block" id="checkBtn">Semak sekarang</button>
-          <p class="muted small privacy-note">Analisis dibuat dalam peranti anda. Teks hanya dihantar ke Wikipedia dan LanguageTool jika pilihan di atas ditanda.</p>
+          <p class="muted small privacy-note">Analisis dibuat dalam peranti anda. Petikan teks hanya dihantar ke Wikipedia, pangkalan artikel akademik (OpenAlex, Crossref, Semantic Scholar, DOAJ, Europe PMC) dan LanguageTool jika pilihan di atas ditanda.</p>
         </div>
       </div>
 
@@ -531,7 +531,7 @@
 
   <footer class="site-footer">
     <p>Bijak Labur ialah projek pendidikan percuma dan bukan nasihat kewangan. Tidak bergabung dengan Moomoo, Futu, JAKIM atau Binance.</p>
-    <p><a href="privacy.html">Dasar privasi</a> · <a href="terma.html">Terma</a> · Data: Binance, CoinGecko, TradingView, api.waktusolat.app, LanguageTool, Wikipedia.</p>
+    <p><a href="privacy.html">Dasar privasi</a> · <a href="terma.html">Terma</a> · Data: Binance, CoinGecko, TradingView, api.waktusolat.app, LanguageTool, Wikipedia, OpenAlex, Crossref, Semantic Scholar, DOAJ, Europe PMC.</p>
   </footer>
 
   <nav class="tabbar" aria-label="Navigasi">

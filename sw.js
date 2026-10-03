@@ -1,6 +1,8 @@
 /* Service worker: simpan app shell untuk kegunaan luar talian */
 const CACHE = 'bijak-labur-v9';
 const SHELL = ['./', 'index.html', 'css/style.css', 'css/langit.css', 'fonts/Geist-Variable.woff2', 'js/app.js', 'js/learn.js', 'js/market.js', 'js/solat.js', 'js/checker.js', 'js/premium.js', 'js/pro.js', 'js/pro-invest.js', 'js/pro-study.js', 'js/vendor/lightweight-charts.js',
+const CACHE = 'bijak-labur-v10';
+const SHELL = ['./', 'index.html', 'css/style.css', 'fonts/Geist-Variable.woff2', 'js/app.js', 'js/learn.js', 'js/market.js', 'js/solat.js', 'js/checker.js', 'js/premium.js', 'js/pro.js', 'js/pro-invest.js', 'js/pro-study.js', 'js/vendor/lightweight-charts.js',
   'manifest.webmanifest', 'privacy.html', 'terma.html', 'terma-app.html', 'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-180.png'];
 
 self.addEventListener('install', e => {
