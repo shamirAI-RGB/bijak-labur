@@ -35,6 +35,13 @@
         </provider>
     </application>
 
+    <!-- Enjin teks-ke-suara peranti (Android 11+ perlu diisytiharkan untuk plugin TextToSpeech) -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+    </queries>
+
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />

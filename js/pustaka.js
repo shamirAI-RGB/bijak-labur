@@ -66,25 +66,10 @@
     return [d ? `${d} ${T('day')}` : '', h ? `${h} ${T('hour')}` : ''].filter(Boolean).join(' ');
   }
 
-  /* ---------- Suara (Web Speech API) ---------- */
-  const synth = 'speechSynthesis' in window ? window.speechSynthesis : null;
-  let speaking = false;
-  function voiceFor(code) {
-    const vs = synth.getVoices(), base = code.split('-')[0];
-    return vs.find(v => v.lang.replace('_', '-') === code) || vs.find(v => v.lang.toLowerCase().startsWith(base)) || null;
-  }
-  function speak(text, btn) {
-    if (!synth) return;
-    if (speaking) { synth.cancel(); return; }
-    const code = LANGS[LI[lang]][2], v = voiceFor(code);
-    if (!v && synth.getVoices().length) { toast(T('noVoice'), 3200); return; }
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = code; if (v) u.voice = v; u.rate = 0.9;
-    const set = on => { speaking = on; if (btn && btn.isConnected) { btn.classList.toggle('on', on); btn.querySelector('span').textContent = T(on ? 'stop' : 'listen'); } };
-    u.onstart = () => set(true); u.onend = u.onerror = () => set(false);
-    synth.cancel(); synth.speak(u);
-  }
-  const hush = () => { if (synth && speaking) synth.cancel(); speaking = false; };
+  /* ---------- Suara: guna pembaca suara seluruh laman (js/suara.js) ---------- */
+  const canSay = () => !!window.Suara;
+  const speak = text => window.Suara && Suara.read(text, LANGS[LI[lang]][2]);
+  const hush = () => { if (window.Suara && Suara.active) Suara.stop(); };
 
   /* ---------- Paparan ---------- */
   const root = $('#view-pustaka');
@@ -193,9 +178,9 @@
         ${big(k)}
         <h2 class="pk-ptitle">${esc(L(t))}</h2>
         <p class="pk-pbody" dir="auto">${esc(L(b))}</p>
-        ${synth ? `<button class="pk-say" id="pkSay">${icon('play')}<span>${T('listen')}</span></button>` : ''}`;
+        ${canSay() ? `<button class="pk-say" id="pkSay">${icon('play')}<span>${T('listen')}</span></button>` : ''}`;
       const say = $('#pkSay');
-      if (say) say.addEventListener('click', () => speak(`${L(t)}. ${L(b)}`, say));
+      if (say) say.addEventListener('click', () => speak(`${L(t)}. ${L(b)}`));
     } else {
       const [k, q] = c.q, solved = !!stars()[`${s.id}.${ci}`];
       pg.innerHTML = `

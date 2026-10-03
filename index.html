@@ -33,6 +33,7 @@
   <link rel="stylesheet" href="css/belajar-visual.css">
   <link rel="stylesheet" href="css/fiqh.css">
   <link rel="stylesheet" href="css/pustaka.css">
+  <link rel="stylesheet" href="css/suara.css">
 </head>
 <body>
   <a class="skip-link" href="#main">Langkau ke kandungan</a>
@@ -82,6 +83,7 @@
       <symbol id="langit-bukit" viewBox="0 0 400 90" preserveAspectRatio="xMidYMax slice"><path style="fill:var(--hill1)" d="M0 58c40-14 82-20 128-10 34 7 58 4 92-8 46-16 96-18 180 4v46H0z"/><path style="fill:var(--hill2)" d="M278 44h3v-8a14 14 0 0 1 9-13l3-6 3 6a14 14 0 0 1 9 13v8h3v46h-30zM262 30h5v60h-5zM264.5 24l2 6h-4zM321 34h5v56h-5zM323.5 28l2 6h-4zM240 50h96v40h-96z"/><path style="fill:var(--hill3)" d="M0 74c56-12 104-12 156-4 50 8 96 6 140-4 40-9 76-8 104-2v26H0z"/></symbol>
       <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></symbol>
       <symbol id="i-play" viewBox="0 0 24 24"><path fill="currentColor" d="M7 4.5v15l12-7.5z"/></symbol>
+      <symbol id="i-volume" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" stroke-linejoin="round"/><path d="M15.5 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11" stroke-linecap="round"/></symbol>
       <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 4.5v15M16 4.5v15"/></symbol>
       <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/></symbol>
       <symbol id="i-bed" viewBox="0 0 24 24"><path d="M2 19V6M2 15h20v4M22 15v-3a3 3 0 0 0-3-3h-8v6"/><circle cx="6.5" cy="11.5" r="2"/></symbol>
@@ -110,6 +112,7 @@
         <a href="#semak" data-nav="semak">Semak Kertas</a>
         <a href="#premium" data-nav="premium" data-premium-entry class="hidden">Premium</a>
       </nav>
+      <button class="icon-btn" id="sayBtn" aria-label="Bacakan halaman ini" aria-pressed="false" title="Bacakan halaman ini"><svg class="ic"><use href="#i-volume"/></svg></button>
       <button class="icon-btn" id="themeBtn" aria-label="Tukar tema cerah atau gelap"><svg class="ic"><use href="#i-moon"/></svg></button>
     </div>
   </header>
@@ -598,6 +601,7 @@
   </nav>
 
   <script src="js/app.js"></script>
+  <script src="js/suara.js"></script>
   <script src="js/learn-visuals.js"></script>
   <script src="js/learn.js"></script>
   <script src="js/market.js"></script>
