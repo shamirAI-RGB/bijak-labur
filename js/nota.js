@@ -27,7 +27,9 @@
     const headers = { ...(opts.headers || {}) };
     if (S.key && path.startsWith('/admin')) headers.Authorization = 'Bearer ' + S.key;
     if (opts.json !== undefined) { headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(opts.json); }
-    const r = await fetch(API + path, { method: opts.method || 'GET', headers, body: opts.body, cache: 'no-store' });
+    // Ralat rangkaian pelayar (cth. "Failed to fetch") ditukar kepada mesej Bahasa Melayu
+    const r = await fetch(API + path, { method: opts.method || 'GET', headers, body: opts.body, cache: 'no-store' })
+      .catch(() => { throw new Error('Tiada sambungan ke pelayan nota. Cuba lagi sebentar.'); });
     if (opts.raw) { if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || 'Gagal (' + r.status + ')'); return r; }
     const j = await r.json().catch(() => ({}));
     if (r.status === 401 && path.startsWith('/admin')) { logout(); throw new Error('Kunci pemilik tidak sah. Sila log masuk semula.'); }

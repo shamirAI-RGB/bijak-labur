@@ -17,8 +17,9 @@ import Anthropic from '@anthropic-ai/sdk';
 import { BY_ID, CORPUS_TEXT } from './corpus.js';
 
 export const MODEL = 'claude-opus-5-5';
-// Alias Google untuk model Flash terkini (peringkat percuma). Boleh ditukar dengan pemboleh ubah GEMINI_MODEL.
-export const GEMINI_MODEL = 'gemini-flash-latest';
+// Alias Google untuk model Flash-Lite terkini (peringkat percuma). Diagnosis menunjukkan Flash penuh kerap
+// memulangkan 503 "high demand", manakala Flash-Lite menjawab dalam ~2 saat. Boleh ditukar dengan GEMINI_MODEL.
+export const GEMINI_MODEL = 'gemini-flash-lite-latest';
 export const DOMAINS = ['shamela.ws', 'quran.com', 'sunnah.com', 'muftiwp.gov.my', 'muftiselangor.gov.my', 'islam.gov.my', 'sc.com.my', 'iifa-aifi.org', 'zakat.com.my'];
 const MAX_Q = 500;
 const CACHE_DAYS = 7;
@@ -160,22 +161,31 @@ Mod korpus: alat web_search dan web_fetch TIDAK tersedia. Gunakan hanya sumber 2
 const provider = env => env.ANTHROPIC_API_KEY ? 'claude' : env.GEMINI_API_KEY ? 'gemini' : '';
 const NO_ANSWER = { status: 'luar_skop', ringkasan: 'Soalan ini tidak dapat dijawab.', huraian: [], khilaf: '', nasihat: '', sumber: [] };
 
+// Jika model pertama kehabisan kuota percuma (429), tiada (404) atau sibuk (5xx), cuba model seterusnya
+export const GEMINI_FALLBACKS = ['gemini-3.5-flash-lite', 'gemini-flash-latest', 'gemini-3.8-flash'];
+const RETRY_NEXT = new Set([404, 429, 500, 503, 504]);
+
+export const geminiModels = env => [...new Set([env.GEMINI_MODEL || GEMINI_MODEL, ...GEMINI_FALLBACKS])];
+export const geminiBody = question => JSON.stringify({
+  systemInstruction: { parts: [{ text: SYSTEM_KORPUS }] },
+  contents: [{ role: 'user', parts: [{ text: `Korpus rujukan Bijak Labur (telah disemak):\n\n${CORPUS_TEXT}` }, { text: `Soalan pengguna:\n${question}` }] }],
+  generationConfig: { responseMimeType: 'application/json', temperature: 0.2, maxOutputTokens: 8192 }
+});
+
 export async function askGemini(env, question) {
-  const model = env.GEMINI_MODEL || GEMINI_MODEL;
-  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY },
-    body: JSON.stringify({
-      systemInstruction: { parts: [{ text: SYSTEM_KORPUS }] },
-      contents: [{ role: 'user', parts: [{ text: `Korpus rujukan Bijak Labur (telah disemak):\n\n${CORPUS_TEXT}` }, { text: `Soalan pengguna:\n${question}` }] }],
-      generationConfig: { responseMimeType: 'application/json', temperature: 0.2, maxOutputTokens: 8192 }
-    })
-  });
-  if (!r.ok) {
-    const e = new Error('Gemini ' + r.status + ' ' + (await r.text()).slice(0, 300));
-    e.status = r.status === 503 ? 529 : r.status;
-    throw e;
+  const models = geminiModels(env), body = geminiBody(question);
+  let r, err;
+  for (const model of models) {
+    r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+      method: 'POST', headers: { 'content-type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY }, body
+    });
+    if (r.ok) break;
+    err = new Error(`Gemini ${model} ${r.status} ${(await r.text()).slice(0, 300)}`);
+    err.status = r.status === 503 ? 529 : r.status;
+    console.log(err.message);
+    if (!RETRY_NEXT.has(r.status)) throw err;
   }
+  if (!r.ok) throw err;
   const d = await r.json(), c = d.candidates && d.candidates[0];
   if ((d.promptFeedback && d.promptFeedback.blockReason) || (c && ['SAFETY', 'PROHIBITED_CONTENT', 'BLOCKLIST', 'SPII'].includes(c.finishReason))) return NO_ANSWER;
   const text = (c && c.content && c.content.parts || []).filter(p => !p.thought).map(p => p.text || '').join('');
