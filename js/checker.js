@@ -28,7 +28,9 @@
       ['ever-evolving', 'changing'], ['rich tapestry', 'mix'], ['tapestry', 'mix'], ['multifaceted', 'complex'], ['underscores', 'shows'], ['underscore', 'show'], ['leverage', 'use'], ['leveraging', 'using'],
       ['utilize', 'use'], ['utilizing', 'using'], ['seamless', 'smooth'], ['seamlessly', 'smoothly'], ['holistic', 'whole'], ['furthermore', null], ['moreover', null], ['additionally', null],
       ['in conclusion', null], ['in summary', null], ['foster', 'build'], ['fostering', 'building'], ['robust', 'strong'], ['comprehensive', 'full'], ['pivotal', 'key'], ['landscape', 'field'],
-      ['harness the power of', 'use'], ['unlock the potential', 'make the most'], ['a myriad of', 'many'], ['plethora of', 'many'], ['showcasing', 'showing'], ['paramount', 'very important'], ['nuanced', 'subtle'], ['embark on', 'start']],
+      ['harness the power of', 'use'], ['unlock the potential', 'make the most'], ['a myriad of', 'many'], ['plethora of', 'many'], ['showcasing', 'showing'], ['paramount', 'very important'], ['nuanced', 'subtle'], ['embark on', 'start'],
+      // Daripada senarai antislop-sampler oleh Sam Paech (Apache-2.0): github.com/sam-paech/antislop-sampler
+      ['symphony', null, 1], ['kaleidoscope', null, 1], ['delving', 'exploring', 1], ['delved', 'explored', 1], ['weaving', null, 1], ['weave', null, 1], ['bustling', 'busy', 1], ['labyrinthine', 'complex', 1], ['labyrinth', 'maze', 1], ['transcended', 'went beyond', 1], ['camaraderie', 'friendship', 1], ['palpable', 'clear', 1], ['cacophony', 'noise', 1], ['meticulously', 'carefully', 1], ['meticulous', 'careful', 1], ['navigating', 'handling', 1], ['complexities', 'difficulties', 1], ['realm', 'area', 1], ['dive into', 'look at', 1], ['tailored', 'suited', 1], ['underpins', 'supports', 1], ['everchanging', 'changing', 1], ['embarked on', 'started', 1], ['embark', 'start', 1], ['journey', null, 1], ['game changer', 'big change', 1], ['designed to enhance', 'meant to improve', 1], ['it is advisable to', 'you should', 1], ['daunting', 'hard', 1], ['when it comes to', null, 1], ['unlock the secrets', 'learn', 1], ['unveil the secrets', 'reveal', 1], ['elevate', 'improve', 1], ['unleash', 'release', 1], ['cutting-edge', 'new', 1], ['harness', 'use', 1], ["it's important to note that", '', 1], ['vibrant', 'lively', 1], ['crucial', 'important', 1], ["it's essential to", 'you must', 1], ['vital', 'important', 1], ['as previously mentioned', '', 1], ["it's worth noting that", '', 1], ['to summarize', null, 1], ['to put it simply', null, 1], ["in today's digital era", 'today', 1], ['reverberate', 'echo', 1], ['revolutionize', 'change', 1], ['enigma', 'mystery', 1], ['indelible', 'lasting', 1], ['newfound', 'new', 1], ['amidst', 'amid', 1], ['intricacies', 'details', 1], ['intricate', 'complex', 1], ['unwavering', 'steady', 1], ['advancements', 'advances', 1], ['insurmountable', 'very hard', 1], ['transformative', null, 1], ['resilience', null, 1], ['interconnectedness', 'links', 1], ['nuances', 'details', 1], ['fostered', 'built', 1], ['underscored', 'showed', 1], ['resonated', 'struck a chord', 1], ['captivating', 'gripping', 1], ['serendipity', 'luck', 1]],
     ms: [['dalam era globalisasi ini', 'kini'], ['dalam dunia yang serba moden ini', 'kini'], ['dalam era digital ini', 'kini'], ['tidak dapat dinafikan bahawa', ''], ['tidak dapat dinafikan', ''],
       ['memainkan peranan yang amat penting', 'penting'], ['memainkan peranan yang penting', 'penting'], ['memainkan peranan penting', 'penting'], ['secara keseluruhannya', null],
       ['kesimpulannya', null], ['tambahan pula', null], ['selain itu', null], ['di samping itu', null], ['lanskap', 'bidang'], ['holistik', 'menyeluruh'], ['komprehensif', 'lengkap'],
@@ -125,12 +127,12 @@
       const ii = /(^|\s)i(?=[\s,.'’])/g;
       while ((m = ii.exec(text))) add(m.index + m[1].length, m.index + m[1].length + 1, 'I', 'ejaan', 'The pronoun "I" is always capitalised.');
     }
-    for (const [a, b] of AI_PHRASES[lang]) {
+    for (const [a, b, slop] of AI_PHRASES[lang]) {
       const r = new RegExp(`\\b${escRe(a)}\\b,?`, 'gi');
       while ((m = r.exec(text))) {
         let rep = b === null ? null : matchCase(m[0], b);
         if (rep && m[0].endsWith(',')) rep += ',';
-        const msg = b === null ? (lang === 'ms' ? 'Penanda wacana ini sangat kerap dalam tulisan AI. Pelbagaikan atau gugurkan jika tidak perlu.' : 'Overused transition typical of AI text. Vary it or drop it.')
+        const msg = slop ? 'Word heavily overused by AI models (antislop list). Prefer plainer, more specific wording.' : b === null ? (lang === 'ms' ? 'Penanda wacana ini sangat kerap dalam tulisan AI. Pelbagaikan atau gugurkan jika tidak perlu.' : 'Overused transition typical of AI text. Vary it or drop it.')
           : (lang === 'ms' ? 'Frasa klise yang kerap muncul dalam tulisan AI. Gunakan ayat sendiri yang lebih spesifik.' : 'Cliché often seen in AI-written text. Be more specific.');
         add(m.index, m.index + m[0].length, rep, 'gaya', msg);
       }
@@ -186,7 +188,7 @@
     const burst = clamp((0.62 - cv(lens)) / 0.38);
     const lower = text.toLowerCase();
     let phraseHits = 0;
-    AI_PHRASES[lang].forEach(([p]) => { const mm = lower.match(new RegExp(`\\b${escRe(p)}\\b`, 'g')); if (mm) phraseHits += mm.length; });
+    AI_PHRASES[lang].forEach(([p, , slop]) => { const mm = lower.match(new RegExp(`\\b${escRe(p)}\\b`, 'g')); if (mm) phraseHits += mm.length * (slop ? 0.5 : 1); });
     const phrase = clamp((phraseHits / n * 100) / 1.6);
     const tr = TRANSITIONS[lang];
     const startsT = sents.filter(s => tr.includes(norm(words(s.text)[0] || ''))).length;
