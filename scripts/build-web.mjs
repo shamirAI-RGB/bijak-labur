@@ -1,7 +1,7 @@
 // Salin fail laman web ke folder www/ untuk dibungkus oleh Capacitor (Android & iOS)
 import { cpSync, rmSync, mkdirSync } from 'node:fs';
 
-const FILES = ['index.html', 'privacy.html', 'terma.html', 'terma-app.html', 'manifest.webmanifest', 'css', 'fonts', 'js', 'icons', 'images', 'data'];
+const FILES = ['index.html', 'privacy.html', 'terma.html', 'terma-app.html', 'tentang.html', 'manifest.webmanifest', 'css', 'fonts', 'js', 'icons', 'images', 'data'];
 rmSync('www', { recursive: true, force: true });
 mkdirSync('www');
 for (const f of FILES) {
