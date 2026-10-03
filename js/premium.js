@@ -71,7 +71,8 @@ const Premium = (function () {
 
   /* ---------- Paparan ---------- */
   let period = 'y1';
-  const salesOpen = () => isNative ? Object.keys(products).length > 0 : !!PAY_API;
+  // Web: percubaan 3 hari sentiasa ada, jadi Premium dipaparkan walaupun bayaran belum dibuka
+  const salesOpen = () => isNative ? Object.keys(products).length > 0 : true;
 
   function statusHTML() {
     const p = api.plan; if (!p) return '';
@@ -114,13 +115,13 @@ const Premium = (function () {
       `<button class="seg ${k === period ? 'active' : ''}" data-period="${k}" role="tab" aria-selected="${k === period}">${k === 'y1' ? (isNative ? 'Tahunan' : 'Setahun') : (isNative ? 'Bulanan' : '30 hari')}</button>`).join('');
     $('#planGrid').innerHTML = Object.entries(PLANS).map(([k, pl]) => {
       const cur = p === k && !api.trialing, pr = isNative && products[k] && products[k][period];
-      const label = isNative ? (cur ? 'Langganan aktif' : pr && pr.trial ? `Cuba percuma ${TRIAL_DAYS} hari` : 'Langgan') : (cur ? 'Sambung' : 'Pilih ' + pl.name);
+      const label = isNative ? (cur ? 'Langganan aktif' : pr && pr.trial ? `Cuba percuma ${TRIAL_DAYS} hari` : 'Langgan') : !PAY_API ? 'Bayaran dibuka tidak lama lagi' : (cur ? 'Sambung' : 'Pilih ' + pl.name);
       return `<article class="plan ${k === 'lengkap' ? 'featured' : ''}">
         <header><h3>${pl.name}</h3>${k === 'lengkap' ? '<span class="plan-tag">Paling berbaloi</span>' : ''}</header>
         <p class="muted small">${pl.blurb}</p>
         ${priceHTML(k)}
         <ul class="plan-feats">${pl.feats.map(f => `<li>${icon('check')}<span>${f}</span></li>`).join('')}</ul>
-        <button class="btn ${k === 'lengkap' ? '' : 'ghost'} block" data-buy="${k}" ${(isNative && (!pr || (cur && storePlans.includes(k)))) ? 'disabled' : ''}>${label}</button>
+        <button class="btn ${k === 'lengkap' ? '' : 'ghost'} block" data-buy="${k}" ${(isNative ? (!pr || (cur && storePlans.includes(k))) : !PAY_API) ? 'disabled' : ''}>${label}</button>
       </article>`;
     }).join('');
     if (isNative) $('#storeTerms').innerHTML = storeTermsHTML();
