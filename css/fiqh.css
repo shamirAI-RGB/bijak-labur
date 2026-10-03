@@ -103,3 +103,30 @@
   .fq-lvl-tag { display: none; }
 }
 .fq-w { display: inline-block; margin-left: 6px; padding: 0 7px; border-radius: 99px; font-size: .7rem; font-weight: 600; color: var(--brand); background: var(--brand-soft); vertical-align: 1px; }
+
+/* Tanya AI */
+.fq-ai-cta { display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit; border-left: 4px solid #c9853a; margin-bottom: 14px; }
+.fq-ai-cta .q-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.fq-ai-cta small { color: var(--muted); font-size: .82rem; }
+.fq-ai-ico { flex: none; width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: color-mix(in srgb, #c9853a 16%, var(--surface)); color: #c9853a; }
+.fq-ai-rules { margin-bottom: 12px; }
+.fq-ai-rules li { font-weight: 500; font-size: .9rem; }
+.fq-ai-eg { margin: 8px 0 10px; padding: 2px 0 6px; }
+.fq-ai-eg .chip { font-weight: 500; }
+.fq-ai-wait { display: flex; gap: 14px; align-items: center; }
+.fq-ai-wait p { margin: 2px 0 0; }
+.fq-ai-spin { flex: none; width: 26px; height: 26px; border-radius: 50%; border: 3px solid color-mix(in srgb, var(--brand) 20%, transparent); border-top-color: var(--brand); animation: fq-spin .9s linear infinite; }
+@keyframes fq-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .fq-ai-spin { animation-duration: 3s; } }
+.fq-ai-ans .fq-ai-q { margin: 0; font-style: italic; }
+.fq-ai-st { display: inline-flex; align-items: center; gap: 5px; flex: none; font-size: .74rem; font-weight: 700; padding: 4px 10px; border-radius: 99px; background: var(--surface-2); color: var(--muted); }
+.fq-ai-st .ic { width: 13px; height: 13px; }
+.fq-ai-st.ok { background: color-mix(in srgb, var(--up) 14%, var(--surface)); color: var(--up); }
+.fq-ai-st.warn { background: color-mix(in srgb, var(--warn) 14%, var(--surface)); color: var(--warn); }
+.fq-ai-khilaf { border-left: 3px solid #1192d6; padding: 6px 12px; margin: 10px 0; background: color-mix(in srgb, #1192d6 7%, var(--surface)); border-radius: 0 10px 10px 0; }
+.fq-ai-khilaf p { margin: 4px 0 0; }
+.fq-ai-src { border-left: 4px solid var(--c); }
+.fq-ai-kind { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--c); }
+.fq-ai-src blockquote { margin: 8px 0; padding: 8px 12px; border-radius: 10px; background: var(--surface-2); }
+.fq-ai-src blockquote.fq-ar { text-align: right; }
+.fq-grade .ic { width: 12px; height: 12px; vertical-align: -2px; margin-right: 3px; }

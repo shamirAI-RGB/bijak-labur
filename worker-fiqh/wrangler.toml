@@ -1,0 +1,21 @@
+# Pelayan Tanya AI Fiqh Bijak Labur (Cloudflare Workers)
+# Menjawab soalan fiqh dengan Claude, hanya bersandarkan rujukan yang boleh dibuka dan disemak.
+name = "bijak-labur-fiqh"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+workers_dev = true
+
+# Domain tetap yang digunakan oleh laman dan app (zon bijaklabur.my dalam akaun Cloudflare yang sama).
+routes = [{ pattern = "fiqh.bijaklabur.my", custom_domain = true }]
+
+[vars]
+ALLOWED_ORIGINS = "https://bijaklabur.my,https://www.bijaklabur.my,https://shamirai-rgb.github.io,capacitor://localhost,https://localhost,http://localhost:8080"
+
+# Had kadar percuma Cloudflare: 5 soalan seminit bagi setiap alamat IP, supaya kredit API tidak dihabiskan.
+[[unsafe.bindings]]
+name = "FIQH_LIMIT"
+type = "ratelimit"
+namespace_id = "2001"
+simple = { limit = 5, period = 60 }
+
+# Rahsia (ditetapkan oleh GitHub Actions, jangan tulis di sini): ANTHROPIC_API_KEY
