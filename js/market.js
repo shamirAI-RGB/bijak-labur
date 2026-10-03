@@ -7,6 +7,31 @@
   // Logo rasmi dalam icons/kripto (web3icons, MIT); simbol lain guna bulatan huruf
   const LOGOS = ['BTC', 'ETH', 'SOL', 'BNB', 'XRP', 'DOGE', 'ADA', 'LINK', 'AVAX', 'TRX', 'DOT', 'LTC', 'SHIB', 'TON', 'SUI', 'PEPE'];
   const NAMES = { BTC: 'Bitcoin', ETH: 'Ethereum', SOL: 'Solana', BNB: 'BNB', XRP: 'XRP', DOGE: 'Dogecoin', ADA: 'Cardano', LINK: 'Chainlink', AVAX: 'Avalanche', TRX: 'Tron', DOT: 'Polkadot', LTC: 'Litecoin', SHIB: 'Shiba Inu', TON: 'Toncoin', SUI: 'Sui', PEPE: 'Pepe' };
+  /* Status Syariah. Utama: senarai MPS SC (sc.com.my/digital-assets). Syiling yang tiada dalam senarai SC
+     memaparkan pandangan Sharlife (sharlife.my/crypto-shariah) sahaja jika ia menilai Diragui atau Tidak patuh.
+     Disemak pada SY_CHECKED; kemas kini apabila SC menambah aset baharu. */
+  const SY_CHECKED = '3 Oktober 2026';
+  const SY_SRC = {
+    sc: ['Majlis Penasihat Syariah, Suruhanjaya Sekuriti Malaysia', 'https://www.sc.com.my/digital-assets'],
+    sharlife: ['Sharlife (saringan kripto)', 'https://sharlife.my/crypto-shariah']
+  };
+  const SC_SAC = { BTC: 'mesyuarat MPS ke-234 (20 Julai 2020)', ETH: 'mesyuarat MPS ke-234 (20 Julai 2020)', XRP: 'mesyuarat MPS ke-234 (20 Julai 2020)', LTC: 'mesyuarat MPS ke-234 (20 Julai 2020)', BCH: 'mesyuarat MPS ke-247 (23 Ogos 2021)', SOL: 'mesyuarat MPS ke-264 (12 Januari 2023)', ADA: 'mesyuarat MPS ke-264 (12 Januari 2023)', LINK: 'mesyuarat MPS ke-265 (9 Februari 2023)', UNI: 'mesyuarat MPS ke-265 (9 Februari 2023)', MATIC: 'mesyuarat MPS ke-271 (10 Ogos 2023)', AVAX: 'mesyuarat MPS ke-271 (10 Ogos 2023)', DOT: 'mesyuarat MPS ke-279 (16 Mei 2024)', ATOM: 'mesyuarat MPS ke-279 (16 Mei 2024)', WLD: 'mesyuarat MPS ke-280 (11 Jun 2024)', XLM: 'mesyuarat MPS ke-286 (10 Disember 2024)' };
+  const SHARLIFE = { DOGE: 'ragu', SHIB: 'ragu', PEPE: 'tidak' };
+  const SY_LABEL = { patuh: 'Patuh Syariah', tidak: 'Tidak patuh', ragu: 'Diragui', belum: 'Belum disaring' };
+  function syStatus(s) {
+    if (SC_SAC[s]) return { k: 'patuh', why: `Diluluskan patuh Syariah oleh Majlis Penasihat Syariah SC, ${SC_SAC[s]}.`, src: SY_SRC.sc };
+    if (SHARLIFE[s] === 'tidak') return { k: 'tidak', why: 'Tiada dalam senarai patuh Syariah MPS SC. Saringan Sharlife menilainya tidak patuh Syariah.', src: SY_SRC.sharlife };
+    if (SHARLIFE[s] === 'ragu') return { k: 'ragu', why: 'Tiada dalam senarai patuh Syariah MPS SC. Saringan Sharlife meletakkannya dalam kategori kelabu (diragui).', src: SY_SRC.sharlife };
+    return { k: 'belum', why: 'Belum diluluskan oleh Majlis Penasihat Syariah SC. Sejak 30 Mac 2026, DAX di Malaysia hanya boleh menawarkan kripto sebagai patuh Syariah selepas pengesahan MPS SC.', src: SY_SRC.sc };
+  }
+  const syBadge = s => { const k = syStatus(s).k; return `<span class="sy sy-${k}">${SY_LABEL[k]}</span>`; };
+  function paintSyariah() {
+    const st = syStatus(chartSym), el = $('#syInfo');
+    if (!el) return;
+    el.innerHTML = `<div class="sy-head"><b>${esc(chartSym)}</b>${syBadge(chartSym)}</div>
+      <p class="small">${esc(st.why)}</p>
+      <p class="source">Sumber: <a href="${st.src[1]}" target="_blank" rel="noopener">${esc(st.src[0])}</a>, disemak ${SY_CHECKED}.</p>`;
+  }
   const DEFAULT = ['BTC', 'ETH', 'SOL', 'BNB', 'XRP', 'DOGE', 'ADA', 'LINK'];
 
   let syms = store.get('cryptoSyms', DEFAULT).filter(s => /^[A-Z0-9]{1,15}$/.test(s));
@@ -27,7 +52,7 @@
     const c = COLORS[s] || 'var(--brand)';
     return `<div class="qrow" role="button" tabindex="0" data-sym="${s}" id="${prefix}-${s}">
       ${LOGOS.includes(s) ? `<span class="coin logo"><img src="icons/kripto/${s.toLowerCase()}.svg" alt="" width="34" height="34" loading="lazy" decoding="async"></span>` : `<span class="coin" style="--c:${c}">${esc(s.slice(0, 1))}</span>`}
-      <span style="min-width:0"><div class="q-sym">${esc(s)}</div><div class="q-name">${esc(NAMES[s] || s + '/USDT')}</div></span>
+      <span style="min-width:0"><div class="q-sym">${esc(s)} ${syBadge(s)}</div><div class="q-name">${esc(NAMES[s] || s + '/USDT')}</div></span>
       <svg class="spark" viewBox="0 0 64 28" preserveAspectRatio="none" aria-hidden="true"></svg>
       <span class="q-right"><div class="q-price"><span class="skeleton"></span></div><div class="q-chg">&nbsp;</div></span>
       ${removable ? `<button class="q-del" data-del="${s}" aria-label="Buang ${s}">${icon('x')}</button>` : ''}
@@ -40,7 +65,7 @@
     markSelected();
     syms.forEach(s => paint(s));
   }
-  function markSelected() { $$('#cryptoTicker .qrow').forEach(r => r.classList.toggle('sel', r.dataset.sym === chartSym)); }
+  function markSelected() { $$('#cryptoTicker .qrow').forEach(r => r.classList.toggle('sel', r.dataset.sym === chartSym)); paintSyariah(); }
 
   function paint(s, prev) {
     const d = data[s]; if (!d || d.price == null) return;
