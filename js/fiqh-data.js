@@ -38,6 +38,10 @@ const FiqhData = (() => {
     scSaringan: { by: 'Suruhanjaya Sekuriti Malaysia', t: 'Soalan lazim kaedah saringan Syariah sekuriti', petik: 'Penanda aras aktiviti perniagaan 5% (cth. perbankan konvensional, judi, arak, babi, tembakau, faedah) dan 20% (cth. operasi hotel, broker saham, sewa daripada aktiviti tidak patuh). Nisbah kewangan: tunai konvensional dan hutang berfaedah masing-masing mesti kurang daripada 33% jumlah aset.', url: 'https://www.sc.com.my/regulation/regulatory-faqs/frequently-asked-questions-on-revised-shariah-screening-methodology' },
     scSenarai: { by: 'Suruhanjaya Sekuriti Malaysia', t: 'Keputusan Majlis Penasihat Syariah SC (edisi Bahasa Malaysia, 31 Disember 2023)', petik: 'Himpunan keputusan rasmi MPS SC untuk pasaran modal Islam.', url: 'https://www.sc.com.my/api/documentms/download.ashx?id=7c96654e-e943-4123-9a4a-9be4ac1da3e3' },
     selZakatSaham: { by: 'Jabatan Mufti Negeri Selangor', t: 'Hukum Zakat Pelaburan Saham (28 Oktober 2023)', petik: 'Hukum zakat ke atas saham yang dilaburkan di pasaran modal adalah sama seperti zakat barang perniagaan (\'urudh al-tijarah).', url: 'https://www.muftiselangor.gov.my/2023/10/28/hukum-zakat-perlaburan-saham/' },
+    mkiForex: { by: 'Muzakarah Jawatankuasa Fatwa Majlis Kebangsaan kali ke-98 (13–15 Februari 2012), dipetik Jabatan Mufti Negeri Selangor', t: 'Hukum forex oleh individu secara lani melalui platform elektronik', petik: 'Haram. Antara sebabnya: riba melalui pengenaan rollover interest, pensyaratan jual beli dalam pemberian hutang melalui leverage, qabd (penerimaan) yang tidak jelas ketika transaksi pertukaran, penjualan mata wang yang tiada dalam pegangan dan spekulasi yang melibatkan perjudian.', url: 'https://emusykil.muftiselangor.gov.my/index.php/site/jawapan?id=3420' },
+    mkiEmas: { by: 'Muzakarah Jawatankuasa Fatwa Majlis Kebangsaan kali ke-96 (13–15 Oktober 2011), dipetik Maybank Islamic', t: 'Parameter Pelaburan Emas', petik: 'Jual beli emas mesti berlaku serta-merta tanpa penangguhan; beli secara hutang penuh atau ansuran tidak dibenarkan; emas mesti wujud dan dimiliki sepenuhnya oleh penjual; serah terima (taqabudh) harga dan emas berlaku sebelum kedua-dua pihak berpisah.', url: 'https://www.maybank.com/islamic/en/coe/fatwa/others/gold_investment_parameters.page' },
+    scNiaga: { by: 'Majlis Penasihat Syariah, Suruhanjaya Sekuriti Malaysia', t: 'Keputusan MPS SC Edisi Kedua: niaga hadapan minyak sawit mentah (hlm. 84) dan indeks komposit KLCI (hlm. 89)', petik: 'Kontrak niaga hadapan minyak sawit mentah (mesyuarat ke-10 dan ke-11, 1997) dan niaga hadapan indeks komposit KLCI (mesyuarat ke-13, 1998) "diharuskan menurut perspektif perundangan Islam".', url: 'https://www.sc.com.my/api/documentms/download.ashx?id=b26a16f1-241d-4831-a433-ed2a62d4cadd' },
+    iifa63: { by: 'Akademi Fiqh Islam Antarabangsa (IIFA), Resolusi 63 (1/7), Jeddah 1992', t: 'Pasaran kewangan: saham, opsyen, komoditi', petik: 'Kontrak opsyen tidak harus, dan kerana ia pada asalnya tidak harus, dagangannya juga tidak harus. Kontrak niaga hadapan komoditi pada asasnya tidak harus. Mata wang tidak boleh dijual beli secara niaga hadapan. Tidak harus menjual saham yang tidak dimiliki penjual.', url: 'https://iifa-aifi.org/en/32438.html' },
     wpQasar: { by: 'Pejabat Mufti Wilayah Persekutuan', t: 'Al-Kafi #1177: Hukum solat jamak qasar semasa musafir tanpa bermalam', petik: 'Musafir melebihi 2 marhalah (kira-kira 81 km) boleh jamak dan qasar walaupun pulang hari dan tidak bermalam, jika destinasi jelas dan perjalanan bukan untuk maksiat.', url: 'https://muftiwp.gov.my/ms/artikel/al-kafi-li-al-fatawi/3241-al-kafi-1177-hukum-solat-jamak-qasar-semasa-musafir-tanpa-bermalam' }
   };
 
@@ -62,7 +66,7 @@ const FiqhData = (() => {
       kitab: [['abisyuja', 19, 'كتاب الصوم'], ['fathqarib', 118, 'كتاب بيان أحكام الصيام'], ['minhaj', 87, 'كتاب الصيام'], ['manhaji', 265, 'الجزء الثاني: الزكاة والصيام والحج']] },
     { k: 'zakat', name: 'Zakat', ar: 'الزكاة', desc: 'Kewajipan, asnaf, fitrah dan zakat saham', color: '#f2b51f',
       kitab: [['abisyuja', 16, 'كتاب الزكاة'], ['fathqarib', 101, 'كتاب أحكام الزكاة'], ['minhaj', 73, 'كتاب الزكاة'], ['manhaji', 265, 'الجزء الثاني: الزكاة والصيام والحج']] },
-    { k: 'muamalat', name: 'Muamalat & Pelaburan', ar: 'المعاملات', desc: 'Jual beli, riba, gharar, saham dan kripto', color: '#f2704d',
+    { k: 'muamalat', name: 'Muamalat & Pelaburan', ar: 'المعاملات', desc: 'Jual beli, riba, gharar, saham, kripto, forex dan CFD', color: '#f2704d',
       kitab: [['abisyuja', 23, 'كتاب البيوع وغيرها من المعاملات'], ['fathqarib', 142, 'كتاب أحكام البيوع'], ['minhaj', 113, 'كتاب البيع'], ['manhaji', 1041, 'الجزء السادس: البيع والربا والصرف']] }
   ];
 
@@ -164,7 +168,40 @@ const FiqhData = (() => {
       q: ['2:275', '4:29'], f: ['scSaringan', 'scSenarai'], app: ['#belajar', 'Belajar asas saham di Bijak Labur'] },
     { bab: 'muamalat', k: 'kripto', t: 'Melabur dalam kripto', hukum: 'harus',
       ringkas: 'MPS SC memutuskan pelaburan dan dagangan aset digital yang memenuhi syarat Syariah dan didagangkan di DAX berdaftar dengan SC adalah dibenarkan. Mata wang digital dianggap harta (mal) dan \'urudh, bukan mata wang. Unsur judi, gharar dan riba tetap perlu dielakkan.',
-      q: ['4:29'], h: ['m1513'], f: ['scKripto'], app: ['#pasaran', 'Lihat harga kripto masa nyata'] }
+      q: ['4:29'], h: ['m1513'], f: ['scKripto'], app: ['#pasaran', 'Lihat harga kripto masa nyata'] },
+    { bab: 'muamalat', k: 'forex', t: 'Dagangan forex (pertukaran mata wang asing) secara individu', hukum: 'haram', alias: 'forex fx metatrader mt4 mt5 eurusd xauusd trading mata wang tukaran asing',
+      ringkas: 'Muzakarah Fatwa Kebangsaan kali ke-98 (2012) memutuskan dagangan forex oleh individu secara lani melalui platform elektronik adalah haram, kerana mengandungi riba (rollover interest), hutang bersyarat jual beli melalui leverage, qabd yang tidak jelas, menjual mata wang yang tiada dalam pegangan dan spekulasi menyerupai judi. Tukaran mata wang sebenar untuk keperluan, secara tunai dan serta-merta, kekal harus.',
+      q: ['2:275', '2:278', '5:90'], h: ['m1587', 'm1598', 'd3503'], f: ['mkiForex'], app: ['#belajar', 'Pelajaran forex dan emas di Belajar'] },
+    { bab: 'muamalat', k: 'cfd', t: 'CFD (Contract for Difference)', hukum: 'haram', alias: 'cfd contract for difference beza harga us500 nas100 gold cfd derivatif',
+      ringkas: 'Dalam CFD, aset tidak pernah dimiliki; yang didagang hanya beza harga dengan broker, dengan leverage dan caj swap semalaman. Unsur-unsur ini sama dengan sebab forex runcit diharamkan oleh Muzakarah kali ke-98: riba, hutang bersyarat jual beli, tiada qabd, menjual yang tiada dalam milik dan spekulasi.',
+      nota: 'Tiada fatwa rasmi Malaysia yang menyebut CFD secara khusus ditemui. Hukum ini disimpulkan daripada sebab-sebab yang dinyatakan dalam fatwa forex di bawah.',
+      q: ['2:275', '5:90'], h: ['d3503', 'm1513'], f: ['mkiForex'], app: ['#belajar', 'Pelajaran CFD di Belajar'] },
+    { bab: 'muamalat', k: 'leverage', t: 'Leverage dan akaun margin berfaedah', hukum: 'haram', alias: 'leverage margin margin call liquidation pinjaman broker gearing',
+      ringkas: 'Leverage dan margin konvensional ialah pinjaman berfaedah daripada broker untuk membeli lebih banyak aset, dan faedah itu riba. Muzakarah kali ke-98 juga menyebut "pensyaratan jual beli dalam pemberian hutang melalui leverage" sebagai sebab pengharaman forex runcit. Pembiayaan margin Islam yang menggunakan akad Syariah ialah alternatif yang perlu disemak akadnya.',
+      q: ['2:275', '2:278', '2:279'], h: ['m1598'], f: ['mkiForex'], app: ['#belajar', 'Cuba simulator leverage di Belajar'] },
+    { bab: 'muamalat', k: 'opsyen', t: 'Opsyen (options) call dan put', hukum: 'haram', alias: 'opsyen options option call put premium waran',
+      ringkas: 'Opsyen ialah hak untuk membeli atau menjual pada harga tetap yang dijual dengan premium. Akademi Fiqh Islam Antarabangsa (Resolusi 63) memutuskan kontrak opsyen tidak harus kerana yang dijual bukan harta, manfaat atau hak kewangan yang sah, dan dagangannya juga tidak harus.',
+      h: ['m1513'], f: ['iifa63'], app: ['#belajar', 'Pelajaran niaga hadapan dan opsyen'] },
+    { bab: 'muamalat', k: 'niaga-hadapan', t: 'Niaga hadapan (futures): FCPO dan FKLI', hukum: 'info', alias: 'niaga hadapan futures fcpo fkli sawit kontrak hadapan perpetual',
+      ringkas: 'Ulama berbeza pendapat (khilaf). Majlis Penasihat Syariah SC memutuskan niaga hadapan minyak sawit mentah (FCPO) dan indeks komposit KLCI di Bursa Malaysia Derivatives adalah harus. Akademi Fiqh Islam Antarabangsa pula berpandangan kontrak niaga hadapan komoditi pada asasnya tidak harus, dan mata wang tidak boleh didagang secara niaga hadapan. Keputusan MPS SC tidak meliputi futures luar negara, futures emas, futures mata wang atau perpetual kripto.',
+      f: ['scNiaga', 'iifa63'], app: ['#belajar', 'Pelajaran niaga hadapan dan opsyen'] },
+    { bab: 'muamalat', k: 'emas', t: 'Jual beli dan pelaburan emas', hukum: 'harus', alias: 'emas gold jongkong dinar akaun emas xau ansuran',
+      ringkas: 'Emas ialah barang ribawi. Jual belinya harus jika serta-merta dan berlaku serah terima (taqabudh) sebelum berpisah, emas wujud dan dimiliki penjual, dan tidak dibeli secara hutang atau ansuran, menurut Parameter Pelaburan Emas Muzakarah kali ke-96. Dagangan emas melalui CFD atau XAU/USD di platform forex tidak memenuhi syarat ini.',
+      langkah: ['Serta-merta, tiada tangguh', 'Tiada ansuran atau hutang', 'Emas wujud dan dimiliki penjual', 'Taqabudh sebelum berpisah'],
+      h: ['m1587'], f: ['mkiEmas'] }
+  ];
+
+  /* Istilah moden yang tiada dalam teks Al-Quran: dipetakan kepada perkataan dalil asas untuk carian ayat */
+  const ISTILAH = [
+    [/forex|\bfx\b|metatrader|mt[45]|mata wang|currency/i, ['riba', 'judi']],
+    [/cfd|contract for diff|derivatif|derivative/i, ['riba', 'judi']],
+    [/leverage|margin|gearing|pinjam|hutang|interest|faedah|bunga/i, ['riba', 'hutang']],
+    [/opsyen|option|futures|niaga hadapan|perpetual|spekulasi|trading|dagang/i, ['judi', 'perniagaan']],
+    [/kripto|crypto|bitcoin|btc|coin|token/i, ['harta', 'perniagaan']],
+    [/emas|gold|perak|silver/i, ['emas', 'riba']],
+    [/saham|stock|share|pelaburan|labur|invest/i, ['perniagaan', 'harta']],
+    [/judi|maisir|loteri|lottery|bet|taruh/i, ['judi']],
+    [/insurans|insurance|takaful/i, ['judi']]
   ];
 
   /* Pautan carian ke sumber asal */
@@ -175,5 +212,5 @@ const FiqhData = (() => {
     ['Keputusan MPS SC', 'Pasaran modal Islam', () => F.scSenarai.url]
   ];
 
-  return { KITAB, shamela, H, KOLEKSI, F, HUKUM, BAB, MASALAH, CARI };
+  return { KITAB, shamela, H, KOLEKSI, F, HUKUM, BAB, MASALAH, CARI, ISTILAH };
 })();

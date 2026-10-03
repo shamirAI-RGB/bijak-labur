@@ -102,3 +102,4 @@
   .fq-kitab-ar { order: -1; flex-basis: 100%; max-width: none; text-align: right; font-size: .95rem; }
   .fq-lvl-tag { display: none; }
 }
+.fq-w { display: inline-block; margin-left: 6px; padding: 0 7px; border-radius: 99px; font-size: .7rem; font-weight: 600; color: var(--brand); background: var(--brand-soft); vertical-align: 1px; }
