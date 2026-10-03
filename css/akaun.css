@@ -1,0 +1,33 @@
+/* Akaun: butang di bar atas dan tetingkap log masuk */
+.topbar .icon-btn + .icon-btn { margin-left: 8px; }
+.ak-btn { position: relative; }
+.ak-btn.needs::after { content: ''; position: absolute; top: 6px; right: 6px; width: 8px; height: 8px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 2px var(--surface); }
+.ak-avatar { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--brand); color: var(--brand-ink, #fff); font-weight: 700; font-size: 0.85rem; }
+
+.ak-dlg { position: fixed; padding: 26px 22px 20px; }
+.ak-dlg .ak-x { position: absolute; top: 12px; right: 12px; width: 34px; height: 34px; border: 0; background: none; color: var(--muted); }
+.ak-dlg h2 { padding-right: 34px; margin-bottom: 6px; }
+.ak-dlg .eyebrow { margin-bottom: 4px; }
+.ak-dlg form { display: grid; gap: 4px; margin-top: 12px; }
+.ak-dlg .link-btn.back { display: inline-flex; align-items: center; gap: 2px; margin-bottom: 6px; }
+.ak-dlg .link-btn.back .ic { transform: rotate(180deg); width: 16px; height: 16px; }
+.ak-list { display: grid; gap: 10px; margin: 18px 0 6px; }
+.ak-prov { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 46px; font-weight: 600; }
+.ak-prov .ic, .ak-logo { width: 20px; height: 20px; flex: none; }
+.ak-guest { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; padding-top: 12px; margin-top: 8px; border-top: 1px solid var(--border); }
+.ak-fine { margin-top: 10px; }
+.ak-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin-top: 12px; }
+.ak-dev { display: flex; align-items: center; gap: 12px; margin: 14px 0 10px; padding: 14px; }
+.ak-dev .ic { width: 22px; height: 22px; color: var(--brand); flex: none; }
+.ak-dl { display: grid; grid-template-columns: max-content 1fr; gap: 8px 16px; margin: 14px 0; font-size: 0.92rem; }
+.ak-dl dt { color: var(--muted); }
+.ak-dl dd { margin: 0; overflow-wrap: anywhere; }
+.ak-dlg .actions.end { margin-top: 14px; }
+#akCaptcha:empty { display: none; }
+
+/* Butang akaun menambah satu butang di bar atas: elak menu desktop berbalut dua baris */
+.logo span, .desk-nav a { white-space: nowrap; }
+@media (min-width: 900px) and (max-width: 1220px) {
+  .desk-nav a { padding: 8px 8px; font-size: 0.9rem; }
+  .topbar-inner { gap: 8px; }
+}
