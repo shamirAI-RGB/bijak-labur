@@ -126,7 +126,11 @@
         <div class="jd-step-n">2</div>
         <div class="jd-step-b">
           <h3>Kursus dan kumpulan</h3>
-          <p class="muted small">Cara paling cepat: salin semua teks slip pendaftaran kursus atau halaman jadual MyStudent anda, kemudian tampal di bawah. Kod kursus dan kumpulan dikesan sendiri.</p>
+          <p class="muted small">Cara paling cepat: log masuk MyStudent, muat turun slip pendaftaran kursus (PDF) dan muat naik di sini, atau salin semua teks slip dan tampal di bawah. Kod kursus dan kumpulan dikesan sendiri.</p>
+          <div class="jd-ms">
+            <a class="btn sm ghost" href="https://mystudent.uitm.edu.my/" target="_blank" rel="noopener">${icon('external')}Buka MyStudent</a>
+            <label class="btn sm ghost">${icon('file')}Muat naik slip PDF<input type="file" id="jdSlip" accept=".pdf,application/pdf,.txt,text/plain" hidden></label>
+          </div>
           <textarea id="jdPaste" rows="3" placeholder="Contoh: CSC584 ENTERPRISE PROGRAMMING CS2305A  ITS662 DATA MINING CS2305A"></textarea>
           <button class="btn sm ghost jd-mt" id="jdDetect">${icon('search')}Kesan kursus</button>
           <div class="jd-or"><span>atau tambah satu per satu</span></div>
@@ -352,6 +356,22 @@
       if (S.campus === 'B' && !ui.faculties) loadCampuses(); else loadCourses();
     };
     $('#jdFac').onchange = e => { S.faculty = e.target.value; save(); loadCourses(); };
+    // Slip PDF daripada MyStudent: baca teks dalam peranti (pdf.js), tiada fail dihantar ke pelayan
+    $('#jdSlip').onchange = async e => {
+      const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+      $('#jdAddErr').textContent = '';
+      try {
+        let text = '';
+        if (/\.pdf$/i.test(f.name) || f.type === 'application/pdf') {
+          await loadScript('js/vendor/pdf.min.js');
+          pdfjsLib.GlobalWorkerOptions.workerSrc = 'js/vendor/pdf.worker.min.js';
+          const pdf = await pdfjsLib.getDocument({ data: await f.arrayBuffer(), isEvalSupported: false }).promise;
+          for (let i = 1; i <= Math.min(pdf.numPages, 10); i++) text += (await (await pdf.getPage(i)).getTextContent()).items.map(t => t.str).join(' ') + '\n';
+        } else text = await f.text();
+        $('#jdPaste').value = text;
+        $('#jdDetect').click();
+      } catch { $('#jdAddErr').textContent = 'Slip tidak dapat dibaca. Pastikan ia PDF asal dari MyStudent (bukan gambar), atau salin dan tampal teksnya.'; }
+    };
     $('#jdDetect').onclick = () => {
       const found = parsePaste($('#jdPaste').value);
       if (!found.length) { $('#jdAddErr').textContent = 'Tiada kod kursus dikesan. Kod kursus UiTM berbentuk tiga huruf dan tiga nombor, cth. CSC584.'; return; }
