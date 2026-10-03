@@ -82,7 +82,7 @@
         const g = id => esc($('#' + id).value.trim());
         const studs = $('#cvStudents').value.split('\n').map(l => l.trim()).filter(Boolean).map(l => { const [n, ...m] = l.split(','); return `<tr><td>${esc(n.trim())}</td><td>${esc(m.join(',').trim())}</td></tr>`; }).join('');
         const d = $('#cvDate').value ? new Date($('#cvDate').value + 'T00:00:00').toLocaleDateString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
-        return `<div class="cv">${logo ? `<img class="cv-logo" src="${logo}" alt="">` : ''}<div class="cv-uni">${g('cvUni') || 'NAMA UNIVERSITI'}</div><div class="cv-fac">${g('cvFac')}</div>
+        return `<div class="cv">${/^data:image\//.test(logo || '') ? `<img class="cv-logo" src="${esc(logo)}" alt="">` : ''}<div class="cv-uni">${g('cvUni') || 'NAMA UNIVERSITI'}</div><div class="cv-fac">${g('cvFac')}</div>
           <div class="cv-course">${[g('cvCode'), g('cvCourse')].filter(Boolean).join(' · ')}</div><div class="cv-title">${g('cvTitle') || 'Tajuk tugasan'}</div>
           ${studs ? `<table class="cv-students"><tr><th>Nama</th><th>No. matrik</th></tr>${studs}</table>` : ''}
           <div class="cv-meta">${g('cvLect') ? `<div><span>Pensyarah</span>${g('cvLect')}</div>` : ''}${d ? `<div><span>Tarikh hantar</span>${esc(d)}</div>` : ''}</div></div>`;

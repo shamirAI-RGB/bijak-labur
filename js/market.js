@@ -7,7 +7,7 @@
   const NAMES = { BTC: 'Bitcoin', ETH: 'Ethereum', SOL: 'Solana', BNB: 'BNB', XRP: 'XRP', DOGE: 'Dogecoin', ADA: 'Cardano', LINK: 'Chainlink', AVAX: 'Avalanche', TRX: 'Tron', DOT: 'Polkadot', LTC: 'Litecoin', SHIB: 'Shiba Inu', TON: 'Toncoin', SUI: 'Sui', PEPE: 'Pepe' };
   const DEFAULT = ['BTC', 'ETH', 'SOL', 'BNB', 'XRP', 'DOGE', 'ADA', 'LINK'];
 
-  let syms = store.get('cryptoSyms', DEFAULT);
+  let syms = store.get('cryptoSyms', DEFAULT).filter(s => /^[A-Z0-9]{1,15}$/.test(s));
   if (!Array.isArray(syms) || !syms.length) syms = DEFAULT.slice();
   const data = {};
   let ws = null, wsRetry = 0, geckoTimer = null, reconnectTimer = null;

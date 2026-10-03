@@ -88,10 +88,10 @@
       const v = valueOf(h, fx); if (v.now != null) { tot += v.now; cost += v.cost; }
       const pl = v.now == null ? null : v.now - v.cost;
       const priceCell = h.type === 'stock'
-        ? `<label class="pf-edit">Harga ${h.cur === 'USD' ? '$' : 'RM'}<input class="pf-price" data-i="${i}" type="number" step="any" inputmode="decimal" value="${h.price}" aria-label="Harga semasa ${esc(h.sym)}"></label>`
+        ? `<label class="pf-edit">Harga ${h.cur === 'USD' ? '$' : 'RM'}<input class="pf-price" data-i="${i}" type="number" step="any" inputmode="decimal" value="${+h.price || ''}" aria-label="Harga semasa ${esc(h.sym)}"></label>`
         : `<span>Harga ${v.price == null ? '<span class="skeleton"></span>' : money(v.price, 'USD')}</span>`;
       return `<div class="pf-row">
-        <div class="pf-main"><b>${esc(h.sym)}</b><span class="muted small">${h.qty.toLocaleString('en-US', { maximumFractionDigits: 8 })} unit · kos ${money(h.cost, h.cur)}</span></div>
+        <div class="pf-main"><b>${esc(h.sym)}</b><span class="muted small">${(+h.qty).toLocaleString('en-US', { maximumFractionDigits: 8 })} unit · kos ${money(h.cost, h.cur)}</span></div>
         <div class="pf-val num">${v.now == null ? '<span class="skeleton"></span>' : fmtRM(v.now)}${pl == null ? '' : `<div class="small ${sign(pl)}">${pl >= 0 ? '+' : '−'}${fmtRM(Math.abs(pl))} (${pct(v.cost ? pl / v.cost * 100 : 0)})</div>`}</div>
         <div class="pf-sub muted small">${h.type === 'crypto' ? 'Kripto' : 'Saham'} · ${priceCell}</div>
         <button class="icon-btn plain pf-del" data-del="${i}" aria-label="Buang ${esc(h.sym)}">${icon('x')}</button>
