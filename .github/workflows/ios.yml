@@ -28,6 +28,8 @@ jobs:
       - name: Bina untuk simulator (semakan, tanpa tandatangan)
         working-directory: ios/App
         run: |
+          # pipefail: tanpa ini, kegagalan xcodebuild disembunyikan oleh "| tail"
+          set -o pipefail
           xcodebuild -project App.xcodeproj -scheme App -configuration Debug \
             -destination 'generic/platform=iOS Simulator' \
             CODE_SIGNING_ALLOWED=NO build | tail -n 30
