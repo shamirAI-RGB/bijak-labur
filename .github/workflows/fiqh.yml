@@ -39,16 +39,28 @@ jobs:
         run: |
           sed -i '/^routes = /d' wrangler.toml
           npx --yes wrangler@3 deploy
-      # Kunci API Claude dimuat naik hanya jika ia ditetapkan. Tanpanya, Tanya AI memaparkan "belum diaktifkan".
+      # Kunci API dimuat naik hanya jika ia ditetapkan. Tanpa ANTHROPIC_API_KEY dan GEMINI_API_KEY, Tanya AI memaparkan "belum diaktifkan".
       - name: Rahsia ANTHROPIC_API_KEY
         if: github.ref == 'refs/heads/main' && env.HAS_CF == 'true'
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           if [ -n "$ANTHROPIC_API_KEY" ]; then printf '%s' "$ANTHROPIC_API_KEY" | npx --yes wrangler@3 secret put ANTHROPIC_API_KEY; fi
+      # Pilihan percuma: kunci Gemini (Google AI Studio). Digunakan jika ANTHROPIC_API_KEY tiada.
+      - name: Rahsia GEMINI_API_KEY
+        if: github.ref == 'refs/heads/main' && env.HAS_CF == 'true'
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          if [ -n "$GEMINI_API_KEY" ]; then printf '%s' "$GEMINI_API_KEY" | npx --yes wrangler@3 secret put GEMINI_API_KEY; fi
       - name: Ringkasan
         if: github.ref == 'refs/heads/main'
+        env:
+          HAS_AI: ${{ secrets.ANTHROPIC_API_KEY != '' || secrets.GEMINI_API_KEY != '' }}
         run: |
+          if [ "$HAS_AI" != "true" ]; then
+            echo "Tiada ANTHROPIC_API_KEY atau GEMINI_API_KEY, jadi Tanya AI memaparkan \"belum diaktifkan\"." >> "$GITHUB_STEP_SUMMARY"
+          fi
           if [ "$HAS_CF" != "true" ]; then
             echo "Rahsia Cloudflare belum ditetapkan, jadi pelayan Tanya AI tidak dipasang." >> "$GITHUB_STEP_SUMMARY"
           elif [ "${{ steps.domain.outcome }}" = "success" ]; then

@@ -50,3 +50,11 @@ Pelayan kecil dalam `worker-jadual/` (Cloudflare Workers, percuma) membaca iCres
 
 - Ujian pelayan: `node worker-jadual/test.mjs`
 - Carian terus dengan No. Pelajar tidak disokong kerana jadual peribadi berada di sebalik log masuk MyStudent; ia memerlukan kebenaran atau API rasmi UiTM.
+
+## Tanya AI Fiqh
+
+Pelayan `worker-fiqh/` (Cloudflare Workers) menjawab soalan fiqh dengan rujukan yang disemak, di `https://fiqh.bijaklabur.my`. Ia dipasang oleh `.github/workflows/fiqh.yml`.
+
+- Rahsia `GEMINI_API_KEY` (percuma, dari Google AI Studio): jawapan bersandarkan korpus rujukan Bijak Labur dan ayat Al-Quran sahaja.
+- Rahsia `ANTHROPIC_API_KEY` (berbayar): Claude juga boleh membuka Shamela, quran.com, sunnah.com dan laman mufti semasa menjawab. Jika kedua-dua kunci ada, Claude digunakan.
+- Ujian pelayan: `node worker-fiqh/test.mjs` (selepas `npm ci` dalam `worker-fiqh/`)
