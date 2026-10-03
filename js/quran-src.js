@@ -10,14 +10,15 @@
 
   // Ralat 404 bermaksud "tiada data" (cth. carian tanpa padanan), bukan masalah rangkaian
   class NotFound extends Error {}
-  async function get(u, ms = 9000) {
+  // Had masa hanya untuk menunggu pelayan menjawab. Muat turun isi (surah panjang
+  // seperti Al-Baqarah) tidak dipotong walaupun rangkaian perlahan.
+  async function get(u, ms = 15000) {
     const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), ms);
-    try {
-      const r = await fetch(u, { signal: ctl.signal });
-      if (r.status === 404) throw new NotFound('404');
-      if (!r.ok) throw new Error(r.status);
-      return await r.json();
-    } finally { clearTimeout(t); }
+    let r;
+    try { r = await fetch(u, { signal: ctl.signal }); } finally { clearTimeout(t); }
+    if (r.status === 404) throw new NotFound('404');
+    if (!r.ok) throw new Error(r.status);
+    return r.json();
   }
   const aq = async path => { const j = await get(AQ + path); if (j.code !== 200) throw new Error(j.status); return j.data; };
   async function first(...tries) {
@@ -27,13 +28,27 @@
   }
   const strip = t => t.replace(/^﻿/, '');
   const memo = {};
+  // Simpanan dalam peranti: senarai surah + 10 surah terakhir dibaca, supaya
+  // surah yang pernah dibuka tetap boleh dibaca walaupun sumber gagal atau tiada internet
+  const LS = 'bl_quran_';
+  const load = k => { try { return JSON.parse(localStorage.getItem(LS + k)); } catch { return null; } };
+  function save(k, v) {
+    const idx = (load('idx') || []).filter(x => x !== k), data = JSON.stringify(v);
+    if (k !== 'list') idx.push(k);
+    for (;;) {
+      while (idx.length > 10) localStorage.removeItem(LS + idx.shift());
+      try { localStorage.setItem(LS + k, data); localStorage.setItem(LS + 'idx', JSON.stringify(idx)); return; }
+      catch { if (idx.length < 2) return; localStorage.removeItem(LS + idx.shift()); } // storan penuh: buang yang paling lama
+    }
+  }
+  const kept = (k, f) => async () => { const c = load(k); if (c && c.length) return c; const v = await f(); save(k, v); return v; };
   const once = (k, f) => memo[k] || (memo[k] = f().catch(e => { delete memo[k]; throw e; }));
 
   /* Senarai 114 surah */
-  const list = () => once('list', () => first(
+  const list = () => once('list', kept('list', () => first(
     async () => (await aq('/surah')).map(s => ({ n: s.number, ar: s.name, en: s.englishName, tr: s.englishNameTranslation, c: s.numberOfAyahs, t: s.revelationType === 'Meccan' ? 'Makkiyah' : 'Madaniyah' })),
     async () => (await get(`${QC}/chapters?language=ms`)).chapters.map(s => ({ n: s.id, ar: 'سُورَةُ ' + s.name_arabic, en: s.name_simple, tr: s.translated_name ? s.translated_name.name : '', c: s.verses_count, t: s.revelation_place === 'makkah' ? 'Makkiyah' : 'Madaniyah' }))
-  ));
+  )));
 
   /* Satu surah: [{ k: no. ayat, g: no. global, ar, ms }] */
   async function qcVerses(path) {
@@ -45,17 +60,17 @@
     }
     return out;
   }
-  const surah = n => once('s' + n, () => first(
-    async () => {
-      const [ar, ms] = await aq(`/surah/${n}/editions/quran-uthmani,ms.basmeih`);
-      return ar.ayahs.map((a, i) => {
-        let t = strip(a.text);
-        if (i === 0 && n !== 1 && n !== 9 && t.startsWith(BASMALAH)) t = t.slice(BASMALAH.length).trim();
-        return { k: a.numberInSurah, g: a.number, ar: t, ms: ms.ayahs[i] ? ms.ayahs[i].text : '' };
-      });
-    },
-    async () => (await qcVerses(`by_chapter/${n}`)).map(v => ({ k: v.verse_number, g: v.id, ar: v.text_uthmani, ms: cleanTr(v.translations && v.translations[0] && v.translations[0].text) }))
-  ));
+  const aqAyahs = (n, ar, ms) => ar.ayahs.map((a, i) => {
+    let t = strip(a.text);
+    if (i === 0 && n !== 1 && n !== 9 && t.startsWith(BASMALAH)) t = t.slice(BASMALAH.length).trim();
+    return { k: a.numberInSurah, g: a.number, ar: t, ms: ms.ayahs[i] ? ms.ayahs[i].text : '' };
+  });
+  const surah = n => once('s' + n, kept('s' + n, () => first(
+    async () => { const [ar, ms] = await aq(`/surah/${n}/editions/quran-uthmani,ms.basmeih`); return aqAyahs(n, ar, ms); },
+    async () => (await qcVerses(`by_chapter/${n}`)).map(v => ({ k: v.verse_number, g: v.id, ar: v.text_uthmani, ms: cleanTr(v.translations && v.translations[0] && v.translations[0].text) })),
+    // Sandaran ketiga: dua permintaan kecil berasingan ke alquran.cloud
+    async () => { const [ar, ms] = await Promise.all([aq(`/surah/${n}/quran-uthmani`), aq(`/surah/${n}/ms.basmeih`)]); return aqAyahs(n, ar, ms); }
+  )));
   const cleanTr = t => (t || '').replace(/<sup[^>]*>.*?<\/sup>/g, '').replace(/<[^>]+>/g, '').trim();
 
   /* Satu ayat, cth. "2:275" */
