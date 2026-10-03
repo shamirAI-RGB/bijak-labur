@@ -7,12 +7,12 @@ const Premium = (function () {
   const TRIAL_DAYS = 3;
 
   const PLANS = {
-    pelajar: { name: 'Pelajar', m1: 5, y1: 39, blurb: 'Untuk pelajar kolej dan universiti.',
-      feats: ['Laporan semakan PDF', 'Penjana rujukan APA, MLA dan Harvard', 'Kalkulator PNGK dan sasaran', 'Penjana muka depan tugasan', 'Bandingkan dua draf', 'Sejarah semakan'] },
+    pelajar: { name: 'Pelajar', m1: 5, y1: 39, blurb: 'Untuk pelajar sekolah, kolej dan universiti.',
+      feats: ['Pustaka Kanak-kanak: semua bab 21 subjek', 'Laporan semakan PDF', 'Penjana rujukan APA, MLA dan Harvard', 'Kalkulator PNGK dan sasaran', 'Penjana muka depan tugasan', 'Bandingkan dua draf', 'Sejarah semakan'] },
     pelabur: { name: 'Pelabur', m1: 12, y1: 89, blurb: 'Untuk yang sudah mula melabur.',
       feats: ['Portfolio dalam Ringgit', 'Simulator DCA dengan harga sebenar', 'Saiz posisi dan risiko', 'Jurnal dagangan', 'Kos dagangan Bursa', 'Dividen dan DRIP', 'Perancang matlamat', 'Bandingkan ASB, KWSP, FD dan emas', 'Kalkulator zakat pelaburan'] },
     lengkap: { name: 'Lengkap', m1: 15, y1: 109, blurb: 'Semua alat Pelajar dan Pelabur.',
-      feats: ['Semua 6 alat pelan Pelajar', 'Semua 9 alat pelan Pelabur', 'Ciri Premium baharu tanpa caj tambahan'] }
+      feats: ['Semua 7 ciri pelan Pelajar', 'Semua 9 alat pelan Pelabur', 'Ciri Premium baharu tanpa caj tambahan'] }
   };
   const PERIOD = { m1: '30 hari', y1: 'setahun' };
   const PERIOD_STORE = { m1: 'bulan', y1: 'tahun' };

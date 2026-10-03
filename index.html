@@ -32,6 +32,7 @@
   <link rel="stylesheet" href="css/ibadah.css">
   <link rel="stylesheet" href="css/belajar-visual.css">
   <link rel="stylesheet" href="css/fiqh.css">
+  <link rel="stylesheet" href="css/pustaka.css">
 </head>
 <body>
   <a class="skip-link" href="#main">Langkau ke kandungan</a>
@@ -102,6 +103,7 @@
       <nav class="desk-nav" aria-label="Navigasi utama">
         <a href="#utama" data-nav="utama">Utama</a>
         <a href="#belajar" data-nav="belajar">Belajar</a>
+        <a href="#pustaka" data-nav="pustaka">Pustaka</a>
         <a href="#pasaran" data-nav="pasaran">Pasaran</a>
         <a href="#solat" data-nav="solat">Waktu Solat</a>
         <a href="#ibadah" data-nav="ibadah">Ibadah</a>
@@ -146,6 +148,11 @@
             <a class="card shortcut" href="#belajar">
               <span class="ring-wrap"><svg class="ring" viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="18" class="ring-bg"/><circle cx="22" cy="22" r="18" class="ring-fg" id="homeRing" stroke-dasharray="113.1" stroke-dashoffset="113.1"/></svg><span class="ring-txt num" id="homePct">0%</span></span>
               <div class="sc-body"><div class="sc-title">Sambung belajar</div><div class="sc-sub" id="homeLesson">Mula dengan modul pertama</div></div>
+              <svg class="ic chev"><use href="#i-chev"/></svg>
+            </a>
+            <a class="card shortcut" href="#pustaka">
+              <span class="sc-ico"><svg class="ic"><use href="#i-book"/></svg></span>
+              <div class="sc-body"><div class="sc-title">Pustaka Kanak-kanak</div><div class="sc-sub">Ebook 21 subjek termasuk Bijak Wang, umur 4 hingga 12. BM, English, 中文, தமிழ்</div></div>
               <svg class="ic chev"><use href="#i-chev"/></svg>
             </a>
             <a class="card shortcut" href="#semak">
@@ -339,6 +346,9 @@
       <div class="card flush"><div class="tbl-wrap"><table id="monthTable" class="month"></table></div></div>
       <p class="source">Data waktu solat rasmi JAKIM melalui api.waktusolat.app. Disimpan dalam peranti untuk kegunaan luar talian. Arah kiblat dikira daripada koordinat Kaabah (21.4225° U, 39.8262° T).</p>
     </section>
+
+    <!-- PUSTAKA KANAK-KANAK -->
+    <section class="view" id="view-pustaka" aria-labelledby="h-pustaka"></section>
 
     <!-- IBADAH -->
     <section class="view" id="view-ibadah" aria-label="Ibadah">
@@ -598,6 +608,8 @@
   <script src="js/ibadah.js"></script>
   <script src="js/checker.js"></script>
   <script src="js/premium.js"></script>
+  <script src="js/pustaka-data.js"></script>
+  <script src="js/pustaka.js"></script>
   <script src="js/pro.js"></script>
   <script src="js/pro-invest.js"></script>
   <script src="js/pro-study.js"></script>
