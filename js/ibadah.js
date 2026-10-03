@@ -26,10 +26,11 @@
     zakat: '<rect x="5" y="2.5" width="14" height="19" rx="2.5" fill="#fff"/><rect x="7.5" y="5" width="9" height="4" rx="1" fill="currentColor" opacity=".4"/><g fill="currentColor" opacity=".45"><circle cx="9" cy="12.5" r="1"/><circle cx="12" cy="12.5" r="1"/><circle cx="15" cy="12.5" r="1"/><circle cx="9" cy="16" r="1"/><circle cx="12" cy="16" r="1"/><circle cx="15" cy="16" r="1"/></g>',
     tetapan: '<path d="M12 2.5 14 4l2.4-.4.9 2.3 2.3.9-.4 2.4 1.5 2-1.5 2 .4 2.4-2.3.9-.9 2.3-2.4-.4-2 1.5-2-1.5-2.4.4-.9-2.3-2.3-.9.4-2.4L2.5 12 4 10l-.4-2.4 2.3-.9.9-2.3L9.2 4Z" fill="#fff"/><circle cx="12" cy="12" r="3.3" fill="currentColor" opacity=".45"/>',
     profil: '<circle cx="12" cy="12" r="9.5" fill="#fff"/><circle cx="12" cy="9.6" r="3.2" fill="currentColor" opacity=".5"/><path d="M6.2 18.2a7 7 0 0 1 11.6 0" fill="currentColor" opacity=".5"/>',
+    fiqh: '<path d="M12 3.5v16.5M7 20.5h10M4.5 7.5h15" stroke="#fff" stroke-width="2" stroke-linecap="round"/><path d="M7 8 4 14a3 3 0 0 0 6 0ZM17 8l-3 6a3 3 0 0 0 6 0Z" fill="#fff"/><circle cx="12" cy="4" r="1.6" fill="#fff"/>',
     bantuan: '<path d="M12 2.8a9.2 9.2 0 0 0-8 13.7L3 21l4.5-1a9.2 9.2 0 1 0 4.5-17.2Z" fill="#fff"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .8-1 1.5v.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" opacity=".55"/><circle cx="12" cy="16.6" r="1.1" fill="currentColor" opacity=".55"/>'
   };
   const TILES = [
-    ['quran', 'Al-Quran', '#1f9d63', '#0e7a4c'], ['doa', 'Doa & Zikir', '#7b5cf0', '#5a3fd1'], ['kiblat', 'Arah Kiblat', '#8fd14f', '#4caf2a'],
+    ['quran', 'Al-Quran', '#1f9d63', '#0e7a4c'], ['doa', 'Doa & Zikir', '#7b5cf0', '#5a3fd1'], ['fiqh', 'Fiqh & Rujukan', '#c9853a', '#9c5f1c'], ['kiblat', 'Arah Kiblat', '#8fd14f', '#4caf2a'],
     ['tasbih', 'Tasbih', '#2bb8f0', '#1192d6'], ['kalendar', 'Kalendar Islam', '#4cc8ee', '#1a9ccc'], ['asma', 'Asmaul Husna', '#7f8cff', '#5864f0'],
     ['galeri', 'Galeri', '#c08cf5', '#9a62e6'], ['haid', 'Panduan Haid', '#ff9cc9', '#f06aa6'], ['haji', 'Panduan Haji', '#5d6470', '#3a4049'],
     ['umrah', 'Panduan Umrah', '#ffd25a', '#f2b51f'], ['tukar', 'Tukar Tarikh', '#ff9a7a', '#f2704d'], ['zakat', 'Kalkulator Zakat', '#2fbf71', '#16934f'],
@@ -516,7 +517,8 @@
   }
 
   const PANELS = { quran: panelQuran, doa: panelDoa, tasbih: panelTasbih, kalendar: panelKalendar, tukar: panelTukar, asma: panelAsma, galeri: panelGaleri,
-    haji: () => guide('haji', D.HAJI), umrah: () => guide('umrah', D.UMRAH), haid: panelHaid, zakat: panelZakat, tetapan: panelTetapan, profil: panelProfil, bantuan: panelBantuan };
+    haji: () => guide('haji', D.HAJI), umrah: () => guide('umrah', D.UMRAH), haid: panelHaid, zakat: panelZakat, tetapan: panelTetapan, profil: panelProfil, bantuan: panelBantuan,
+    fiqh: args => Fiqh.render(P(), args, head('fiqh')) };
 
   /* ---------- Acara ---------- */
   root.addEventListener('click', async e => {
