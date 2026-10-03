@@ -3,6 +3,8 @@
 (function () {
   const D = FiqhData;
   const HAPI = 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions';
+  // Pelayan Tanya AI (worker-fiqh). Boleh ditukar untuk ujian: store.set('fiqh_api', 'https://...workers.dev')
+  const AI_API = (store.get('fiqh_api', '') || 'https://fiqh.bijaklabur.my').replace(/\/$/, '');
   const BAB = Object.fromEntries(D.BAB.map(b => [b.k, b]));
   const SCALE = ['wajib', 'sunat', 'harus', 'makruh', 'haram'];
   let el = null, seq = 0;
@@ -10,7 +12,7 @@
   const badge = h => `<span class="hk hk-${h}">${D.HUKUM[h][0]}</span>`;
   const sunnahUrl = h => `https://sunnah.com/${h.c}:${h.n}`;
   const hRef = h => `${D.KOLEKSI[h.c]} ${h.n.replace(/[a-z]$/, '')}`;
-  const ext = (href, label) => `<a class="link-btn" href="${href}" target="_blank" rel="noopener">${label}${icon('link')}</a>`;
+  const ext = (href, label) => /^https:\/\//.test(href) ? `<a class="link-btn" href="${esc(href)}" target="_blank" rel="noopener">${label}${icon('link')}</a>` : '';
 
   /* ---------- Muat sumber ---------- */
   const cache = {};
@@ -45,6 +47,7 @@
     el.innerHTML = head + `
       <p class="lead">Setiap jawapan dipautkan terus kepada sumbernya. Teks ayat dan hadis dimuat daripada pangkalan data asal semasa anda membukanya, bukan ditulis semula oleh AI. Rujukan yang tidak dapat disahkan tidak dimasukkan.</p>
       ${chainVisual()}
+      <a class="card fq-ai-cta" href="#ibadah/fiqh/tanya"><span class="fq-ai-ico">${icon('quote')}</span><span class="q-main"><b>Tanya AI berasaskan rujukan</b><small>Jawapan hanya daripada kitab muktabar, Al-Quran, hadis dan fatwa rasmi, dengan pautan ke muka surat sumber.</small></span>${icon('chev', 'ic chev')}</a>
       <div class="search-in"><svg class="ic"><use href="#i-search"/></svg><input id="fqFind" placeholder="Cari masalah, cth. riba, forex, CFD, kripto" aria-label="Cari masalah fiqh" autocomplete="off"></div>
       <div id="fqHits"></div>
       <h2 class="grid-title">Bab</h2>
@@ -165,9 +168,96 @@
     return out.join('\n');
   }
 
+  /* ---------- Tanya AI ---------- */
+  const CONTOH = ['Apakah hukum trading forex secara individu?', 'Bolehkah solat jamak dan qasar jika pulang hari?', 'Adakah saham perlu dizakatkan?', 'Apakah rukun wuduk dalam mazhab Syafie?'];
+  const JENIS = { kitab: ['Kitab muktabar', '#f2704d'], quran: ['Al-Quran', '#1f9d63'], hadis: ['Hadis', '#7b5cf0'], fatwa: ['Fatwa', '#1192d6'], bijaklabur: ['Rujukan Bijak Labur', '#c9853a'], lain: ['Sumber rasmi', '#66718f'] };
+  const isAr = t => /[\u0600-\u06FF]/.test(t);
+  let asking = false;
+
+  function tanya(head) {
+    el.innerHTML = head + `
+      <div class="fq-crumb"><a href="#ibadah/fiqh">Fiqh</a>${icon('chev')}<span>Tanya AI</span></div>
+      <div class="fq-hero" style="--c:#c9853a"><span lang="ar" dir="rtl">اسأل</span><div><h2>Tanya AI berasaskan rujukan</h2><p>Setiap jawapan mesti bersandarkan sumber yang boleh anda buka sendiri.</p></div></div>
+      <ol class="fq-flow fq-ai-rules">
+        <li><span class="num">1</span>AI hanya boleh memetik kitab muktabar (Shamela), Al-Quran, hadis dan fatwa rasmi Malaysia.</li>
+        <li><span class="num">2</span>Setiap petikan disemak dengan teks halaman sumber. Petikan yang tidak sepadan dibuang.</li>
+        <li><span class="num">3</span>Jika tiada sumber yang sah, AI menjawab "tidak pasti" dan meminta anda merujuk mufti.</li>
+      </ol>
+      <div class="card">
+        <label for="fqAsk" class="small muted">Soalan anda</label>
+        <textarea id="fqAsk" rows="3" maxlength="500" placeholder="Cth. Apakah hukum menggunakan leverage dalam trading saham?"></textarea>
+        <div class="chips fq-ai-eg">${CONTOH.map(q => `<button class="chip" data-fq-eg="${esc(q)}">${esc(q)}</button>`).join('')}</div>
+        <button class="btn" data-fq-ask>${icon('search')}Tanya</button>
+      </div>
+      <div id="fqAns" aria-live="polite"></div>
+      <p class="note">${icon('alert')}<span>Tanya AI membantu mencari dan menyusun rujukan. Ia bukan mufti dan jawapannya bukan fatwa. AI boleh tersilap memahami teks, jadi bukalah muka surat sumber untuk menyemak. Untuk kes peribadi, rujuk Jabatan Mufti negeri anda atau guru yang bertauliah.</span></p>`;
+  }
+
+  async function ask() {
+    const q = ($('#fqAsk').value || '').replace(/\s+/g, ' ').trim(), box = $('#fqAns');
+    if (asking) return;
+    if (q.length < 5) { box.innerHTML = '<p class="muted small">Tulis soalan sekurang-kurangnya 5 huruf.</p>'; return; }
+    asking = true;
+    const btn = $('[data-fq-ask]'); if (btn) btn.disabled = true;
+    box.innerHTML = `<div class="card fq-ai-wait"><span class="fq-ai-spin" aria-hidden="true"></span><div><b>Mencari dalam kitab dan fatwa</b><p class="muted small">AI sedang membuka muka surat sumber dan menyemak petikan. Ini mungkin mengambil masa sehingga satu minit.</p></div></div>`;
+    const my = seq;
+    try {
+      const r = await fetch(AI_API + '/tanya', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ q }) });
+      const d = await r.json().catch(() => ({}));
+      if (my !== seq) return;
+      if (!r.ok) throw new Error(d.error || (r.status === 503 ? 'Tanya AI belum diaktifkan.' : 'Tanya AI tidak tersedia buat masa ini.'));
+      answer(d, q);
+    } catch (e) {
+      if (my === seq) box.innerHTML = `<p class="note">${icon('alert')}<span>${esc(e.message && !/fetch|network|load/i.test(e.message) ? e.message : 'Tidak dapat menghubungi Tanya AI. Semak sambungan internet anda.')}</span></p>`;
+    } finally { asking = false; if (btn) btn.disabled = false; }
+  }
+
+  function answer(d, q) {
+    const box = $('#fqAns'), src = d.sumber || [], verified = src.filter(s => s.disahkan).length;
+    const head = d.status === 'jawab' ? `<span class="fq-ai-st ok">${icon('check')}${src.length} rujukan${verified ? `, ${verified} petikan disemak` : ''}</span>`
+      : d.status === 'luar_skop' ? '<span class="fq-ai-st">Luar skop</span>' : `<span class="fq-ai-st warn">${icon('alert')}Tidak pasti</span>`;
+    box.innerHTML = `<article class="fq-detail fq-ai-ans">
+      <div class="row-between"><p class="small muted fq-ai-q">${esc(q)}</p>${head}</div>
+      <p class="fq-sum">${esc(d.ringkasan || '')}</p>
+      ${(d.huraian || []).map(p => `<p>${esc(p)}</p>`).join('')}
+      ${d.khilaf ? `<div class="fq-ai-khilaf"><b>Perbezaan pendapat</b><p>${esc(d.khilaf)}</p></div>` : ''}
+      ${d.nasihat ? `<p class="note">${icon('alert')}<span>${esc(d.nasihat)}</span></p>` : ''}
+      ${src.length ? `<h3 class="fq-sec">Rujukan</h3><div>${src.map(sourceCard).join('')}</div>` : ''}
+      <div class="actions"><button class="btn sm ghost" data-fq-copyai>${icon('copy')}Salin jawapan dan rujukan</button>${ext('https://github.com/shamirAI-RGB/bijak-labur/issues', 'Laporkan kesilapan')}</div>
+    </article>`;
+    box._ans = { d, q };
+    fillSources(seq);
+  }
+
+  function sourceCard(s) {
+    const [label, c] = JENIS[s.jenis] || JENIS.lain;
+    const page = s.shamela ? `Shamela, muka surat ${esc(s.shamela)}` : '';
+    const printed = [s.jilid && `juz ${esc(s.jilid)}`, s.halaman && `hlm. ${esc(s.halaman)}`].filter(Boolean).join(', ');
+    if (s.jenis === 'quran') return `<div class="fq-src fq-ai-src" style="--c:${c}" data-ayah="${esc(s.ref)}"><p class="muted small">Memuatkan ayat ${esc(s.ref)}</p></div>`;
+    const hk = s.id && s.id.startsWith('hadis:') && D.H[s.id.slice(6)] ? s.id.slice(6) : '';
+    const live = hk ? `<p class="fq-isi"><span>Isi ringkas</span>${esc(D.H[hk].isi)}</p><div class="fq-live"><p class="muted small">Memuatkan teks hadis</p></div>` : '';
+    return `<div class="fq-src fq-ai-src" style="--c:${c}"${hk ? ` data-hadith="${hk}"` : ''}>
+      <div class="row-between"><span class="fq-ai-kind">${label}</span>${ext(s.url, s.jenis === 'kitab' ? 'Buka muka surat' : 'Buka sumber')}</div>
+      <b>${esc(s.tajuk)}</b>${page || printed ? `<p class="small muted">${[page, printed].filter(Boolean).join(' · ')}</p>` : ''}
+      ${s.petikan ? `<blockquote class="${isAr(s.petikan) ? 'ar fq-ar' : 'fq-tr'}"${isAr(s.petikan) ? ' lang="ar" dir="rtl"' : ''}>${esc(s.petikan)}</blockquote>` : ''}
+      ${s.maksud ? `<p class="fq-tr">${esc(s.maksud)}</p>` : ''}
+      ${s.untuk ? `<p class="small muted">Menyokong: ${esc(s.untuk)}</p>` : ''}
+      ${live}
+      <div class="fq-grades">${s.petikan ? `<span class="fq-grade ok">${icon('check')}Petikan sepadan dengan teks sumber</span>` : `<span class="fq-grade">Buka pautan untuk membaca teks penuh</span>`}</div>
+    </div>`;
+  }
+
+  function aiCite({ d, q }) {
+    const out = [`Soalan: ${q}`, '', d.ringkasan || '', ...(d.huraian || []), d.khilaf ? 'Perbezaan pendapat: ' + d.khilaf : '', '', 'Rujukan:'];
+    (d.sumber || []).forEach(s => out.push(`- ${s.tajuk}${s.shamela ? `, Shamela hlm. ${s.shamela}` : ''}${s.halaman ? `, hlm. ${s.halaman}` : ''} (${s.url})${s.petikan ? `\n  "${s.petikan}"` : ''}`));
+    out.push('', 'Dijana oleh Tanya AI Bijak Labur. Bukan fatwa; semak sumber asal.');
+    return out.filter((l, i, a) => l || a[i - 1]).join('\n');
+  }
+
   /* ---------- Penghala ---------- */
   function render(target, args, head) {
     el = target; seq++;
+    if (args[0] === 'tanya') { tanya(head); window.scrollTo({ top: 0 }); return; }
     const b = args[0] && BAB[args[0]];
     if (!b) return home(head);
     const m = args[1] && D.MASALAH.find(x => x.bab === b.k && x.k === args[1]);
@@ -184,9 +274,16 @@
       box.innerHTML = hits.length ? `<div class="list">${hits.map(hitRow).join('')}</div>` : `<p class="muted small">Tiada masalah sepadan. Cuba cari dalil terus dari sumber di bawah.</p>`;
     } else if (e.target.id === 'fqDalil') $('#fqOut').innerHTML = outLinks(e.target.value.trim());
   });
-  document.addEventListener('keydown', e => { if (e.target.id === 'fqDalil' && e.key === 'Enter') searchAyat(); });
+  document.addEventListener('keydown', e => {
+    if (e.target.id === 'fqDalil' && e.key === 'Enter') searchAyat();
+    if (e.target.id === 'fqAsk' && e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ask(); }
+  });
   document.addEventListener('click', async e => {
     if (e.target.closest('[data-fq-ayat]')) return searchAyat();
+    if (e.target.closest('[data-fq-ask]')) return ask();
+    const eg = e.target.closest('[data-fq-eg]');
+    if (eg) { $('#fqAsk').value = eg.dataset.fqEg; return ask(); }
+    if (e.target.closest('[data-fq-copyai]')) { try { await navigator.clipboard.writeText(aiCite($('#fqAns')._ans)); toast('Jawapan disalin'); } catch { toast('Tidak dapat menyalin'); } return; }
     const c = e.target.closest('[data-fq-copy]');
     if (c) { const m = D.MASALAH.find(x => x.k === c.dataset.fqCopy); try { await navigator.clipboard.writeText(citeText(m)); toast('Rujukan disalin'); } catch { toast('Tidak dapat menyalin'); } }
   });
