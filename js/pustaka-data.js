@@ -322,39 +322,6 @@ const PustakaData = (function () {
         q: ['நன்றி', ['Apakah maksudnya?', 'What does it mean?', '这是什么意思？', 'இதன் பொருள் என்ன?'], [['terima kasih', 'thank you', '谢谢', 'நன்றி கூறுதல்'], ['maaf', 'sorry', '对不起', 'மன்னிப்பு'], ['selamat tinggal', 'goodbye', '再见', 'விடைபெறுதல்']]] }
     ] });
 
-  sub({ id: 'ba', age: [7, 12], c: ['#5ecfc4', '#1f9c90'], e: '🌙',
-    n: ['Bahasa Arab', 'Arabic Language', '阿拉伯文', 'அரபு மொழி'],
-    dskp: 'DSKP KSSR (Semakan 2017) Bahasa Arab Tahun 1–6',
-    ch: [
-      { y: '1', b: ['Mengenal huruf', 'Letters', '认识字母', 'எழுத்துகள்'],
-        t: ['Huruf hijaiyah', 'Arabic letters', '阿拉伯字母', 'அரபு எழுத்துகள்'],
-        p: [
-          ['✍️', 'ا ب ت ث', ['28 huruf', '28 letters', '28个字母', '28 எழுத்துகள்'],
-            ['Ada 28 huruf hijaiyah. Bahasa Arab ditulis dari kanan ke kiri.', 'There are 28 Arabic letters. Arabic is written from right to left.', '阿拉伯文有28个字母，从右往左写。', 'அரபியில் 28 எழுத்துகள் உள்ளன. வலமிருந்து இடமாக எழுதப்படும்.']],
-          ['👋', 'السَّلَامُ عَلَيْكُمْ', ['Memberi salam', 'Greeting', '问候', 'சலாம் கூறுதல்'],
-            ['Assalamualaikum bermaksud "semoga kesejahteraan ke atas kamu". Jawapannya: Waalaikumussalam.', 'Assalamualaikum means "peace be upon you". The reply is Waalaikumussalam.', 'Assalamualaikum 的意思是“愿你平安”，回答是 Waalaikumussalam。', 'அஸ்ஸலாமு அலைக்கும் என்றால் "உங்கள் மீது அமைதி உண்டாகட்டும்". பதில்: வஅலைக்கும் ஸலாம்.']]
-        ],
-        q: ['ب ت ث', ['Bahasa Arab ditulis dari…', 'Arabic is written from…', '阿拉伯文怎样书写？', 'அரபி எப்படி எழுதப்படும்?'], [['kanan ke kiri', 'right to left', '从右到左', 'வலமிருந்து இடம்'], ['kiri ke kanan', 'left to right', '从左到右', 'இடமிருந்து வலம்'], ['atas ke bawah', 'top to bottom', '从上到下', 'மேலிருந்து கீழ்']]] },
-      { y: '2', b: ['Kosa kata', 'Vocabulary', '词汇', 'சொல்வளம்'],
-        t: ['Di sekolah', 'At school', '在学校', 'பள்ளியில்'],
-        p: [
-          ['🔢', 'وَاحِد · اِثْنَان · ثَلَاثَة', ['Nombor', 'Numbers', '数字', 'எண்கள்'],
-            ['wāḥid (1), ithnān (2), thalāthah (3).', 'wāḥid (1), ithnān (2), thalāthah (3).', 'wāḥid（1）、ithnān（2）、thalāthah（3）。', 'வாஹித் (1), இத்னான் (2), தலாதா (3).']],
-          ['🏫', 'مَدْرَسَة · كِتَاب · قَلَم', ['Benda di sekolah', 'Things at school', '学校里的东西', 'பள்ளிப் பொருட்கள்'],
-            ['madrasah (sekolah), kitāb (buku), qalam (pen).', 'madrasah (school), kitāb (book), qalam (pen).', 'madrasah（学校）、kitāb（书）、qalam（笔）。', 'மத்ரஸா (பள்ளி), கிதாப் (புத்தகம்), கலம் (பேனா).']]
-        ],
-        q: ['كِتَاب', ['Apakah maksudnya?', 'What does it mean?', '这是什么意思？', 'இதன் பொருள் என்ன?'], [['buku', 'book', '书', 'புத்தகம்'], ['pen', 'pen', '笔', 'பேனா'], ['sekolah', 'school', '学校', 'பள்ளி']]] },
-      { y: '3', b: ['Bertutur', 'Speaking', '说话', 'பேசுதல்'],
-        t: ['Keluarga saya', 'My family', '我的家人', 'என் குடும்பம்'],
-        p: [
-          ['👨‍👩‍👦', 'أَب · أُمّ · أَخ · أُخْت', ['Ahli keluarga', 'Family', '家人', 'குடும்பம்'],
-            ['ab (bapa), umm (ibu), akh (saudara lelaki), ukht (saudara perempuan).', 'ab (father), umm (mother), akh (brother), ukht (sister).', 'ab（爸爸）、umm（妈妈）、akh（兄弟）、ukht（姐妹）。', 'அப் (தந்தை), உம் (தாய்), அக் (சகோதரன்), உக்த் (சகோதரி).']],
-          ['😊', 'شُكْرًا · عَفْوًا', ['Terima kasih', 'Thank you', '谢谢', 'நன்றி'],
-            ['shukran bermaksud terima kasih. Jawapannya ʿafwan (sama-sama).', 'shukran means thank you. The reply is ʿafwan (you are welcome).', 'shukran 是谢谢，回答 ʿafwan（不客气）。', 'ஷுக்ரன் என்றால் நன்றி. பதில் அஃப்வன் (பரவாயில்லை).']]
-        ],
-        q: ['أُمّ', ['Apakah maksudnya?', 'What does it mean?', '这是什么意思？', 'இதன் பொருள் என்ன?'], [['ibu', 'mother', '妈妈', 'தாய்'], ['bapa', 'father', '爸爸', 'தந்தை'], ['kakak', 'sister', '姐姐', 'அக்கா']]] }
-    ] });
-
   /* ================= TERAS SEKOLAH RENDAH ================= */
   sub({ id: 'mt', age: [7, 12], c: ['#8e8bff', '#5b54e8'], e: '➗',
     n: ['Matematik', 'Mathematics', '数学', 'கணிதம்'],
