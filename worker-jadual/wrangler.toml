@@ -1,0 +1,13 @@
+# Pelayan jadual kelas UiTM Bijak Labur (Cloudflare Workers, pelan percuma)
+# Membaca jadual awam iCress (simsweb4.uitm.edu.my) dan menghantarnya sebagai JSON dengan CORS.
+name = "bijak-labur-jadual"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+workers_dev = true
+
+# Domain tetap yang digunakan oleh laman dan app. Cloudflare mencipta rekod DNS ini sendiri
+# apabila zon bijaklabur.my aktif dalam akaun yang sama.
+routes = [{ pattern = "jadual.bijaklabur.my", custom_domain = true }]
+
+[vars]
+ALLOWED_ORIGINS = "https://bijaklabur.my,https://www.bijaklabur.my,https://shamirai-rgb.github.io,capacitor://localhost,https://localhost,http://localhost:8080"
