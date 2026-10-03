@@ -8,7 +8,7 @@ const Premium = (function () {
 
   const PLANS = {
     pelajar: { name: 'Pelajar', m1: 5, y1: 39, blurb: 'Untuk pelajar sekolah, kolej dan universiti.',
-      feats: ['Pustaka Kanak-kanak: semua bab 20 subjek', 'Laporan semakan PDF', 'Penjana rujukan APA, MLA dan Harvard', 'Kalkulator PNGK dan sasaran', 'Penjana muka depan tugasan', 'Bandingkan dua draf', 'Sejarah semakan'] },
+      feats: ['Pustaka Kanak-kanak: semua bab 21 subjek', 'Laporan semakan PDF', 'Penjana rujukan APA, MLA dan Harvard', 'Kalkulator PNGK dan sasaran', 'Penjana muka depan tugasan', 'Bandingkan dua draf', 'Sejarah semakan'] },
     pelabur: { name: 'Pelabur', m1: 12, y1: 89, blurb: 'Untuk yang sudah mula melabur.',
       feats: ['Portfolio dalam Ringgit', 'Simulator DCA dengan harga sebenar', 'Saiz posisi dan risiko', 'Jurnal dagangan', 'Kos dagangan Bursa', 'Dividen dan DRIP', 'Perancang matlamat', 'Bandingkan ASB, KWSP, FD dan emas', 'Kalkulator zakat pelaburan'] },
     lengkap: { name: 'Lengkap', m1: 15, y1: 109, blurb: 'Semua alat Pelajar dan Pelabur.',

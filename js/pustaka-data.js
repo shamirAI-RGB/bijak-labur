@@ -4,6 +4,58 @@ const PustakaData = (function () {
   const S = [];
   const sub = (o) => S.push(o);
 
+  /* ================= BIJAK WANG (celik kewangan dan asas melabur) ================= */
+  sub({ id: 'wang', age: [4, 12], c: ['#2fbf71', '#0b7a4b'], e: '🌱',
+    n: ['Bijak Wang', 'Money Smart', '理财小达人', 'பணப் புத்திசாலி'],
+    dskp: 'Elemen Merentas Kurikulum KSSR (Semakan 2017): Pendidikan Kewangan. Topik melabur ialah tambahan Bijak Labur, bukan topik DSKP',
+    ch: [
+      { y: 'P', b: ['Keperluan dan kehendak', 'Needs and wants', '需要与想要', 'தேவையும் விருப்பமும்'],
+        t: ['Perlu atau mahu?', 'Need or want?', '需要还是想要？', 'தேவையா விருப்பமா?'],
+        p: [
+          ['🍚', '🍚 💧 🏠 ✓', ['Keperluan', 'Needs', '需要', 'தேவைகள்'],
+            ['Keperluan ialah benda yang kita mesti ada untuk hidup: makanan, air, pakaian dan rumah.', 'Needs are things we must have to live: food, water, clothes and a home.', '需要是生活必须有的东西：食物、水、衣服和房子。', 'தேவைகள் வாழ அவசியமானவை: உணவு, நீர், உடை, வீடு.']],
+          ['🧸', '🧸 🎮 🍭 ?', ['Kehendak', 'Wants', '想要', 'விருப்பங்கள்'],
+            ['Kehendak ialah benda yang seronok untuk dimiliki tetapi tidak wajib, seperti mainan dan gula-gula. Beli keperluan dahulu.', 'Wants are nice to have but not a must, like toys and sweets. Buy needs first.', '想要的东西有了会开心，但不是必须的，比如玩具和糖果。先买需要的东西。', 'விருப்பங்கள் இருந்தால் மகிழ்ச்சி, ஆனால் அவசியமில்லை, எ.கா. பொம்மை, மிட்டாய். முதலில் தேவையை வாங்கு.']]
+        ],
+        q: ['', ['Yang mana keperluan?', 'Which one is a need?', '哪一个是需要？', 'எது தேவை?'], [['air minuman', 'drinking water', '饮用水', 'குடிநீர்'], ['robot mainan', 'a toy robot', '玩具机器人', 'பொம்மை ரோபோ'], ['gula-gula', 'sweets', '糖果', 'மிட்டாய்']]] },
+      { y: '1', b: ['Menabung', 'Saving', '储蓄', 'சேமிப்பு'],
+        t: ['Tabung ajaib', 'The magic money box', '神奇的储蓄罐', 'மாயச் சேமிப்புப் பெட்டி'],
+        p: [
+          ['🐷', 'RM1 × 30 = RM30', ['Simpan sedikit setiap hari', 'Save a little every day', '每天存一点', 'தினமும் கொஞ்சம் சேமி'],
+            ['Simpan RM1 setiap hari dalam tabung. Selepas 30 hari, kamu ada RM30.', 'Put RM1 in your money box every day. After 30 days you have RM30.', '每天往储蓄罐里存RM1，30天后就有RM30。', 'தினமும் RM1 சேமிப்புப் பெட்டியில் போடு. 30 நாளில் RM30 சேரும்.']],
+          ['🎯', '🚲 = RM150', ['Ada matlamat', 'Have a goal', '定一个目标', 'இலக்கு வை'],
+            ['Pilih benda yang kamu mahu, contohnya basikal. Tulis harganya dan simpan sedikit demi sedikit sehingga cukup.', 'Choose something you want, like a bicycle. Write down its price and save bit by bit until you have enough.', '选一样你想要的东西，比如脚踏车。写下价钱，一点一点存，直到存够为止。', 'உனக்கு வேண்டியதைத் தேர்ந்தெடு, எ.கா. மிதிவண்டி. விலையை எழுதி, போதுமானது வரை கொஞ்சம் கொஞ்சமாகச் சேமி.']]
+        ],
+        q: ['RM2 × 10 = ?', ['Simpan RM2 sehari selama 10 hari. Berapa jumlahnya?', 'Save RM2 a day for 10 days. How much?', '每天存RM2，存10天，一共多少？', 'தினமும் RM2, 10 நாள். மொத்தம் எவ்வளவு?'], ['RM20', 'RM12', 'RM10']] },
+      { y: '3', b: ['Wang bertumbuh', 'Money that grows', '会长大的钱', 'வளரும் பணம்'],
+        t: ['Pokok duit', 'The money tree', '摇钱树', 'பண மரம்'],
+        p: [
+          ['🌳', 'RM100 → RM110 → RM121', ['Untung atas untung', 'Profit on profit', '利上加利', 'லாபத்தின் மேல் லாபம்'],
+            ['Jika RM100 bertambah 10% setahun, ia menjadi RM110. Tahun kedua, 10% daripada RM110 menjadikannya RM121.', 'If RM100 grows 10% a year, it becomes RM110. In year two, 10% of RM110 makes it RM121.', '如果RM100每年增长10%，一年后变成RM110；第二年再增长10%，就是RM121。', 'RM100 ஆண்டுக்கு 10% வளர்ந்தால் RM110 ஆகும். இரண்டாம் ஆண்டில் RM110-இன் 10% சேர்ந்து RM121 ஆகும்.']],
+          ['⏳', '🌱 → 🌿 → 🌳', ['Mula awal', 'Start early', '越早开始越好', 'சீக்கிரம் தொடங்கு'],
+            ['Seperti pokok, wang perlukan masa untuk tumbuh. Lebih awal kamu mula, lebih lama ia sempat bertumbuh.', 'Like a tree, money needs time to grow. The earlier you start, the longer it has to grow.', '钱就像树，需要时间长大。越早开始，它成长的时间就越长。', 'மரம் போல பணமும் வளர நேரம் தேவை. சீக்கிரம் தொடங்கினால் அதிக காலம் வளரும்.']]
+        ],
+        q: ['🌳', ['Apa yang membantu wang bertumbuh?', 'What helps money grow?', '什么能帮助钱长大？', 'பணம் வளர எது உதவும்?'], [['masa dan kesabaran', 'time and patience', '时间和耐心', 'நேரமும் பொறுமையும்'], ['membelanjakan semuanya', 'spending it all', '全部花掉', 'எல்லாவற்றையும் செலவழித்தல்'], ['menyorok di bawah bantal', 'hiding it under a pillow', '藏在枕头下', 'தலையணைக்கடியில் ஒளித்தல்']]] },
+      { y: '5', b: ['Asas melabur', 'Investing basics', '投资基础', 'முதலீட்டு அடிப்படை'],
+        t: ['Apa itu saham?', 'What is a share?', '什么是股票？', 'பங்கு என்றால் என்ன?'],
+        p: [
+          ['🍰', '🍰 ÷ 8 = 1 🍰', ['Sepotong kek syarikat', 'A slice of a company', '公司的一小块蛋糕', 'நிறுவனத்தின் ஒரு துண்டு'],
+            ['Saham ialah sebahagian kecil pemilikan sebuah syarikat. Jika syarikat untung, pemegang saham boleh menerima dividen.', 'A share is a small piece of ownership in a company. If the company makes a profit, shareholders may receive dividends.', '股票就是公司的一小部分。公司赚钱时，股东可能会得到股息。', 'பங்கு என்பது ஒரு நிறுவனத்தின் சிறிய உரிமைப் பகுதி. நிறுவனம் லாபம் ஈட்டினால் பங்குதாரர்களுக்கு ஈவுத்தொகை கிடைக்கலாம்.']],
+          ['✅', 'SC ✓ Syariah', ['Saham patuh Syariah', 'Shariah-compliant shares', '符合伊斯兰教义的股票', 'ஷரியா இணக்கப் பங்குகள்'],
+            ['Suruhanjaya Sekuriti menyenaraikan saham patuh Syariah dua kali setahun. Syarikat itu tidak menjalankan perniagaan riba, judi atau arak.', 'The Securities Commission lists Shariah-compliant shares twice a year. These companies do not run interest-based, gambling or alcohol businesses.', '马来西亚证券监督委员会每年两次公布符合伊斯兰教义的股票名单，这些公司不经营利息、赌博或酒类生意。', 'பங்குப் பரிவர்த்தனை ஆணையம் ஆண்டுக்கு இருமுறை ஷரியா இணக்கப் பங்குகளைப் பட்டியலிடுகிறது. அந்நிறுவனங்கள் வட்டி, சூதாட்டம், மது வணிகம் செய்வதில்லை.']]
+        ],
+        q: ['🍰', ['Saham ialah…', 'A share is…', '股票是…', 'பங்கு என்பது…'], [['sebahagian pemilikan syarikat', 'part ownership of a company', '公司的一部分所有权', 'நிறுவனத்தின் உரிமைப் பகுதி'], ['hadiah percuma', 'a free gift', '免费礼物', 'இலவசப் பரிசு'], ['sejenis kek', 'a kind of cake', '一种蛋糕', 'ஒரு வகைக் கேக்']]] },
+      { y: '6', b: ['Risiko dan keselamatan', 'Risk and safety', '风险与安全', 'இடரும் பாதுகாப்பும்'],
+        t: ['Melabur dengan selamat', 'Investing safely', '安全投资', 'பாதுகாப்பான முதலீடு'],
+        p: [
+          ['🧺', '🥚🥚🥚 → 🧺🧺🧺', ['Jangan satu bakul', 'Not all in one basket', '别把鸡蛋放在同一个篮子里', 'ஒரே கூடையில் வேண்டாம்'],
+            ['Harga saham boleh naik dan turun. Bahagikan wang kepada beberapa pelaburan supaya risiko lebih kecil.', 'Share prices can go up and down. Spread your money across several investments so the risk is smaller.', '股价会涨也会跌。把钱分散在几种投资里，风险就比较小。', 'பங்கு விலை ஏறலாம், இறங்கலாம். பணத்தைப் பல முதலீடுகளில் பிரித்தால் இடர் குறையும்.']],
+          ['🚩', '"Untung 50% seminggu!" 🚩', ['Awas penipuan', 'Watch out for scams', '小心诈骗', 'மோசடியில் கவனம்'],
+            ['Janji untung besar dengan cepat tanpa risiko ialah tanda penipuan. Semak Senarai Amaran Pengguna Kewangan BNM dan tanya ibu bapa. Akaun pelaburan seperti Moomoo hanya untuk umur 18 tahun ke atas.', 'A promise of big, fast, risk-free profit is a sign of a scam. Check the BNM Financial Consumer Alert List and ask your parents. Investment accounts like Moomoo are for ages 18 and above only.', '承诺快速高回报又没有风险，就是诈骗的迹象。请查看国家银行的金融消费者警示名单，并问问父母。像Moomoo这样的投资户口只限18岁以上开设。', 'விரைவான பெரும் லாபம், இடர் இல்லை என்ற வாக்குறுதி மோசடியின் அடையாளம். BNM நிதி நுகர்வோர் எச்சரிக்கைப் பட்டியலைச் சரிபார், பெற்றோரிடம் கேள். Moomoo போன்ற முதலீட்டுக் கணக்கு 18 வயதுக்கு மேற்பட்டவர்களுக்கு மட்டுமே.']]
+        ],
+        q: ['🚩', ['"Untung besar, cepat, tiada risiko" ialah…', '"Big, fast, risk-free profit" is…', '“快速、高回报、没风险”是…', '"விரைவான பெரும் லாபம், இடர் இல்லை" என்பது…'], [['tanda penipuan', 'a sign of a scam', '诈骗的迹象', 'மோசடியின் அடையாளம்'], ['pelaburan terbaik', 'the best investment', '最好的投资', 'சிறந்த முதலீடு'], ['hadiah kerajaan', 'a government gift', '政府礼物', 'அரசுப் பரிசு']]] }
+    ] });
+
   /* ================= PRASEKOLAH (4 hingga 6 tahun) ================= */
   sub({ id: 'matawal', age: [4, 6], c: ['#ffb547', '#f08a1c'], e: '🔢',
     n: ['Matematik Awal', 'Early Mathematics', '早期数学', 'ஆரம்பக் கணிதம்'],
