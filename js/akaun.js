@@ -281,7 +281,7 @@ const Akaun = (function () {
         ${u.phone ? `<dt>Telefon</dt><dd>${esc(u.phone)}</dd>` : ''}
         <dt>Log masuk dengan</dt><dd>${esc(prov.join(', '))}</dd>
         <dt>Peranti aktif</dt><dd>${esc(label)} (peranti ini)</dd>
-        <dt>Premium</dt><dd>${plan ? esc(Premium.PLANS[plan].name) + (Premium.trialing ? ' (percubaan)' : '') : 'Tiada'}</dd>
+        <dt>Premium</dt><dd>${plan ? esc(Premium.PLANS[plan].name) + (Premium.launch ? ' (percuma semasa pelancaran)' : Premium.trialing ? ' (percubaan)' : '') : 'Tiada'}</dd>
       </dl>
       <p class="muted small">Satu akaun untuk satu peranti. Log keluar dahulu sebelum menggunakan akaun ini pada peranti lain.</p>
       <div class="actions end"><button type="button" class="btn ghost" data-ak-out>Log keluar</button><a class="btn" href="#premium" data-ak-close>Premium</a></div>`;

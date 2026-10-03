@@ -32,6 +32,10 @@ const Premium = (function () {
   let storePlans = [];       // langganan app aktif, cth. ['lengkap']
   let storeTrial = false;
   let products = {};         // products[plan][period] = { priceString, trial, ... }
+  // Percuma semasa pelancaran: selagi bayaran belum dibuka (web: ToyyibPay, app: produk kedai),
+  // semua alat Premium dibuka untuk semua orang tanpa akaun. Tukar ke false untuk mengunci semula.
+  const LAUNCH_FREE = true;
+  const launchFree = () => LAUNCH_FREE && (isNative ? Object.keys(products).length === 0 : !PAY_API);
   const now = () => Date.now() / 1000;
   const unb64 = s => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
   const dateMs = sec => new Intl.DateTimeFormat('ms-MY', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kuala_Lumpur' }).format(new Date(sec * 1000));
@@ -56,12 +60,14 @@ const Premium = (function () {
   const api = {
     available: true,
     native: isNative,
+    get launch() { return launchFree(); },
     get plan() {
+      if (launchFree()) return 'lengkap';
       if (!Akaun.active) return null;   // tetamu: tiada Premium
       if (isNative) return storePlans.includes('lengkap') || (storePlans.includes('pelajar') && storePlans.includes('pelabur')) ? 'lengkap' : storePlans[0] || null;
       return validLic() ? lic.p : null;
     },
-    get trialing() { return isNative ? Akaun.active && storeTrial : isTrialLic(); },
+    get trialing() { return launchFree() ? false : isNative ? Akaun.active && storeTrial : isTrialLic(); },
     has(feature) { const p = this.plan; return !!p && (p === 'lengkap' || p === feature); },
     require(feature) {
       if (this.has(feature)) return true;
@@ -81,6 +87,7 @@ const Premium = (function () {
 
   function statusHTML() {
     const p = api.plan; if (!p) return '';
+    if (launchFree()) return `<span class="sc-ico">${icon('check')}</span><div class="sc-body"><div class="sc-title">Percuma semasa pelancaran</div><div class="sc-sub">Semua alat Premium dibuka untuk semua orang. Tiada akaun atau bayaran diperlukan buat masa ini.</div></div>`;
     let sub;
     if (isNative) sub = storeTrial ? 'Dalam tempoh percubaan percuma. Urus atau batal dalam tetapan langganan.' : 'Langganan aktif. Urus atau batal dalam tetapan langganan.';
     else if (api.trialing) {
@@ -103,19 +110,23 @@ const Premium = (function () {
       <div class="plan-per">${period === 'y1' ? `RM${(price / 12).toFixed(2)} sebulan, jimat ${saving}%` : 'Bayar sekali, tiada caj automatik'}</div>`;
   }
 
+  const LEAD = { normal: '', launch: 'Alat untuk melabur dengan lebih teratur dan menyiapkan tugasan dengan lebih kemas. Percuma untuk semua semasa pelancaran.' };
   function render() {
-    const p = api.plan, open = salesOpen() || !!p;
+    const p = api.plan, open = salesOpen() || !!p, free = launchFree();
     $$('[data-premium-entry]').forEach(el => el.classList.toggle('hidden', !open));
+    const lead = $('#view-premium .lead'), sub = $('[data-premium-sub]');
+    if (lead) { LEAD.normal = LEAD.normal || lead.textContent; lead.textContent = free ? LEAD.launch : LEAD.normal; }
+    if (sub) { sub.dataset.normal = sub.dataset.normal || sub.textContent; sub.textContent = free ? 'Semua alat Premium percuma semasa pelancaran' : sub.dataset.normal; }
 
     $('#proStatus').innerHTML = statusHTML();
     $('#proStatus').classList.toggle('hidden', !p);
-    $('#plansBlock').classList.toggle('hidden', p === 'lengkap' && !api.trialing && !isNative);
+    $('#plansBlock').classList.toggle('hidden', free || (p === 'lengkap' && !api.trialing && !isNative));
     $('#plansTitle').textContent = p && !api.trialing ? 'Naik taraf atau sambung' : 'Pilih pelan';
 
     // Kad akaun untuk tetamu, dan kad percubaan (sekali bagi setiap akaun)
     const guest = $('#proGuest');
     if (guest) {
-      guest.classList.toggle('hidden', Akaun.active);
+      guest.classList.toggle('hidden', Akaun.active || free);
       $('#proGuestText').textContent = !Akaun.enabled ? 'Log masuk akan dibuka tidak lama lagi. Premium dan percubaan percuma 3 hari memerlukan akaun.'
         : Akaun.user ? 'Lengkapkan log masuk akaun anda untuk menggunakan Premium pada peranti ini.'
         : 'Log masuk dengan Google, Facebook, nombor telefon atau e-mel. Tetamu boleh menggunakan semua ciri percuma, tetapi tidak Premium.';
