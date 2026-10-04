@@ -1,0 +1,26 @@
+/* Bijak Labur: Jejak Aktiviti (penjejak GPS) */
+.jk-grid { display: grid; gap: 0 14px; }
+@media (min-width: 960px) { .jk-grid { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); align-items: start; } .jk-mapcard { grid-row: span 2; } }
+.jk-mapcard { padding: 6px; }
+.jk-map { height: min(62vh, 560px); min-height: 300px; border-radius: 12px; overflow: hidden; background: var(--surface-2); z-index: 0; }
+.jk-nomap { padding: 20px; }
+.jk-type { margin-bottom: 10px; }
+.jk-time { font-family: var(--display, inherit); font-size: clamp(2.6rem, 9vw, 3.6rem); font-weight: 600; line-height: 1; letter-spacing: -.02em; margin: 4px 0 12px; }
+.jk-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; margin-bottom: 10px; }
+.jk-stat { display: grid; gap: 2px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; }
+.jk-stat b { font-size: 1.35rem; font-weight: 650; }
+.jk-stat span { font-size: .75rem; color: var(--muted); }
+.jk-gps { font-size: .85rem; color: var(--warn); margin: 0 0 10px; }
+.jk-gps.ok { color: var(--up); }
+.jk-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.jk-btns .btn { flex: 1; justify-content: center; min-height: 48px; }
+.jk-go { font-size: 1.05rem; }
+.jk-opts { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; margin-top: 12px; }
+.jk-splits { list-style: none; margin: 6px 0 10px; padding: 0; display: grid; gap: 4px; }
+.jk-splits li { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); }
+.jk-ctl h3 { margin: 14px 0 4px; font-size: .95rem; }
+.jk-hist { list-style: none; margin: 8px 0 0; padding: 0; display: grid; }
+.jk-hist button { width: 100%; display: grid; grid-template-columns: auto 1fr auto auto; gap: 4px 12px; align-items: center; text-align: left; padding: 10px 2px; border: 0; border-bottom: 1px solid var(--border); background: none; color: var(--text); font: inherit; cursor: pointer; }
+.jk-hist .ic { width: 16px; height: 16px; color: var(--muted); }
+.leaflet-container { font: inherit; }
+.leaflet-control-attribution { font-size: 10px; }

@@ -23,7 +23,7 @@
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Lokasi digunakan sekali sahaja untuk menentukan zon waktu solat JAKIM anda. Ia tidak disimpan.</string>
+	<string>Lokasi digunakan untuk menentukan zon waktu solat anda, dan semasa anda menjejak jalan, lari atau berbasikal untuk mengira jarak dan melukis laluan. Laluan disimpan dalam peranti anda sahaja.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>LSRequiresIPhoneOS</key>
