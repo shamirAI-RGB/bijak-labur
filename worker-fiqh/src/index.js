@@ -18,6 +18,7 @@ import { BY_ID, CORPUS_TEXT } from './corpus.js';
 import { GEMINI_MODEL, GEMINI_FALLBACKS, geminiModels, geminiGenerate } from './gemini.js';
 import { semak, MIN_CHARS, MAX_CHARS } from './semak.js';
 import { kalori, check as checkKalori } from './kalori.js';
+import { gambar, check as checkGambar } from './gambar.js';
 export { GEMINI_MODEL, GEMINI_FALLBACKS, geminiModels };
 
 export const MODEL = 'claude-opus-5-5';
@@ -280,6 +281,27 @@ async function kaloriRoute(req, env, h) {
   }
 }
 
+/* Studio Gambar AI: FLUX di Cloudflare Workers AI, prompt disediakan dan disemak oleh Gemini */
+async function gambarRoute(req, env, h) {
+  if (!env.AI) return json({ error: 'Studio gambar belum diaktifkan.' }, 503, h);
+  if (!h['access-control-allow-origin']) return json({ error: 'Tidak dibenarkan.' }, 403, h);
+  let body;
+  try { body = await req.json(); } catch { return json({ error: 'Permintaan tidak sah.' }, 400, h); }
+  const input = checkGambar(body || {});
+  if (input.error) return json({ error: input.error }, 400, h);
+  if (env.GAMBAR_LIMIT) {
+    const { success } = await env.GAMBAR_LIMIT.limit({ key: req.headers.get('cf-connecting-ip') || 'x' });
+    if (!success) return json({ error: 'Terlalu banyak gambar. Cuba lagi selepas seminit.' }, 429, h);
+  }
+  try { return json(await gambar(env, input), 200, h); }
+  catch (e) {
+    console.log('gambar', e && e.status, e && e.message);
+    if (e && e.status === 422) return json({ error: e.message }, 422, h);
+    if (e && e.status === 429) return json({ error: 'Kuota percuma studio gambar untuk hari ini telah habis. Cuba lagi esok.' }, 429, h);
+    return json({ error: 'Studio gambar tidak tersedia buat masa ini. Cuba lagi sebentar.' }, 502, h);
+  }
+}
+
 export default {
   async fetch(req, env) {
     const url = new URL(req.url), h = cors(req, env);
@@ -288,7 +310,8 @@ export default {
       if (req.method === 'POST' && url.pathname === '/tanya') return await tanya(req, env, url, h);
       if (req.method === 'POST' && url.pathname === '/semak') return await semakRoute(req, env, h);
       if (req.method === 'POST' && url.pathname === '/kalori') return await kaloriRoute(req, env, h);
-      if (url.pathname === '/') return json({ ok: true, service: 'bijak-labur-fiqh', ai: !!provider(env), penyedia: provider(env) }, 200, h);
+      if (req.method === 'POST' && url.pathname === '/gambar') return await gambarRoute(req, env, h);
+      if (url.pathname === '/') return json({ ok: true, service: 'bijak-labur-fiqh', ai: !!provider(env), penyedia: provider(env), gambar: !!env.AI }, 200, h);
       return json({ error: 'Tidak dijumpai' }, 404, h);
     } catch (e) {
       console.log('ralat', e && e.stack || e);

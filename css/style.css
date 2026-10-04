@@ -105,7 +105,7 @@ main { max-width: 1120px; margin: 0 auto; padding: 8px 16px 32px; min-height: 10
 .view { display: none; }
 .view.active { display: block; animation: enter .22s ease-out; }
 /* Halaman semasa dipaparkan sebaik HTML tiba (js/boot.js), sebelum route() dalam app.js */
-[data-view="utama"] #view-utama, [data-view="belajar"] #view-belajar, [data-view="pustaka"] #view-pustaka, [data-view="pasaran"] #view-pasaran, [data-view="solat"] #view-solat, [data-view="ibadah"] #view-ibadah, [data-view="semak"] #view-semak, [data-view="jadual"] #view-jadual, [data-view="nota"] #view-nota, [data-view="sihat"] #view-sihat, [data-view="premium"] #view-premium, [data-view="soalan"] #view-soalan { display: block; }
+[data-view="utama"] #view-utama, [data-view="belajar"] #view-belajar, [data-view="pustaka"] #view-pustaka, [data-view="pasaran"] #view-pasaran, [data-view="solat"] #view-solat, [data-view="ibadah"] #view-ibadah, [data-view="semak"] #view-semak, [data-view="jadual"] #view-jadual, [data-view="nota"] #view-nota, [data-view="sihat"] #view-sihat, [data-view="studio"] #view-studio, [data-view="premium"] #view-premium, [data-view="soalan"] #view-soalan { display: block; }
 @keyframes enter { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .view.active { animation: none; } * { transition: none !important; } }
 .page-head { margin: 14px 0 20px; }

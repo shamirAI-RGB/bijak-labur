@@ -40,6 +40,15 @@ jobs:
           echo "Model Flash yang tersedia:"
           curl -sS "$G?pageSize=200" -H "x-goog-api-key: $GEMINI_API_KEY" | jq -r '.models[]?.name | select(test("flash"))' | head -30
           node diag.mjs
+      # Studio Gambar: uji FLUX sebenar di Workers AI dengan akaun Cloudflare (satu gambar kecil, ~60 neuron)
+      - name: Semak Workers AI (FLUX)
+        if: env.HAS_CF == 'true'
+        continue-on-error: true
+        run: |
+          curl -sS -X POST "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/ai/run/@cf/black-forest-labs/flux-1-schnell" \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H 'content-type: application/json' \
+            -d '{"prompt":"a cat eating nasi lemak on a banana leaf, watercolour","steps":4,"seed":7}' \
+            | jq -r 'if .success then "FLUX berjaya: gambar \(.result.image | length) aksara base64" else "FLUX gagal: \(.errors | tostring)" end'
       # Cuba dengan domain fiqh.bijaklabur.my dahulu. Jika gagal, pasang ke alamat workers.dev sahaja.
       - name: Pasang ke Cloudflare (domain fiqh.bijaklabur.my)
         id: domain
