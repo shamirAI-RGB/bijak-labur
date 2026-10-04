@@ -20,10 +20,14 @@
   /** Pembetulan pakar -> cadangan dalam format penyemak ({ start, end, orig, rep, cat, msg }) */
   function toSuggestions(text, list) {
     const out = [], used = new Set();
+    // Padan sebagai perkataan penuh sahaja, dan hanya jika frasa itu unik dalam teks
+    const isL = c => !!c && /[\p{L}\p{N}]/u.test(c);
     for (const p of list || []) {
-      let i = text.indexOf(p.asal);
-      while (i >= 0 && used.has(i)) i = text.indexOf(p.asal, i + 1);
-      if (i < 0) continue;
+      const hits = [];
+      for (let i = text.indexOf(p.asal); i >= 0; i = text.indexOf(p.asal, i + 1))
+        if (!isL(text[i - 1]) && !isL(text[i + p.asal.length])) hits.push(i);
+      if (hits.length !== 1 || used.has(hits[0])) continue;
+      const i = hits[0];
       used.add(i);
       out.push({ start: i, end: i + p.asal.length, orig: p.asal, rep: p.baru, cat: p.jenis, msg: p.sebab + ' (ulasan pakar)', src: 'ai' });
     }

@@ -174,7 +174,7 @@ assert.equal(d.penyedia, 'claude');
 
 // Semak Kertas: ulasan pakar
 {
-  const TEKS = 'Kajian ini bertujuan untuk mengenal pasti faktor yang mempengaruhi pelaburan pelajar. Hasil kajian menunjukan bahawa pengetahuan kewangan adalah lebih penting dari pendapatan. '.repeat(3);
+  const TEKS = 'Kajian ini bertujuan untuk mengenal pasti faktor yang mempengaruhi pelaburan pelajar. Hasil kajian menunjukan bahawa pengetahuan kewangan adalah lebih penting dari pendapatan, dan data dari soal selidik menyokongnya. Pelajar daripada pelbagai fakulti terlibat dalam kajian ini secara sukarela.';
   const raw = {
     ringkasan: 'Baik.', kekuatan: ['Jelas'],
     markah: { struktur: { skor: 7.3, ulasan: 'ok' }, hujah: { skor: 12, ulasan: 'x' }, bukti: { skor: -1, ulasan: '' }, bahasa: { skor: 6, ulasan: '' }, rujukan: { skor: 'a', ulasan: '' } },
@@ -185,11 +185,13 @@ assert.equal(d.penyedia, 'claude');
       { asal: 'teks yang tidak wujud', baru: 'x', jenis: 'ejaan', sebab: 'rekaan' },
       { asal: 'menunjukan', baru: 'menunjukkan', jenis: 'ejaan', sebab: 'pendua' },
       { asal: 'Kajian', baru: 'Kajian', jenis: 'gaya', sebab: 'sama' },
-      { asal: 'pelajar', baru: 'murid', jenis: 'pelik', sebab: 'jenis tidak sah' }
+      { asal: 'faktor yang', baru: 'faktor-faktor yang', jenis: 'pelik', sebab: 'jenis tidak sah' },
+      { asal: 'dari', baru: 'daripada', jenis: 'tatabahasa', sebab: 'kabur: muncul banyak kali' },
+      { asal: 'kajian', baru: 'penyelidikan', jenis: 'gaya', sebab: 'kabur' }
     ]
   };
   const c = clean(raw, TEKS);
-  assert.deepEqual(c.pembetulan.map(p => p.asal), ['menunjukan', 'lebih penting dari', 'pelajar']);
+  assert.deepEqual(c.pembetulan.map(p => p.asal), ['menunjukan', 'lebih penting dari', 'faktor yang']);
   assert.equal(c.pembetulan[2].jenis, 'tatabahasa');
   assert.equal(c.markah.struktur.skor, 7.5); assert.equal(c.markah.hujah.skor, 10); assert.equal(c.markah.bukti.skor, 0); assert.equal(c.markah.rujukan.skor, 0);
   assert.equal(c.jumlah, 47);
