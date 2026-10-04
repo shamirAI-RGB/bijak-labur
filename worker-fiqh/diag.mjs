@@ -36,7 +36,12 @@ for (const m of geminiModels({})) {
   try { show('kalori teks', await kalori({ GEMINI_API_KEY: key }, { text: '1 pinggan nasi lemak ayam goreng dan teh tarik' })); }
   catch (e) { console.log('kalori teks gagal', e.status, e.message.slice(0, 200)); }
   try {
-    const img = await fetch('https://commons.wikimedia.org/wiki/Special:FilePath/Nasi_Lemak.jpg?width=640', { headers: { 'user-agent': 'BijakLabur-diag/1.0 (https://bijaklabur.my)' } });
+    const ua = { 'user-agent': 'BijakLabur-diag/1.0 (https://bijaklabur.my)' };
+    const q = await (await fetch('https://commons.wikimedia.org/w/api.php?action=query&format=json&generator=search&gsrnamespace=6&gsrlimit=10&gsrsearch=nasi%20lemak%20filetype:bitmap&prop=imageinfo&iiprop=url|mime&iiurlwidth=640', { headers: ua })).json();
+    const pick = Object.values((q.query || {}).pages || {}).map(p => (p.imageinfo || [])[0]).find(i => i && i.mime === 'image/jpeg');
+    if (!pick) throw new Error('tiada gambar dijumpai');
+    console.log('gambar ujian:', pick.descriptionurl);
+    const img = await fetch(pick.thumburl, { headers: ua });
     if (!img.ok) throw Object.assign(new Error('gambar ' + img.status), { status: img.status });
     const b64 = Buffer.from(await img.arrayBuffer()).toString('base64');
     show('kalori gambar', await kalori({ GEMINI_API_KEY: key }, { image: b64, mime: (img.headers.get('content-type') || 'image/jpeg').split(';')[0] }));
