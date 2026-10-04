@@ -289,8 +289,12 @@ assert.equal(d.penyedia, 'claude');
   // Kuota Workers AI habis, ralat lain, tanpa binding, asal lain, had kadar
   r = await post({ prompt: 'kucing' }, { ...genv, AI: { run: async () => { throw new Error('3036: Account limited to 10000 daily neurons'); } } });
   assert.equal(r.status, 429); assert.match((await r.json()).error, /esok/);
-  assert.equal((await post({ prompt: 'kucing' }, { ...genv, AI: { run: async () => { throw new Error('boom'); } } })).status, 502);
+  r = await post({ prompt: 'kucing' }, { ...genv, AI: { run: async () => { throw new Error('AiError: 5007: No such model <x>'); } } });
+  assert.equal(r.status, 502); assert.equal((await r.json()).kod, 'AiError: 5007: No such model x');
   assert.equal((await post({ prompt: 'kucing' }, { ...genv, AI: { run: async () => ({}) } })).status, 502);
+  // Binari (stream PNG) ditukar kepada base64
+  r = await post({ prompt: 'kucing' }, { ...genv, AI: { run: async m => { if (m !== FLUX) throw new Error('x'); return new Response(new Uint8Array([0x89, 0x50, 0x4e, 0x47])).body; } } }); d = await r.json();
+  assert.equal(r.status, 200); assert.equal(d.image, 'iVBORw=='); assert.equal(d.mime, 'image/png');
   assert.equal((await post({ prompt: 'kucing' }, { ALLOWED_ORIGINS: env.ALLOWED_ORIGINS })).status, 503);
   assert.equal((await post({ prompt: 'kucing' }, genv, 'https://jahat.example')).status, 403);
   assert.equal((await post({ prompt: 'k' })).status, 400);
