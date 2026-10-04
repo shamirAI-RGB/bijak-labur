@@ -101,6 +101,7 @@
   <link rel="stylesheet" href="css/studio.css">
   <link rel="stylesheet" href="css/buku.css">
   <link rel="stylesheet" href="css/jejak.css">
+  <link rel="stylesheet" href="css/iklan.css">
   <link rel="stylesheet" href="css/rupa.css">
 </head>
 <body>
@@ -234,6 +235,7 @@
             <a class="km-item hidden" href="#premium" data-premium-entry><svg class="ic"><use href="#i-star"/></svg><span>Premium dan langganan</span></a>
             <button type="button" class="km-item hidden" id="kmInstall"><svg class="ic"><use href="#i-download"/></svg><span>Pasang app ke skrin utama</span></button>
             <button type="button" class="km-item" id="kmShare"><svg class="ic"><use href="#i-share"/></svg><span>Kongsi Bijak Labur</span></button>
+            <button type="button" class="km-item hidden" id="kmOwner"><svg class="ic"><use href="#i-lock"/></svg><span>Mod Pemilik</span></button>
           </div>
           <div class="km-group">
             <p class="km-label">Bantuan</p>
@@ -333,6 +335,11 @@
               <svg class="ic chev"><use href="#i-chev"/></svg>
             </a>
           </div>
+
+          <section class="ik-block" aria-labelledby="h-iklan">
+            <div class="block-head"><h2 id="h-iklan">Rakan dan penaja</h2></div>
+            <div class="ik-grid" id="ikGrid"></div>
+          </section>
         </div>
 
         <div class="home-side">
@@ -841,5 +848,7 @@
   <script src="js/kerja.js" defer></script>
   <script src="js/gaya-ai.js" defer></script>
   <script src="js/jejak.js" defer></script>
+  <script src="js/iklan.js" defer></script>
+  <script src="js/pemilik.js" defer></script>
 </body>
 </html>

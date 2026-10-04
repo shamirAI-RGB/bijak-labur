@@ -22,8 +22,19 @@
  *   PUT    /admin/qr                 (badan = gambar) ; DELETE /admin/qr
  *   POST   /admin/key                (JSON: key) tukar kunci pemilik
  *
+ * Iklan halaman utama (4 ruang) dan teks laman yang boleh disunting oleh pemilik
+ *   GET    /iklan                    -> { slots: [iklan | null] x4, wa }   (awam, iklan aktif sahaja)
+ *   GET    /iklan/:n/gambar          -> gambar iklan
+ *   GET    /iklan/:n/klik            -> kira klik, kemudian 302 ke pautan pengiklan
+ *   GET    /kandungan                -> { teks: { kunci: teks } }   teks laman yang diubah oleh pemilik
+ *   GET    /admin/iklan              -> semua ruang termasuk tidak aktif, dengan kiraan klik
+ *   PUT    /admin/iklan/:n           (multipart: tajuk, teks, nama, url, aktif, mula, tamat, gambar?, buangGambar?)
+ *   DELETE /admin/iklan/:n           kosongkan ruang
+ *   PUT    /admin/kandungan          (JSON: { teks: { kunci: teks | null } }) gabung; null = kembali ke asal
+ *
  * Kunci KV: idx (senarai nota), f:<id> (fail), p:<id> (pratonton), cfg (tetapan), qr, owner (cincang kunci baru),
- *           dl:<token> (pautan pembeli, tamat sendiri)
+ *           dl:<token> (pautan pembeli, tamat sendiri), iklan (4 ruang), ig:<n> (gambar iklan),
+ *           klik:<n>:<YYYY-MM> (kiraan klik), kandungan (teks laman)
  */
 
 export const MAX_FILE = 24 * 1024 * 1024;   // had nilai KV ialah 25 MiB
@@ -91,6 +102,48 @@ const getIdx = async env => (await env.NOTA.get('idx', 'json')) || [];
 const putIdx = (env, idx) => env.NOTA.put('idx', JSON.stringify(idx));
 const getCfg = async env => ({ ...DEFAULTS, ...((await env.NOTA.get('cfg', 'json')) || {}) });
 
+/* ---------- Iklan ---------- */
+export const SLOTS = 4;
+const getAds = async env => { const a = (await env.NOTA.get('iklan', 'json')) || []; return Array.from({ length: SLOTS }, (_, i) => a[i] || null); };
+const month = (d = new Date()) => d.toISOString().slice(0, 7);
+const ymd = v => /^\d{4}-\d{2}-\d{2}$/.test(String(v || '')) ? String(v) : '';
+export function adUrl(v) {
+  const u = String(v || '').trim();
+  if (!u) return '';
+  try { const x = new URL(u); return /^https?:$/.test(x.protocol) && u.length <= 500 ? x.toString() : null; } catch { return null; }
+}
+export function sanitizeAd(b, base = {}) {
+  const out = { ...base };
+  for (const [k, n] of [['tajuk', 60], ['teks', 160], ['nama', 60]]) if (k in b) out[k] = clean(b[k], n);
+  if ('url' in b) { const u = adUrl(b.url); if (u === null) throw new HttpError(400, 'Pautan iklan mesti bermula dengan https://'); out.url = u; }
+  if ('aktif' in b) out.aktif = b.aktif === true || b.aktif === 'true' || b.aktif === '1' || b.aktif === 'on';
+  if ('mula' in b) out.mula = ymd(b.mula);
+  if ('tamat' in b) out.tamat = ymd(b.tamat);
+  if (out.aktif && !out.tajuk) throw new HttpError(400, 'Tajuk iklan diperlukan.');
+  return out;
+}
+// Iklan dipaparkan jika aktif dan hari ini (waktu Malaysia) dalam tempoh mula hingga tamat
+export function live(ad, now = new Date()) {
+  if (!ad || !ad.aktif || !ad.tajuk) return false;
+  const today = new Date(now.getTime() + 8 * 3600e3).toISOString().slice(0, 10);
+  return (!ad.mula || ad.mula <= today) && (!ad.tamat || ad.tamat >= today);
+}
+const pubAd = (ad, i) => ({ slot: i + 1, tajuk: ad.tajuk, teks: ad.teks || '', nama: ad.nama || '', gambar: ad.gambar ? `/iklan/${i + 1}/gambar?v=${ad.gambar}` : '', url: ad.url ? `/iklan/${i + 1}/klik` : '' });
+
+/* ---------- Teks laman (Mod Pemilik) ---------- */
+const KEY_RE = /^[a-z0-9][a-z0-9._-]{1,59}$/;
+export function mergeText(cur, patch) {
+  const out = { ...(cur || {}) };
+  for (const [k, v] of Object.entries(patch || {})) {
+    if (!KEY_RE.test(k)) throw new HttpError(400, `Kunci teks tidak sah: ${k.slice(0, 40)}`);
+    if (v == null || String(v).trim() === '') delete out[k];
+    else out[k] = String(v).replace(/[\u0000-\u0009\u000b-\u001f\u007f]/g, ' ').replace(/\n{3,}/g, '\n\n').trim().slice(0, 600);
+  }
+  if (Object.keys(out).length > 400) throw new HttpError(413, 'Terlalu banyak teks yang diubah.');
+  if (JSON.stringify(out).length > 100000) throw new HttpError(413, 'Teks terlalu panjang.');
+  return out;
+}
+
 /* ---------- Pengesahan pemilik ----------
  * Kini: satu kunci pemilik rahsia. Cincangnya ada dalam OWNER_KEY_HASH (wrangler.toml) atau dalam KV jika ditukar.
  * Apabila log masuk akaun siap, gantikan fungsi ini sahaja (cth. sahkan token akaun dan peranan "owner"). */
@@ -140,6 +193,22 @@ async function handle(req, env, h) {
     if (!id) throw new HttpError(404, 'Pautan ini telah tamat tempoh atau tidak sah. Hubungi penjual untuk pautan baharu.');
     return fileResponse(await env.NOTA.getWithMetadata('f:' + id, { type: 'arrayBuffer' }), h, true, 'private, no-store');
   }
+
+  if (p === '/iklan' && M === 'GET') {
+    const [ads, cfg] = await Promise.all([getAds(env), getCfg(env)]);
+    return json({ slots: ads.map((a, i) => live(a) ? pubAd(a, i) : null), wa: (cfg.wa[0] || {}).no || '' }, 200, h, 'public, max-age=60');
+  }
+  if ((m = p.match(/^\/iklan\/([1-4])\/gambar$/)) && M === 'GET')
+    return fileResponse(await env.NOTA.getWithMetadata('ig:' + m[1], { type: 'arrayBuffer' }), h, false, 'public, max-age=31536000, immutable');
+  if ((m = p.match(/^\/iklan\/([1-4])\/klik$/)) && M === 'GET') {
+    const ad = (await getAds(env))[+m[1] - 1];
+    if (!live(ad) || !ad.url) throw new HttpError(404, 'Iklan ini tidak lagi aktif.');
+    const k = `klik:${m[1]}:${month()}`;
+    try { await env.NOTA.put(k, String((+(await env.NOTA.get(k)) || 0) + 1), { expirationTtl: 400 * 86400 }); } catch {}
+    return new Response(null, { status: 302, headers: { Location: ad.url, 'Cache-Control': 'no-store', 'Referrer-Policy': 'origin' } });
+  }
+  if (p === '/kandungan' && M === 'GET')
+    return json({ teks: (await env.NOTA.get('kandungan', 'json')) || {} }, 200, h, 'public, max-age=60');
 
   if (!p.startsWith('/admin')) throw new HttpError(404, 'Laluan tidak dijumpai.');
   // Had cubaan per alamat IP: kunci pemilik tidak boleh diteka secara beramai-ramai
@@ -210,6 +279,37 @@ async function handle(req, env, h) {
   if (p === '/admin/qr' && M === 'DELETE') {
     await Promise.all([env.NOTA.delete('qr'), env.NOTA.delete('qrv')]);
     return json({ ok: true }, 200, h);
+  }
+  if (p === '/admin/iklan' && M === 'GET') {
+    const ads = await getAds(env), now = month(), prev = month(new Date(Date.now() - 31 * 864e5));
+    const kl = await Promise.all(ads.map((_, i) => Promise.all([env.NOTA.get(`klik:${i + 1}:${now}`), env.NOTA.get(`klik:${i + 1}:${prev}`)])));
+    return json({ slots: ads.map((a, i) => ({ slot: i + 1, ...(a || {}), gambar: a && a.gambar ? `/iklan/${i + 1}/gambar?v=${a.gambar}` : '', live: live(a), klik: { bulanIni: +kl[i][0] || 0, bulanLepas: +kl[i][1] || 0 } })) }, 200, h);
+  }
+  if ((m = p.match(/^\/admin\/iklan\/([1-4])$/))) {
+    const n = +m[1], ads = await getAds(env);
+    if (M === 'PUT') {
+      const form = await req.formData();
+      const fields = Object.fromEntries([...form.entries()].filter(([, v]) => typeof v === 'string'));
+      if (!('aktif' in fields)) fields.aktif = '';
+      const ad = sanitizeAd(fields, ads[n - 1] || {});
+      const img = await readImage(form.get('gambar'), 'Gambar iklan');
+      if (img) { await env.NOTA.put('ig:' + n, img.buf, { metadata: { type: img.type } }); ad.gambar = Date.now().toString(36); }
+      else if (fields.buangGambar === '1') { await env.NOTA.delete('ig:' + n); ad.gambar = ''; }
+      ads[n - 1] = ad;
+      await env.NOTA.put('iklan', JSON.stringify(ads));
+      return json({ ok: true, live: live(ad) }, 200, h);
+    }
+    if (M === 'DELETE') {
+      ads[n - 1] = null;
+      await Promise.all([env.NOTA.put('iklan', JSON.stringify(ads)), env.NOTA.delete('ig:' + n)]);
+      return json({ ok: true }, 200, h);
+    }
+  }
+  if (p === '/admin/kandungan' && M === 'PUT') {
+    const b = await req.json().catch(() => ({}));
+    const teks = mergeText((await env.NOTA.get('kandungan', 'json')) || {}, b && b.teks);
+    await env.NOTA.put('kandungan', JSON.stringify(teks));
+    return json({ ok: true, teks }, 200, h);
   }
   if (p === '/admin/key' && M === 'POST') {
     const key = String((await req.json().catch(() => ({}))).key || '').trim();
