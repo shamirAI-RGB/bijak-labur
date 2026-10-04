@@ -1,0 +1,63 @@
+# Pemantau Bijak Labur: semak laman, pelayan dan perkhidmatan luar setiap jam.
+# Kerosakan kritikal membuka (atau mengemas kini) satu issue berlabel "pantau"; issue ditutup sendiri apabila pulih.
+# AI Agent harian membaca issue ini dan membaikinya melalui PR.
+name: Pemantau
+
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+  pull_request:
+    paths: ['scripts/pantau.mjs', '.github/workflows/pantau.yml']
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: pantau
+  cancel-in-progress: false
+
+jobs:
+  pantau:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Semak
+        id: semak
+        run: node scripts/pantau.mjs
+        continue-on-error: true
+
+      - name: Ringkasan
+        if: always()
+        run: cat pantau.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Buka, kemas kini atau tutup issue
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          GAGAL: ${{ steps.semak.outcome == 'failure' }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh label create pantau --color B60205 --description "Kerosakan dikesan oleh pemantau automatik" 2>/dev/null || true
+          open=$(gh issue list --label pantau --state open --json number --jq '.[0].number')
+          printf '\n[Log semakan](%s)\n' "$RUN_URL" >> pantau.md
+          if [ "$GAGAL" = "true" ]; then
+            if [ -n "$open" ]; then
+              gh issue comment "$open" --body-file pantau.md
+            else
+              gh issue create --label pantau --title "🔴 Pemantau: $(node -e "console.log(require('./pantau.json').kritikal.join(', ').slice(0,180))")" --body-file pantau.md
+            fi
+          elif [ -n "$open" ]; then
+            gh issue close "$open" --comment "✅ Semua semakan kritikal kembali sihat. $RUN_URL"
+          fi
+
+      - name: Gagal jika PR merosakkan pemantau
+        if: github.event_name == 'pull_request' && steps.semak.outcome == 'failure'
+        run: echo "::warning::Pemantau melaporkan kerosakan (lihat ringkasan)."
