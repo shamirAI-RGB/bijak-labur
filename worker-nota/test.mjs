@@ -1,6 +1,6 @@
 // Ujian pelayan nota tanpa rangkaian: node worker-nota/test.mjs
 import assert from 'node:assert/strict';
-import worker, { sha256, waNumber, price, sanitizeSettings } from './src/index.js';
+import worker, { sha256, waNumber, price, sanitizeSettings, adUrl, sanitizeAd, live, mergeText } from './src/index.js';
 
 assert.equal(waNumber('010-254 6720'), '60102546720');
 assert.equal(waNumber('0176040973'), '60176040973');
@@ -110,6 +110,50 @@ assert.equal((await call('/admin/key', { method: 'POST', body: JSON.stringify({ 
 assert.equal((await call('/admin/key', { method: 'POST', body: JSON.stringify({ key: 'kunci-baharu-yang-panjang' }) }, KEY)).status, 200);
 assert.equal((await call('/admin/check', {}, KEY)).status, 401);
 assert.equal((await call('/admin/check', {}, 'kunci-baharu-yang-panjang')).status, 200);
+
+const KEY2 = 'kunci-baharu-yang-panjang';   // kunci telah ditukar di atas
+// Iklan
+assert.equal(adUrl('javascript:alert(1)'), null); assert.equal(adUrl(''), ''); assert.equal(adUrl('https://kedai.my/a?b=1'), 'https://kedai.my/a?b=1');
+assert.throws(() => sanitizeAd({ url: 'ftp://x' }), /https/); assert.throws(() => sanitizeAd({ aktif: '1' }), /Tajuk/);
+const d = new Date('2026-10-04T20:00:00Z');   // 5 Okt, 4 pagi waktu Malaysia
+assert.equal(live({ aktif: true, tajuk: 'A', mula: '2026-10-05' }, d), true);
+assert.equal(live({ aktif: true, tajuk: 'A', tamat: '2026-10-04' }, d), false);
+assert.equal(live({ aktif: false, tajuk: 'A' }, d), false);
+r = await call('/iklan'); j = await r.json();
+assert.equal(r.status, 200); assert.deepEqual(j.slots, [null, null, null, null]); assert.equal(j.wa, '60102546720');
+assert.equal((await call('/admin/iklan')).status, 401);
+const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 1, 2, 3]);
+let fd = new FormData();
+for (const [k, v] of Object.entries({ tajuk: 'Kedai Kopi Pak Ali', teks: 'Diskaun 10% untuk pelajar', nama: 'Pak Ali Sdn Bhd', url: 'https://kopi.my', aktif: 'on' })) fd.set(k, v);
+fd.set('gambar', new Blob([PNG], { type: 'image/png' }), 'iklan.png');
+r = await call('/admin/iklan/2', { method: 'PUT', body: fd }, KEY2); assert.equal(r.status, 200, await r.clone().text()); assert.equal((await r.json()).live, true);
+j = await (await call('/iklan')).json();
+assert.equal(j.slots[0], null); assert.equal(j.slots[1].tajuk, 'Kedai Kopi Pak Ali'); assert.equal(j.slots[1].url, '/iklan/2/klik'); assert.match(j.slots[1].gambar, /^\/iklan\/2\/gambar\?v=/);
+assert.equal(j.slots[1].urlAsal, undefined);   // pautan sebenar tidak didedahkan, klik melalui pelayan
+r = await call('/iklan/2/gambar'); assert.equal(r.status, 200); assert.equal(r.headers.get('Content-Type'), 'image/png');
+r = await call('/iklan/2/klik', { redirect: 'manual' }); assert.equal(r.status, 302); assert.equal(r.headers.get('Location'), 'https://kopi.my/');
+await call('/iklan/2/klik', { redirect: 'manual' });
+j = await (await call('/admin/iklan', {}, KEY2)).json(); assert.equal(j.slots[1].klik.bulanIni, 2); assert.equal(j.slots[1].nama, 'Pak Ali Sdn Bhd');
+assert.equal((await call('/iklan/3/klik', { redirect: 'manual' })).status, 404);
+// Nyahaktif (kotak tidak ditanda tidak dihantar oleh borang) dan buang gambar
+fd = new FormData(); fd.set('tajuk', 'Kedai Kopi Pak Ali'); fd.set('buangGambar', '1');
+r = await call('/admin/iklan/2', { method: 'PUT', body: fd }, KEY2); assert.equal((await r.json()).live, false);
+assert.equal((await (await call('/iklan')).json()).slots[1], null);
+assert.equal((await call('/iklan/2/gambar')).status, 404);
+fd = new FormData(); fd.set('url', 'javascript:alert(1)');
+assert.equal((await call('/admin/iklan/1', { method: 'PUT', body: fd }, KEY2)).status, 400);
+assert.equal((await call('/admin/iklan/9', { method: 'PUT', body: new FormData() }, KEY2)).status, 404);
+assert.equal((await call('/admin/iklan/2', { method: 'DELETE' }, KEY2)).status, 200);
+
+// Teks laman (Mod Pemilik)
+assert.deepEqual(mergeText({ a1: 'x' }, { a1: null, 'utama.h1': '  Hai\u0007 dunia ' }), { 'utama.h1': 'Hai  dunia' });
+assert.throws(() => mergeText({}, { 'Bad Key!': 'x' }), /tidak sah/);
+assert.equal((await call('/admin/kandungan', { method: 'PUT', body: JSON.stringify({ teks: { 'utama.lead': 'Teks baharu' } }) })).status, 401);
+r = await call('/admin/kandungan', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ teks: { 'utama.lead': 'Teks baharu', 'nota.h1': 'Nota' } }) }, KEY2);
+assert.equal(r.status, 200);
+j = await (await call('/kandungan')).json(); assert.deepEqual(j.teks, { 'utama.lead': 'Teks baharu', 'nota.h1': 'Nota' });
+await call('/admin/kandungan', { method: 'PUT', body: JSON.stringify({ teks: { 'nota.h1': '' } }) }, KEY2);
+assert.deepEqual((await (await call('/kandungan')).json()).teks, { 'utama.lead': 'Teks baharu' });
 
 // Tanpa KV
 assert.equal((await worker.fetch(new Request(B + '/notes'), {})).status, 503);

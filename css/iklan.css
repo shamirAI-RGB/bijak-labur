@@ -1,0 +1,38 @@
+/* Bijak Labur: ruang iklan halaman utama dan Mod Pemilik */
+.ik-block { margin-top: 22px; }
+.ik-block .block-head { margin-bottom: 10px; }
+.ik-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (min-width: 1100px) { .ik-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.ik-card { display: grid; grid-template-rows: auto 1fr; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; background: var(--surface); color: var(--text); text-decoration: none; min-height: 100%; transition: border-color .2s, transform .2s; }
+a.ik-card:hover { border-color: color-mix(in srgb, var(--brand) 35%, var(--border)); }
+a.ik-card:active { transform: scale(.99); }
+.ik-card img, .ik-ph { width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; display: block; background: var(--surface-2); }
+.ik-ph { display: grid; place-items: center; font-family: var(--display, inherit); font-size: 1.6rem; font-weight: 600; color: color-mix(in srgb, var(--brand) 70%, var(--text)); background: color-mix(in srgb, var(--brand) 10%, var(--surface)); }
+.ik-body { display: grid; gap: 3px; padding: 10px 12px 12px; align-content: start; }
+.ik-body b { font-size: .95rem; line-height: 1.3; }
+.ik-teks { font-size: .82rem; color: var(--muted); line-height: 1.4; }
+.ik-tag { justify-self: start; font-size: .65rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--border); border-radius: 5px; padding: 1px 6px; }
+.ik-empty { grid-template-rows: none; align-content: center; gap: 6px; padding: 14px; border-style: dashed; background: repeating-linear-gradient(135deg, transparent 0 10px, color-mix(in srgb, var(--surface-2) 70%, transparent) 10px 20px), var(--surface); }
+.ik-num { font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.ik-empty b { font-size: 1rem; }
+.ik-cta { display: inline-flex; align-items: center; gap: 6px; font-size: .82rem; font-weight: 650; color: var(--brand); margin-top: 2px; }
+.ik-cta .ic { width: 16px; height: 16px; }
+
+/* Mod Pemilik */
+.pm-dialog { width: min(560px, calc(100% - 32px)); }
+.pm-menu { display: grid; gap: 4px; margin-top: 8px; }
+.pm-menu .km-item { align-items: flex-start; text-align: left; }
+.pm-menu .km-item > span { display: grid; gap: 2px; }
+.pm-ad { display: grid; gap: 8px; padding: 14px 0; border-top: 1px solid var(--border); }
+.pm-ad h3 { margin: 0; font-size: 1rem; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.pm-live { font-size: .72rem; font-weight: 700; color: var(--up); }
+.pm-img { width: 100%; max-height: 160px; object-fit: cover; border-radius: 10px; }
+.pm-two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+.pm-ad > *, .pm-two > * { min-width: 0; }
+.pm-ad input { min-width: 0; max-width: 100%; }
+.pm-dialog { overflow-x: hidden; }
+.pm-ad .field { margin: 0; }
+.pm-editing [data-edit] { outline: 1.5px dashed color-mix(in srgb, var(--gold) 80%, transparent); outline-offset: 3px; border-radius: 3px; cursor: text; }
+.pm-editing [data-edit]:focus { outline: 2px solid var(--brand); background: color-mix(in srgb, var(--brand) 6%, transparent); }
+.pm-bar { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom, 0px) + 80px); z-index: 90; display: flex; align-items: center; gap: 10px; padding: 10px 12px 10px 16px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); box-shadow: 0 12px 36px rgba(0, 0, 0, .2); width: max-content; max-width: calc(100% - 24px); flex-wrap: wrap; }
+@media (min-width: 900px) { .pm-bar { bottom: 24px; } }
