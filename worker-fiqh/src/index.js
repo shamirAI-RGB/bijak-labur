@@ -19,6 +19,9 @@ import { GEMINI_MODEL, GEMINI_FALLBACKS, geminiModels, geminiGenerate } from './
 import { semak, MIN_CHARS, MAX_CHARS } from './semak.js';
 import { kalori, check as checkKalori } from './kalori.js';
 import { gambar, check as checkGambar } from './gambar.js';
+import { buku, check as checkBuku } from './buku.js';
+import { kerja, check as checkKerja } from './kerja.js';
+import { manusia, check as checkManusia } from './manusia.js';
 export { GEMINI_MODEL, GEMINI_FALLBACKS, geminiModels };
 
 export const MODEL = 'claude-opus-5-5';
@@ -302,6 +305,33 @@ async function gambarRoute(req, env, h) {
   }
 }
 
+/* Laluan AI generik: Buku Nota (/buku), Kerjaya (/kerja), No AI Slop (/manusia) */
+const AI_ROUTES = {
+  '/buku': { nama: 'Buku Nota AI', limit: 'BUKU_LIMIT', check: checkBuku, run: buku, maxBytes: 600_000 },
+  '/kerja': { nama: 'Kerjaya AI', limit: 'KERJA_LIMIT', check: checkKerja, run: kerja, maxBytes: 150_000 },
+  '/manusia': { nama: 'Semakan gaya AI', limit: 'MANUSIA_LIMIT', check: checkManusia, run: manusia, maxBytes: 200_000 }
+};
+
+async function aiRoute(req, env, h, r) {
+  if (!env.GEMINI_API_KEY) return json({ error: `${r.nama} belum diaktifkan.` }, 503, h);
+  if (!h['access-control-allow-origin']) return json({ error: 'Tidak dibenarkan.' }, 403, h);
+  if (+(req.headers.get('content-length') || 0) > r.maxBytes) return json({ error: 'Teks terlalu panjang.' }, 413, h);
+  let body;
+  try { body = await req.json(); } catch { return json({ error: 'Permintaan tidak sah.' }, 400, h); }
+  const input = r.check(body);
+  if (input.error) return json({ error: input.error }, input.status || 400, h);
+  if (env[r.limit]) {
+    const { success } = await env[r.limit].limit({ key: req.headers.get('cf-connecting-ip') || 'x' });
+    if (!success) return json({ error: 'Terlalu banyak permintaan. Cuba lagi selepas seminit.' }, 429, h);
+  }
+  try { return json(await r.run(env, input), 200, h); }
+  catch (e) {
+    console.log(r.nama, e && e.status, e && e.message);
+    const busy = e && (e.status === 429 || e.status === 529);
+    return json({ error: e && e.status === 422 ? 'Kandungan ini tidak dapat diproses.' : busy ? `${r.nama} sibuk. Cuba lagi sebentar.` : `${r.nama} tidak tersedia buat masa ini.` }, busy ? 429 : 502, h);
+  }
+}
+
 export default {
   async fetch(req, env) {
     const url = new URL(req.url), h = cors(req, env);
@@ -311,6 +341,7 @@ export default {
       if (req.method === 'POST' && url.pathname === '/semak') return await semakRoute(req, env, h);
       if (req.method === 'POST' && url.pathname === '/kalori') return await kaloriRoute(req, env, h);
       if (req.method === 'POST' && url.pathname === '/gambar') return await gambarRoute(req, env, h);
+      if (req.method === 'POST' && AI_ROUTES[url.pathname]) return await aiRoute(req, env, h, AI_ROUTES[url.pathname]);
       if (url.pathname === '/') return json({ ok: true, service: 'bijak-labur-fiqh', ai: !!provider(env), penyedia: provider(env), gambar: !!env.AI }, 200, h);
       return json({ error: 'Tidak dijumpai' }, 404, h);
     } catch (e) {

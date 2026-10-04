@@ -32,6 +32,27 @@ function loadScript(src) {
   return scriptCache[src];
 }
 
+/* Baca teks daripada fail .pdf, .docx atau teks biasa (dikongsi oleh Semak Kertas, Buku Nota dan Kerjaya) */
+async function fileText(f) {
+  const name = f.name.toLowerCase();
+  if (name.endsWith('.docx')) {
+    await loadScript('js/vendor/mammoth.min.js');
+    const r = await mammoth.extractRawText({ arrayBuffer: await f.arrayBuffer() });
+    return r.value.replace(/\n{3,}/g, '\n\n').trim();
+  }
+  if (name.endsWith('.pdf')) {
+    await loadScript('js/vendor/pdf.min.js');
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'js/vendor/pdf.worker.min.js';
+    const pdf = await pdfjsLib.getDocument({ data: await f.arrayBuffer(), isEvalSupported: false }).promise; const out = [];
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const c = await (await pdf.getPage(i)).getTextContent();
+      out.push(c.items.map(it => it.str + (it.hasEOL ? '\n' : ' ')).join(''));
+    }
+    return out.join('\n\n').replace(/[ \t]+/g, ' ').trim();
+  }
+  return (await f.text()).trim();
+}
+
 /* Notifikasi: plugin asli dalam app, Notification API dalam pelayar */
 const Notify = {
   async request() {
@@ -82,7 +103,7 @@ function paintThemeIcon() {
 })();
 
 /* Navigasi berasaskan hash */
-const VIEWS = ['utama', 'belajar', 'pustaka', 'pasaran', 'solat', 'ibadah', 'semak', 'jadual', 'nota', 'sihat', 'studio', 'premium', 'soalan'];
+const VIEWS = ['utama', 'belajar', 'pustaka', 'pasaran', 'solat', 'ibadah', 'semak', 'jadual', 'nota', 'sihat', 'studio', 'buku', 'kerja', 'premium', 'soalan'];
 let currentView = null, currentHash = null;
 function route() {
   // Hash boleh mempunyai sub-laluan, cth. #ibadah/quran/36

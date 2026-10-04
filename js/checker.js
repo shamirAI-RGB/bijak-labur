@@ -602,22 +602,8 @@
   const wc = () => { $('#wc').textContent = words($('#paper').value).length + ' patah perkataan'; };
   $('#paper').addEventListener('input', wc);
   async function readFile(f) {
-    const name = f.name.toLowerCase();
     try {
-      if (name.endsWith('.docx')) {
-        await loadScript('js/vendor/mammoth.min.js');
-        const r = await mammoth.extractRawText({ arrayBuffer: await f.arrayBuffer() });
-        $('#paper').value = r.value.replace(/\n{3,}/g, '\n\n').trim();
-      } else if (name.endsWith('.pdf')) {
-        await loadScript('js/vendor/pdf.min.js');
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'js/vendor/pdf.worker.min.js';
-        const pdf = await pdfjsLib.getDocument({ data: await f.arrayBuffer(), isEvalSupported: false }).promise; let out = [];
-        for (let i = 1; i <= pdf.numPages; i++) {
-          const c = await (await pdf.getPage(i)).getTextContent();
-          out.push(c.items.map(it => it.str + (it.hasEOL ? '\n' : ' ')).join(''));
-        }
-        $('#paper').value = out.join('\n\n').replace(/[ \t]+/g, ' ').trim();
-      } else { $('#paper').value = await f.text(); }
+      $('#paper').value = await fileText(f);
       wc(); toast('Fail dimuatkan: ' + f.name);
     } catch (e) { toast('Gagal membaca fail. Cuba tampal teks secara manual.'); }
   }

@@ -1,5 +1,10 @@
 /* Menu titik tiga (tetapan pantas) dan Ruang Soalan */
 (() => {
+  // Menu lungsur "Alat AI" di bar atas: tutup apabila memilih pautan atau klik di luar
+  document.addEventListener('click', e => {
+    $$('details.nav-more[open]').forEach(d => { if (!d.contains(e.target) || e.target.closest('a')) d.open = false; });
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') $$('details.nav-more[open]').forEach(d => { d.open = false; d.querySelector('summary').focus(); }); });
   const btn = $('#menuBtn'), menu = $('#mainMenu');
   const WA = '60102546720';
 

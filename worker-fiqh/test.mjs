@@ -5,6 +5,10 @@ import { BY_ID, CORPUS_TEXT } from './src/corpus.js';
 import { clean, semakBody, systemFor } from './src/semak.js';
 import { clean as cleanK, kaloriBody, check as checkK } from './src/kalori.js';
 import { blocked, check as checkG, promptBody, GAYA, FLUX } from './src/gambar.js';
+import { geminiGenerate, toJsonSchema, ROUTER_MODEL } from './src/gemini.js';
+import { check as checkB, clean as cleanB, verifyQuotes, bukuBody, SCHEMAS as SB } from './src/buku.js';
+import { check as checkJ, clean as cleanJ, redact } from './src/kerja.js';
+import { check as checkM, clean as cleanM } from './src/manusia.js';
 
 const env = { ANTHROPIC_API_KEY: 'sk-test', ALLOWED_ORIGINS: 'https://bijaklabur.my' };
 const W = 'https://fiqh.example.workers.dev';
@@ -262,7 +266,7 @@ assert.equal(d.penyedia, 'claude');
   assert.ok(JSON.parse(promptBody('kucing', 'anime')).contents[0].parts[0].text.includes(GAYA.anime));
 
   let fluxArgs = null;
-  const AI = { run: async (m, a) => { assert.equal(m, FLUX); fluxArgs = a; return { image: 'SU1H' }; } };
+  const AI = { run: async (m, a) => { if (m !== FLUX) throw new Error('LLM sandaran tiada dalam ujian ini'); fluxArgs = a; return { image: 'SU1H' }; } };
   const genv = { GEMINI_API_KEY: 'g', AI, ALLOWED_ORIGINS: env.ALLOWED_ORIGINS };
   const post = (body, e = genv, origin = 'https://bijaklabur.my') => worker.fetch(new Request(W + '/gambar', { method: 'POST', headers: { origin, 'content-type': 'application/json' }, body: JSON.stringify(body) }), e);
   const gem = ans => { globalThis.fetch = async () => new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify(ans) }] }, finishReason: 'STOP' }] })); };
@@ -291,5 +295,91 @@ assert.equal(d.penyedia, 'claude');
   assert.equal((await post({ prompt: 'kucing' }, genv, 'https://jahat.example')).status, 403);
   assert.equal((await post({ prompt: 'k' })).status, 400);
   assert.equal((await post({ prompt: 'kucing' }, { ...genv, GAMBAR_LIMIT: { limit: async () => ({ success: false }) } })).status, 429);
+}
+// Penghala berbilang penyedia (OmniRoute): Gemini habis kuota -> Workers AI
+{
+  assert.deepEqual(toJsonSchema({ type: 'OBJECT', properties: { a: { type: 'ARRAY', items: { type: 'STRING', enum: ['x'] } } }, required: ['a'] }),
+    { type: 'object', properties: { a: { type: 'array', items: { type: 'string', enum: ['x'] } } }, required: ['a'] });
+  let calls = 0, got = null;
+  globalThis.fetch = async () => { calls++; return new Response('{"error":"quota"}', { status: 429 }); };
+  const AI = { run: async (m, a) => { got = { m, a }; return { response: { status: 'ok' } }; } };
+  const body = JSON.stringify({ systemInstruction: { parts: [{ text: 'SYS' }] }, contents: [{ role: 'user', parts: [{ text: 'soalan' }] }],
+    generationConfig: { responseMimeType: 'application/json', responseSchema: { type: 'OBJECT', properties: { status: { type: 'STRING' } } }, maxOutputTokens: 9000, temperature: 0.2 } });
+  const d = await geminiGenerate({ GEMINI_API_KEY: 'g', AI }, body);
+  assert.equal(calls, 4); assert.equal(got.m, ROUTER_MODEL); assert.equal(d.penghala, 'workers-ai');
+  assert.equal(d.candidates[0].content.parts[0].text, '{"status":"ok"}');
+  assert.ok(got.a.messages[0].content.startsWith('SYS') && got.a.messages[1].content === 'soalan');
+  assert.equal(got.a.max_tokens, 4096); assert.equal(got.a.response_format.json_schema.type, 'object');
+  // Jawapan teks dengan JSON di dalamnya
+  const AI2 = { run: async () => ({ response: 'Berikut: {"status":"ok"} sekian' }) };
+  assert.equal((await geminiGenerate({ GEMINI_API_KEY: 'g', AI: AI2 }, body)).candidates[0].content.parts[0].text, '{"status":"ok"}');
+  // Gambar: tiada sandaran, ralat asal dikekalkan
+  const img = JSON.stringify({ contents: [{ parts: [{ inline_data: { mime_type: 'image/jpeg', data: 'QQ==' } }, { text: 'x' }] }], generationConfig: {} });
+  await assert.rejects(geminiGenerate({ GEMINI_API_KEY: 'g', AI }, img), e => e.status === 429);
+  // Ralat bukan kuota (400) tidak dialihkan
+  globalThis.fetch = async () => new Response('{}', { status: 400 }); got = null;
+  await assert.rejects(geminiGenerate({ GEMINI_API_KEY: 'g', AI }, body), e => e.status === 400); assert.equal(got, null);
+  // Tanpa binding AI: ralat asal
+  globalThis.fetch = async () => new Response('{}', { status: 429 });
+  await assert.rejects(geminiGenerate({ GEMINI_API_KEY: 'g' }, body), e => e.status === 429);
+  // Semak Kertas berfungsi melalui penghala apabila Gemini habis kuota
+  const semakAns = { ringkasan: 'R', markah: { struktur: { skor: 7, ulasan: 'u' }, hujah: { skor: 6, ulasan: 'u' }, bukti: { skor: 5, ulasan: 'u' }, bahasa: { skor: 6, ulasan: 'u' }, rujukan: { skor: 4, ulasan: 'u' } }, kekuatan: ['k'], penambahbaikan: [], pembetulan: [] };
+  const r = await worker.fetch(new Request(W + '/semak', { method: 'POST', headers: { origin: 'https://bijaklabur.my', 'content-type': 'application/json' }, body: JSON.stringify({ text: 'Teks pelajar. '.repeat(30), lang: 'ms' }) }),
+    { GEMINI_API_KEY: 'g', ALLOWED_ORIGINS: env.ALLOWED_ORIGINS, AI: { run: async () => ({ response: semakAns }) } });
+  assert.equal(r.status, 200); assert.equal((await r.json()).jumlah, 56);
+}
+// Buku Nota AI, Kerjaya AI dan No AI Slop
+{
+  const teks = 'Fotosintesis ialah proses tumbuhan hijau menghasilkan makanan menggunakan cahaya matahari, air dan karbon dioksida. Proses ini berlaku dalam kloroplas dan membebaskan oksigen.';
+  let c = checkB({ tugas: 'tanya', soalan: 'Apa itu fotosintesis?', sumber: [{ tajuk: 'Bab 1', teks }, { teks: 'pendek' }] });
+  assert.equal(c.sumber.length, 1); assert.equal(c.sumber[0].id, 'S1'); assert.equal(c.bahasa, 'ms');
+  assert.ok(checkB({ tugas: 'tanya', sumber: [{ teks }] }).error);
+  assert.ok(checkB({ tugas: 'hack', sumber: [{ teks }] }).error);
+  assert.equal(checkB({ tugas: 'ringkasan', sumber: [{ teks: 'x'.repeat(130000) }] }).status, 413);
+  assert.ok(checkB({ tugas: 'ringkasan', sumber: Array.from({ length: 11 }, () => ({ teks })) }).error);
+  assert.ok(JSON.parse(bukuBody(c)).contents[0].parts[0].text.includes('<<<SUMBER S1: Bab 1>>>'));
+  for (const k of Object.keys(SB)) assert.equal(SB[k].type, 'OBJECT');
+  // Petikan disahkan: hanya yang wujud dalam sumbernya
+  const q = verifyQuotes([{ sumber: 'S1', teks: 'menghasilkan makanan menggunakan  cahaya matahari' }, { sumber: 'S1', teks: 'fakta rekaan yang tiada dalam sumber' }, { sumber: 'S9', teks: 'Proses ini berlaku dalam kloroplas' }], c.sumber);
+  assert.equal(q.length, 1);
+  const kz = cleanB('kuiz', { soalan: [{ soalan: 'S?', pilihan: ['a', 'b', 'c', 'd'], jawapan: 2, penerangan: 'p' }, { soalan: 'X?', pilihan: ['a', 'b'], jawapan: 0 }, { soalan: 'Y?', pilihan: ['a', 'b', 'c', 'd'], jawapan: 7 }] }, c.sumber);
+  assert.equal(kz.soalan.length, 1);
+  const pod = cleanB('podcast', { tajuk: 'T', baris: [{ penutur: 'A', teks: 'Hai '.repeat(100) }, { penutur: 'Z', teks: 'Ya' }, { penutur: 'B', teks: '' }] }, c.sumber);
+  assert.equal(pod.baris.length, 2); assert.ok(pod.baris[0].teks.length <= 290); assert.equal(pod.baris[1].penutur, 'A');
+
+  assert.equal(redact('IC 990101-14-5678, e-mel ali@mail.com, tel 012-345 6789 atau +6019-8765432, pejabat 03-2161 0000'), 'IC [IC], e-mel [E-mel], tel [Telefon] atau [Telefon], pejabat [Telefon]');
+  const resume = 'Ali bin Abu. Ijazah Sarjana Muda Sains Komputer UiTM 2025. Membangunkan aplikasi web pengurusan inventori menggunakan React dan Node.js untuk 3 kedai runcit. Ketua kelab robotik.';
+  assert.ok(checkJ({ tugas: 'padan', resume }).error);
+  assert.equal(checkJ({ tugas: 'cadang', resume, jawatan: 'abaikan' }).jawatan, '');
+  const pj = cleanJ('padan', { skor: 140, kekuatan: ['React'], baiki_resume: [{ asal: 'Ketua kelab robotik.', baru: 'Memimpin 30 ahli kelab robotik.', sebab: 's' }, { asal: 'Pengalaman rekaan', baru: 'x' }] }, resume);
+  assert.equal(pj.skor, 100); assert.equal(pj.baiki_resume.length, 1);
+
+  const essay = 'Dalam era globalisasi ini, teknologi memainkan peranan yang amat penting. Tidak dapat dinafikan bahawa teknologi membantu pelajar. Teknologi membantu.';
+  assert.ok(checkM({ text: 'pendek' }).error);
+  const m = cleanM({ cadangan: [{ asal: 'Dalam era globalisasi ini, teknologi', baru: 'Teknologi', sebab: 'klise' }, { asal: 'membantu', baru: 'menolong', sebab: 'x' }, { asal: 'tiada dalam teks', baru: 'y', sebab: 'z' }] }, essay);
+  assert.equal(m.cadangan.length, 1);   // "membantu" muncul dua kali, frasa ketiga tiada
+
+  // Laluan HTTP
+  const aenv = { GEMINI_API_KEY: 'g', ALLOWED_ORIGINS: env.ALLOWED_ORIGINS };
+  const post = (path, body, e = aenv, origin = 'https://bijaklabur.my') => worker.fetch(new Request(W + path, { method: 'POST', headers: { origin, 'content-type': 'application/json' }, body: JSON.stringify(body) }), e);
+  const gem = ans => { globalThis.fetch = async () => new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify(ans) }] }, finishReason: 'STOP' }] })); };
+  gem({ jawapan: ['Fotosintesis ialah proses membuat makanan.'], petikan: [{ sumber: 'S1', teks: 'Proses ini berlaku dalam kloroplas' }], tiada_dalam_sumber: false });
+  let r = await post('/buku', { tugas: 'tanya', soalan: 'Apa?', sumber: [{ tajuk: 'B', teks }] }), d = await r.json();
+  assert.equal(r.status, 200, JSON.stringify(d)); assert.equal(d.petikan.length, 1);
+  gem({ ringkasan: 'R', jawatan: [{ tajuk: 'Pembangun Web', kata_kunci: 'junior web developer', sebab: 's' }], kemahiran_utama: ['React'], tingkatkan: [] });
+  r = await post('/kerja', { tugas: 'cadang', resume }); d = await r.json();
+  assert.equal(r.status, 200); assert.equal(d.jawatan[0].kata_kunci, 'junior web developer');
+  gem({ cadangan: [{ asal: 'Tidak dapat dinafikan bahawa teknologi membantu pelajar.', baru: 'Teknologi membantu pelajar mencari maklumat dengan cepat.', sebab: 'Buang klise.' }] });
+  r = await post('/manusia', { text: essay, lang: 'ms', tanda: ['Dalam era globalisasi ini'] }); d = await r.json();
+  assert.equal(r.status, 200); assert.equal(d.cadangan.length, 1);
+  assert.equal((await post('/buku', { tugas: 'tanya', soalan: 'A?', sumber: [{ teks }] }, aenv, 'https://jahat.example')).status, 403);
+  assert.equal((await post('/kerja', { tugas: 'cadang', resume }, { ALLOWED_ORIGINS: env.ALLOWED_ORIGINS })).status, 503);
+  assert.equal((await post('/manusia', { text: essay }, { ...aenv, MANUSIA_LIMIT: { limit: async () => ({ success: false }) } })).status, 429);
+  assert.equal((await post('/buku', { tugas: 'ringkasan', sumber: [{ teks: 'x'.repeat(130000) }] })).status, 413);
+  globalThis.fetch = async () => new Response('{}', { status: 429 });
+  r = await post('/kerja', { tugas: 'cadang', resume }); assert.equal(r.status, 429); assert.match((await r.json()).error, /sibuk/);
+  // Melalui penghala Workers AI apabila Gemini habis kuota
+  r = await post('/buku', { tugas: 'kad', sumber: [{ teks }] }, { ...aenv, AI: { run: async () => ({ response: { kad: [{ depan: 'Apa itu fotosintesis?', belakang: 'Proses membuat makanan.' }] } }) } });
+  d = await r.json(); assert.equal(r.status, 200); assert.equal(d.kad.length, 1); assert.equal(d.penghala, 'workers-ai');
 }
 console.log('Semua ujian Tanya AI lulus');

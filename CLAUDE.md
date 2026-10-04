@@ -10,7 +10,7 @@ Laman bijaklabur.my (GitHub Pages, cawangan `main`) dan app Android/iOS (Capacit
 - `sw.js`: service worker. **Naikkan `CACHE` (cth. v44 ke v45) dan tambah fail baharu ke senarai cache setiap kali js/css/html berubah.**
 - Pelayan Cloudflare Workers, dipasang oleh GitHub Actions apabila `main` berubah:
   - `worker/`: Premium, akaun (Firebase + Durable Object), Suara HD (Azure)
-  - `worker-fiqh/`: Tanya AI, `/semak`, `/kalori` (Gemini percuma)
+  - `worker-fiqh/`: Tanya AI, `/semak`, `/kalori`, `/gambar` (FLUX), `/buku` (Buku Nota AI), `/kerja` (Kerjaya AI), `/manusia` (gaya AI). Gemini percuma, dengan penghala sandaran ke Workers AI (`src/gemini.js`) apabila kuota Gemini habis
   - `worker-jadual/`: jadual UiTM
   - `worker-nota/`: kedai nota
 
