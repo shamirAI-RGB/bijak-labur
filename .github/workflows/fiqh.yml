@@ -47,7 +47,7 @@ jobs:
         run: |
           curl -sS -X POST "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/ai/run/@cf/black-forest-labs/flux-1-schnell" \
             -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H 'content-type: application/json' \
-            -d '{"prompt":"a cat eating nasi lemak on a banana leaf, watercolour","steps":4,"seed":7}' \
+            -d '{"prompt":"a cat eating nasi lemak on a banana leaf, watercolour","steps":4}' \
             | jq -r 'if .success then "FLUX berjaya: gambar \(.result.image | length) aksara base64" else "FLUX gagal: \(.errors | tostring)" end'
       # Cuba dengan domain fiqh.bijaklabur.my dahulu. Jika gagal, pasang ke alamat workers.dev sahaja.
       - name: Pasang ke Cloudflare (domain fiqh.bijaklabur.my)
