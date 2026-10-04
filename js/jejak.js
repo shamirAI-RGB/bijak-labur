@@ -1,7 +1,9 @@
 /* Bijak Labur: Jejak Aktiviti. Penjejak GPS masa nyata untuk jalan, lari dan berbasikal: peta laluan langsung
    (Leaflet + OpenStreetMap), jarak, masa bergerak, rentak/kelajuan, langkah, kalori, pendakian, catatan setiap km
    dengan pengumuman suara, jeda/sambung, sejarah, dan eksport GPX. Semua data disimpan dalam peranti ini sahaja.
-   Had pelayar: penjejakan hanya berjalan semasa halaman dibuka dan skrin hidup (kunci skrin diminta). */
+   Dalam pelayar, penjejakan hanya berjalan semasa halaman dibuka dan skrin hidup (kunci skrin diminta).
+   Dalam app (Android/iOS), pemalam @capgo/background-geolocation meneruskan GPS walaupun skrin dikunci
+   atau app ditutup, dengan notifikasi kekal di Android. */
 (function () {
   const root = $('#view-jejak');
   if (!root) return;
@@ -35,6 +37,7 @@
 
   // Sambung aktiviti yang tergendala (cth. tab dimuat semula) jika kurang daripada 3 jam
   const saved = store.get('jejak_aktif', null);
+  const resumeNative = !!(saved && saved.start && !saved.paused && Native);
   if (saved && saved.start && Date.now() - (saved.saved || 0) < 3 * 3600e3) T = Object.assign(blank(saved.jenis), saved, { on: true, paused: true, pauseAt: saved.pauseAt || saved.saved });
   const persist = () => { if (T.on) store.set('jejak_aktif', { ...T, saved: Date.now() }); else store.set('jejak_aktif', null); };
 
@@ -83,8 +86,34 @@
   }
 
   /* ---------- GPS ---------- */
+  // App: GPS latar belakang (terus berjalan apabila skrin dikunci atau app di latar belakang)
+  const BG = plugin('BackgroundGeolocation');
+  let bgId = null;
+  async function startBg() {
+    if (!BG) return false;
+    if (bgId != null) return true;
+    stopWatch();
+    try {
+      bgId = await BG.start({
+        backgroundTitle: 'Jejak Aktiviti sedang merekod',
+        backgroundMessage: 'Bijak Labur merekod laluan anda. Buka app untuk jeda atau tamat.',
+        requestPermissions: true, stale: false, distanceFilter: 0
+      }, (loc, err) => {
+        if (err) {
+          if (err.code === 'NOT_AUTHORIZED') { acc = -1; paintCtl(); if (confirm('Bijak Labur memerlukan kebenaran lokasi untuk menjejak aktiviti. Buka tetapan sekarang?')) BG.openSettings(); }
+          return;
+        }
+        if (loc) onPos({ coords: { latitude: loc.latitude, longitude: loc.longitude, accuracy: loc.accuracy, altitude: loc.altitude, altitudeAccuracy: loc.altitudeAccuracy }, timestamp: loc.time || Date.now() });
+      });
+      return true;
+    } catch { bgId = null; return false; }
+  }
+  async function stopBg() { if (BG && bgId != null) { bgId = null; try { await BG.stop(); } catch {} } }
+  // Semasa menjejak dalam app: latar belakang; selainnya (atau dalam pelayar): GPS halaman biasa
+  async function track() { if (!(await startBg())) startWatch(); }
+
   function startWatch() {
-    if (watch != null || !navigator.geolocation) return;
+    if (watch != null || bgId != null || !navigator.geolocation) return;
     watch = navigator.geolocation.watchPosition(onPos, err => { acc = err && err.code === 1 ? -1 : acc; paintCtl(); }, { enableHighAccuracy: true, maximumAge: 0, timeout: 30000 });
   }
   function stopWatch() { if (watch != null) navigator.geolocation.clearWatch(watch); watch = null; }
@@ -117,6 +146,7 @@
       else if (T.altS - T.altLo > 2) { T.ascent += T.altS - T.altLo; T.altLo = T.altS; }
     }
     T.pts.push(c);
+    if (T.pts.length % 10 === 0) persist();
     if (line) line.addLatLng([c[0], c[1]]);
     while (T.dist >= (T.splits.length + 1) * 1000) {
       const ms = moving();
@@ -143,16 +173,16 @@
     viewing = null; if (histLayer) histLayer.clearLayers();
     if (line) line.setLatLngs([]);
     if (startDot) { startDot.remove(); startDot = null; }
-    follow = true; startWatch(); await keepAwake(); persist(); paintAll();
+    follow = true; await track(); await keepAwake(); persist(); paintAll();
     if (suara && window.speechSynthesis) { const u = new SpeechSynthesisUtterance('Aktiviti bermula.'); u.lang = 'ms-MY'; speechSynthesis.speak(u); }
   }
-  function jeda() { if (!T.on || T.paused) return; T.paused = true; T.pauseAt = Date.now(); persist(); paintCtl(); }
+  function jeda() { if (!T.on || T.paused) return; T.paused = true; T.pauseAt = Date.now(); stopBg().then(() => { if (root.offsetParent) startWatch(); }); persist(); paintCtl(); }
   async function sambung() {
     if (!T.on || !T.paused) return;
     T.pausedMs += Date.now() - T.pauseAt; T.paused = false;
     // Elak garis lurus merentasi tempoh jeda
     if (T.pts.length) T.pts[T.pts.length - 1][2] = Math.round((Date.now() - T.start) / 1000);
-    startWatch(); await keepAwake(); persist(); paintCtl();
+    await track(); await keepAwake(); persist(); paintCtl();
   }
   function tamat() {
     if (!T.on) return;
@@ -177,7 +207,7 @@
     buang(true);
   }
   function buang(kept) {
-    stopWatch(); if (lock) { lock.release().catch(() => {}); lock = null; }
+    stopWatch(); stopBg(); if (lock) { lock.release().catch(() => {}); lock = null; }
     const jenis = T.jenis; T = blank(jenis); persist();
     if (!kept && line) line.setLatLngs([]);
     paintAll(); if (viewing) lihat(viewing);
@@ -276,7 +306,7 @@
         <div class="card jk-ctl" id="jkCtl"></div>
         <div class="card" id="jkHist"></div>
       </div>
-      <p class="note">${icon('alert')}<span>Pastikan skrin kekal hidup semasa menjejak: pelayar menghentikan GPS apabila skrin dikunci atau halaman ditutup. Lokasi dan laluan anda disimpan dalam peranti ini sahaja dan tidak dihantar ke pelayan Bijak Labur. Jubin peta dimuatkan daripada OpenStreetMap. Utamakan keselamatan: perhatikan jalan raya, bukan skrin.</span></p>`;
+      <p class="note">${icon('alert')}<span>${BG ? 'Dalam app ini, penjejakan diteruskan walaupun skrin dikunci atau anda membuka app lain (notifikasi "Jejak Aktiviti" dipaparkan). Tekan Tamat apabila selesai untuk menjimatkan bateri.' : 'Dalam pelayar, pastikan skrin kekal hidup semasa menjejak: pelayar menghentikan GPS apabila skrin dikunci atau halaman ditutup. Untuk menjejak dengan skrin dikunci, gunakan app Bijak Labur (Android/iOS).'} Lokasi dan laluan anda disimpan dalam peranti ini sahaja dan tidak dihantar ke pelayan Bijak Labur. Jubin peta dimuatkan daripada OpenStreetMap. Utamakan keselamatan: perhatikan jalan raya, bukan skrin.</span></p>`;
     map = null; line = dot = ring = startDot = histLayer = null;
     paintAll();
   }
@@ -313,5 +343,7 @@
   });
   render();
   if (document.documentElement.dataset.view === 'jejak') { ensureMap(); startWatch(); }
-  if (T.on) setTimeout(() => toast('Aktiviti yang tergendala dipulihkan. Tekan Sambung untuk meneruskan.', 4500), 800);
+  if (T.on && resumeNative) setTimeout(() => { sambung(); toast('Jejak Aktiviti disambung semula.', 3500); }, 600);
+  else if (T.on) setTimeout(() => toast('Aktiviti yang tergendala dipulihkan. Tekan Sambung untuk meneruskan.', 4500), 800);
+  else if (BG) BG.stop().catch(() => {});   // bersihkan notifikasi lama jika app dimulakan semula
 })();
