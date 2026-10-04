@@ -17,6 +17,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { BY_ID, CORPUS_TEXT } from './corpus.js';
 import { GEMINI_MODEL, GEMINI_FALLBACKS, geminiModels, geminiGenerate } from './gemini.js';
 import { semak, MIN_CHARS, MAX_CHARS } from './semak.js';
+import { kalori, check as checkKalori } from './kalori.js';
 export { GEMINI_MODEL, GEMINI_FALLBACKS, geminiModels };
 
 export const MODEL = 'claude-opus-5-5';
@@ -257,6 +258,28 @@ async function semakRoute(req, env, h) {
   }
 }
 
+/* Sihat: anggaran kalori daripada gambar atau penerangan makanan (Gemini) */
+async function kaloriRoute(req, env, h) {
+  if (!env.GEMINI_API_KEY) return json({ error: 'Analisis kalori belum diaktifkan.' }, 503, h);
+  if (!h['access-control-allow-origin']) return json({ error: 'Tidak dibenarkan.' }, 403, h);
+  if (+(req.headers.get('content-length') || 0) > 2_000_000) return json({ error: 'Gambar terlalu besar.' }, 413, h);
+  let body;
+  try { body = await req.json(); } catch { return json({ error: 'Permintaan tidak sah.' }, 400, h); }
+  const input = { image: body && body.image ? String(body.image) : '', mime: String(body && body.mime || 'image/jpeg'), text: String(body && body.text || '').trim() };
+  const bad = checkKalori(input);
+  if (bad) return json({ error: bad }, 400, h);
+  if (env.KALORI_LIMIT) {
+    const { success } = await env.KALORI_LIMIT.limit({ key: req.headers.get('cf-connecting-ip') || 'x' });
+    if (!success) return json({ error: 'Terlalu banyak analisis. Cuba lagi selepas seminit.' }, 429, h);
+  }
+  try { return json(await kalori(env, input), 200, h); }
+  catch (e) {
+    console.log('kalori', e && e.status, e && e.message);
+    const busy = e && (e.status === 429 || e.status === 529);
+    return json({ error: e && e.status === 422 ? 'Gambar ini tidak dapat dianalisis.' : busy ? 'Analisis kalori sibuk. Cuba lagi sebentar.' : 'Analisis kalori tidak tersedia buat masa ini.' }, busy ? 429 : 502, h);
+  }
+}
+
 export default {
   async fetch(req, env) {
     const url = new URL(req.url), h = cors(req, env);
@@ -264,6 +287,7 @@ export default {
     try {
       if (req.method === 'POST' && url.pathname === '/tanya') return await tanya(req, env, url, h);
       if (req.method === 'POST' && url.pathname === '/semak') return await semakRoute(req, env, h);
+      if (req.method === 'POST' && url.pathname === '/kalori') return await kaloriRoute(req, env, h);
       if (url.pathname === '/') return json({ ok: true, service: 'bijak-labur-fiqh', ai: !!provider(env), penyedia: provider(env) }, 200, h);
       return json({ error: 'Tidak dijumpai' }, 404, h);
     } catch (e) {
