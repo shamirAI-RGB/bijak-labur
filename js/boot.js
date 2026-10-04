@@ -1,7 +1,7 @@
 /* Bijak Labur: kerja awal sebelum skrip utama dimuatkan, supaya kandungan dilukis serta-merta
    (bukan selepas semua skrip selesai). Senarai halaman sama dengan VIEWS dalam app.js. */
 (function () {
-  var V = ['utama', 'belajar', 'pustaka', 'pasaran', 'solat', 'ibadah', 'semak', 'jadual', 'nota', 'premium', 'soalan'];
+  var V = ['utama', 'belajar', 'pustaka', 'pasaran', 'solat', 'ibadah', 'semak', 'jadual', 'nota', 'sihat', 'premium', 'soalan'];
   var v = (location.hash || '#utama').slice(1).split('/')[0];
   document.documentElement.setAttribute('data-view', V.indexOf(v) >= 0 ? v : 'utama');
 

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import worker, { verify, collectRetrieved, norm, normUrl, parseAnswer, MODEL, GEMINI_MODEL, GEMINI_FALLBACKS, DOMAINS } from './src/index.js';
 import { BY_ID, CORPUS_TEXT } from './src/corpus.js';
 import { clean, semakBody, systemFor } from './src/semak.js';
+import { clean as cleanK, kaloriBody, check as checkK } from './src/kalori.js';
 
 const env = { ANTHROPIC_API_KEY: 'sk-test', ALLOWED_ORIGINS: 'https://bijaklabur.my' };
 const W = 'https://fiqh.example.workers.dev';
@@ -213,5 +214,38 @@ assert.equal(d.penyedia, 'claude');
   assert.equal((await post({ text: TEKS }, { ...senv, SEMAK_LIMIT: { limit: async () => ({ success: false }) } })).status, 429);
   globalThis.fetch = async () => new Response('{}', { status: 503 });
   assert.equal((await post({ text: TEKS })).status, 429);
+}
+
+// Sihat: kalori daripada gambar atau teks
+{
+  const raw = { yakin: 'tinggi', nota: 'Anggaran.', items: [
+    { nama: 'Nasi santan', hidangan: '1 pinggan', berat_g: 200, kalori: 330.6, protein_g: 6, karbohidrat_g: 60, lemak_g: 8 },
+    { nama: 'Ayam goreng', berat_g: 120, kalori: 290, protein_g: 25, karbohidrat_g: 8, lemak_g: 18 },
+    { nama: '', kalori: 99 }, { nama: 'Mustahil', berat_g: 99999, kalori: 99999, protein_g: -5, karbohidrat_g: 'x', lemak_g: 1 }
+  ] };
+  const k = cleanK(raw);
+  assert.equal(k.items.length, 3); assert.equal(k.items[0].kalori, 331); assert.equal(k.items[2].kalori, 4000); assert.equal(k.items[2].berat_g, 3000); assert.equal(k.items[2].protein_g, 0);
+  assert.equal(k.jumlah.kalori, 331 + 290 + 4000); assert.equal(k.yakin, 'tinggi');
+  assert.equal(cleanK({ items: 'x', yakin: 'pelik' }).yakin, 'sederhana');
+  assert.match(checkK({}), /gambar atau penerangan/);
+  assert.match(checkK({ image: 'AAAA', mime: 'image/gif' }), /Format/);
+  assert.match(checkK({ image: 'A'.repeat(1_600_001), mime: 'image/jpeg' }), /besar/);
+  assert.equal(checkK({ image: 'QUJD', mime: 'image/jpeg' }), null);
+  assert.equal(checkK({ text: 'nasi lemak' }), null);
+  const b = JSON.parse(kaloriBody({ image: 'QUJD', mime: 'image/jpeg', text: '' }));
+  assert.equal(b.contents[0].parts[0].inline_data.mime_type, 'image/jpeg');
+  assert.ok(b.generationConfig.responseSchema);
+
+  const kenv = { GEMINI_API_KEY: 'g', ALLOWED_ORIGINS: env.ALLOWED_ORIGINS };
+  const post = (body, e = kenv, origin = 'https://bijaklabur.my') => worker.fetch(new Request(W + '/kalori', { method: 'POST', headers: { origin, 'content-type': 'application/json' }, body: JSON.stringify(body) }), e);
+  globalThis.fetch = async () => new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify(raw) }] }, finishReason: 'STOP' }] }));
+  let r = await post({ image: 'QUJD', mime: 'image/jpeg' }), d = await r.json();
+  assert.equal(r.status, 200, JSON.stringify(d)); assert.equal(d.items.length, 3);
+  assert.equal((await post({ text: 'roti canai 2 keping' })).status, 200);
+  assert.equal((await post({})).status, 400);
+  assert.equal((await post({ text: 'x' }, kenv, 'https://jahat.example')).status, 403);
+  assert.equal((await post({ text: 'x' }, { ...kenv, KALORI_LIMIT: { limit: async () => ({ success: false }) } })).status, 429);
+  globalThis.fetch = async () => new Response('{}', { status: 400 });
+  assert.equal((await post({ text: 'nasi' })).status, 502);
 }
 console.log('Semua ujian Tanya AI lulus');

@@ -25,5 +25,12 @@ type = "ratelimit"
 namespace_id = "2002"
 simple = { limit = 3, period = 60 }
 
+# Sihat: 6 analisis kalori seminit bagi setiap alamat IP
+[[unsafe.bindings]]
+name = "KALORI_LIMIT"
+type = "ratelimit"
+namespace_id = "2003"
+simple = { limit = 6, period = 60 }
+
 # Rahsia (ditetapkan oleh GitHub Actions, jangan tulis di sini): ANTHROPIC_API_KEY (Claude) atau GEMINI_API_KEY (Gemini percuma)
 # Pilihan: GEMINI_MODEL (lalai gemini-flash-lite-latest)

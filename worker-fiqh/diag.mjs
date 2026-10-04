@@ -28,3 +28,17 @@ for (const m of geminiModels({})) {
     console.log('penambahbaikan:', r.penambahbaikan.map(p => p.isu).join(' | '));
   } catch (e) { console.log('semak gagal', e.status, e.message.slice(0, 200)); }
 }
+
+// Sihat: anggaran kalori sebenar (teks dan gambar nasi lemak dari Wikimedia Commons)
+{
+  const { kalori } = await import('./src/kalori.js');
+  const show = (tag, r) => console.log(`${tag}: ${r.jumlah.kalori} kcal, yakin ${r.yakin} | ` + r.items.map(i => `${i.nama} ${i.berat_g}g ${i.kalori}kcal`).join(', '));
+  try { show('kalori teks', await kalori({ GEMINI_API_KEY: key }, { text: '1 pinggan nasi lemak ayam goreng dan teh tarik' })); }
+  catch (e) { console.log('kalori teks gagal', e.status, e.message.slice(0, 200)); }
+  try {
+    const img = await fetch('https://commons.wikimedia.org/wiki/Special:FilePath/Nasi_Lemak.jpg?width=640', { headers: { 'user-agent': 'BijakLabur-diag/1.0 (https://bijaklabur.my)' } });
+    if (!img.ok) throw Object.assign(new Error('gambar ' + img.status), { status: img.status });
+    const b64 = Buffer.from(await img.arrayBuffer()).toString('base64');
+    show('kalori gambar', await kalori({ GEMINI_API_KEY: key }, { image: b64, mime: (img.headers.get('content-type') || 'image/jpeg').split(';')[0] }));
+  } catch (e) { console.log('kalori gambar gagal', e.status, String(e.message).slice(0, 200)); }
+}
