@@ -1,0 +1,30 @@
+/* Bijak Labur: Studio Gambar AI */
+.st-grid { display: grid; gap: 0 14px; }
+@media (min-width: 900px) { .st-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); align-items: start; } }
+.st-form { display: grid; gap: 10px; }
+.st-form .field { position: relative; margin: 0; }
+.st-form textarea { resize: vertical; min-height: 104px; }
+.st-count { position: absolute; right: 10px; bottom: 8px; pointer-events: none; }
+.st-lbl { margin: 4px 0 0; font-size: .78rem; font-weight: 650; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.st-gaya { display: flex; flex-wrap: wrap; gap: 6px; }
+.st-gaya .chip { flex: initial; }
+.st-go { justify-self: start; min-width: 180px; justify-content: center; }
+.st-idea { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.st-idea .link-btn { text-align: left; font-size: .85rem; }
+.st-res { padding: 10px; }
+.st-stage { margin: 0; border-radius: 12px; overflow: hidden; }
+.st-empty, .st-wait { aspect-ratio: 1; display: grid; place-content: center; justify-items: center; gap: 10px; text-align: center; padding: 20px;
+  background: repeating-linear-gradient(45deg, var(--surface-2) 0 12px, transparent 12px 24px); border: 1px dashed var(--border); }
+.st-empty .ic { width: 34px; height: 34px; color: var(--muted); }
+.st-spin { width: 44px; height: 44px; border-radius: 50%; border: 3px solid var(--surface-2); border-top-color: var(--brand); animation: st-spin 1s linear infinite; }
+@keyframes st-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .st-spin { animation-duration: 3s; } }
+.st-out img { display: block; width: 100%; height: auto; border-radius: 12px; background: var(--surface-2); }
+.st-out figcaption { display: grid; gap: 8px; padding: 10px 2px 2px; }
+.st-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.st-prompt summary { cursor: pointer; font-size: .85rem; color: var(--muted); }
+.st-prompt p { margin: 6px 0 0; font-size: .85rem; line-height: 1.5; }
+.st-gal { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; margin: 10px 0 6px; }
+.st-thumb { padding: 0; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; cursor: pointer; background: var(--surface-2); aspect-ratio: 1; }
+.st-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.st-thumb:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }

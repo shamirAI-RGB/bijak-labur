@@ -32,5 +32,16 @@ type = "ratelimit"
 namespace_id = "2003"
 simple = { limit = 6, period = 60 }
 
+# Studio Gambar AI: 3 gambar seminit bagi setiap alamat IP
+[[unsafe.bindings]]
+name = "GAMBAR_LIMIT"
+type = "ratelimit"
+namespace_id = "2004"
+simple = { limit = 3, period = 60 }
+
+# Workers AI (model FLUX untuk Studio Gambar). Peringkat percuma 10,000 neuron sehari; tiada caj pada pelan percuma.
+[ai]
+binding = "AI"
+
 # Rahsia (ditetapkan oleh GitHub Actions, jangan tulis di sini): ANTHROPIC_API_KEY (Claude) atau GEMINI_API_KEY (Gemini percuma)
 # Pilihan: GEMINI_MODEL (lalai gemini-flash-lite-latest)

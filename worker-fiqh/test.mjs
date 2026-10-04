@@ -4,6 +4,7 @@ import worker, { verify, collectRetrieved, norm, normUrl, parseAnswer, MODEL, GE
 import { BY_ID, CORPUS_TEXT } from './src/corpus.js';
 import { clean, semakBody, systemFor } from './src/semak.js';
 import { clean as cleanK, kaloriBody, check as checkK } from './src/kalori.js';
+import { blocked, check as checkG, promptBody, GAYA, FLUX } from './src/gambar.js';
 
 const env = { ANTHROPIC_API_KEY: 'sk-test', ALLOWED_ORIGINS: 'https://bijaklabur.my' };
 const W = 'https://fiqh.example.workers.dev';
@@ -111,7 +112,7 @@ assert.equal((await call({ q: 'x'.repeat(501) })).status, 400);
 assert.equal((await call({ q: 'Hukum kripto?' }, 'https://jahat.example')).status, 403);
 assert.equal((await call({ q: 'Hukum kripto?' }, 'https://bijaklabur.my', { ALLOWED_ORIGINS: env.ALLOWED_ORIGINS })).status, 503);
 d = await (await worker.fetch(new Request(W + '/'), env)).json();
-assert.deepEqual(d, { ok: true, service: 'bijak-labur-fiqh', ai: true, penyedia: 'claude' });
+assert.deepEqual(d, { ok: true, service: 'bijak-labur-fiqh', ai: true, penyedia: 'claude', gambar: false });
 
 // Gemini (percuma) apabila hanya GEMINI_API_KEY ditetapkan: korpus dan ayat Al-Quran sahaja
 const genv = { GEMINI_API_KEY: 'g-test', ALLOWED_ORIGINS: env.ALLOWED_ORIGINS };
@@ -168,7 +169,7 @@ assert.equal((await call({ q: 'Hukum emas digital?' }, 'https://bijaklabur.my', 
 
 // Claude diutamakan jika kedua-dua kunci ada
 d = await (await worker.fetch(new Request(W + '/'), genv)).json();
-assert.deepEqual(d, { ok: true, service: 'bijak-labur-fiqh', ai: true, penyedia: 'gemini' });
+assert.deepEqual(d, { ok: true, service: 'bijak-labur-fiqh', ai: true, penyedia: 'gemini', gambar: false });
 d = await (await worker.fetch(new Request(W + '/'), { ...genv, ...env })).json();
 assert.equal(d.penyedia, 'claude');
 
@@ -247,5 +248,48 @@ assert.equal(d.penyedia, 'claude');
   assert.equal((await post({ text: 'x' }, { ...kenv, KALORI_LIMIT: { limit: async () => ({ success: false }) } })).status, 429);
   globalThis.fetch = async () => new Response('{}', { status: 400 });
   assert.equal((await post({ text: 'nasi' })).status, 502);
+}
+// Studio Gambar AI
+{
+  assert.ok(blocked('gadis bogel')); assert.ok(blocked('NSFW art')); assert.ok(blocked('kanak-kanak memakai bikini'));
+  assert.ok(!blocked('kanak-kanak bermain di taman')); assert.ok(!blocked('kucing comel makan nasi lemak'));
+  assert.equal(checkG({ prompt: 'ab' }).error.length > 0, true);
+  assert.ok(checkG({ prompt: 'x'.repeat(401) }).error);
+  let c = checkG({ prompt: '  kucing   comel ', gaya: 'batik', seed: 42 });
+  assert.deepEqual(c, { prompt: 'kucing comel', gaya: 'batik', seed: 42 });
+  c = checkG({ prompt: 'kucing', gaya: '__proto__', seed: -1 });
+  assert.equal(c.gaya, 'realistik'); assert.ok(c.seed > 0);
+  assert.ok(JSON.parse(promptBody('kucing', 'anime')).contents[0].parts[0].text.includes(GAYA.anime));
+
+  let fluxArgs = null;
+  const AI = { run: async (m, a) => { assert.equal(m, FLUX); fluxArgs = a; return { image: 'SU1H' }; } };
+  const genv = { GEMINI_API_KEY: 'g', AI, ALLOWED_ORIGINS: env.ALLOWED_ORIGINS };
+  const post = (body, e = genv, origin = 'https://bijaklabur.my') => worker.fetch(new Request(W + '/gambar', { method: 'POST', headers: { origin, 'content-type': 'application/json' }, body: JSON.stringify(body) }), e);
+  const gem = ans => { globalThis.fetch = async () => new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify(ans) }] }, finishReason: 'STOP' }] })); };
+
+  gem({ selamat: true, sebab: '', prompt_en: 'A cute cat eating nasi lemak on a banana leaf' });
+  let r = await post({ prompt: 'kucing comel makan nasi lemak', gaya: 'catair', seed: 7 }), d = await r.json();
+  assert.equal(r.status, 200, JSON.stringify(d)); assert.equal(d.image, 'SU1H'); assert.equal(d.seed, 7); assert.equal(d.ai, true);
+  assert.ok(fluxArgs.prompt.startsWith('A cute cat') && fluxArgs.prompt.includes('watercolour')); assert.equal(fluxArgs.steps, 4); assert.equal(fluxArgs.seed, 7);
+  // Gemini menolak
+  gem({ selamat: false, sebab: 'Gambar orang sebenar tidak dibenarkan.', prompt_en: '' }); fluxArgs = null;
+  r = await post({ prompt: 'gambar perdana menteri' }); d = await r.json();
+  assert.equal(r.status, 422); assert.equal(d.error, 'Gambar orang sebenar tidak dibenarkan.'); assert.equal(fluxArgs, null);
+  // Penapis tempatan menolak tanpa memanggil sesiapa
+  globalThis.fetch = async () => { throw new Error('tidak patut dipanggil'); };
+  assert.equal((await post({ prompt: 'wanita bogel' })).status, 422); assert.equal(fluxArgs, null);
+  // Gemini gagal: guna penerangan asal + gaya
+  globalThis.fetch = async () => new Response('{}', { status: 500 });
+  r = await post({ prompt: 'menara berkembar waktu malam', gaya: 'poster' }); d = await r.json();
+  assert.equal(r.status, 200); assert.equal(d.ai, false); assert.ok(fluxArgs.prompt.startsWith('menara berkembar waktu malam. minimalist poster'));
+  // Kuota Workers AI habis, ralat lain, tanpa binding, asal lain, had kadar
+  r = await post({ prompt: 'kucing' }, { ...genv, AI: { run: async () => { throw new Error('3036: Account limited to 10000 daily neurons'); } } });
+  assert.equal(r.status, 429); assert.match((await r.json()).error, /esok/);
+  assert.equal((await post({ prompt: 'kucing' }, { ...genv, AI: { run: async () => { throw new Error('boom'); } } })).status, 502);
+  assert.equal((await post({ prompt: 'kucing' }, { ...genv, AI: { run: async () => ({}) } })).status, 502);
+  assert.equal((await post({ prompt: 'kucing' }, { ALLOWED_ORIGINS: env.ALLOWED_ORIGINS })).status, 503);
+  assert.equal((await post({ prompt: 'kucing' }, genv, 'https://jahat.example')).status, 403);
+  assert.equal((await post({ prompt: 'k' })).status, 400);
+  assert.equal((await post({ prompt: 'kucing' }, { ...genv, GAMBAR_LIMIT: { limit: async () => ({ success: false }) } })).status, 429);
 }
 console.log('Semua ujian Tanya AI lulus');
