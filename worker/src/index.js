@@ -79,6 +79,9 @@ async function checkout(req, env, url) {
   });
   const code = Array.isArray(res) && res[0] && res[0].BillCode;
   if (!code) { console.log('createBill gagal', JSON.stringify(res)); return { status: 502, data: { error: 'Gerbang pembayaran tidak dapat mencipta bil. Cuba lagi sebentar.' } }; }
+  // Rekod bil di pelayan: hanya bil yang dicipta di sini boleh dituntut, dengan pelan dan harga yang direkod
+  const rec = await callDO(env, `b:${code}`, { op: 'cipta', uid: who.uid, plan: b.plan, period: b.period, sen: plan[b.period] });
+  if (rec.status !== 200) return rec;
   return { status: 200, data: { url: `${tpBase(env)}/${code}`, billcode: code } };
 }
 
@@ -107,6 +110,10 @@ async function claim(req, env) {
   const device = String(b.device || '');
   if (!code) return { status: 400, data: { error: 'Kod bil tidak sah.' } };
   if (!email) return { status: 400, data: { error: 'Sila isi e-mel yang digunakan semasa membayar.' } };
+  // Bil mesti dicipta oleh /checkout Bijak Labur, bukan bil ToyyibPay lain (termasuk bil akaun ToyyibPay orang lain)
+  const rec = await callDO(env, `b:${code}`, { op: 'lihat' });
+  if (rec.status !== 200) return rec;
+  const { plan, period, sen } = rec.data;
   const tx = await toyyib(env, 'getBillTransactions', { billCode: code });
   const list = Array.isArray(tx) ? tx : [];
   const paid = list.find(t => String(t.billpaymentStatus) === '1');
@@ -116,11 +123,8 @@ async function claim(req, env) {
   }
   if (cleanEmail(paid.billEmail) !== email) return { status: 403, data: { error: 'E-mel tidak sepadan dengan bil ini.' } };
 
-  const tag = `${paid.billExternalReferenceNo || ''} ${paid.billDescription || ''}`.match(/(pelajar|pelabur|lengkap)-(m1|y1)/);
-  if (!tag) return { status: 400, data: { error: 'Bil ini bukan langganan Bijak Labur.' } };
-  const [, plan, period] = tag;
   const paidSen = Math.round(parseFloat(paid.billpaymentAmount) * 100);
-  if (!(paidSen >= PLANS[plan][period])) return { status: 400, data: { error: 'Jumlah bayaran tidak sepadan dengan harga pelan.' } };
+  if (!(paidSen >= sen)) return { status: 400, data: { error: 'Jumlah bayaran tidak sepadan dengan harga pelan.' } };
 
   const start = parseDate(paid.billPaymentDate) || Date.now();
   const exp = Math.floor((start + PERIODS[period].days * 864e5) / 1000);
@@ -157,6 +161,9 @@ async function tts(req, env, url, h) {
   const cache = typeof caches !== 'undefined' ? caches.default : null;
   let hit = cache && await cache.match(key);
   if (!hit) {
+    // Had per alamat IP supaya kuota Azure bulanan tidak dihabiskan oleh satu pihak (pengepala Origin boleh dipalsukan)
+    if (env.TTS_LIMIT && !(await env.TTS_LIMIT.limit({ key: req.headers.get('cf-connecting-ip') || 'x' })).success)
+      return json({ error: 'Terlalu banyak permintaan suara. Cuba lagi sebentar.' }, 429, h);
     const ssml = `<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="${v[0]}"><voice name="${v[1]}"><prosody rate="${rate}">${xml(text)}</prosody></voice></speak>`;
     const r = await fetch(`https://${env.AZURE_SPEECH_REGION || 'southeastasia'}.tts.speech.microsoft.com/cognitiveservices/v1`, {
       method: 'POST',

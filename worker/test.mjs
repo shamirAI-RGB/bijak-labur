@@ -28,14 +28,14 @@ async function idToken(uid, over = {}, kid = 'k1') {
   const sig = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', rsa.privateKey, new TextEncoder().encode(body));
   return `${body}.${btoa(String.fromCharCode(...new Uint8Array(sig))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')}`;
 }
-const pwUsers = new Set(['ali', 'abu']);
+const pwUsers = new Set(['ali', 'abu']), verified = new Set();
 const W = 'https://pay.example.workers.dev';
 let created = null, tx = [];
 globalThis.fetch = async (u, init) => {
   if (u.startsWith('https://www.googleapis.com/service_accounts/')) return new Response(JSON.stringify({ keys: [rsaPub] }), { headers: { 'cache-control': 'max-age=600' } });
   if (u.startsWith('https://identitytoolkit.googleapis.com/v1/accounts:lookup')) {
     const uid = JSON.parse(atob(JSON.parse(init.body).idToken.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).sub;
-    return new Response(JSON.stringify({ users: [{ localId: uid, providerUserInfo: [{ providerId: 'google.com' }, ...(pwUsers.has(uid) ? [{ providerId: 'password' }] : [])] }] }));
+    return new Response(JSON.stringify({ users: [{ localId: uid, emailVerified: verified.has(uid), providerUserInfo: [{ providerId: 'google.com' }, ...(pwUsers.has(uid) ? [{ providerId: 'password' }] : [])] }] }));
   }
   const f = Object.fromEntries(init.body);
   if (u.endsWith('/createBill')) { created = f; return new Response(JSON.stringify([{ BillCode: 'abc12345' }])); }
@@ -75,6 +75,11 @@ assert.equal((await call('/akaun/sesi', { device: DEV_A })).status, 200);
 // Peranti kedua ditolak tanpa pengesahan
 r = await call('/akaun/sesi', { device: DEV_B, label: 'Safari, iPhone' }); d = await r.json();
 assert.equal(r.status, 409); assert.equal(d.code, 'device'); assert.equal(d.other.label, 'Chrome, Android'); assert.equal(d.switchesLeft, 2);
+// Percubaan perlukan e-mel disahkan (Ali belum; Firebase kata belum)
+{
+  const r = await call('/akaun/percubaan', { device: DEV_A }); assert.equal(r.status, 403); assert.equal((await r.json()).code, 'verify');
+}
+verified.add('ali');
 // Percubaan hanya pada peranti aktif, dan sekali sahaja
 assert.equal((await call('/akaun/percubaan', { device: DEV_B })).status, 409);
 r = await call('/akaun/percubaan', { device: DEV_A }); d = await r.json();
@@ -124,6 +129,12 @@ assert.equal(r.headers.get('access-control-allow-origin'), null);
 r = await worker.fetch(new Request(W + '/return?status_id=1&billcode=abc12345&order_id=BL-x'), env);
 assert.equal(r.status, 302); assert.equal(r.headers.get('location'), 'https://shamirai-rgb.github.io/bijak-labur/?bill=abc12345&status=1#premium');
 
+// Bil yang tidak dicipta oleh /checkout (cth. bil daripada akaun ToyyibPay lain) ditolak tanpa menghubungi ToyyibPay
+r = await call('/claim', { billcode: 'zzz99999', email: 'ali@mail.com', device: DEV_C });
+assert.equal(r.status, 404); assert.match((await r.json()).error, /bukan daripada Bijak Labur/);
+// Pelan dan harga diambil daripada rekod pelayan, bukan daripada teks bil
+assert.deepEqual((({ plan, period, sen }) => ({ plan, period, sen }))(await (await env.AKAUN.get('b:abc12345').fetch('https://akaun/', { method: 'POST', body: JSON.stringify({ op: 'lihat' }) })).json()), { plan: 'lengkap', period: 'y1', sen: 10900 });
+
 // Belum bayar
 tx = [{ billpaymentStatus: '3', billEmail: 'ali@mail.com' }];
 assert.equal((await call('/claim', { billcode: 'abc12345', email: 'ali@mail.com', device: DEV_C })).status, 402);
@@ -157,7 +168,7 @@ assert.equal((await call('/claim', { billcode: 'abc12345', email: 'ali@mail.com'
 tx[0].billpaymentAmount = '15.00';
 assert.equal((await call('/claim', { billcode: 'abc12345', email: 'ali@mail.com', device: DEV_C })).status, 400);
 // Langganan tamat
-Object.assign(tx[0], { billpaymentAmount: '5.00', billExternalReferenceNo: 'BL-pelajar-m1-1', billPaymentDate: '01-01-2025 10:00:00' });
+Object.assign(tx[0], { billpaymentAmount: '109.00', billPaymentDate: '01-01-2024 10:00:00' });
 assert.equal((await call('/claim', { billcode: 'abc12345', email: 'ali@mail.com', device: DEV_C })).status, 410);
 
 // Suara HD
@@ -176,3 +187,7 @@ assert.equal((await tts('t=' + 'a'.repeat(301) + '&v=ms-f', undefined, envT)).st
 assert.equal((await tts('t=Hai&v=ms-f', 'https://jahat.example', envT)).status, 403);
 
 console.log('Semua ujian pelayan pembayaran dan akaun lulus');
+
+// Had suara HD per IP (permintaan baharu sahaja)
+assert.equal((await tts('t=Teks+baharu&v=ms-f', undefined, { ...envT, TTS_LIMIT: { limit: async () => ({ success: false }) } })).status, 429);
+console.log('Had suara HD lulus');
