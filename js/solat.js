@@ -1,7 +1,10 @@
-/* Waktu solat Malaysia: zon JAKIM melalui api.waktusolat.app */
+/* Waktu solat: zon JAKIM melalui api.waktusolat.app untuk Malaysia,
+   dan api.aladhan.com untuk bandar lain di seluruh dunia (zon "GL") */
 (function () {
   const API = 'https://api.waktusolat.app';
-  const TZ = 'Asia/Kuala_Lumpur';
+  const ALADHAN = 'https://api.aladhan.com/v1';
+  const GEO = 'https://geocoding-api.open-meteo.com/v1/search';
+  let TZ = 'Asia/Kuala_Lumpur';
   const FALLBACK_ZONES = `JHR01|Johor|Pulau Aur dan Pulau Pemanggil
 JHR02|Johor|Johor Bahru, Kota Tinggi, Mersing, Kulai
 JHR03|Johor|Kluang, Pontian
@@ -80,8 +83,16 @@ WLY02|Wilayah Persekutuan|Labuan`.split('\n').map(l => { const [jakimCode, neger
     ['اللَّهُمَّ إِنِّي أَسْأَلُكَ عِلْمًا نَافِعًا وَرِزْقًا طَيِّبًا وَعَمَلًا مُتَقَبَّلًا', 'Ya Allah, aku memohon kepada-Mu ilmu yang bermanfaat, rezeki yang baik dan amalan yang diterima.', 'Doa selepas Subuh, riwayat Ibnu Majah']
   ];
   const HIJRI = ['Muharram', 'Safar', 'Rabiulawal', 'Rabiulakhir', 'Jamadilawal', 'Jamadilakhir', 'Rejab', 'Syaaban', 'Ramadan', 'Syawal', 'Zulkaedah', 'Zulhijjah'];
-  const tFmt = new Intl.DateTimeFormat('en-GB', { timeZone: TZ, hour: 'numeric', minute: '2-digit', hour12: true });
-  const dFmt = new Intl.DateTimeFormat('ms-MY', { timeZone: TZ, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  let tFmt, dFmt, wdFmt;
+  // Zon waktu ikut lokasi: Malaysia, atau zon waktu bandar luar negara
+  function setTZ(tz) {
+    try { new Intl.DateTimeFormat('en', { timeZone: tz }); } catch { tz = 'Asia/Kuala_Lumpur'; }
+    TZ = tz;
+    tFmt = new Intl.DateTimeFormat('en-GB', { timeZone: TZ, hour: 'numeric', minute: '2-digit', hour12: true });
+    dFmt = new Intl.DateTimeFormat('ms-MY', { timeZone: TZ, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    wdFmt = new Intl.DateTimeFormat('ms-MY', { timeZone: TZ, weekday: 'short' });
+  }
+  setTZ(TZ);
   const partsKL = d => Object.fromEntries(new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: 'numeric', day: 'numeric' }).formatToParts(d).filter(p => p.type !== 'literal').map(p => [p.type, +p.value]));
   // Format 12 jam gaya Malaysia: 5:53 pg / 1:06 ptg / 7:20 mlm
   const fmtT = ts => {
@@ -100,14 +111,38 @@ WLY02|Wilayah Persekutuan|Labuan`.split('\n').map(l => { const [jakimCode, neger
   function renderZones() {
     const byState = {};
     zones.forEach(z => (byState[z.negeri] = byState[z.negeri] || []).push(z));
-    $('#zoneSel').innerHTML = Object.keys(byState).sort().map(n => `<optgroup label="${esc(n)}">${byState[n].map(z => `<option value="${esc(z.jakimCode)}" ${z.jakimCode === zone ? 'selected' : ''}>${esc(z.daerah)} (${esc(z.jakimCode)})</option>`).join('')}</optgroup>`).join('');
+    $('#zoneSel').innerHTML = Object.keys(byState).sort().map(n => `<optgroup label="${esc(n)}">${byState[n].map(z => `<option value="${esc(z.jakimCode)}" ${z.jakimCode === zone ? 'selected' : ''}>${esc(z.daerah)} (${esc(z.jakimCode)})</option>`).join('')}</optgroup>`).join('')
+      + `<optgroup label="Luar Malaysia">${city ? `<option value="GL" ${zone === 'GL' ? 'selected' : ''}>${esc(city.name)}${city.country ? ', ' + esc(city.country) : ''}</option>` : ''}<option value="__dunia">Cari bandar lain di dunia…</option></optgroup>`;
   }
-  const zoneInfo = () => zones.find(z => z.jakimCode === zone) || { daerah: zone, negeri: '' };
+  // Bandar luar Malaysia: { name, country, lat, lon, tz }
+  let city = store.get('solatCity', null);
+  const isGL = () => zone === 'GL' && city;
+  const zoneInfo = () => isGL() ? { daerah: city.name, negeri: city.country } : zones.find(z => z.jakimCode === zone) || { daerah: zone, negeri: '' };
+  if (zone === 'GL' && !city) zone = 'WLY01';
+  setTZ(isGL() ? city.tz : 'Asia/Kuala_Lumpur');
+
+  /* Aladhan -> bentuk yang sama dengan waktusolat.app: { month_number, prayers: [{ day, hijri, imsak, fajr, ... }] } */
+  async function fetchGlobal(c, y, m) {
+    const r = await fetch(`${ALADHAN}/calendar/${y}/${m}?latitude=${c.lat}&longitude=${c.lon}&school=0&iso8601=true`);
+    if (!r.ok) throw new Error('aladhan ' + r.status);
+    const j = await r.json(), sec = t => Math.floor(Date.parse(String(t).replace(/\s*\(.*\)$/, '')) / 1000);
+    const prayers = (j.data || []).map(d => {
+      const t = d.timings, h = d.date.hijri, row = {
+        day: +d.date.gregorian.day, hijri: `${h.year}-${String(h.month.number).padStart(2, '0')}-${String(h.day).padStart(2, '0')}`,
+        imsak: sec(t.Imsak), fajr: sec(t.Fajr), syuruk: sec(t.Sunrise), dhuhr: sec(t.Dhuhr), asr: sec(t.Asr), maghrib: sec(t.Maghrib), isha: sec(t.Isha)
+      };
+      row.dhuha = row.syuruk + 25 * 60; // ikut amalan JAKIM: kira-kira 25 minit selepas syuruk
+      return row;
+    }).filter(r => Object.values(r).every(v => v === r.hijri || Number.isFinite(v)));
+    if (!prayers.length) throw new Error('tiada data');
+    return { zone: 'GL', month_number: m, year: y, prayers, tz: j.data[0].meta.timezone };
+  }
 
   async function fetchMonth(z, y, m) {
-    const key = `solat_${z}_${y}_${m}`;
+    const key = z === 'GL' ? `solat_GL_${city.lat.toFixed(2)}_${city.lon.toFixed(2)}_${y}_${m}` : `solat_${z}_${y}_${m}`;
     const cached = store.get(key, null);
     if (cached && cached.prayers && cached.prayers.length) return cached;
+    if (z === 'GL') { const j = await fetchGlobal(city, y, m); store.set(key, j); pruneCache(); return j; }
     const urls = [`${API}/v2/solat/${z}?year=${y}&month=${m}`, `data/solat/${z}-${y}-${String(m).padStart(2, '0')}.json`];
     for (const u of urls) {
       try {
@@ -131,6 +166,8 @@ WLY02|Wilayah Persekutuan|Labuan`.split('\n').map(l => { const [jakimCode, neger
     $('#nextName').textContent = 'Memuatkan';
     try {
       month = await fetchMonth(zone, p.year, p.month);
+      // Zon waktu sebenar bandar (daripada Aladhan) mengatasi anggaran awal
+      if (isGL() && month.tz && month.tz !== city.tz) { city = { ...city, tz: month.tz }; store.set('solatCity', city); setTZ(city.tz); }
       renderToday(); renderMonth();
       const nm = p.month === 12 ? [p.year + 1, 1] : [p.year, p.month + 1];
       fetchMonth(zone, nm[0], nm[1]).then(j => { nextMonth = j; scheduleNative(); }).catch(() => scheduleNative());
@@ -243,7 +280,6 @@ WLY02|Wilayah Persekutuan|Labuan`.split('\n').map(l => { const [jakimCode, neger
   }
 
   /* Jalur 7 hari */
-  const wdFmt = new Intl.DateTimeFormat('ms-MY', { timeZone: TZ, weekday: 'short' });
   function renderDays() {
     $('#dayStrip').innerHTML = [0, 1, 2, 3, 4, 5, 6].map(o => {
       const dt = new Date(Date.now() + o * 86400000), row = dayRow(o);
@@ -368,17 +404,61 @@ WLY02|Wilayah Persekutuan|Labuan`.split('\n').map(l => { const [jakimCode, neger
       `<tr class="${d.day === today ? 'today' : ''}"><td>${+d.day || ''} <span class="muted small">${hijriStr(d.hijri).replace(/ \d+H$/, '')}</span></td>${cols.map(([k]) => `<td>${fmtT(d[k]).replace(/ (pg|ptg|mlm)$/, '')}</td>`).join('')}</tr>`).join('') + '</tbody>';
   }
 
-  $('#zoneSel').addEventListener('change', e => { zone = e.target.value; store.set('zone', zone); nextMonth = null; load(); });
+  function useZone(z, c) {
+    zone = z; store.set('zone', zone);
+    if (c) { city = c; store.set('solatCity', c); }
+    setTZ(isGL() ? city.tz : 'Asia/Kuala_Lumpur');
+    month = nextMonth = null; renderZones(); load();
+  }
+  $('#zoneSel').addEventListener('change', e => {
+    if (e.target.value === '__dunia') { renderZones(); openCity(); return; }
+    useZone(e.target.value);
+  });
+
+  /* Carian bandar di seluruh dunia (Open-Meteo, percuma, tanpa kunci) */
+  const cityDlg = document.createElement('dialog');
+  cityDlg.className = 'city-dlg'; cityDlg.setAttribute('aria-labelledby', 'cityTitle');
+  cityDlg.innerHTML = `<h2 id="cityTitle">Waktu solat di luar Malaysia</h2>
+    <p class="muted small">Cari bandar di mana-mana negara. Waktu dikira oleh Aladhan mengikut kaedah pihak berkuasa terdekat (Asar mazhab Syafie), dalam zon waktu bandar itu.</p>
+    <form id="cityForm" class="inline-form"><input id="cityQ" placeholder="Cth. London, Makkah, Tokyo" autocomplete="off" required minlength="2"><button class="btn" type="submit">${icon('search')}Cari</button></form>
+    <ul class="city-list" id="cityList"></ul>
+    <div class="actions end"><button type="button" class="btn ghost" id="cityClose">Tutup</button></div>`;
+  document.body.appendChild(cityDlg);
+  const openCity = () => { $('#cityList', cityDlg).innerHTML = ''; cityDlg.showModal(); $('#cityQ', cityDlg).focus(); };
+  $('#cityClose', cityDlg).onclick = () => cityDlg.close();
+  $('#cityForm', cityDlg).onsubmit = async e => {
+    e.preventDefault();
+    const list = $('#cityList', cityDlg), q = $('#cityQ', cityDlg).value.trim();
+    list.innerHTML = '<li class="muted small"><span class="spinner"></span> Mencari</li>';
+    try {
+      const j = await (await fetch(`${GEO}?name=${encodeURIComponent(q)}&count=8&language=ms&format=json`)).json();
+      const res = (j.results || []).filter(r => r.timezone);
+      list.innerHTML = res.length ? res.map((r, i) => `<li><button type="button" data-i="${i}"><b>${esc(r.name)}</b><span class="muted small">${esc([r.admin1, r.country].filter(Boolean).join(', '))}</span></button></li>`).join('')
+        : '<li class="muted small">Tiada bandar dijumpai. Cuba ejaan lain.</li>';
+      list.onclick = ev => {
+        const b = ev.target.closest('[data-i]'); if (!b) return;
+        const r = res[+b.dataset.i];
+        if (r.country_code === 'MY') { cityDlg.close(); toast('Untuk Malaysia, pilih zon JAKIM atau tekan Lokasi saya.'); return; }
+        cityDlg.close();
+        useZone('GL', { name: r.name, country: r.country || '', lat: r.latitude, lon: r.longitude, tz: r.timezone });
+        toast(`Waktu solat untuk ${r.name}`);
+      };
+    } catch { list.innerHTML = '<li class="muted small">Carian tidak dapat dibuat. Semak sambungan internet.</li>'; }
+  };
   $('#gpsBtn').addEventListener('click', () => {
     if (!navigator.geolocation) return toast('Lokasi tidak disokong pada peranti ini.');
     toast('Mengesan lokasi');
     navigator.geolocation.getCurrentPosition(async pos => {
       try {
-        const r = await (await fetch(`${API}/zones/${pos.coords.latitude.toFixed(4)}/${pos.coords.longitude.toFixed(4)}`)).json();
-        if (!r.zone) throw 0;
-        zone = r.zone; store.set('zone', zone); renderZones(); nextMonth = null; load();
-        toast(`Zon ditetapkan: ${zoneInfo().daerah.split(',')[0]}`);
-      } catch { toast('Zon tidak dapat dikesan. Sila pilih secara manual.'); }
+        const lat = pos.coords.latitude, lon = pos.coords.longitude;
+        const r = await fetch(`${API}/zones/${lat.toFixed(4)}/${lon.toFixed(4)}`).then(x => x.ok ? x.json() : {}).catch(() => ({}));
+        if (r.zone) { useZone(r.zone); toast(`Zon ditetapkan: ${zoneInfo().daerah.split(',')[0]}`); return; }
+        // Luar Malaysia: waktu solat global ikut koordinat, nama tempat daripada BigDataCloud
+        const g = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=ms`).then(x => x.json()).catch(() => ({}));
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        useZone('GL', { name: g.city || g.locality || 'Lokasi saya', country: g.countryName || '', lat, lon, tz });
+        toast(`Waktu solat untuk ${city.name}`);
+      } catch { toast('Lokasi tidak dapat dikesan. Sila pilih zon atau cari bandar.'); }
     }, () => toast('Kebenaran lokasi ditolak.'), { timeout: 15000, maximumAge: 600000 });
   });
   const paintSwitch = () => {

@@ -7,7 +7,7 @@ Laman web + app (PWA) percuma: Akademi Moomoo, harga saham & kripto masa nyata, 
 - `css/style.css`: reka bentuk (tema cerah/gelap automatik)
 - `js/learn.js`: modul pembelajaran Moomoo, kalkulator, kuiz
 - `js/market.js`: kripto masa nyata (Binance WebSocket, sandaran CoinGecko), carta lilin, amaran harga, widget saham TradingView
-- `js/solat.js`: waktu solat zon JAKIM (api.waktusolat.app), kiraan detik, notifikasi azan, jadual bulanan
+- `js/solat.js`: waktu solat zon JAKIM (api.waktusolat.app) untuk Malaysia, dan bandar di seluruh dunia (api.aladhan.com, carian bandar Open-Meteo) dalam zon waktu bandar itu; kiraan detik, notifikasi azan, jadual bulanan
 - `js/checker.js`: anggaran AI %, plagiarisme % (Wikipedia + teks sumber), pembetulan bahasa (peraturan BM/BI + LanguageTool)
 - `manifest.webmanifest`, `sw.js`, `icons/`: supaya boleh dipasang sebagai app dan berfungsi luar talian
 
