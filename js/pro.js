@@ -170,7 +170,7 @@
         [fmtRM(invested), `Jumlah dilabur (${k.length} bulan)`], [fmtRM(value), 'Nilai hari ini'],
         [`<span class="${sign(gain)}">${pct(gain / invested * 100)}</span>`, 'Pulangan'], [`${units.toPrecision(6)} ${sym}`, 'Unit terkumpul']
       ].map(([v, kk]) => `<div class="stat"><div class="v num">${v}</div><div class="k">${kk}</div></div>`).join('');
-      $('#dcaNote').textContent = (late ? `Data ${sym}/USDT di Binance bermula ${first.toLocaleDateString('ms-MY', { month: 'long', year: 'numeric' })}. ` : '')
+      $('#dcaNote').textContent = (late ? `Data ${sym}/USDT bermula ${first.toLocaleDateString('ms-MY', { month: 'long', year: 'numeric' })}. ` : '')
         + `Belian pada harga pembukaan setiap bulan. Ringgit ditukar pada kadar semasa RM${fx.toFixed(2)} sedolar; caj dagangan dan perubahan kadar tukaran tidak dikira. Prestasi lalu tidak menjamin pulangan masa depan.`;
       await loadScript('js/vendor/lightweight-charts.js');
       const cs = getComputedStyle(document.documentElement), g = n => cs.getPropertyValue(n).trim();
@@ -330,7 +330,7 @@
   ProTools.add('portfolio', { name: 'Portfolio', plan: 'pelabur', icon: 'wallet', init: initPortfolio, desc: 'Nilai dan untung rugi dalam Ringgit',
     pitch: 'Catat pegangan saham dan kripto anda. Nilai kripto dikemas kini secara langsung dan semuanya ditukar ke Ringgit, supaya anda nampak untung rugi sebenar.' });
   ProTools.add('dca', { name: 'Simulator DCA', plan: 'pelabur', icon: 'chart', init: initDca, desc: 'Labur tetap setiap bulan sejak 2017',
-    pitch: 'Lihat apa yang berlaku jika anda melabur jumlah tetap setiap bulan, menggunakan harga bulanan sebenar dari Binance sejak 2017.' });
+    pitch: 'Lihat apa yang berlaku jika anda melabur jumlah tetap setiap bulan, menggunakan harga bulanan sebenar sejak 2017.' });
   ProTools.add('zakat', { name: 'Zakat pelaburan', plan: 'pelabur', icon: 'moon', init: initZakat, desc: 'Saham, kripto dan simpanan',
     pitch: 'Kira zakat atas saham, kripto dan simpanan tunai berbanding nisab emas semasa.' });
   ProTools.add('rujukan', { name: 'Penjana rujukan', plan: 'pelajar', icon: 'quote', init: initRujukan, desc: 'APA 7, MLA 9 dan Harvard',
@@ -362,7 +362,7 @@
       <h2>Cadangan pembetulan (${r.sugg.length})</h2>${r.sugg.length ? `<table><tr><th>Jenis</th><th>Asal</th><th>Cadangan</th><th>Sebab</th></tr>${r.sugg.map(s => `<tr><td>${esc(s.cat)}</td><td>${esc(s.from)}</td><td>${esc(s.to)}</td><td>${esc(s.why)}</td></tr>`).join('')}</table>` : '<p>Tiada isu bahasa ditemui.</p>'}
       <h2>Sumber yang sepadan</h2>${r.sources.length ? `<table>${r.sources.map(s => `<tr><td>${esc(s.name)}${s.url ? `<br><small>${esc(s.url)}</small>` : ''}</td><td class="num">${s.pct}%</td></tr>`).join('')}</table>` : `<p>${r.plag == null ? 'Semakan sumber tidak dijalankan.' : 'Tiada padanan ketara.'}</p>`}
       <h2>Teks yang disemak</h2><div class="rp-text">${esc(r.text).replace(/\n/g, '<br>')}</div>
-      <p class="rp-foot">Peratus AI dan plagiarisme ialah anggaran berdasarkan ciri statistik teks dan carian sumber terbuka (Wikipedia dan teks yang diberikan). Ia bukan bukti muktamad dan tidak setara dengan Turnitin.</p>`;
+      <p class="rp-foot">Peratus AI dan plagiarisme ialah anggaran berdasarkan ciri statistik teks dan carian sumber terbuka dan teks yang diberikan. Ia bukan bukti muktamad dan tidak setara dengan sistem semakan rasmi universiti.</p>`;
     document.title = 'Laporan semakan - Bijak Labur';
     document.body.classList.add('printing');
     setTimeout(() => { window.print(); document.title = 'Bijak Labur'; }, 60);

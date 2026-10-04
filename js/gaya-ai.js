@@ -67,7 +67,7 @@
       ${r.found.length ? `<ul class="sl-list">${r.found.slice(0, 12).map(f => `<li><span><b>${esc(f.frasa)}</b>${f.n > 1 ? ` <span class="muted small">×${f.n}</span>` : ''}</span><span class="muted small">${esc(f.nota)}</span><span class="small">${esc(f.konteks[0])}<mark>${esc(f.konteks[1])}</mark>${esc(f.konteks[2])}</span></li>`).join('')}</ul>`
         : '<p class="muted">Tiada klise biasa ditemui. Bagus!</p>'}
       <div class="row-gap" style="margin-top:12px"><button class="btn sm" type="button" id="slGo" ${S.busy ? 'disabled' : ''}>${icon('star')}${S.busy ? 'Menulis semula…' : 'Cadangkan ayat lebih semula jadi'}</button>
-        <span class="muted small">Teks dihantar kepada Google Gemini melalui pelayan Bijak Labur, tidak disimpan.</span></div>
+        <span class="muted small">Teks dihantar kepada penyedia AI melalui pelayan Bijak Labur, tidak disimpan.</span></div>
       ${S.err ? `<p class="error">${esc(S.err)}</p>` : ''}
       ${S.cad ? (S.cad.length ? `<div style="margin-top:10px">${S.cad.map((p, i) => `<div class="sl-fix"><del>${esc(p.asal)}</del><ins>${esc(p.baru)}</ins><span class="muted small">${esc(p.sebab)}</span>
           <div class="row-gap"><button class="link-btn" type="button" data-guna="${i}">${icon('check')}Guna</button></div></div>`).join('')}

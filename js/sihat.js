@@ -232,7 +232,7 @@
           </form>
         </details>
       </div>
-      <p class="note">${icon('alert')}<span>Kalori daripada gambar ialah anggaran AI (Gemini) dan boleh tersasar 10 hingga 30 peratus bergantung pada saiz hidangan dan cara masakan. Gambar tidak disimpan. Ini bukan nasihat perubatan; rujuk doktor atau pakar pemakanan untuk keperluan khusus.</span></p>`;
+      <p class="note">${icon('alert')}<span>Kalori daripada gambar ialah anggaran AI dan boleh tersasar 10 hingga 30 peratus bergantung pada saiz hidangan dan cara masakan. Gambar tidak disimpan. Ini bukan nasihat perubatan; rujuk doktor atau pakar pemakanan untuk keperluan khusus.</span></p>`;
     paintWalk();
   }
 

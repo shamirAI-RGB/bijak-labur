@@ -66,6 +66,7 @@
     const el = $('#jkMap', root); if (!el || map) return;
     const last = T.pts.length ? T.pts[T.pts.length - 1] : here;
     map = L.map(el, { zoomControl: true, attributionControl: true }).setView(last ? [last[0], last[1]] : KL, last ? 16 : 12);
+    map.attributionControl.setPrefix(false);
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' }).addTo(map);
     const brand = getComputedStyle(document.documentElement).getPropertyValue('--brand').trim() || '#0f5a46';
     line = L.polyline(T.pts.map(p => [p[0], p[1]]), { color: brand, weight: 5, opacity: .9 }).addTo(map);

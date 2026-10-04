@@ -49,7 +49,7 @@
 
   function render() {
     root.innerHTML = `<div class="page-head"><p class="eyebrow">Kerjaya</p><h1 id="h-kerja">Kerjaya AI</h1>
-        <p class="lead">Cari jawatan yang sesuai dengan resume anda, semak padanan dengan iklan kerja, tulis surat permohonan dan bersedia untuk temu duga. Diilhamkan oleh projek AI Job Search.</p></div>
+        <p class="lead">Cari jawatan yang sesuai dengan resume anda, semak padanan dengan iklan kerja, tulis surat permohonan dan bersedia untuk temu duga.</p></div>
       <div class="kj-grid">
         <form class="card kj-form" id="kjForm">
           <div class="field"><div class="kj-file"><label for="kjResume">Resume anda</label><label class="link-btn">${icon('upload')}Muat naik PDF/DOCX<input type="file" id="kjFile" accept=".pdf,.docx,.txt" hidden></label></div>

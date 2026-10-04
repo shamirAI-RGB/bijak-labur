@@ -34,7 +34,7 @@
   function resultHTML() {
     if (S.busy) {
       const s = Math.floor((Date.now() - S.t0) / 1000);
-      return `<div class="st-stage st-wait" role="status"><div class="st-spin" aria-hidden="true"></div><p><b>Menjana gambar…</b><br><span class="muted small">${s < 4 ? 'Menyediakan prompt' : 'FLUX sedang melukis'} · ${s} s</span></p></div>`;
+      return `<div class="st-stage st-wait" role="status"><div class="st-spin" aria-hidden="true"></div><p><b>Menjana gambar…</b><br><span class="muted small">${s < 4 ? 'Menyediakan prompt' : 'AI sedang melukis'} · ${s} s</span></p></div>`;
     }
     if (S.err) return `<div class="st-stage st-empty"><p class="error">${esc(S.err)}</p></div>`;
     const g = S.cur;
@@ -52,7 +52,7 @@
 
   function render() {
     root.innerHTML = `<div class="page-head"><p class="eyebrow">Kreatif</p><h1 id="h-studio">Studio Gambar AI</h1>
-        <p class="lead">Terangkan gambar dalam Bahasa Melayu dan AI melukisnya dalam beberapa saat. Dikuasakan oleh FLUX, model sumber terbuka yang sama digunakan dalam ComfyUI.</p></div>
+        <p class="lead">Terangkan gambar dalam Bahasa Melayu dan AI melukisnya dalam beberapa saat.</p></div>
       <div class="st-grid">
         <form class="card st-form" id="stForm">
           <div class="field"><label for="stPrompt">Apa yang anda mahu lukis?</label>
@@ -69,7 +69,7 @@
       ${galeri.length ? `<div class="card"><div class="row-between"><h2>Galeri anda</h2><button class="link-btn" type="button" data-act="padam">${icon('trash')}Padam semua</button></div>
         <div class="st-gal">${galeri.map(g => `<button type="button" class="st-thumb" data-id="${esc(g.id)}" aria-label="Buka: ${esc(g.prompt)}"><img src="${src(g)}" alt="" loading="lazy" width="160" height="160"></button>`).join('')}</div>
         <p class="muted small">Disimpan dalam peranti ini sahaja (${galeri.length} gambar terkini).</p></div>` : ''}
-      <p class="note">${icon('alert')}<span>Gambar dijana oleh AI dan mungkin tidak tepat. Permintaan kandungan lucah, ganas, kebencian, orang sebenar yang dikenali, dokumen palsu atau gambaran para nabi akan ditolak. Penerangan anda dihantar kepada Google (Gemini) dan Cloudflare (FLUX) untuk menjana gambar, dan tidak disimpan di pelayan Bijak Labur. Jangan gunakan gambar AI untuk menipu atau menyamar.</span></p>`;
+      <p class="note">${icon('alert')}<span>Gambar dijana oleh AI dan mungkin tidak tepat. Permintaan kandungan lucah, ganas, kebencian, orang sebenar yang dikenali, dokumen palsu atau gambaran para nabi akan ditolak. Penerangan anda dihantar kepada penyedia AI untuk menjana gambar, dan tidak disimpan di pelayan Bijak Labur. Jangan gunakan gambar AI untuk menipu atau menyamar.</span></p>`;
   }
   const paintResult = () => { const r = $('#stRes', root); if (r) r.innerHTML = resultHTML(); };
 

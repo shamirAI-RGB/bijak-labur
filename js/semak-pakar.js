@@ -76,26 +76,26 @@
       const d = doi.replace(/[.,;)\]]+$/, '');
       try {
         const j = await getJSON(`https://api.crossref.org/works/${encodeURIComponent(d)}`);
-        if (j && j.message) return { ref, status: 'sah', title: (j.message.title || [''])[0], url: 'https://doi.org/' + d, via: 'DOI (Crossref)' };
-        return { ref, status: 'tiada', note: 'DOI ini tidak wujud dalam Crossref. Semak semula nombor DOI.' };
+        if (j && j.message) return { ref, status: 'sah', title: (j.message.title || [''])[0], url: 'https://doi.org/' + d, via: 'DOI' };
+        return { ref, status: 'tiada', note: 'DOI ini tidak wujud dalam pangkalan DOI. Semak semula nombor DOI.' };
       } catch { return { ref, status: 'ralat' }; }
     }
     const q = encodeURIComponent(ref.replace(/https?:\/\/\S+/g, '').slice(0, 300));
     const cands = [];
     try {
       const j = await getJSON(`https://api.crossref.org/works?query.bibliographic=${q}&rows=3&select=DOI,title,issued`);
-      for (const it of (j && j.message && j.message.items) || []) cands.push({ title: (it.title || [''])[0], year: String(((it.issued || {})['date-parts'] || [[]])[0][0] || ''), url: it.DOI ? 'https://doi.org/' + it.DOI : '', via: 'Crossref' });
+      for (const it of (j && j.message && j.message.items) || []) cands.push({ title: (it.title || [''])[0], year: String(((it.issued || {})['date-parts'] || [[]])[0][0] || ''), url: it.DOI ? 'https://doi.org/' + it.DOI : '', via: 'Pangkalan DOI' });
     } catch {}
     try {
       const j = await getJSON(`https://api.openalex.org/works?search=${q}&per-page=3&select=title,publication_year,doi,id`);
-      for (const it of (j && j.results) || []) cands.push({ title: it.title || '', year: String(it.publication_year || ''), url: it.doi || it.id || '', via: 'OpenAlex' });
+      for (const it of (j && j.results) || []) cands.push({ title: it.title || '', year: String(it.publication_year || ''), url: it.doi || it.id || '', via: 'Pangkalan akademik' });
     } catch {}
     let best = null, score = 0;
     for (const c of cands) { const s = overlap(c.title, ref) - (year && c.year && Math.abs(+c.year - +year) > 1 ? 0.25 : 0); if (s > score) { score = s; best = c; } }
     if (best && score >= 0.85) return { ref, status: 'sah', title: best.title, url: best.url, via: best.via };
     if (best && score >= 0.55) return { ref, status: 'mungkin', title: best.title, url: best.url, via: best.via };
     if (/https?:\/\//.test(ref)) return { ref, status: 'laman', note: 'Rujukan laman web: buka pautan untuk memastikan ia masih wujud.' };
-    return { ref, status: 'tiada', note: 'Tidak dijumpai dalam Crossref atau OpenAlex. Buku, laporan dan terbitan tempatan mungkin tiada dalam pangkalan ini, tetapi pastikan rujukan ini benar-benar wujud.' };
+    return { ref, status: 'tiada', note: 'Tidak dijumpai dalam pangkalan akademik. Buku, laporan dan terbitan tempatan mungkin tiada dalam pangkalan ini, tetapi pastikan rujukan ini benar-benar wujud.' };
   }
 
   /** Sitasi dalam teks: (Ahmad, 2020), (Lee et al., 2019; Tan & Lim, 2021), Ahmad (2020) */
