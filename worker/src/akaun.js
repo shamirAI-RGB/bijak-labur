@@ -66,6 +66,20 @@ export async function hasPassword(idToken, env) {
   return !!u && (u.providerUserInfo || []).some(p => p.providerId === 'password');
 }
 
+// Percubaan hanya untuk e-mel yang disahkan, atau log masuk Google/Facebook (e-mel disahkan oleh penyedia).
+// Elak akaun e-mel palsu tanpa had untuk percubaan berulang. Token mungkin lama, jadi semak semula dengan Firebase.
+export async function verifiedEmail(who, env) {
+  const c = who.claims;
+  if (c.email_verified === true || ['google.com', 'facebook.com'].includes(c.firebase && c.firebase.sign_in_provider)) return true;
+  if (!env.FIREBASE_API_KEY) return false;
+  const r = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${encodeURIComponent(env.FIREBASE_API_KEY)}`, {
+    method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ idToken: who.token })
+  });
+  if (!r.ok) return false;
+  const u = ((await r.json()).users || [])[0];
+  return !!(u && u.emailVerified);
+}
+
 /* ---------- Hak Premium ---------- */
 // Pilih hak terbaik yang masih aktif: Lengkap, atau Pelajar + Pelabur = Lengkap
 export function bestEntitlement(ents, t = nowSec()) {
@@ -157,7 +171,19 @@ export class Akaun {
     return { data: { ok: true, ...this.summary(a, t) } };
   }
 
-  // Objek bil: satu bil hanya boleh dituntut oleh satu akaun
+  // Objek bil: direkod semasa /checkout; satu bil hanya boleh dituntut oleh satu akaun
+  async op_cipta({ uid, plan, period, sen }) {
+    if (await this.storage.get('bil')) return { status: 409, data: { error: 'Bil sudah wujud.' } };
+    await this.storage.put('bil', { by: uid, plan, period, sen, t: nowSec() });
+    return { data: { ok: true } };
+  }
+
+  async op_lihat() {
+    const bil = await this.storage.get('bil');
+    if (!bil) return { status: 404, data: { error: 'Kod bil ini bukan daripada Bijak Labur. Gunakan kod bil yang diterima selepas membayar di laman ini.' } };
+    return { data: bil };
+  }
+
   async op_milik({ uid }) {
     const owner = await this.storage.get('uid');
     if (owner && owner !== uid) return { status: 403, data: { error: 'Bil ini sudah diaktifkan oleh akaun lain.' } };
@@ -209,6 +235,7 @@ export async function handleAkaun(req, env, path, sign) {
   }
 
   if (path === '/akaun/percubaan') {
+    if (!(await verifiedEmail(who, env))) return { status: 403, data: { code: 'verify', error: 'Sahkan e-mel anda dahulu: buka pautan pengesahan yang dihantar ke e-mel anda (semak folder spam), kemudian cuba lagi.' } };
     const r = await callDO(env, `u:${who.uid}`, { op: 'percubaan', device });
     if (r.status !== 200) return r;
     return { status: 200, data: { ...r.data, licence: await licenceFor(env, sign, who.uid, device, r.data) } };

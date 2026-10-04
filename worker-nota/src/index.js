@@ -142,6 +142,9 @@ async function handle(req, env, h) {
   }
 
   if (!p.startsWith('/admin')) throw new HttpError(404, 'Laluan tidak dijumpai.');
+  // Had cubaan per alamat IP: kunci pemilik tidak boleh diteka secara beramai-ramai
+  if (env.ADMIN_LIMIT && !(await env.ADMIN_LIMIT.limit({ key: req.headers.get('cf-connecting-ip') || 'x' })).success)
+    throw new HttpError(429, 'Terlalu banyak cubaan. Cuba lagi selepas seminit.');
   if (!(await isOwner(req, env))) throw new HttpError(401, 'Kunci pemilik salah.');
 
   if (p === '/admin/check' && M === 'GET') return json({ ok: true }, 200, h);

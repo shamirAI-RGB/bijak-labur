@@ -13,3 +13,10 @@ ALLOWED_ORIGINS = "https://bijaklabur.my,https://www.bijaklabur.my,https://shami
 OWNER_KEY_HASH = "ba63c8003b26e061933c6529ee7e103940ec510c1aa7aa6438f5ecf2e221d4ef"
 
 # Ruang nama KV "bijak-labur-nota" dicipta dan diikat oleh .github/workflows/nota.yml semasa dipasang.
+
+# Ruang pemilik: 60 permintaan seminit bagi setiap alamat IP (mengehadkan cubaan meneka kunci)
+[[unsafe.bindings]]
+name = "ADMIN_LIMIT"
+type = "ratelimit"
+namespace_id = "3001"
+simple = { limit = 60, period = 60 }

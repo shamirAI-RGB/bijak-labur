@@ -38,6 +38,10 @@ assert.equal(j.settings.msg, 'Hi saya berminat nak beli nota untuk belajar');
 assert.equal((await call('/admin/check')).status, 401);
 assert.equal((await call('/admin/check', {}, 'kunci-salah-sekali-123')).status, 401);
 assert.equal((await call('/admin/check', {}, KEY)).status, 200);
+// Had cubaan: apabila had habis, kunci yang betul pun ditolak buat sementara
+env.ADMIN_LIMIT = { limit: async () => ({ success: false }) };
+assert.equal((await call('/admin/check', {}, KEY)).status, 429);
+delete env.ADMIN_LIMIT;
 
 // Muat naik
 const pdf = new Uint8Array([37, 80, 68, 70, 45, 49, 46, 55]);
