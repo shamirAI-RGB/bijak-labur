@@ -88,7 +88,8 @@ export async function gambar(env, { prompt, gaya, seed }) {
   const p = await preparePrompt(env, prompt, gaya);
   if (!p.selamat || blocked(p.prompt_en)) throw Object.assign(new Error(p.sebab || 'Permintaan ini tidak sesuai untuk Bijak Labur.'), { status: 422 });
   let out;
-  try { out = await env.AI.run(FLUX, { prompt: p.prompt_en.slice(0, 2048), steps: 4, seed }); }
+  // Skema FLUX di Workers AI tidak menerima "seed" (ralat 5006), jadi setiap jana menghasilkan variasi baharu
+  try { out = await env.AI.run(FLUX, { prompt: p.prompt_en.slice(0, 2048), steps: 4 }); }
   catch (e) {
     const m = String(e && e.message || e);
     console.log('flux', m.slice(0, 300));

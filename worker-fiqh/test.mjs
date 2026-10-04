@@ -274,7 +274,7 @@ assert.equal(d.penyedia, 'claude');
   gem({ selamat: true, sebab: '', prompt_en: 'A cute cat eating nasi lemak on a banana leaf' });
   let r = await post({ prompt: 'kucing comel makan nasi lemak', gaya: 'catair', seed: 7 }), d = await r.json();
   assert.equal(r.status, 200, JSON.stringify(d)); assert.equal(d.image, 'SU1H'); assert.equal(d.seed, 7); assert.equal(d.ai, true);
-  assert.ok(fluxArgs.prompt.startsWith('A cute cat') && fluxArgs.prompt.includes('watercolour')); assert.equal(fluxArgs.steps, 4); assert.equal(fluxArgs.seed, 7);
+  assert.ok(fluxArgs.prompt.startsWith('A cute cat') && fluxArgs.prompt.includes('watercolour')); assert.equal(fluxArgs.steps, 4); assert.equal('seed' in fluxArgs, false);
   // Gemini menolak
   gem({ selamat: false, sebab: 'Gambar orang sebenar tidak dibenarkan.', prompt_en: '' }); fluxArgs = null;
   r = await post({ prompt: 'gambar perdana menteri' }); d = await r.json();

@@ -163,7 +163,7 @@
         <div class="card">
           <h2>Langkah</h2>
           <div id="shWalk"></div>
-          <div class="actions">${walk.on ? `<button class="btn" type="button" id="shStop">${icon('check')}Berhenti dan simpan</button>` : `<button class="btn" type="button" id="shStart">${icon('pin')}Mula berjalan</button>`}</div>
+          <div class="actions">${walk.on ? `<button class="btn" type="button" id="shStop">${icon('check')}Berhenti dan simpan</button>` : `<button class="btn" type="button" id="shStart">${icon('pin')}Mula berjalan</button><a class="btn ghost" href="#jejak">${icon('compass')}Jejak dengan peta</a>`}</div>
           <p class="muted small">Langkah dikira dengan sensor gerakan telefon dan GPS semasa halaman ini dibuka (skrin kekal hidup). Laman web tidak boleh membaca kiraan langkah latar belakang telefon; untuk itu, masukkan jumlah dari app kesihatan anda (Samsung Health, Apple Health dan lain-lain):</p>
           <form class="inline-form" id="shManual"><input id="shMan" type="number" inputmode="numeric" min="0" max="100000" placeholder="Langkah dari app telefon" value="${d.manual || ''}"><button class="btn ghost" type="submit">Simpan</button></form>
         </div>
@@ -239,7 +239,8 @@
     if (id === 'shStart') startWalk().then(render);
     if (id === 'shStop') stopWalk();
   });
-  document.addEventListener('viewchange', e => { if (e.detail === 'sihat' && !walk.on) render(); });
+  // Muat semula log apabila halaman dibuka: Jejak Aktiviti boleh menambah langkah dan jarak
+  document.addEventListener('viewchange', e => { if (e.detail === 'sihat' && !walk.on) { L = store.get('sihat_log', {}); render(); } });
   render();
   window.Sihat = { target, _hav: hav };
 })();
