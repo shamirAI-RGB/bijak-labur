@@ -4,4 +4,10 @@
     <string name="title_activity_main">Bijak Labur</string>
     <string name="package_name">io.github.shamirairgb.bijaklabur</string>
     <string name="custom_url_scheme">io.github.shamirairgb.bijaklabur</string>
+    <!-- Notifikasi Jejak Aktiviti di latar belakang -->
+    <string name="capacitor_background_geolocation_notification_channel_name">Jejak Aktiviti</string>
+    <string name="capacitor_background_geolocation_notification_icon">drawable/ic_stat_notify</string>
+    <string name="capacitor_background_geolocation_notification_color">#0B5D4B</string>
+    <!-- Dasar privasi yang dipaparkan oleh Health Connect -->
+    <string name="health_connect_privacy_policy_url">https://bijaklabur.my/privacy.html</string>
 </resources>

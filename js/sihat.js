@@ -28,7 +28,8 @@
   const bmi = () => P.berat / Math.pow(P.tinggi / 100, 2);
   const bmiLabel = b => b < 18.5 ? 'Kurang berat badan' : b < 23 ? 'Normal (piawaian Asia)' : b < 27.5 ? 'Berlebihan berat badan' : 'Obes';
   const stride = () => P.tinggi * 0.415 / 100;                         // panjang langkah (m)
-  const steps = d => (d.langkah || 0) + (d.manual || 0);
+  // Langkah telefon (Health Connect / Apple Health) sudah merangkumi semua langkah hari itu, termasuk yang dijejak dalam app
+  const steps = d => { const own = (d.langkah || 0) + (d.manual || 0); return d.telefon != null ? Math.max(d.telefon, own) : own; };
   const burned = d => steps(d) * 0.04 * (P.berat / 70);               // kcal anggaran daripada langkah
   const eaten = d => d.makan.reduce((t, m) => t + m.kalori, 0);
   const macro = (d, k) => d.makan.reduce((t, m) => t + (m[k] || 0), 0);
@@ -125,6 +126,49 @@
       ${pending.nota ? `<p class="muted small">${esc(pending.nota)}${pending.yakin ? ` Keyakinan: ${esc(pending.yakin)}.` : ''}</p>` : ''}
       ${pending.items.length ? `<div class="inline-form"><select id="shMeal" aria-label="Waktu makan">${MEALS.map(([k, v]) => `<option value="${k}" ${k === mealNow() ? 'selected' : ''}>${v}</option>`).join('')}</select><button class="btn" type="button" id="shSave">${icon('check')}Simpan ke log</button><button class="btn ghost" type="button" id="shCancel">Batal</button></div>` : `<button class="btn ghost" type="button" id="shCancel">Tutup</button>`}</div>`;
   }
+  /* ---------- Langkah telefon: Health Connect (Android) / Apple Health (iOS), dalam app sahaja ----------
+     Telefon mengira langkah sepanjang hari walaupun app ditutup; app membaca jumlah harian (baca sahaja). */
+  const Health = plugin('Health');
+  const hs = { on: store.get('sihat_health', false), busy: false, err: '', at: 0 };
+  const healthName = () => Native && Native.getPlatform() === 'ios' ? 'Apple Health' : 'Health Connect';
+  async function syncHealth(ask) {
+    if (!Health || hs.busy || (!ask && Date.now() - hs.at < 60000)) return;
+    hs.busy = true; hs.err = '';
+    if (ask) paintHealth();
+    try {
+      const av = await Health.isAvailable();
+      if (!av || !av.available) throw new Error(healthName() === 'Health Connect' ? 'Health Connect belum tersedia. Pasang "Health Connect" daripada Play Store (Android 13 dan lebih lama), kemudian cuba lagi.' : 'Apple Health tidak tersedia pada peranti ini.');
+      if (ask) await Health.requestAuthorization({ read: ['steps'], write: [] });
+      // Setiap hari ditanya berasingan dari tengah malam waktu tempatan, supaya langkah tidak tersasar hari
+      let got = 0;
+      for (let i = 6; i >= 0; i--) {
+        const a = new Date(); a.setHours(0, 0, 0, 0); a.setDate(a.getDate() - i);
+        const b = new Date(a); b.setDate(b.getDate() + 1);
+        const r = await Health.queryAggregated({ dataType: 'steps', startDate: a.toISOString(), endDate: (i ? b : new Date()).toISOString(), bucket: 'day', aggregation: 'sum' });
+        const n = Math.round((r.samples || []).reduce((t, s) => t + (+s.value || 0), 0));
+        if (n > 0 || i === 0) { const k = day(a); const x = L[k] = L[k] || { makan: [], langkah: 0, manual: 0, jarak: 0 }; x.telefon = n; got += n; }
+      }
+      hs.on = true; hs.at = Date.now(); store.set('sihat_health', true); save();
+      if (ask) toast(got ? `Langkah daripada ${healthName()} disegerakkan.` : `Tiada langkah dalam ${healthName()} lagi. Pastikan kebenaran "Langkah" diberikan.`, 4000);
+    } catch (e) {
+      hs.err = e && e.message && !/^\w+Error$/.test(e.message) ? e.message : `Tidak dapat membaca ${healthName()}.`;
+    }
+    hs.busy = false;
+    if (!walk.on && root.offsetParent) render();
+  }
+  function healthBlock() {
+    const d = today();
+    return `<div class="sh-health" id="shHealth">${hs.on && d.telefon != null
+      ? `<p><b class="num">${fmt(d.telefon)}</b> langkah hari ini daripada ${healthName()}${hs.at ? ` · dikemas kini ${new Date(hs.at).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' })}` : ''}</p>
+         <button class="link-btn" type="button" id="shHSync" ${hs.busy ? 'disabled' : ''}>${icon('refresh')}${hs.busy ? 'Menyegerak…' : 'Segerak sekarang'}</button>`
+      : `<p class="muted small">Telefon anda mengira langkah sepanjang hari, walaupun app ditutup. Sambung ${healthName()} untuk memaparkannya di sini secara automatik (baca sahaja, data kekal dalam peranti).</p>
+         <button class="btn ghost" type="button" id="shHSync" ${hs.busy ? 'disabled' : ''}>${icon('refresh')}${hs.busy ? 'Menyambung…' : `Sambung ${healthName()}`}</button>`}
+      ${hs.err ? `<p class="error small">${esc(hs.err)}</p>` : ''}</div>`;
+  }
+  const healthHTML = () => Health ? `${healthBlock()}<p class="muted small">Atau masukkan jumlah secara manual:</p>`
+    : `<p class="muted small">Laman web tidak boleh membaca kiraan langkah telefon semasa ditutup. Gunakan app Bijak Labur (Android/iOS) untuk menyambung Health Connect atau Apple Health secara automatik, atau masukkan jumlah dari app kesihatan anda:</p>`;
+  const paintHealth = () => { const e = $('#shHealth', root); if (e) e.outerHTML = healthBlock(); };
+
   function weekHTML() {
     const days = Array.from({ length: 7 }, (_, i) => { const d = new Date(); d.setDate(d.getDate() - 6 + i); return d; });
     const t = target().sasaran, rows = days.map(d => { const x = L[day(d)] || { makan: [], langkah: 0, manual: 0 }; return { d, k: eaten(x), s: steps(x) }; });
@@ -164,7 +208,8 @@
           <h2>Langkah</h2>
           <div id="shWalk"></div>
           <div class="actions">${walk.on ? `<button class="btn" type="button" id="shStop">${icon('check')}Berhenti dan simpan</button>` : `<button class="btn" type="button" id="shStart">${icon('pin')}Mula berjalan</button><a class="btn ghost" href="#jejak">${icon('compass')}Jejak dengan peta</a>`}</div>
-          <p class="muted small">Langkah dikira dengan sensor gerakan telefon dan GPS semasa halaman ini dibuka (skrin kekal hidup). Laman web tidak boleh membaca kiraan langkah latar belakang telefon; untuk itu, masukkan jumlah dari app kesihatan anda (Samsung Health, Apple Health dan lain-lain):</p>
+          <p class="muted small">"Mula berjalan" mengira langkah dengan sensor gerakan dan GPS semasa halaman ini dibuka.</p>
+          ${healthHTML()}
           <form class="inline-form" id="shManual"><input id="shMan" type="number" inputmode="numeric" min="0" max="100000" placeholder="Langkah dari app telefon" value="${d.manual || ''}"><button class="btn ghost" type="submit">Simpan</button></form>
         </div>
 
@@ -237,10 +282,12 @@
       pending = null; save(); render(); toast('Disimpan ke log hari ini');
     }
     if (id === 'shStart') startWalk().then(render);
+    if (id === 'shHSync') syncHealth(true);
     if (id === 'shStop') stopWalk();
   });
   // Muat semula log apabila halaman dibuka: Jejak Aktiviti boleh menambah langkah dan jarak
-  document.addEventListener('viewchange', e => { if (e.detail === 'sihat' && !walk.on) { L = store.get('sihat_log', {}); render(); } });
+  document.addEventListener('viewchange', e => { if (e.detail === 'sihat' && !walk.on) { L = store.get('sihat_log', {}); render(); if (hs.on) syncHealth(false); } });
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && hs.on && root.offsetParent) syncHealth(false); });
   render();
   window.Sihat = { target, _hav: hav };
 })();

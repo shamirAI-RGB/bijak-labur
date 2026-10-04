@@ -24,6 +24,16 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Lokasi digunakan untuk menentukan zon waktu solat anda, dan semasa anda menjejak jalan, lari atau berbasikal untuk mengira jarak dan melukis laluan. Laluan disimpan dalam peranti anda sahaja.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Semasa Jejak Aktiviti berjalan, lokasi digunakan walaupun app ditutup atau skrin dikunci supaya jarak dan laluan jalan, lari atau berbasikal anda terus direkodkan. Laluan disimpan dalam peranti anda sahaja.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+	</array>
+	<key>NSHealthShareUsageDescription</key>
+	<string>Bijak Labur membaca jumlah langkah dan jarak harian daripada Apple Health untuk dipaparkan di halaman Sihat. Data tidak dihantar ke pelayan.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>Bijak Labur tidak menulis data ke Apple Health; ia hanya membaca langkah dan jarak.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>LSRequiresIPhoneOS</key>

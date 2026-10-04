@@ -49,3 +49,6 @@
 .sh-prof summary h2 { margin: 0; }
 .sh-prof form { margin-top: 14px; }
 .sh-prof .field:last-child { display: grid; gap: 8px; align-content: end; }
+.sh-health { display: grid; gap: 6px; justify-items: start; padding: 10px 12px; margin: 8px 0 4px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-2); }
+.sh-health p { margin: 0; }
+.sh-health .num { font-size: 1.2rem; }
