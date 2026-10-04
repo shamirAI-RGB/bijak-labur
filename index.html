@@ -99,6 +99,7 @@
   <link rel="stylesheet" href="css/menu.css">
   <link rel="stylesheet" href="css/sihat.css">
   <link rel="stylesheet" href="css/studio.css">
+  <link rel="stylesheet" href="css/buku.css">
   <link rel="stylesheet" href="css/rupa.css">
 </head>
 <body>
@@ -193,8 +194,15 @@
         <a href="#ibadah" data-nav="ibadah">Ibadah</a>
         <a href="#semak" data-nav="semak">Semak Kertas</a>
         <a href="#jadual" data-nav="jadual">Jadual</a>
-        <a href="#sihat" data-nav="sihat">Sihat</a>
-        <a href="#studio" data-nav="studio">Studio AI</a>
+        <details class="nav-more">
+          <summary>Alat AI<svg class="ic" aria-hidden="true"><use href="#i-chev-down"/></svg></summary>
+          <div class="nav-pop">
+            <a href="#studio" data-nav="studio">Studio Gambar AI</a>
+            <a href="#buku" data-nav="buku">Buku Nota AI</a>
+            <a href="#kerja" data-nav="kerja">Kerjaya AI</a>
+            <a href="#sihat" data-nav="sihat">Sihat: kalori dan langkah</a>
+          </div>
+        </details>
         <a href="#nota" data-nav="nota">Nota</a>
         <a href="#premium" data-nav="premium" data-premium-entry class="hidden">Premium</a>
       </nav>
@@ -285,6 +293,16 @@
             <a class="card shortcut" href="#studio">
               <span class="sc-ico"><svg class="ic"><use href="#i-star"/></svg></span>
               <div class="sc-body"><div class="sc-title">Studio Gambar AI</div><div class="sc-sub">Terangkan dalam Bahasa Melayu, AI melukis gambar untuk anda</div></div>
+              <svg class="ic chev"><use href="#i-chev"/></svg>
+            </a>
+            <a class="card shortcut" href="#buku">
+              <span class="sc-ico"><svg class="ic"><use href="#i-book"/></svg></span>
+              <div class="sc-body"><div class="sc-title">Buku Nota AI</div><div class="sc-sub">Muat naik nota kuliah: tanya soalan, ringkasan, kuiz, kad imbas dan podcast</div></div>
+              <svg class="ic chev"><use href="#i-chev"/></svg>
+            </a>
+            <a class="card shortcut" href="#kerja">
+              <span class="sc-ico"><svg class="ic"><use href="#i-target"/></svg></span>
+              <div class="sc-body"><div class="sc-title">Kerjaya AI</div><div class="sc-sub">Cadangan jawatan, padanan resume, surat permohonan dan persediaan temu duga</div></div>
               <svg class="ic chev"><use href="#i-chev"/></svg>
             </a>
             <a class="card shortcut" href="#jadual">
@@ -531,6 +549,8 @@
     <!-- SIHAT: kalori dan langkah -->
     <section class="view" id="view-sihat" aria-labelledby="h-sihat"></section>
     <section class="view" id="view-studio" aria-labelledby="h-studio"></section>
+    <section class="view" id="view-buku" aria-labelledby="h-buku"></section>
+    <section class="view" id="view-kerja" aria-labelledby="h-kerja"></section>
 
     <!-- NOTA IC220 -->
     <section class="view" id="view-nota" aria-labelledby="h-nota"></section>
@@ -574,6 +594,7 @@
         </div>
         <div class="card hidden"><h3>Ulasan pakar</h3><div id="expertBox"></div></div>
         <div class="card hidden"><h3>Semakan rujukan</h3><div id="refBox"></div></div>
+        <div class="card hidden" id="slopCard" aria-live="polite"></div>
         <div class="two-col">
           <div class="card"><h3>Statistik penulisan</h3><div class="stat-row" id="stats"></div></div>
           <div class="card"><h3>Isyarat tulisan AI</h3><div class="bars" id="aiBars"></div></div>
@@ -808,5 +829,8 @@
   <script src="js/nota.js" defer></script>
   <script src="js/sihat.js" defer></script>
   <script src="js/studio.js" defer></script>
+  <script src="js/buku.js" defer></script>
+  <script src="js/kerja.js" defer></script>
+  <script src="js/gaya-ai.js" defer></script>
 </body>
 </html>

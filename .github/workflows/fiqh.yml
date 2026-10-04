@@ -74,6 +74,20 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           if [ -n "$GEMINI_API_KEY" ]; then printf '%s' "$GEMINI_API_KEY" | npx --yes wrangler@3 secret put GEMINI_API_KEY; fi
+      # Uji pelayan sebenar selepas dipasang: Studio Gambar (FLUX), Buku Nota dan Kerjaya
+      - name: Uji pelayan sebenar
+        if: github.ref == 'refs/heads/main' && env.HAS_CF == 'true' && steps.domain.outcome == 'success'
+        continue-on-error: true
+        run: |
+          sleep 15
+          F=https://fiqh.bijaklabur.my; O='origin: https://bijaklabur.my'; C='content-type: application/json'
+          curl -sS "$F/" | jq -c .
+          curl -sS -X POST "$F/gambar" -H "$O" -H "$C" -d '{"prompt":"kucing comel makan nasi lemak atas daun pisang","gaya":"catair","seed":7}' \
+            | jq -r 'if .image then "gambar OK: \(.image | length) aksara base64, prompt: \(.prompt_en[0:120])" else "gambar GAGAL: \(.error)" end'
+          curl -sS -X POST "$F/buku" -H "$O" -H "$C" -d '{"tugas":"kad","sumber":[{"tajuk":"Bab 1","teks":"Fotosintesis ialah proses tumbuhan hijau menghasilkan makanan menggunakan cahaya matahari, air dan karbon dioksida. Proses ini berlaku dalam kloroplas dan membebaskan oksigen."}]}' \
+            | jq -r 'if .kad then "buku OK: \(.kad | length) kad, contoh: \(.kad[0].depan) -> \(.kad[0].belakang)\(if .penghala then " (penghala)" else "" end)" else "buku GAGAL: \(.error)" end'
+          curl -sS -X POST "$F/kerja" -H "$O" -H "$C" -d '{"tugas":"cadang","resume":"Graduan Ijazah Sarjana Muda Perakaunan UiTM 2025. Latihan industri 6 bulan di firma audit kecil: menyediakan penyata bank, lejar am dan cukai SST. Mahir Excel, SQL Account dan AutoCount. Bendahari persatuan pelajar."}' \
+            | jq -r 'if .jawatan then "kerja OK: \([.jawatan[].tajuk] | join(", "))" else "kerja GAGAL: \(.error)" end'
       - name: Ringkasan
         if: github.ref == 'refs/heads/main'
         env:
