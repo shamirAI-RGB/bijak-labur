@@ -1,6 +1,6 @@
 // Ujian pelayan jadual tanpa rangkaian: node worker-jadual/test.mjs
 import assert from 'node:assert/strict';
-import worker, { BASE, clock, dayTime, parseGroups, byGroup, parseCourses, sessionLabel } from './src/index.js';
+import worker, { BASE, STUDENT_URL, clock, dayTime, parseGroups, byGroup, parseCourses, sessionLabel, fromStudent } from './src/index.js';
 
 // Penghurai masa
 assert.equal(clock('09:00 AM'), 540);
@@ -103,4 +103,31 @@ assert.equal(r.headers.get('access-control-allow-origin'), null);
 r = await worker.fetch(new Request('https://jadual.bijaklabur.my/campuses'), env, null, { fetch: async () => new Response('', { status: 503 }), cache: null });
 assert.equal(r.status, 502); assert.match((await r.json()).error, /iCress/);
 
+
+// Jadual pelajar mengikut No. Pelajar (cdn.uitm.link)
+const STU = {
+  '2026-10-05': { hari: 'Monday', jadual: [{ course_desc: 'HALAL INDUSTRY', courseid: 'IHM521', groups: 'IC2205A', masa: '08:00 AM - 10:00 AM', bilik: 'BK 1' }, { course_desc: 'ENGLISH', courseid: 'ELC590', groups: 'IC2205B', masa: '14:00 PM - 16:00 PM', bilik: 'DK 2' }] },
+  '2026-10-12': { hari: 'Monday', jadual: [{ course_desc: 'HALAL INDUSTRY', courseid: 'IHM521', groups: 'IC2205A', masa: '08:00 AM - 10:00 AM', bilik: 'BK 1' }] },
+  '2026-10-07': { hari: 'Wednesday', jadual: [{ course_desc: 'HALAL INDUSTRY', courseid: 'IHM521', groups: 'IC2205A', masa: '10:00 AM - 12:00 PM', bilik: 'BK 3' }, { courseid: '', masa: 'x' }] },
+  meta: 'abaikan'
+};
+let st = fromStudent(STU);
+assert.equal(st.dates, 3);
+assert.deepEqual(st.items.map(i => i.course + '.' + i.group), ['ELC590.IC2205B', 'IHM521.IC2205A']);
+assert.deepEqual(st.items[1].slots, [{ d: 1, s: 480, e: 600, room: 'BK 1', mode: '' }, { d: 3, s: 600, e: 720, room: 'BK 3', mode: '' }]);
+assert.deepEqual(st.items[0].slots[0], { d: 1, s: 840, e: 960, room: 'DK 2', mode: '' });
+assert.deepEqual(fromStudent(null), { items: [], dates: 0 });
+{
+  const env2 = { ALLOWED_ORIGINS: 'https://bijaklabur.my' };
+  let asked = '', status = 200;
+  const f = async u => { asked = String(u); return new Response(status === 200 ? JSON.stringify(STU) : 'x', { status }); };
+  const req = id => worker.fetch(new Request('https://j.example/pelajar?id=' + id, { headers: { origin: 'https://bijaklabur.my' } }), env2, null, { fetch: f, cache: null });
+  let r = await req('2023123456'), d = await r.json();
+  assert.equal(r.status, 200); assert.equal(asked, STUDENT_URL + '2023123456.json');
+  assert.equal(d.items.length, 2); assert.equal(r.headers.get('cache-control'), 'no-store');
+  assert.equal((await req('12345')).status, 400);
+  assert.equal((await req('abc1234567')).status, 400);
+  status = 404; assert.equal((await req('2023999999')).status, 404);
+  status = 500; assert.equal((await req('2023999999')).status, 502);
+}
 console.log('Semua ujian pelayan jadual lulus');
