@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import worker, { verify, collectRetrieved, norm, normUrl, parseAnswer, MODEL, GEMINI_MODEL, GEMINI_FALLBACKS, DOMAINS } from './src/index.js';
 import { BY_ID, CORPUS_TEXT } from './src/corpus.js';
+import { clean, semakBody, systemFor } from './src/semak.js';
 
 const env = { ANTHROPIC_API_KEY: 'sk-test', ALLOWED_ORIGINS: 'https://bijaklabur.my' };
 const W = 'https://fiqh.example.workers.dev';
@@ -170,4 +171,45 @@ assert.deepEqual(d, { ok: true, service: 'bijak-labur-fiqh', ai: true, penyedia:
 d = await (await worker.fetch(new Request(W + '/'), { ...genv, ...env })).json();
 assert.equal(d.penyedia, 'claude');
 
+
+// Semak Kertas: ulasan pakar
+{
+  const TEKS = 'Kajian ini bertujuan untuk mengenal pasti faktor yang mempengaruhi pelaburan pelajar. Hasil kajian menunjukan bahawa pengetahuan kewangan adalah lebih penting dari pendapatan. '.repeat(3);
+  const raw = {
+    ringkasan: 'Baik.', kekuatan: ['Jelas'],
+    markah: { struktur: { skor: 7.3, ulasan: 'ok' }, hujah: { skor: 12, ulasan: 'x' }, bukti: { skor: -1, ulasan: '' }, bahasa: { skor: 6, ulasan: '' }, rujukan: { skor: 'a', ulasan: '' } },
+    penambahbaikan: [{ isu: 'Hujah nipis', petikan: 'pengetahuan kewangan adalah lebih penting', cadangan: 'Tambah data.' }, { isu: 'Rekaan', petikan: 'ayat yang tiada', cadangan: 'x' }],
+    pembetulan: [
+      { asal: 'menunjukan', baru: 'menunjukkan', jenis: 'ejaan', sebab: 'Ejaan baku.' },
+      { asal: 'lebih penting dari', baru: 'lebih penting daripada', jenis: 'tatabahasa', sebab: 'Perbandingan.' },
+      { asal: 'teks yang tidak wujud', baru: 'x', jenis: 'ejaan', sebab: 'rekaan' },
+      { asal: 'menunjukan', baru: 'menunjukkan', jenis: 'ejaan', sebab: 'pendua' },
+      { asal: 'Kajian', baru: 'Kajian', jenis: 'gaya', sebab: 'sama' },
+      { asal: 'pelajar', baru: 'murid', jenis: 'pelik', sebab: 'jenis tidak sah' }
+    ]
+  };
+  const c = clean(raw, TEKS);
+  assert.deepEqual(c.pembetulan.map(p => p.asal), ['menunjukan', 'lebih penting dari', 'pelajar']);
+  assert.equal(c.pembetulan[2].jenis, 'tatabahasa');
+  assert.equal(c.markah.struktur.skor, 7.5); assert.equal(c.markah.hujah.skor, 10); assert.equal(c.markah.bukti.skor, 0); assert.equal(c.markah.rujukan.skor, 0);
+  assert.equal(c.jumlah, 47);
+  assert.equal(c.penambahbaikan[1].petikan, '');
+  assert.match(systemFor('ms'), /BUKAN Bahasa Indonesia/);
+  assert.ok(JSON.parse(semakBody(TEKS, 'ms')).generationConfig.responseSchema);
+
+  const senv = { GEMINI_API_KEY: 'g', ALLOWED_ORIGINS: env.ALLOWED_ORIGINS };
+  const post = (body, e = senv, origin = 'https://bijaklabur.my') => worker.fetch(new Request(W + '/semak', { method: 'POST', headers: { origin, 'content-type': 'application/json' }, body: JSON.stringify(body) }), e);
+  let sent = null;
+  globalThis.fetch = async (u, init) => { sent = JSON.parse(init.body); return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify(raw) }] }, finishReason: 'STOP' }] })); };
+  let r = await post({ text: TEKS, lang: 'ms' }), d = await r.json();
+  assert.equal(r.status, 200, JSON.stringify(d)); assert.equal(d.pembetulan.length, 3); assert.equal(d.jumlah, 47);
+  assert.ok(sent.contents[0].parts[0].text.includes('menunjukan'));
+  assert.equal((await post({ text: 'pendek' })).status, 400);
+  assert.equal((await post({ text: 'x'.repeat(60001) })).status, 413);
+  assert.equal((await post({ text: TEKS }, senv, 'https://jahat.example')).status, 403);
+  assert.equal((await post({ text: TEKS }, { ALLOWED_ORIGINS: env.ALLOWED_ORIGINS })).status, 503);
+  assert.equal((await post({ text: TEKS }, { ...senv, SEMAK_LIMIT: { limit: async () => ({ success: false }) } })).status, 429);
+  globalThis.fetch = async () => new Response('{}', { status: 503 });
+  assert.equal((await post({ text: TEKS })).status, 429);
+}
 console.log('Semua ujian Tanya AI lulus');
