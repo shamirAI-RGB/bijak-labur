@@ -15,11 +15,11 @@
  */
 import Anthropic from '@anthropic-ai/sdk';
 import { BY_ID, CORPUS_TEXT } from './corpus.js';
+import { GEMINI_MODEL, GEMINI_FALLBACKS, geminiModels, geminiGenerate } from './gemini.js';
+import { semak, MIN_CHARS, MAX_CHARS } from './semak.js';
+export { GEMINI_MODEL, GEMINI_FALLBACKS, geminiModels };
 
 export const MODEL = 'claude-opus-5-5';
-// Alias Google untuk model Flash-Lite terkini (peringkat percuma). Diagnosis menunjukkan Flash penuh kerap
-// memulangkan 503 "high demand", manakala Flash-Lite menjawab dalam ~2 saat. Boleh ditukar dengan GEMINI_MODEL.
-export const GEMINI_MODEL = 'gemini-flash-lite-latest';
 export const DOMAINS = ['shamela.ws', 'quran.com', 'sunnah.com', 'muftiwp.gov.my', 'muftiselangor.gov.my', 'islam.gov.my', 'sc.com.my', 'iifa-aifi.org', 'zakat.com.my'];
 const MAX_Q = 500;
 const CACHE_DAYS = 7;
@@ -161,11 +161,6 @@ Mod korpus: alat web_search dan web_fetch TIDAK tersedia. Gunakan hanya sumber 2
 const provider = env => env.ANTHROPIC_API_KEY ? 'claude' : env.GEMINI_API_KEY ? 'gemini' : '';
 const NO_ANSWER = { status: 'luar_skop', ringkasan: 'Soalan ini tidak dapat dijawab.', huraian: [], khilaf: '', nasihat: '', sumber: [] };
 
-// Jika model pertama kehabisan kuota percuma (429), tiada (404) atau sibuk (5xx), cuba model seterusnya
-export const GEMINI_FALLBACKS = ['gemini-3.5-flash-lite', 'gemini-flash-latest', 'gemini-3.8-flash'];
-const RETRY_NEXT = new Set([404, 429, 500, 503, 504]);
-
-export const geminiModels = env => [...new Set([env.GEMINI_MODEL || GEMINI_MODEL, ...GEMINI_FALLBACKS])];
 export const geminiBody = question => JSON.stringify({
   systemInstruction: { parts: [{ text: SYSTEM_KORPUS }] },
   contents: [{ role: 'user', parts: [{ text: `Korpus rujukan Bijak Labur (telah disemak):\n\n${CORPUS_TEXT}` }, { text: `Soalan pengguna:\n${question}` }] }],
@@ -173,20 +168,7 @@ export const geminiBody = question => JSON.stringify({
 });
 
 export async function askGemini(env, question) {
-  const models = geminiModels(env), body = geminiBody(question);
-  let r, err;
-  for (const model of models) {
-    r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
-      method: 'POST', headers: { 'content-type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY }, body
-    });
-    if (r.ok) break;
-    err = new Error(`Gemini ${model} ${r.status} ${(await r.text()).slice(0, 300)}`);
-    err.status = r.status === 503 ? 529 : r.status;
-    console.log(err.message);
-    if (!RETRY_NEXT.has(r.status)) throw err;
-  }
-  if (!r.ok) throw err;
-  const d = await r.json(), c = d.candidates && d.candidates[0];
+  const d = await geminiGenerate(env, geminiBody(question)), c = d.candidates && d.candidates[0];
   if ((d.promptFeedback && d.promptFeedback.blockReason) || (c && ['SAFETY', 'PROHIBITED_CONTENT', 'BLOCKLIST', 'SPII'].includes(c.finishReason))) return NO_ANSWER;
   const text = (c && c.content && c.content.parts || []).filter(p => !p.thought).map(p => p.text || '').join('');
   const ans = parseAnswer(text);
@@ -253,12 +235,35 @@ async function tanya(req, env, url, h) {
   return json(out, 200, h);
 }
 
+/* Semak Kertas: ulasan pakar dan pembetulan bahasa (Gemini) */
+async function semakRoute(req, env, h) {
+  if (!env.GEMINI_API_KEY) return json({ error: 'Ulasan pakar belum diaktifkan.' }, 503, h);
+  if (!h['access-control-allow-origin']) return json({ error: 'Tidak dibenarkan.' }, 403, h);
+  let body;
+  try { body = await req.json(); } catch { return json({ error: 'Permintaan tidak sah.' }, 400, h); }
+  const text = String(body && body.text || '').replace(/\r\n/g, '\n').trim();
+  const lang = body && body.lang === 'en' ? 'en' : 'ms';
+  if (text.length < MIN_CHARS) return json({ error: 'Teks terlalu pendek untuk ulasan pakar.' }, 400, h);
+  if (text.length > MAX_CHARS) return json({ error: `Teks terlalu panjang (had ${MAX_CHARS.toLocaleString('en')} aksara). Semak bahagian demi bahagian.` }, 413, h);
+  if (env.SEMAK_LIMIT) {
+    const { success } = await env.SEMAK_LIMIT.limit({ key: req.headers.get('cf-connecting-ip') || 'x' });
+    if (!success) return json({ error: 'Terlalu banyak semakan. Cuba lagi selepas seminit.' }, 429, h);
+  }
+  try { return json(await semak(env, text, lang), 200, h); }
+  catch (e) {
+    console.log('semak', e && e.status, e && e.message);
+    const busy = e && (e.status === 429 || e.status === 529);
+    return json({ error: e && e.status === 422 ? 'Teks ini tidak dapat diulas.' : busy ? 'Ulasan pakar sibuk. Cuba lagi sebentar.' : 'Ulasan pakar tidak tersedia buat masa ini.' }, busy ? 429 : 502, h);
+  }
+}
+
 export default {
   async fetch(req, env) {
     const url = new URL(req.url), h = cors(req, env);
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: h });
     try {
       if (req.method === 'POST' && url.pathname === '/tanya') return await tanya(req, env, url, h);
+      if (req.method === 'POST' && url.pathname === '/semak') return await semakRoute(req, env, h);
       if (url.pathname === '/') return json({ ok: true, service: 'bijak-labur-fiqh', ai: !!provider(env), penyedia: provider(env) }, 200, h);
       return json({ error: 'Tidak dijumpai' }, 404, h);
     } catch (e) {

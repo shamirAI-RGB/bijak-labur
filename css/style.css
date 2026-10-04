@@ -569,3 +569,29 @@ a.card:active, .shortcut:active, .tool-card:active { transform: translateY(0) sc
 .founders-why p { color: var(--muted); font-size: 0.95rem; }
 .founders-why p:last-child { margin-bottom: 0; }
 @media (max-width: 520px) { .founder figcaption { padding: 28px 10px 10px; } .founder figcaption b { font-size: 0.82rem; } .founder figcaption span { font-size: 0.7rem; } }
+
+/* Semak Kertas: ulasan pakar dan semakan rujukan */
+.xp-head { display: flex; gap: 16px; align-items: center; margin-bottom: 14px; }
+.xp-score { flex: none; width: 92px; height: 92px; border-radius: 50%; display: grid; place-content: center; text-align: center; background: var(--brand-soft); color: var(--brand); line-height: 1; }
+.xp-score b { font-family: var(--display, inherit); font-size: 2.1rem; font-weight: 600; }
+.xp-score span { font-size: .78rem; color: var(--muted); }
+.xp-grade { font-weight: 700; margin-bottom: 4px; }
+.xp-crit { display: grid; gap: 12px; margin: 8px 0 16px; }
+@media (min-width: 760px) { .xp-crit { grid-template-columns: 1fr 1fr; } }
+.xp-row .track { height: 7px; border-radius: 99px; background: var(--surface-2); overflow: hidden; margin: 6px 0 4px; }
+.xp-row .track div { height: 100%; border-radius: inherit; background: var(--brand); }
+.xp-row p { margin: 0; }
+#expertBox h4, #refBox h4 { margin: 16px 0 8px; font-size: .95rem; }
+.xp-list { margin: 0; padding-left: 20px; display: grid; gap: 10px; }
+.xp-list.good { list-style: none; padding: 0; }
+.xp-list.good li { display: flex; gap: 8px; }
+.xp-list.good .ic { color: var(--up); width: 18px; height: 18px; margin-top: 2px; }
+.xp-list li > span { display: block; }
+.xp-list blockquote { margin: 6px 0; padding: 6px 10px; border-left: 3px solid var(--gold, var(--warn)); background: var(--surface-2); border-radius: 6px; font-size: .9rem; }
+.rf-sum { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.rf-chip { display: inline-block; padding: 2px 9px; border-radius: 99px; font-size: .74rem; font-weight: 650; white-space: nowrap; --c: var(--muted); color: color-mix(in srgb, var(--c) 75%, var(--text)); background: color-mix(in srgb, var(--c) 13%, transparent); }
+.rf-chip.up { --c: var(--up); } .rf-chip.down { --c: var(--down); } .rf-chip.warn { --c: var(--warn); } .rf-chip.info { --c: var(--info); }
+.rf-list { margin: 0; padding-left: 20px; display: grid; gap: 12px; }
+.rf-list li { display: grid; gap: 4px; justify-items: start; }
+.rf-ref { font-size: .9rem; overflow-wrap: anywhere; }
+.rf-plain { margin: 0; padding-left: 20px; font-size: .9rem; }

@@ -512,6 +512,7 @@
       + '<p class="muted small" style="margin-top:8px">Bar lebih panjang = lebih menyerupai corak tulisan AI.</p>';
     renderSources();
     renderStats(state.orig, state.sents); renderSugg(); renderAnnotated();
+    if (window.SemakPakar) SemakPakar.render(state);
   }
 
   $('#viewTabs').innerHTML = [['fix', 'Pembetulan'], ['ai', 'Peta AI'], ['plag', 'Plagiarisme']].map(([k, v]) => `<button class="seg ${k === 'fix' ? 'active' : ''}" data-v="${k}">${v}</button>`).join('');
@@ -549,6 +550,7 @@
   window.CheckerReport = () => state.ai && {
     ai: state.ai.pct, plag: state.plag.checked ? state.plag.pct : null, quality: state.quality, text: state.text,
     stats: state.statItems || [], signals: state.ai.signals, sources: state.plag.perSource.map(s => ({ name: s.name, url: s.url, pct: s.pct })),
+    expert: state.expert && !state.expert.error ? state.expert : null, refs: state.refs,
     sugg: state.sugg.filter(s => !s.dismissed).map(s => ({ cat: CATS[s.cat].name, from: s.orig, to: s.rep === null ? '(semak semula ayat)' : s.applied ? s.rep + ' (diterima)' : s.rep || '(buang)', why: s.msg }))
   };
 
@@ -560,11 +562,20 @@
     prog('Menganalisis…');
     try {
       const lang = $('#lang').value === 'auto' ? detectLang(text) : $('#lang').value;
-      Object.assign(state, { text, orig: text, lang, sents: sentences(text) });
+      Object.assign(state, { text, orig: text, lang, sents: sentences(text), expert: null, refs: null });
+      // Ulasan pakar (Gemini) dan pemeriksa rujukan berjalan serentak dengan semakan lain
+      const SP = window.SemakPakar, wantX = SP && $('#optExpert') && $('#optExpert').checked && text.length >= 200;
+      const expertP = wantX ? SP.expert(text, lang).catch(e => ({ error: e.message })) : null;
+      const refsP = SP && $('#optRefs') && $('#optRefs').checked ? SP.references(text).catch(() => null) : null;
       let sugg = localSuggestions(text, lang);
       if ($('#optLT').checked && lang === 'en') {
         prog('Menyemak tatabahasa…');
         try { sugg = sugg.concat(await languageTool(text, lang)); } catch { toast('Semakan LanguageTool tidak tersedia; guna semakan asas.'); }
+      }
+      if (expertP) {
+        prog('Ulasan pakar sedang menilai…');
+        state.expert = await expertP;
+        if (state.expert && !state.expert.error) sugg = sugg.concat(SP.toSuggestions(text, state.expert.pembetulan));
       }
       state.sugg = dedupe(sugg);
       const spellErrs = state.sugg.filter(s => s.cat === 'ejaan' || s.cat === 'tandabaca').length;
@@ -577,6 +588,7 @@
         sources.push(...w, ...a);
       }
       state.plag = Object.assign(plagiarism(text, state.sents, sources), { checked: sources.length > 0 });
+      if (refsP) { prog('Mengesahkan rujukan…'); state.refs = await refsP; }
       state.view = 'fix'; $$('#viewTabs .seg').forEach(t => t.classList.toggle('active', t.dataset.v === 'fix'));
       $('#results').classList.remove('hidden'); renderAll();
       document.dispatchEvent(new CustomEvent('checkdone'));
