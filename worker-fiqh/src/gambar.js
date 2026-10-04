@@ -95,9 +95,18 @@ export async function gambar(env, { prompt, gaya, seed }) {
     // Kuota percuma harian Workers AI (neuron) habis, atau terlalu banyak permintaan
     if (/neuron|quota|limit|capacity|429|3036|3040/i.test(m)) throw Object.assign(new Error('kuota'), { status: 429 });
     if (/nsfw|safety|flagged/i.test(m)) throw Object.assign(new Error('Gambar ini tidak dapat dijana. Cuba penerangan lain.'), { status: 422 });
-    throw Object.assign(new Error('flux'), { status: 502 });
+    // Kod ralat ringkas (tanpa data pengguna) untuk diagnosis daripada CI
+    throw Object.assign(new Error('flux'), { status: 502, kod: m.replace(/[^\w .:;,()\-/]/g, '').slice(0, 160) });
   }
-  const image = out && out.image;
-  if (!image || typeof image !== 'string') throw Object.assign(new Error('tiada gambar'), { status: 502 });
-  return { image, mime: 'image/jpeg', prompt_en: p.prompt_en, seed, ai: !!p.ai };
+  // FLUX biasanya memulangkan { image: base64 }; sesetengah versi memulangkan binari (stream atau bait)
+  let image = out && out.image, mime = 'image/jpeg';
+  if (!image && out && (out instanceof ReadableStream || out instanceof ArrayBuffer || ArrayBuffer.isView(out))) {
+    const bytes = new Uint8Array(out instanceof ReadableStream ? await new Response(out).arrayBuffer() : ArrayBuffer.isView(out) ? out.buffer : out);
+    if (bytes[0] === 0x89) mime = 'image/png';
+    let bin = '';
+    for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+    image = btoa(bin);
+  }
+  if (!image || typeof image !== 'string') throw Object.assign(new Error('tiada gambar'), { status: 502, kod: `tiada image; kunci: ${out && typeof out === 'object' ? Object.keys(out).join(',').slice(0, 80) : typeof out}` });
+  return { image, mime, prompt_en: p.prompt_en, seed, ai: !!p.ai };
 }

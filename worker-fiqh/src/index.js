@@ -301,7 +301,7 @@ async function gambarRoute(req, env, h) {
     console.log('gambar', e && e.status, e && e.message);
     if (e && e.status === 422) return json({ error: e.message }, 422, h);
     if (e && e.status === 429) return json({ error: 'Kuota percuma studio gambar untuk hari ini telah habis. Cuba lagi esok.' }, 429, h);
-    return json({ error: 'Studio gambar tidak tersedia buat masa ini. Cuba lagi sebentar.' }, 502, h);
+    return json({ error: 'Studio gambar tidak tersedia buat masa ini. Cuba lagi sebentar.', ...(e && e.kod ? { kod: e.kod } : {}) }, 502, h);
   }
 }
 
