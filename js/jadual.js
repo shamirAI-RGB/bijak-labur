@@ -110,6 +110,16 @@
   function setupHTML() {
     const picks = S.picks;
     return `<div class="jd-setup">
+      <form class="card jd-stu" id="jdStu">
+        <h3>Cara paling cepat: No. Pelajar</h3>
+        <p class="muted small">Masukkan No. Pelajar UiTM anda (10 digit). Jadual kelas anda dimuatkan terus daripada data jadual pelajar UiTM. Tiada kata laluan diperlukan.</p>
+        <div class="inline-form">
+          <input id="jdStuId" inputmode="numeric" autocomplete="off" maxlength="10" pattern="\\d{10}" placeholder="Cth. 2023123456" aria-label="No. Pelajar" value="${esc(S.student || '')}">
+          <button class="btn" type="submit" id="jdStuGo">${icon('search')}Dapatkan jadual</button>
+        </div>
+        <p class="err" id="jdStuErr"></p>
+      </form>
+      <div class="jd-or"><span>atau bina sendiri ikut kampus, kursus dan kumpulan</span></div>
       <div class="card jd-step">
         <div class="jd-step-n">1</div>
         <div class="jd-step-b">
@@ -126,11 +136,7 @@
         <div class="jd-step-n">2</div>
         <div class="jd-step-b">
           <h3>Kursus dan kumpulan</h3>
-          <p class="muted small">Cara paling cepat: log masuk MyStudent, muat turun slip pendaftaran kursus (PDF) dan muat naik di sini, atau salin semua teks slip dan tampal di bawah. Kod kursus dan kumpulan dikesan sendiri.</p>
-          <div class="jd-ms">
-            <a class="btn sm ghost" href="https://mystudent.uitm.edu.my/" target="_blank" rel="noopener">${icon('external')}Buka MyStudent</a>
-            <label class="btn sm ghost">${icon('file')}Muat naik slip PDF<input type="file" id="jdSlip" accept=".pdf,application/pdf,.txt,text/plain" hidden></label>
-          </div>
+          <p class="muted small">Salin teks jadual atau senarai kursus anda dari MyStudent, kemudian tampal di bawah. Kod kursus dan kumpulan dikesan sendiri.</p>
           <textarea id="jdPaste" rows="3" placeholder="Contoh: CSC584 ENTERPRISE PROGRAMMING CS2305A  ITS662 DATA MINING CS2305A"></textarea>
           <button class="btn sm ghost jd-mt" id="jdDetect">${icon('search')}Kesan kursus</button>
           <div class="jd-or"><span>atau tambah satu per satu</span></div>
@@ -151,10 +157,6 @@
       </div>
       <p class="err" id="jdBuildErr"></p>
 
-      <details class="card jd-why">
-        <summary>Kenapa tidak cukup dengan No. Pelajar sahaja?</summary>
-        <p class="muted small">Jadual peribadi yang dicari melalui No. Pelajar berada dalam sistem MyStudent yang memerlukan log masuk. UiTM belum menyediakan API terbuka untuknya, dan Bijak Labur tidak meminta kata laluan anda atau mencari data pelajar lain. Sebab itu jadual dibina daripada senarai awam iCress mengikut kod kursus dan kumpulan anda. Carian terus dengan No. Pelajar hanya boleh ditambah dengan kebenaran rasmi UiTM.</p>
-      </details>
     </div>`;
   }
   const pickHTML = (p, i) => `<li class="jd-pick" style="--h:var(--jd${i % HUES})">
@@ -342,6 +344,19 @@
   }
 
   function bindSetup() {
+    $('#jdStu').onsubmit = async e => {
+      e.preventDefault();
+      const id = $('#jdStuId').value.replace(/\D/g, ''), err = $('#jdStuErr'), go = $('#jdStuGo');
+      err.textContent = '';
+      if (!/^\d{10}$/.test(id)) { err.textContent = 'No. Pelajar UiTM mempunyai 10 digit, cth. 2023123456.'; return; }
+      go.disabled = true; go.innerHTML = '<span class="spinner"></span> Memuatkan';
+      try {
+        const d = await api('/pelajar' + q({ id }));
+        Object.assign(S, { student: id, items: d.items, picks: d.items.map(i => ({ course: i.course, group: i.group })), campusName: 'Jadual peribadi', label: 'Mengikut No. Pelajar', session: '', updated: Date.now(), demo: false });
+        save(); ui.editing = false; render();
+        toast(`${d.items.length} kursus dimuatkan`);
+      } catch (x) { err.textContent = x.message; go.disabled = false; go.innerHTML = `${icon('search')}Dapatkan jadual`; }
+    };
     root.onclick = e => {
       const del = e.target.closest('[data-del]');
       if (del) { S.picks.splice(+del.dataset.del, 1); save(); refreshSelects(); return; }
@@ -356,22 +371,6 @@
       if (S.campus === 'B' && !ui.faculties) loadCampuses(); else loadCourses();
     };
     $('#jdFac').onchange = e => { S.faculty = e.target.value; save(); loadCourses(); };
-    // Slip PDF daripada MyStudent: baca teks dalam peranti (pdf.js), tiada fail dihantar ke pelayan
-    $('#jdSlip').onchange = async e => {
-      const f = e.target.files[0]; e.target.value = ''; if (!f) return;
-      $('#jdAddErr').textContent = '';
-      try {
-        let text = '';
-        if (/\.pdf$/i.test(f.name) || f.type === 'application/pdf') {
-          await loadScript('js/vendor/pdf.min.js');
-          pdfjsLib.GlobalWorkerOptions.workerSrc = 'js/vendor/pdf.worker.min.js';
-          const pdf = await pdfjsLib.getDocument({ data: await f.arrayBuffer(), isEvalSupported: false }).promise;
-          for (let i = 1; i <= Math.min(pdf.numPages, 10); i++) text += (await (await pdf.getPage(i)).getTextContent()).items.map(t => t.str).join(' ') + '\n';
-        } else text = await f.text();
-        $('#jdPaste').value = text;
-        $('#jdDetect').click();
-      } catch { $('#jdAddErr').textContent = 'Slip tidak dapat dibaca. Pastikan ia PDF asal dari MyStudent (bukan gambar), atau salin dan tampal teksnya.'; }
-    };
     $('#jdDetect').onclick = () => {
       const found = parsePaste($('#jdPaste').value);
       if (!found.length) { $('#jdAddErr').textContent = 'Tiada kod kursus dikesan. Kod kursus UiTM berbentuk tiga huruf dan tiga nombor, cth. CSC584.'; return; }

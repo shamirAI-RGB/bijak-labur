@@ -2,16 +2,16 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
     <loc>https://bijaklabur.my/</loc>
-    <lastmod>2026-10-03</lastmod>
+    <lastmod>2026-10-04</lastmod>
     <image:image><image:loc>https://bijaklabur.my/images/og-bijaklabur.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://bijaklabur.my/tentang.html</loc>
-    <lastmod>2026-10-03</lastmod>
+    <lastmod>2026-10-04</lastmod>
     <image:image><image:loc>https://bijaklabur.my/images/pengasas/yusshamir.jpg</image:loc></image:image>
     <image:image><image:loc>https://bijaklabur.my/images/pengasas/wabil.jpg</image:loc></image:image>
   </url>
-  <url><loc>https://bijaklabur.my/privacy.html</loc><lastmod>2026-10-03</lastmod></url>
-  <url><loc>https://bijaklabur.my/padam-data.html</loc><lastmod>2026-10-03</lastmod></url>
-  <url><loc>https://bijaklabur.my/terma.html</loc><lastmod>2026-10-03</lastmod></url>
+  <url><loc>https://bijaklabur.my/privacy.html</loc><lastmod>2026-10-04</lastmod></url>
+  <url><loc>https://bijaklabur.my/padam-data.html</loc><lastmod>2026-10-04</lastmod></url>
+  <url><loc>https://bijaklabur.my/terma.html</loc><lastmod>2026-10-04</lastmod></url>
 </urlset>

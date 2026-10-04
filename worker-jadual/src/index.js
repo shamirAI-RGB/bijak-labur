@@ -13,10 +13,15 @@
  * GET /timetable?campus=B&faculty=CD&pick=CSC584.CS2305A,ITS662.CS2305A
  *                                                -> { session, items: [{ course, group, slots }], missing }
  *
+ * GET /pelajar?id=2023123456                     -> { items: [{ course, name, group, slots }], dates }
+ *   Jadual peribadi mengikut No. Pelajar daripada fail awam UiTM (cdn.uitm.link), sumber yang sama
+ *   digunakan oleh penjana jadual pelajar lain. Tidak disimpan dalam cache (data peribadi).
+ *
  * slot = { d: 1-7 (Isnin = 1), s: minit dari tengah malam, e: minit, room, mode }
  */
 
 export const BASE = 'https://simsweb4.uitm.edu.my/estudent/class_timetable/';
+export const STUDENT_URL = 'https://cdn.uitm.link/jadual/baru/';
 const UA = 'Mozilla/5.0 (compatible; BijakLabur/1.0; +https://bijaklabur.my)';
 const TTL = { session: 3600, campuses: 21600, faculties: 21600, courses: 3600, groups: 1200, timetable: 1200 };
 const MAX_PICKS = 15;
@@ -25,7 +30,8 @@ const RE = {
   campus: /^[A-Z0-9]{1,6}$/,
   faculty: /^[A-Z]{2,4}$/,
   course: /^[A-Z]{2,4}\d{3}[A-Z]?$/,
-  group: /^[A-Z0-9]{2,14}$/
+  group: /^[A-Z0-9]{2,14}$/,
+  student: /^\d{10}$/
 };
 
 export class IcressError extends Error {}
@@ -175,6 +181,32 @@ export function byGroup(rows) {
   return [...g.values()].sort((a, b) => a.group.localeCompare(b.group));
 }
 
+/**
+ * Jadual pelajar UiTM: { "2026-10-05": { hari: "Monday", jadual: [{ course_desc, courseid, groups, masa: "16:00 PM - 18:00 PM", bilik }] } }
+ * Satu entri bagi setiap tarikh; dihimpun menjadi jadual mingguan [{ course, name, group, slots }].
+ */
+export function fromStudent(json) {
+  if (!json || typeof json !== 'object' || Array.isArray(json)) return { items: [], dates: 0 };
+  const dates = Object.keys(json).filter(k => json[k] && Array.isArray(json[k].jadual));
+  const items = new Map();
+  for (const date of dates) {
+    const d = DAYS[String(json[date].hari || '').trim().toUpperCase()];
+    if (!d) continue;
+    for (const r of json[date].jadual) {
+      const course = String(r && r.courseid || '').trim().toUpperCase();
+      const [a, b] = String(r && r.masa || '').split(/\s*[-–]\s*/);
+      const st = clock(a || ''), en = clock(b || '');
+      if (!course || st == null || en == null || en <= st) continue;
+      const group = String(r.groups || '').trim().toUpperCase(), key = course + '.' + group;
+      if (!items.has(key)) items.set(key, { course, name: text(r.course_desc || ''), group, slots: [] });
+      const it = items.get(key), room = text(r.bilik || '');
+      if (!it.slots.some(x => x.d === d && x.s === st && x.e === en)) it.slots.push({ d, s: st, e: en, room, mode: '' });
+    }
+  }
+  for (const it of items.values()) it.slots.sort((x, y) => x.d - y.d || x.s - y.s);
+  return { items: [...items.values()].sort((x, y) => x.course.localeCompare(y.course)), dates: dates.length };
+}
+
 /* ---------- Pengambil iCress dengan kuki sesi ---------- */
 export function client(fetchImpl = fetch) {
   const jar = new Map();
@@ -204,6 +236,12 @@ export function client(fetchImpl = fetch) {
 
   return {
     index,
+    async student(id) {
+      const r = await fetchImpl(STUDENT_URL + id + '.json', { headers: { 'user-agent': UA, accept: 'application/json' }, signal: AbortSignal.timeout(15000) });
+      if (r.status === 404) return null;
+      if (!r.ok) throw new IcressError(`Jadual pelajar menjawab ${r.status}`);
+      return fromStudent(await r.json().catch(() => null));
+    },
     async campuses() {
       const i = await index();
       const u = i.campusUrl || 'combo_select_campus.txt';
@@ -287,6 +325,12 @@ export async function handle(url, ic) {
       const order = picks.map(p => p.join('.'));
       items.sort((a, b) => order.indexOf(`${a.course}.${a.group}`) - order.indexOf(`${b.course}.${b.group}`));
       return [{ session: i.session, label: sessionLabel(i.session), items, missing }, TTL.timetable];
+    }
+    case '/pelajar': {
+      const id = param(url, 'id', RE.student);
+      const out = await ic.student(id);
+      if (!out || !out.items.length) return [{ error: 'Tiada jadual dijumpai untuk No. Pelajar ini. Semak nombornya, atau cuba lagi selepas pendaftaran kursus disahkan.' }, 0, 404];
+      return [out, 0];
     }
     case '/': return [{ ok: true, service: 'bijak-labur-jadual', source: BASE }, 0];
     default: return [{ error: 'Tidak dijumpai' }, 0, 404];

@@ -4,8 +4,9 @@
   const NATIVE_TTS = plugin('TextToSpeech');
   const synth = 'speechSynthesis' in window ? window.speechSynthesis : null;
   const btn = $('#sayBtn');
-  // Suara HD: alamat pelayan Bijak Labur (Cloudflare Worker) dengan laluan /tts. Kosong = guna suara peranti sahaja.
-  const HD_API = '';
+  // Suara HD (neural Azure, natural): pelayan Bijak Labur (worker/) dengan laluan /tts.
+  // Hanya digunakan selepas pelayan melaporkan kunci Azure sudah ditetapkan (GET / -> { tts: true }).
+  const HD_API = 'https://bijak-labur-premium.khanz-amir.workers.dev';
   if (!NATIVE_TTS && !synth && !HD_API) { btn.remove(); return; }
 
   const BASE = { ms: 'ms-MY', en: 'en-GB', 'zh-Hans': 'zh-CN', zh: 'zh-CN', ta: 'ta-IN', ar: 'ar-SA' };
@@ -77,16 +78,17 @@
     return out.filter(s => /[\p{L}\p{N}]/u.test(s));
   }
 
-  /* ---------- Enjin suara: setiap bahasa ada senarai ganti (cth. Melayu → Indonesia) ---------- */
+  /* ---------- Enjin suara: setiap bahasa ada senarai ganti. Bahasa Melayu tidak sekali-kali
+     beralih ke suara Bahasa Indonesia (sebutan dan perkataan berbeza). ---------- */
   const LANGS = [
-    { k: 'ms', name: 'Bahasa Melayu', chain: ['ms-MY', 'ms', 'id-ID', 'id', 'in-ID'], sample: 'Selamat datang ke Bijak Labur. Mari belajar melabur dengan bijak.', soft: true },
+    { k: 'ms', name: 'Bahasa Melayu', chain: ['ms-MY', 'ms', 'ms-SG', 'ms-BN'], sample: 'Selamat datang ke Bijak Labur. Mari belajar melabur dengan bijak.', soft: true },
     { k: 'en', name: 'English', chain: ['en-GB', 'en-MY', 'en-US', 'en-AU', 'en-IN', 'en'], sample: 'Welcome to Bijak Labur. Let us learn to invest wisely.', soft: true },
     { k: 'zh', name: '中文 (华语)', chain: ['zh-CN', 'cmn-CN', 'zh-SG', 'cmn-Hans-CN', 'zh-TW', 'cmn-TW', 'zh-HK', 'yue-HK', 'zh'], sample: '欢迎来到 Bijak Labur。我们一起学习投资。' },
     { k: 'ta', name: 'தமிழ்', chain: ['ta-IN', 'ta-MY', 'ta-SG', 'ta-LK', 'ta'], sample: 'பிஜாக் லாபூருக்கு வரவேற்கிறோம். முதலீடு செய்யக் கற்போம்.' },
     { k: 'ar', name: 'العربية', chain: ['ar-SA', 'ar-001', 'ar-AE', 'ar-EG', 'ar-XA', 'ar'], sample: 'بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ' }
   ];
   const LK = Object.fromEntries(LANGS.map(l => [l.k, l]));
-  const keyOf = lang => { const b = String(lang).toLowerCase().replace('_', '-').split('-')[0]; return { id: 'ms', in: 'ms', cmn: 'zh', yue: 'zh' }[b] || b; };
+  const keyOf = lang => { const b = String(lang).toLowerCase().replace('_', '-').split('-')[0]; return { cmn: 'zh', yue: 'zh' }[b] || b; };
   const norm = l => String(l).toLowerCase().replace('_', '-');
 
   let dlg = null;
@@ -141,7 +143,9 @@
   }
 
   /* ---------- Suara HD (neural, melalui pelayan) ---------- */
-  const HD_OK = !!HD_API;
+  let HD_OK = false;
+  // Semak sekali sama ada pelayan sudah ada kunci Azure; jika belum, guna suara peranti tanpa mesej ralat
+  if (HD_API) fetch(HD_API.replace(/\/$/, '') + '/').then(r => r.json()).then(j => { HD_OK = !!j.tts; }).catch(() => {});
   const hdOn = () => HD_OK && store.get('sayHD', true) && navigator.onLine !== false && !hdDown;
   const hdGender = () => store.get('sayHDg', 'f');
   let hdDown = false, hdPending = new Map();

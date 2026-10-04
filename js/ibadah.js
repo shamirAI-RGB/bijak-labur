@@ -123,7 +123,7 @@
       <p class="source">Teks Uthmani dan terjemahan Tafsir Pimpinan Ar-Rahman (Abdullah Basmeih) melalui api.alquran.cloud, dengan Quran.com sebagai sumber sandaran. Audio ${esc(QARI[qari()] || '')} melalui cdn.islamic.network.</p>`;
     paintQTab();
     try { await getList(); paintQTab(); }
-    catch { if (!qList) $('#qListBox').innerHTML = offline('Senarai surah perlukan sambungan internet kali pertama.'); }
+    catch { const box = $('#qListBox'); if (!qList && box) box.innerHTML = offline('Senarai surah perlukan sambungan internet kali pertama.'); }
   }
   function paintQTab() {
     $$('[data-qtab]').forEach(b => { const on = b.dataset.qtab === qTab; b.classList.toggle('active', on); b.setAttribute('aria-selected', on); });
@@ -152,7 +152,9 @@
     P().innerHTML = head('quran') + `<div id="qReader"><div class="card pad muted">Memuatkan surah</div></div>`;
     let s;
     try { await getList().catch(() => {}); s = await getSurah(n); }
-    catch { $('#qReader').innerHTML = offline('Surah ini belum disimpan dalam peranti. Sambung ke internet untuk memuatkannya.'); return; }
+    catch { const box = $('#qReader'); if (box) box.innerHTML = offline('Surah ini belum disimpan dalam peranti. Sambung ke internet untuk memuatkannya.'); return; }
+    // Pengguna mungkin sudah beralih ke halaman lain semasa surah dimuatkan
+    if (!$('#qReader')) return;
     const meta = qList ? qList[n - 1] : { n, en: 'Surah ' + n, ar: '', tr: '', c: s.ayahs.length, t: '' };
     const read = store.get('qRead', []); if (!read.includes(n)) { read.push(n); store.set('qRead', read); }
     $('#qReader').innerHTML = `

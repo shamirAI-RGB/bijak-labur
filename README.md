@@ -7,7 +7,7 @@ Laman web + app (PWA) percuma: Akademi Moomoo, harga saham & kripto masa nyata, 
 - `css/style.css`: reka bentuk (tema cerah/gelap automatik)
 - `js/learn.js`: modul pembelajaran Moomoo, kalkulator, kuiz
 - `js/market.js`: kripto masa nyata (Binance WebSocket, sandaran CoinGecko), carta lilin, amaran harga, widget saham TradingView
-- `js/solat.js`: waktu solat zon JAKIM (api.waktusolat.app), kiraan detik, notifikasi azan, jadual bulanan
+- `js/solat.js`: waktu solat zon JAKIM (api.waktusolat.app) untuk Malaysia, dan bandar di seluruh dunia (api.aladhan.com, carian bandar Open-Meteo) dalam zon waktu bandar itu; kiraan detik, notifikasi azan, jadual bulanan
 - `js/checker.js`: anggaran AI %, plagiarisme % (Wikipedia + teks sumber), pembetulan bahasa (peraturan BM/BI + LanguageTool)
 - `manifest.webmanifest`, `sw.js`, `icons/`: supaya boleh dipasang sebagai app dan berfungsi luar talian
 
@@ -44,12 +44,11 @@ Pelan berbayar Pelajar, Pelabur dan Lengkap dijual melalui ToyyibPay (FPX dan ka
 
 ## Jadual kelas UiTM
 
-Halaman `#jadual` (`js/jadual.js`, `css/jadual.css`) membina jadual mingguan pelajar UiTM daripada senarai awam iCress mengikut kampus, kod kursus dan kumpulan. Pelajar boleh membuka MyStudent dari halaman ini, kemudian memuat naik slip pendaftaran PDF (dibaca dalam peranti dengan pdf.js) atau menampal teks slip untuk mengesan kod kursus dan kumpulan sendiri. Jadual disimpan dalam peranti, boleh dicetak dan disimpan ke kalendar telefon (.ics).
+Halaman `#jadual` (`js/jadual.js`, `css/jadual.css`) membina jadual mingguan pelajar UiTM daripada senarai awam iCress mengikut kampus, kod kursus dan kumpulan. Cara paling cepat ialah No. Pelajar: pelayan membaca fail jadual pelajar awam UiTM (`cdn.uitm.link/jadual/baru/<No. Pelajar>.json`, sumber yang sama digunakan oleh penjana jadual lain) tanpa kata laluan, dan jawapannya tidak disimpan dalam cache. Pelajar juga boleh membina jadual sendiri ikut kampus, kursus dan kumpulan, atau menampal teks dari MyStudent. Jadual disimpan dalam peranti, boleh dicetak dan disimpan ke kalendar telefon (.ics).
 
 Pelayan kecil dalam `worker-jadual/` (Cloudflare Workers, percuma) membaca iCress dan menghantar JSON dengan CORS di `https://jadual.bijaklabur.my`. Ia dipasang oleh `.github/workflows/jadual.yml` apabila rahsia `CLOUDFLARE_API_TOKEN` dan `CLOUDFLARE_ACCOUNT_ID` ditetapkan.
 
 - Ujian pelayan: `node worker-jadual/test.mjs`
-- Carian terus dengan No. Pelajar tidak disokong kerana jadual peribadi berada di sebalik log masuk MyStudent; ia memerlukan kebenaran atau API rasmi UiTM.
 
 ## Tanya AI Fiqh
 

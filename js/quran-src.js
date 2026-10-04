@@ -27,6 +27,20 @@
     throw err;
   }
   const strip = t => t.replace(/^﻿/, '');
+
+  // Bismillah hanya dipaparkan sebagai kepala surah (tengah atas), bukan dalam ayat 1,
+  // kecuali Al-Fatihah (Bismillah ialah ayat 1) dan At-Taubah (tiada Bismillah).
+  // Teks dibandingkan tanpa harakat kerana sumber berbeza menulis tanda baris secara berbeza.
+  const skel = w => w.normalize('NFC').replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED\u0640\uFEFF\u200B-\u200F]/g, '').replace(/[ٱأإآ]/g, 'ا');
+  const BASM_SK = BASMALAH.split(/\s+/).map(skel).join(' ');
+  const MS_BASM = /^\s*Dengan nama Allah,?\s*Yang Maha Pemurah,?\s*lagi Maha Mengasihani\.?\s*/i;
+  function dropBasmalah(n, a) {
+    if (n === 1 || n === 9 || a.k !== 1) return a;
+    const w = String(a.ar).trim().split(/\s+/);
+    const ar = w.length > 4 && w.slice(0, 4).map(skel).join(' ') === BASM_SK ? w.slice(4).join(' ') : a.ar;
+    const ms = String(a.ms || '').replace(MS_BASM, '');
+    return { ...a, ar, ms: ms ? ms.charAt(0).toUpperCase() + ms.slice(1) : ms };
+  }
   const memo = {};
   // Simpanan dalam peranti: senarai surah + 10 surah terakhir dibaca, supaya
   // surah yang pernah dibuka tetap boleh dibaca walaupun sumber gagal atau tiada internet
@@ -60,24 +74,22 @@
     }
     return out;
   }
-  const aqAyahs = (n, ar, ms) => ar.ayahs.map((a, i) => {
-    let t = strip(a.text);
-    if (i === 0 && n !== 1 && n !== 9 && t.startsWith(BASMALAH)) t = t.slice(BASMALAH.length).trim();
-    return { k: a.numberInSurah, g: a.number, ar: t, ms: ms.ayahs[i] ? ms.ayahs[i].text : '' };
-  });
-  const surah = n => once('s' + n, kept('s' + n, () => first(
+  const aqAyahs = (n, ar, ms) => ar.ayahs.map((a, i) => ({ k: a.numberInSurah, g: a.number, ar: strip(a.text), ms: ms.ayahs[i] ? ms.ayahs[i].text : '' }));
+  // Kunci "s2-" supaya surah lama dalam storan (dengan Bismillah dalam ayat 1) dibaca semula
+  const surah = n => once('s' + n, async () => (await kept('s2-' + n, () => first(
     async () => { const [ar, ms] = await aq(`/surah/${n}/editions/quran-uthmani,ms.basmeih`); return aqAyahs(n, ar, ms); },
     async () => (await qcVerses(`by_chapter/${n}`)).map(v => ({ k: v.verse_number, g: v.id, ar: v.text_uthmani, ms: cleanTr(v.translations && v.translations[0] && v.translations[0].text) })),
     // Sandaran ketiga: dua permintaan kecil berasingan ke alquran.cloud
     async () => { const [ar, ms] = await Promise.all([aq(`/surah/${n}/quran-uthmani`), aq(`/surah/${n}/ms.basmeih`)]); return aqAyahs(n, ar, ms); }
-  )));
+  ))()).map(a => dropBasmalah(n, a)));
   const cleanTr = t => (t || '').replace(/<sup[^>]*>.*?<\/sup>/g, '').replace(/<[^>]+>/g, '').trim();
 
   /* Satu ayat, cth. "2:275" */
   const ayah = ref => once('a' + ref, () => first(
     async () => {
       const [ar, ms] = await aq(`/ayah/${ref}/editions/quran-uthmani,ms.basmeih`);
-      return { ar: strip(ar.text), ms: ms.text, surah: ar.surah.englishName, s: ar.surah.number, a: ar.numberInSurah };
+      const d = dropBasmalah(ar.surah.number, { k: ar.numberInSurah, ar: strip(ar.text), ms: ms.text });
+      return { ar: d.ar, ms: d.ms, surah: ar.surah.englishName, s: ar.surah.number, a: ar.numberInSurah };
     },
     async () => {
       const v = (await get(`${QC}/verses/by_key/${ref}?translations=${QC_MS}&fields=text_uthmani`)).verse;
@@ -108,5 +120,5 @@
     } catch (e) { if (e instanceof NotFound) return []; throw e; }
   });
 
-  window.QuranSrc = { list, surah, ayah, search, BASMALAH, web: (s, a) => `https://quran.com/${s}${a ? '/' + a : ''}` };
+  window.QuranSrc = { list, surah, ayah, search, BASMALAH, dropBasmalah, web: (s, a) => `https://quran.com/${s}${a ? '/' + a : ''}` };
 })();
