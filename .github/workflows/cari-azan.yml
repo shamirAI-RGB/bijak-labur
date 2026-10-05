@@ -1,0 +1,22 @@
+name: Cari azan (sementara)
+on:
+  push:
+    branches: [claude/azan-bunyi]
+    paths: [.github/workflows/cari-azan.yml]
+jobs:
+  cari:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Senarai fail azan di Wikimedia Commons
+        run: |
+          for q in adhan azan athan "call to prayer" adzan; do
+            curl -sS -A "BijakLabur/1.0 (bijaklabur.my)" "https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=$(python3 -c "import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1]+' filetype:audio'))" "$q")&gsrnamespace=6&gsrlimit=40&prop=imageinfo&iiprop=url|size|mime|extmetadata&iiextmetadatafilter=LicenseShortName|Artist|ImageDescription|Credit&format=json" > r.json
+            python3 - <<'PY'
+          import json,re
+          d=json.load(open('r.json'))
+          for p in (d.get('query',{}).get('pages',{}) or {}).values():
+              ii=p['imageinfo'][0]; m=ii.get('extmetadata',{})
+              g=lambda k: re.sub('<[^>]+>','',m.get(k,{}).get('value',''))[:100].replace('\n',' ')
+              print(f"{p['title']} | {ii.get('size')} | {ii.get('duration','')} | {g('LicenseShortName')} | {g('Artist')} | {g('ImageDescription')} | {ii['url']}")
+          PY
+          done | sort -u
