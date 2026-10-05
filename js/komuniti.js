@@ -15,7 +15,8 @@
   };
   const WARNA = ['#0E7C66', '#2563EB', '#7C3AED', '#DB2777', '#EA580C', '#CA8A04', '#0891B2', '#475569'];
   const BULAN = ['Jan', 'Feb', 'Mac', 'Apr', 'Mei', 'Jun', 'Jul', 'Ogo', 'Sep', 'Okt', 'Nov', 'Dis'];
-  const KL = [3.139, 101.687];
+  // Pusat lalai peta: UiTM Shah Alam (dari pautan Google Maps Shamir)
+  const PUSAT = [3.0716068, 101.4902525];
 
   let S = { tab: store.get('km_tab', 'peta'), me: null, belum: 0, peta: null, list: null, busy: false, err: '',
     acara: { jenis: 'semua', uni: '' }, servis: { mod: 'layari', jenis: 'tawar', kategori: '', q: '' } };
@@ -180,7 +181,7 @@
     try { await loadScript('js/vendor/leaflet.js'); } catch { el.innerHTML = '<p class="muted km-nomap">Peta tidak dapat dimuatkan.</p>'; return; }
     if (!el.isConnected || map) return;
     const sendiri = S.peta && S.peta.saya;
-    map = L.map(el, { zoomControl: false, attributionControl: true }).setView(sendiri ? [sendiri.lat, sendiri.lng] : KL, sendiri ? 14 : 11);
+    map = L.map(el, { zoomControl: false, attributionControl: true }).setView(sendiri ? [sendiri.lat, sendiri.lng] : PUSAT, sendiri ? 14 : 16);
     map.attributionControl.setPrefix(false);
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' }).addTo(map);
     L.control.zoom({ position: 'bottomright' }).addTo(map);
