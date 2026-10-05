@@ -1,6 +1,6 @@
 // Ujian pelayan nota tanpa rangkaian: node worker-nota/test.mjs
 import assert from 'node:assert/strict';
-import worker, { sha256, waNumber, price, sanitizeSettings, adUrl, sanitizeAd, live, mergeText } from './src/index.js';
+import worker, { sha256, waNumber, price, sanitizeSettings, adUrl, sanitizeAd, live, mergeText, stockSyms, parseChart } from './src/index.js';
 
 assert.equal(waNumber('010-254 6720'), '60102546720');
 assert.equal(waNumber('0176040973'), '60176040973');
@@ -157,5 +157,20 @@ assert.deepEqual((await (await call('/kandungan')).json()).teks, { 'utama.lead':
 
 // Tanpa KV
 assert.equal((await worker.fetch(new Request(B + '/notes'), {})).status, 503);
+
+// Harga saham
+assert.deepEqual(stockSyms('aapl, nvda,AAPL,bad sym,1155.KL,BRK-B,<x>'), ['AAPL', 'NVDA', '1155.KL', 'BRK-B']);
+assert.equal(stockSyms('A,B,C,D,E,F,G,H,I,J').length, 8);
+const ch = parseChart('AAPL', { chart: { result: [{ meta: { regularMarketPrice: 110, chartPreviousClose: 100, regularMarketTime: 5 }, indicators: { quote: [{ close: [100, null, 105, 110] }] } }] } });
+assert.equal(ch.price, 110); assert.equal(Math.round(ch.chg), 10); assert.deepEqual(ch.spark, [100, 105, 110]);
+assert.equal(parseChart('X', { chart: { result: null } }), null);
+assert.equal((await call('/saham')).status, 400);
+const realFetch = globalThis.fetch;
+globalThis.fetch = async u => new Response(JSON.stringify({ chart: { result: [{ meta: { regularMarketPrice: 50, chartPreviousClose: 40 }, indicators: { quote: [{ close: [40, 50] }] } }] } }), { status: String(u).includes('BAD') ? 404 : 200 });
+r = await call('/saham?s=AAPL,BAD');
+assert.equal(r.status, 200);
+assert.deepEqual((await r.json()).quotes.map(q => q.s), ['AAPL']);
+assert.equal((await call('/saham?s=BAD')).status, 502);
+globalThis.fetch = realFetch;
 
 console.log('Semua ujian pelayan nota lulus.');

@@ -44,8 +44,12 @@
 
   const fmt = p => p == null || isNaN(p) ? '' : p >= 1 ? usd.format(p) : '$' + p.toPrecision(4);
 
+  let cryptoState = [false, 'Menyambung'], homeSeg = store.get('homeSeg', 'crypto') === 'stock' ? 'stock' : 'crypto';
+  function liveText(sel, on, text) { const el = $(sel); el.textContent = text; el.classList.toggle('on', on); }
   function setStatus(on, text) {
-    ['#cryptoStatus', '#homeLive'].forEach(s => { const el = $(s); el.textContent = text; el.classList.toggle('on', on); });
+    cryptoState = [on, text];
+    liveText('#cryptoStatus', on, text);
+    if (homeSeg === 'crypto') liveText('#homeLive', on, text);
   }
 
   function rowHTML(s, prefix, removable) {
@@ -202,7 +206,7 @@
       renderRows(); connect(); return;
     }
     const r = e.target.closest('.qrow'); if (!r) return;
-    if (home) { chartSym = r.dataset.sym; location.hash = '#pasaran'; loadChart(); markSelected(); return; }
+    if (home) { store.set('marketSeg', 'crypto'); chartSym = r.dataset.sym; location.hash = '#pasaran'; loadChart(); markSelected(); return; }
     chartSym = r.dataset.sym; markSelected(); loadChart();
     $('.chart-card').scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
@@ -295,6 +299,73 @@
     tvWidget($('#tvMovers'), 'hotlists', { exchange: 'US', showChart: false, width: '100%', height: '100%', dateRange: '1D' });
   }
 
+  /* Halaman utama: suis Kripto / Saham. Harga saham daripada pelayan nota (Yahoo Finance, cache 60 saat) */
+  const STOCK_API = 'https://nota.bijaklabur.my/saham';
+  const HOME_STOCKS = STOCKS.slice(0, 5).map(([tv, n]) => ({ tv, n, s: tv.split(':')[1], ex: tv.split(':')[0] }));
+  const STOCK_COLORS = { AAPL: '#555', NVDA: '#76b900', TSLA: '#cc0000', MSFT: '#00a4ef', GOOGL: '#4285f4' };
+  const stockData = store.get('homeStockQuotes', {});
+  let stockTimer = null, stockOk = false;
+  $('#homeStocks').innerHTML = HOME_STOCKS.map(({ tv, n, s, ex }) => `<div class="qrow" role="button" tabindex="0" data-tv="${esc(tv)}" id="hs-${esc(s)}">
+      <span class="coin tk" style="--c:${STOCK_COLORS[s] || 'var(--brand)'}">${esc(s.slice(0, 4))}</span>
+      <span style="min-width:0"><div class="q-sym">${esc(s)} <span class="sy sy-belum">${esc(ex)}</span></div><div class="q-name">${esc(n)}</div></span>
+      <svg class="spark" viewBox="0 0 64 28" preserveAspectRatio="none" aria-hidden="true"></svg>
+      <span class="q-right"><div class="q-price"><span class="skeleton"></span></div><div class="q-chg">&nbsp;</div></span>
+    </div>`).join('');
+  function paintStock(q) {
+    const el = document.getElementById('hs-' + q.s); if (!el || !(q.price > 0)) return;
+    el.querySelector('.q-price').textContent = fmt(q.price);
+    const ch = el.querySelector('.q-chg'), up = q.chg >= 0;
+    ch.textContent = (up ? '+' : '') + (+q.chg).toFixed(2) + '%';
+    ch.className = 'q-chg ' + (up ? 'up' : 'down');
+    if (Array.isArray(q.spark) && q.spark.length > 1) {
+      const pts = q.spark.concat(q.price), mn = Math.min(...pts), mx = Math.max(...pts), r = mx - mn || 1;
+      const path = pts.map((v, i) => `${(i / (pts.length - 1) * 64).toFixed(1)},${(26 - (v - mn) / r * 24).toFixed(1)}`).join(' ');
+      el.querySelector('.spark').innerHTML = `<polyline points="${path}" fill="none" stroke="${up ? 'var(--up)' : 'var(--down)'}" stroke-width="1.6" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>`;
+    }
+  }
+  function stockStatus() {
+    if (homeSeg !== 'stock') return;
+    const t = Object.values(stockData).reduce((m, q) => Math.max(m, q.time || 0), 0);
+    const open = t && Date.now() / 1000 - t < 20 * 60;
+    liveText('#homeLive', stockOk && open, !stockOk ? (t ? 'Harga terakhir' : 'Menyambung') : open ? 'Masa nyata' : 'Pasaran tutup');
+  }
+  async function loadStocks() {
+    try {
+      const r = await fetch(`${STOCK_API}?s=${HOME_STOCKS.map(x => x.s).join(',')}`);
+      if (!r.ok) throw 0;
+      (await r.json()).quotes.forEach(q => { if (q && typeof q.s === 'string') { stockData[q.s] = q; paintStock(q); } });
+      store.set('homeStockQuotes', stockData); stockOk = true;
+    } catch {
+      stockOk = false;
+      HOME_STOCKS.forEach(({ s }) => { const el = !stockData[s] && document.getElementById('hs-' + s); if (el) el.querySelector('.q-price').textContent = '-'; });
+    }
+    stockStatus();
+  }
+  function showHomeSeg(seg) {
+    homeSeg = seg; store.set('homeSeg', seg);
+    $$('#homeSeg .seg').forEach(b => { const on = b.dataset.hseg === seg; b.classList.toggle('active', on); b.setAttribute('aria-selected', on); });
+    $('#homeTicker').classList.toggle('hidden', seg !== 'crypto');
+    $('#homeStocks').classList.toggle('hidden', seg !== 'stock');
+    clearInterval(stockTimer); stockTimer = null;
+    if (seg === 'stock') { stockStatus(); loadStocks(); stockTimer = setInterval(() => { if (!document.hidden) loadStocks(); }, 60000); }
+    else liveText('#homeLive', cryptoState[0], cryptoState[1]);
+  }
+  Object.values(stockData).forEach(paintStock);
+  $('#homeSeg').addEventListener('click', e => { const b = e.target.closest('[data-hseg]'); if (b) showHomeSeg(b.dataset.hseg); });
+  $('#homeSeg').addEventListener('keydown', e => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    const next = homeSeg === 'crypto' ? 'stock' : 'crypto';
+    showHomeSeg(next); $(`#homeSeg [data-hseg="${next}"]`).focus();
+  });
+  $('#homeMore').addEventListener('click', () => store.set('marketSeg', homeSeg));
+  $('#homeStocks').addEventListener('click', e => {
+    const r = e.target.closest('.qrow'); if (!r) return;
+    stockSym = r.dataset.tv; store.set('stockSym', stockSym); store.set('marketSeg', 'stock');
+    if (tvLoaded) { renderStockTabs(); loadStock(); }
+    location.hash = '#pasaran';
+  });
+  $('#homeStocks').addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('qrow')) { e.preventDefault(); e.target.click(); } });
+
   /* Kawalan Kripto/Saham */
   function showSeg(seg) {
     $$('.seg[data-seg]').forEach(b => { const on = b.dataset.seg === seg; b.classList.toggle('active', on); b.setAttribute('aria-selected', on); });
@@ -316,11 +387,12 @@
     }
   });
 
-  renderRows(); renderAlerts();
+  renderRows(); renderAlerts(); showHomeSeg(homeSeg);
   snapshot().then(ok => { if (!ok) startGecko(); });
   connect();
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) return;
+    if (homeSeg === 'stock') loadStocks();
     if (!ws || ws.readyState > 1) connect();
     snapshot();
   });

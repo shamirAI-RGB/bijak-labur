@@ -22,6 +22,9 @@
  *   PUT    /admin/qr                 (badan = gambar) ; DELETE /admin/qr
  *   POST   /admin/key                (JSON: key) tukar kunci pemilik
  *
+ * Harga saham (kad Kripto/Saham halaman utama)
+ *   GET  /saham?s=AAPL,NVDA          -> { quotes: [{ s, price, chg, spark: [...], time }] }  (cache 60 saat)
+ *
  * Iklan halaman utama (4 ruang) dan teks laman yang boleh disunting oleh pemilik
  *   GET    /iklan                    -> { slots: [iklan | null] x4, wa }   (awam, iklan aktif sahaja)
  *   GET    /iklan/:n/gambar          -> gambar iklan
@@ -169,6 +172,38 @@ async function readImage(blob, what) {
   return { buf: await blob.arrayBuffer(), type: blob.type };
 }
 
+/* ---------- Harga saham ---------- */
+// Data carta awam Yahoo Finance (tanpa kunci), diambil di pelayan kerana pelayar disekat CORS.
+export const STOCK_MAX = 8;
+export function stockSyms(q) {
+  const out = [];
+  for (const raw of String(q || '').toUpperCase().split(',')) {
+    const s = raw.trim();
+    if (/^[A-Z0-9]{1,6}([.-][A-Z]{1,3})?$/.test(s) && !out.includes(s)) out.push(s);
+    if (out.length >= STOCK_MAX) break;
+  }
+  return out;
+}
+export function parseChart(s, j) {
+  const r = j && j.chart && j.chart.result && j.chart.result[0];
+  const meta = r && r.meta;
+  if (!meta || !(meta.regularMarketPrice > 0)) return null;
+  const price = meta.regularMarketPrice, prev = meta.chartPreviousClose || meta.previousClose;
+  const closes = (((r.indicators || {}).quote || [])[0] || {}).close || [];
+  const spark = closes.filter(v => typeof v === 'number' && isFinite(v));
+  const step = Math.max(1, Math.ceil(spark.length / 32));
+  return { s, price, chg: prev > 0 ? (price / prev - 1) * 100 : 0, spark: spark.filter((_, i) => i % step === 0).map(v => +v.toFixed(4)), time: meta.regularMarketTime || 0 };
+}
+async function quote(s) {
+  try {
+    const r = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(s)}?range=1d&interval=5m`, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; BijakLabur/1.0; +https://bijaklabur.my)', Accept: 'application/json' },
+      cf: { cacheTtl: 60, cacheEverything: true }
+    });
+    return r.ok ? parseChart(s, await r.json()) : null;
+  } catch { return null; }
+}
+
 /* ---------- Laluan ---------- */
 async function handle(req, env, h) {
   const url = new URL(req.url);
@@ -177,6 +212,13 @@ async function handle(req, env, h) {
   let m;
 
   if (p === '/' && M === 'GET') return json({ ok: true, service: 'bijak-labur-nota', kv: !!env.NOTA }, 200, h);
+  if (p === '/saham' && M === 'GET') {
+    const syms = stockSyms(url.searchParams.get('s'));
+    if (!syms.length) throw new HttpError(400, 'Simbol saham diperlukan.');
+    const quotes = (await Promise.all(syms.map(quote))).filter(Boolean);
+    if (!quotes.length) throw new HttpError(502, 'Harga saham tidak dapat diambil sekarang.');
+    return json({ quotes }, 200, h, 'public, max-age=60');
+  }
   if (!env.NOTA) throw new HttpError(503, 'Storan nota belum disediakan.');
 
   // Awam

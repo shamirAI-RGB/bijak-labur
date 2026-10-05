@@ -595,3 +595,8 @@ a.card:active, .shortcut:active, .tool-card:active { transform: translateY(0) sc
 .rf-list li { display: grid; gap: 4px; justify-items: start; }
 .rf-ref { font-size: .9rem; overflow-wrap: anywhere; }
 .rf-plain { margin: 0; padding-left: 20px; font-size: .9rem; }
+
+/* Halaman utama: suis Kripto / Saham */
+.home-mkt-head .segmented { margin-right: auto; }
+.home-mkt-head .seg { min-width: 64px; }
+.coin.tk { font-size: 0.72rem; letter-spacing: -0.02em; }
