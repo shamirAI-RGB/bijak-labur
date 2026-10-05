@@ -15,7 +15,7 @@
  */
 import Anthropic from '@anthropic-ai/sdk';
 import { BY_ID, CORPUS_TEXT } from './corpus.js';
-import { DOC, search, expand, pagesText, pageUrl } from './rujukan.js';
+import { DOC, search, expand, pagesText, pageUrl, cetakan } from './rujukan.js';
 import { GEMINI_MODEL, GEMINI_FALLBACKS, geminiModels, geminiGenerate } from './gemini.js';
 import { semak, MIN_CHARS, MAX_CHARS } from './semak.js';
 import { kalori, check as checkKalori } from './kalori.js';
@@ -41,7 +41,7 @@ Peraturan integriti (wajib):
    a. Id daripada korpus rujukan Bijak Labur yang diberi (cth. "fatwa:mkiForex", "hadis:m1598", "kitab:fathqarib:142", "masalah:muamalat/riba").
    b. Ayat Al-Quran dengan id "quran:SURAH:AYAT" (cth. "quran:2:275"). Teks ayat dimuat oleh app daripada sumber asal, jadi jangan petik teks ayat.
    c. Halaman yang anda buka dengan web_fetch atau temui dengan web_search dalam domain yang dibenarkan, dengan URL tepat seperti yang dipulangkan alat. Untuk kitab, buka halaman Shamela (https://shamela.ws/book/ID/HALAMAN) supaya pengguna boleh membuka muka surat yang sama.
-   d. Muka surat dokumen rasmi moden yang diberi dalam blok "Dokumen rujukan rasmi moden", dengan id "pdf:KOD:MUKASURAT" tepat seperti tertera (cth. "pdf:jakim:57"). Petik ayat tepat daripada teks muka surat itu supaya pengguna boleh membuka muka surat PDF yang sama. Dokumen ini ialah keputusan rasmi (Muzakarah Fatwa Kebangsaan, Majlis Penasihat Syariah SC dan BNM, Akademi Fiqh Islam Antarabangsa); utamakannya untuk isu semasa seperti kewangan, pelaburan, perubatan dan teknologi. Jika muka surat yang diberi tidak berkaitan dengan soalan, jangan gunakannya.
+   d. Muka surat dokumen rasmi moden yang diberi dalam blok "Dokumen rujukan rasmi moden", dengan id "pdf:KOD:MUKASURAT" tepat seperti tertera (cth. "pdf:jakim:57"). Petik ayat tepat daripada teks muka surat itu supaya pengguna boleh membuka muka surat PDF yang sama. Dokumen ini ialah keputusan rasmi (Muzakarah Fatwa Kebangsaan, Majlis Penasihat Syariah SC dan BNM, Akademi Fiqh Islam Antarabangsa); utamakannya untuk isu semasa seperti kewangan, pelaburan, perubatan dan teknologi. Blok yang sama juga mengandungi teks halaman kitab muktabar dari Shamela dengan id "kitab:KOD:HALAMAN" (cth. "kitab:fathqarib:142"); petik teks Arab tepat daripadanya dan berikan maksudnya dalam Bahasa Melayu. Jika muka surat yang diberi tidak berkaitan dengan soalan, jangan gunakannya.
 3. "petikan" mesti disalin tepat huruf demi huruf daripada teks halaman yang anda buka atau daripada teks korpus. Jangan ubah, ringkaskan atau tambah baris (harakat). Jika anda tidak membuka halaman itu, biarkan "petikan" kosong. Petikan diperiksa secara automatik; petikan yang tidak sepadan akan dibuang.
 4. Utamakan mazhab Syafie dan keputusan rasmi Malaysia (Muzakarah Fatwa Kebangsaan, Jabatan Mufti negeri, MPS Suruhanjaya Sekuriti). Jika ulama berbeza pendapat, nyatakan khilaf dengan adil beserta sumber setiap pendapat.
 5. Jika tiada sumber yang benar-benar menjawab soalan, pulangkan status "tidak_pasti" dan cadangkan pengguna merujuk Jabatan Mufti negeri atau guru bertauliah. Lebih baik berkata tidak pasti daripada meneka.
@@ -115,7 +115,9 @@ export function verify(ans, pages, docs = []) {
     if (pdf.has(id)) {
       // Muka surat PDF yang benar-benar diberi kepada model dalam jawapan ini; petikan disemak dengan teks muka surat itu
       const d = pdf.get(id), ok = !!(petikan && quoteIn(petikan, d.teks)), doc = DOC[d.k];
-      out = { ...base, id, jenis: 'dokumen', tajuk: doc.name, oleh: `${doc.by}, ${doc.tahun}`, url: pageUrl(d.k, d.n), pdf: d.n, petikan: ok ? petikan : '', disahkan: ok };
+      out = doc.jenis === 'kitab'
+        ? { ...base, id, jenis: 'kitab', tajuk: doc.name, ar: doc.ar, oleh: doc.by, url: pageUrl(d.k, d.n), shamela: String(d.n), ...cetakan(d.teks), petikan: ok ? petikan : '', disahkan: ok }
+        : { ...base, id, jenis: 'dokumen', tajuk: doc.name, oleh: `${doc.by}, ${doc.tahun}`, url: pageUrl(d.k, d.n), pdf: d.n, petikan: ok ? petikan : '', disahkan: ok };
     } else if (q) {
       const su = +q[1], ay = +q[2];
       if (su >= 1 && su <= 114 && ay >= 1 && ay <= AYAT[su - 1]) out = { ...base, jenis: 'quran', ref: `${su}:${ay}`, tajuk: `Al-Quran ${su}:${ay}`, url: `https://quran.com/${su}/${ay}`, petikan: '', maksud: '' };
@@ -166,13 +168,13 @@ export function verify(ans, pages, docs = []) {
 // Gemini tidak mempunyai alat web_search/web_fetch dalam pelayan ini, jadi hanya korpus dan ayat Al-Quran dibenarkan
 export const SYSTEM_KORPUS = SYSTEM + `
 
-Mod korpus: alat web_search dan web_fetch TIDAK tersedia. Gunakan hanya sumber 2a (id korpus), 2b (quran:SURAH:AYAT) dan 2d (pdf:KOD:MUKASURAT), dan biarkan "url" kosong. Jika korpus tidak menjawab soalan, pulangkan status "tidak_pasti".`;
+Mod korpus: alat web_search dan web_fetch TIDAK tersedia. Gunakan hanya sumber 2a (id korpus), 2b (quran:SURAH:AYAT) dan 2d (pdf:KOD:MUKASURAT atau kitab:KOD:HALAMAN yang diberi), dan biarkan "url" kosong. Jika korpus tidak menjawab soalan, pulangkan status "tidak_pasti".`;
 
 /* ---------- Model ---------- */
 const provider = env => env.ANTHROPIC_API_KEY ? 'claude' : env.GEMINI_API_KEY ? 'gemini' : '';
 const NO_ANSWER = { status: 'luar_skop', ringkasan: 'Soalan ini tidak dapat dijawab.', huraian: [], khilaf: '', nasihat: '', sumber: [] };
 
-const DOCS_HEAD = 'Dokumen rujukan rasmi moden (teks muka surat PDF yang paling berkaitan dengan soalan, hasil carian automatik):\n\n';
+const DOCS_HEAD = 'Dokumen rujukan rasmi moden dan teks kitab (teks muka surat yang paling berkaitan dengan soalan, hasil carian automatik):\n\n';
 
 export const geminiBody = (question, docs = []) => JSON.stringify({
   systemInstruction: { parts: [{ text: SYSTEM_KORPUS }] },

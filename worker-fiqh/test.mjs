@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import worker, { verify, collectRetrieved, norm, normUrl, parseAnswer, MODEL, GEMINI_MODEL, GEMINI_FALLBACKS, DOMAINS } from './src/app.js';
 import { BY_ID, CORPUS_TEXT } from './src/corpus.js';
-import { MODEN, buildIndex, search, expand, pageUrl, tokens } from './src/rujukan.js';
+import { MODEN, KITAB, buildIndex, search, expand, pageUrl, tokens, cetakan } from './src/rujukan.js';
 import { clean, semakBody, systemFor } from './src/semak.js';
 import { clean as cleanK, kaloriBody, check as checkK } from './src/kalori.js';
 import { blocked, check as checkG, promptBody, GAYA, FLUX } from './src/gambar.js';
@@ -215,6 +215,24 @@ assert.equal(d.sumber.length, 2, JSON.stringify(d.sumber));
 assert.deepEqual([d.sumber[0].jenis, d.sumber[0].pdf, d.sumber[0].disahkan, d.sumber[0].url], ['dokumen', 2, true, pageUrl('jakim', 2)]);
 assert.match(d.sumber[0].oleh, /JAKIM/);
 assert.equal(d.sumber[1].disahkan, false); assert.equal(d.sumber[1].petikan, '');
+
+// Kitab muktabar (teks Shamela): carian Arab daripada soalan Bahasa Melayu, pautan ke halaman Shamela yang sama
+assert.ok(KITAB.some(k => k.k === 'fathqarib' && k.id === 35120));
+assert.deepEqual(tokens('والرِّبَا بالذهب'), ['ربا', 'ذهب']);
+assert.deepEqual(cetakan('نص [الجزء: ١ ¦ الصفحة: ٢٥٥]'), { jilid: '1', halaman: '255' });
+const KT = 'فصل في الربا. والرِّبَا حرامٌ في الذهب والفضة، ولا يجوز بيع الذهب بالذهب إلا متماثلا نقدا. [الجزء: ١ ¦ الصفحة: ١٨١]';
+const kfiles = buildIndex({ ...PDF, fathqarib: [...Array(141).fill(''), 'كتاب الطهارة: المياه التي يجوز التطهير بها سبع مياه', KT] });
+const kenv = { RUJUKAN: { fetch: async req => { const p = new URL(req.url).pathname.slice(1); return kfiles.has(p) ? new Response(kfiles.get(p)) : new Response('', { status: 404 }); } } };
+hits = await search(kenv, expand('Hukum jual beli emas dengan emas'));
+assert.equal(hits[0].id, 'kitab:fathqarib:143', JSON.stringify(hits.map(h => h.id)));
+greply = () => gem({ status: 'jawab', ringkasan: 'Mesti sama timbangan dan tunai.', huraian: ['Syarat tukaran emas.'], sumber: [
+  { id: 'kitab:fathqarib:143', petikan: 'ولا يجوز بيع الذهب بالذهب إلا متماثلا نقدا', maksud: 'Tidak harus menjual emas dengan emas kecuali sama dan tunai.' }
+] });
+d = await (await call({ q: 'Hukum jual beli emas dengan emas' }, 'https://bijaklabur.my', { ...genv, ...kenv })).json();
+assert.ok(gsent.contents[0].parts.some(p => p.text.includes('[kitab:fathqarib:143] (kitab) Fath al-Qarib') && p.text.includes('Halaman Shamela 143')));
+assert.deepEqual([d.sumber[0].jenis, d.sumber[0].url, d.sumber[0].shamela, d.sumber[0].jilid, d.sumber[0].halaman, d.sumber[0].disahkan],
+  ['kitab', 'https://shamela.ws/book/35120/143', '143', '1', '181', true]);
+
 // Tanpa aset rujukan (muat turun gagal), Tanya AI tetap berjalan seperti biasa
 d = await (await call({ q: 'Apakah hukum melabur kripto lagi?' }, 'https://bijaklabur.my', genv)).json();
 assert.ok(!gsent.contents[0].parts.some(p => p.text.startsWith('Dokumen rujukan')));
