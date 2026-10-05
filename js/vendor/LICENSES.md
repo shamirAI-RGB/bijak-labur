@@ -10,3 +10,4 @@
 - Adhan 4.4.6 (Batoul Apps), MIT: https://github.com/batoulapps/adhan-js (waktu solat anggaran luar talian)
 - Mermaid 11 (rajah dijana semasa pembinaan, bukan dimuat dalam pelayar), MIT: https://github.com/mermaid-js/mermaid
 - globe.gl 2.46.2 (Vasco Asturiano, termasuk three.js), MIT: https://github.com/vasturiano/globe.gl (Peta Dunia 3D sahaja). Tekstur `data/peta/bumi-gelap.jpg` daripada contoh three-globe (MIT); sempadan negara `data/peta/negara.json` daripada Natural Earth 1:110m (domain awam)
+- Leaflet juga digunakan oleh Peta Jalan (peta.html). Carian: Nominatim (© OpenStreetMap, ODbL); laluan: OSRM (routing.openstreetmap.de, router.project-osrm.org); jubin satelit: Esri World Imagery; jubin gelap: CARTO; cuaca: Open-Meteo (CC BY 4.0); waktu solat: Aladhan

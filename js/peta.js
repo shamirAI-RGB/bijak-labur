@@ -75,6 +75,8 @@
   const narrow = () => window.innerWidth < 720;
   let hovered = null;
   let selected = null;
+  let dest = null; // destinasi daripada Peta Jalan
+  const posListeners = [];
 
   const world = window.Globe({ animateIn: !reduceMotion })(container)
     .width(container.clientWidth || window.innerWidth)
@@ -92,16 +94,16 @@
     // Titik dan label pusat kewangan
     .pointsData(HUBS)
     .pointLat('lat').pointLng('lng')
-    .pointColor(d => d.me ? GPS_COLOR : d.name === 'Kuala Lumpur' ? '#ffff00' : '#00ffff')
+    .pointColor(d => d.me ? GPS_COLOR : d.dest ? '#ff00ff' : d.name === 'Kuala Lumpur' ? '#ffff00' : '#00ffff')
     .pointAltitude(0.015)
-    .pointRadius(d => d.me ? 0.45 : d.name === 'Kuala Lumpur' ? 0.6 : 0.35)
+    .pointRadius(d => d.me || d.dest ? 0.45 : d.name === 'Kuala Lumpur' ? 0.6 : 0.35)
     .labelsData(HUBS)
     .labelLat('lat').labelLng('lng')
     .labelText('name')
     .labelSize(0.9)
     .labelDotRadius(0)
     .labelAltitude(0.02)
-    .labelColor(d => d.me ? GPS_COLOR : 'rgba(160, 216, 239, 0.85)')
+    .labelColor(d => d.me ? GPS_COLOR : d.dest ? '#ff00ff' : 'rgba(160, 216, 239, 0.85)')
     .labelResolution(2)
     // Gelang denyut GPS pada lokasi pengguna
     .ringLat('lat').ringLng('lng')
@@ -109,6 +111,13 @@
     .ringMaxRadius('r')
     .ringPropagationSpeed('speed')
     .ringRepeatPeriod(reduceMotion ? 0 : 900)
+    // Laluan perjalanan (daripada Peta Jalan) dilukis sebagai garis di atas permukaan
+    .pathPointLat(p => p[0]).pathPointLng(p => p[1])
+    .pathColor(() => ['rgba(0,255,255,0.9)', 'rgba(57,255,20,0.9)'])
+    .pathStroke(1.2)
+    .pathPointAlt(0.012)
+    .pathDashLength(0.2).pathDashGap(0.05).pathDashAnimateTime(reduceMotion ? 0 : 3000)
+    .pathTransitionDuration(0)
     // Laluan
     .arcColor('color')
     .arcDashLength(0.4)
@@ -289,7 +298,7 @@
     el.classList.toggle('is-bad', !!bad);
   };
   const paintMe = () => {
-    const extra = me ? [{ name: 'Anda', lat: me.lat, lng: me.lng, me: true }] : [];
+    const extra = (me ? [{ name: 'Anda', lat: me.lat, lng: me.lng, me: true }] : []).concat(dest ? [{ name: dest.name, lat: dest.lat, lng: dest.lng, dest: true }] : []);
     world.pointsData(HUBS.concat(extra)).labelsData(HUBS.concat(extra));
     world.ringsData(me ? [
       { lat: me.lat, lng: me.lng, r: 4, speed: 3 },
@@ -326,7 +335,8 @@
     $('gps-country').textContent = f ? countryName(f.properties || {}) : 'Lautan / tidak diketahui';
     setGps(`Aktif · ${new Date(pos.timestamp || Date.now()).toLocaleTimeString('ms-MY')}`);
     paintMe();
-    if (!firstFix) { firstFix = true; flyToMe(); }
+    posListeners.forEach(fn => { try { fn(pos); } catch (e) { /* pendengar rosak tidak menghentikan GPS */ } });
+    if (!firstFix) { firstFix = true; if (!(window.PetaJalan && window.PetaJalan.aktif())) flyToMe(); }
   }
   function onErr(err) {
     const msg = !err ? 'Ralat GPS'
@@ -364,4 +374,21 @@
     if (document.hidden) { navigator.geolocation.clearWatch(watchId); watchId = -1; }
     else if (watchId === -1) watchId = navigator.geolocation.watchPosition(onPos, onErr, { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 });
   });
+  /* ---------- Jambatan ke Peta Jalan (js/peta-jalan.js) ---------- */
+  const flyTo = (lat, lng) => {
+    controls.autoRotate = false;
+    syncRotateLabel();
+    world.pointOfView({ lat, lng, altitude: narrow() ? 1.2 : 0.8 }, reduceMotion ? 0 : 1200);
+  };
+  window.PetaGlob = {
+    startGps: () => { if (watchId === null) startGps(); },
+    onPos: fn => { posListeners.push(fn); if (me) fn({ coords: { latitude: me.lat, longitude: me.lng, accuracy: me.acc, speed: null, heading: null }, timestamp: Date.now() }); },
+    getMe: () => me,
+    flyTo,
+    setDest: (lat, lng, name) => { dest = { lat, lng, name: name || 'Destinasi' }; paintMe(); },
+    setRoute: coords => { world.pathsData(coords && coords.length ? [coords.map(c => [c.lat, c.lng])] : []); },
+    countryCodeAt: (lat, lng) => { const f = countryAt(lat, lng); return f && f.properties ? f.properties.a2 || '' : ''; }
+  };
+  $('openJalan').addEventListener('click', () => { if (window.PetaJalan) window.PetaJalan.buka(); else showMsg('Peta jalan gagal dimuat. Cuba muat semula halaman.'); });
+  $('gpsArah').addEventListener('click', () => { if (window.PetaJalan) window.PetaJalan.buka({ lat: me ? me.lat : undefined, lng: me ? me.lng : undefined, zoom: 15 }); });
 })();
