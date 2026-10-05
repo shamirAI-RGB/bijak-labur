@@ -251,21 +251,24 @@ greply = () => gem({ ar: ['طهارة', 'مياه'] });
 hits = await search(kenv, expand('Air apa yang boleh digunakan untuk mengangkat hadas?') + ' ' + await kataKunci({ ...genv, ...kenv }, 'q'));
 assert.ok(hits.some(h => h.id === 'kitab:fathqarib:142'), JSON.stringify(hits.map(h => h.id)));
 
-// Edisi cetakan: halaman cetakan + offset = muka surat PDF (halaman Shamela 143 bertanda halaman cetakan 181)
-const CET = { penerbit: 'Dar Ibn Hazm', edisi: 'Pertama, 1425H', pdf: [{ url: 'https://archive.org/download/x/x.pdf', offset: 4, dari: 1, hingga: 300, padan: 6 }] };
+// Edisi cetakan: halaman Shamela dipetakan ke [fail, muka surat PDF] dengan OCR
+const CET = { penerbit: 'Dar Ibn Hazm', edisi: 'Pertama, 1425H', fail: ['https://archive.org/download/x/x.pdf', 'https://a/j2.pdf'], peta: { 143: [0, 147], 900: [1, 13] } };
 assert.deepEqual(cetakPdf(CET, 143), { penerbit: 'Dar Ibn Hazm', edisi: 'Pertama, 1425H', pdf: 147, pdf_url: 'https://archive.org/download/x/x.pdf#page=147' });
+assert.equal(cetakPdf(CET, 900).pdf_url, 'https://a/j2.pdf#page=13');
 assert.deepEqual(cetakPdf(CET, 400), { penerbit: 'Dar Ibn Hazm', edisi: 'Pertama, 1425H' });
 assert.equal(cetakPdf(null, 1), null);
-// Kitab berjilid: halaman cetakan dan juz yang tertera pada halaman Shamela, bukan nombor halaman Shamela
-const CETJ = { penerbit: 'Dar al-Qalam', edisi: '', pdf: [{ url: 'https://a/j2.pdf', jilid: '2', offset: 3, dari: 1, hingga: 500, padan: 5 }] };
-assert.equal(cetakPdf(CETJ, 900, 'نص [الجزء: ٢ ¦ الصفحة: ١٠]').pdf, 13);
-assert.equal(cetakPdf(CETJ, 900, 'نص [الجزء: ١ ¦ الصفحة: ١٠]').pdf, undefined);
-assert.equal(cetakPdf(CETJ, 10).pdf, undefined);
-assert.equal(cetakPdf(CET, 1, 'نص [الجزء: ١ ¦ الصفحة: ١٠]').pdf, 14);
+// Peta OCR: padanan yang melanggar tertib dibuang, muka surat pertama diambil, jurang kecil yang konsisten diisi
+{
+  const { bina } = await import('./scripts/peta.mjs');
+  const o = { 19: [1, .5], 20: [2, .5], 22: [4, .5], 23: [5, .5], 24: [6, .5], 25: [7, .5], 26: [7, .4], 29: [8, .5], 30: [200, .3], 31: 0 };
+  assert.deepEqual(bina([o, { 1: [9, .5] }], 300), { 1: [0, 19], 2: [0, 20], 3: [0, 21], 4: [0, 22], 5: [0, 23], 6: [0, 24], 7: [0, 25], 8: [0, 29], 9: [1, 1] });
+  // Halaman pertama yang jauh terpisah (mukadimah pentahqiq memetik teks kitab) dibuang
+  assert.deepEqual(bina([{ 15: [1, .4], 65: [2, .5], 67: [3, .5], 69: [4, .5] }], 406), { 2: [0, 65], 3: [0, 67], 4: [0, 69] });
+}
 kfiles.set('rujukan/cetakan.json', JSON.stringify({ fathqarib: CET }));
 greply = () => gem({ status: 'jawab', ringkasan: 'x', huraian: ['y'], sumber: [{ id: 'kitab:fathqarib:143', petikan: 'ولا يجوز بيع الذهب بالذهب إلا متماثلا نقدا', maksud: 'Tidak harus menjual emas dengan emas kecuali sama dan tunai.' }] });
 d = await (await call({ q: 'Hukum jual beli emas dengan emas!' }, 'https://bijaklabur.my', { ...genv, ...kenv })).json();
-assert.deepEqual([d.sumber[0].pdf, d.sumber[0].pdf_url, d.sumber[0].penerbit, d.sumber[0].disahkan], [185, 'https://archive.org/download/x/x.pdf#page=185', 'Dar Ibn Hazm', true]);
+assert.deepEqual([d.sumber[0].pdf, d.sumber[0].pdf_url, d.sumber[0].penerbit, d.sumber[0].disahkan], [147, 'https://archive.org/download/x/x.pdf#page=147', 'Dar Ibn Hazm', true]);
 assert.equal(d.nota_pdf, undefined);
 
 // Tanpa aset rujukan (muat turun gagal), Tanya AI tetap berjalan seperti biasa
