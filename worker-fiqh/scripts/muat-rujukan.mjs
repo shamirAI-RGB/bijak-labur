@@ -8,7 +8,7 @@ import { mkdir, writeFile, rm, appendFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
-import { MODEN, buildIndex } from '../src/rujukan.js';
+import { MODEN, buildIndex, search, expand } from '../src/rujukan.js';
 
 const OUT = join(dirname(fileURLToPath(import.meta.url)), '..', 'aset');
 const summary = s => process.env.GITHUB_STEP_SUMMARY ? appendFile(process.env.GITHUB_STEP_SUMMARY, s + '\n') : null;
@@ -70,3 +70,11 @@ for (const [path, content] of files) {
 console.log(`Aset ditulis: ${files.size} fail, ${(bytes / 1048576).toFixed(1)} MB`);
 const ok = Object.keys(docs).length;
 if (!ok) console.log('Tiada dokumen berjaya dimuat; Tanya AI berjalan tanpa rujukan PDF.');
+
+// Contoh carian sebenar, supaya kualiti padanan boleh dilihat dalam log
+const env = { RUJUKAN: { fetch: async req => { const p = new URL(req.url).pathname.slice(1); return files.has(p) ? new Response(files.get(p)) : new Response('', { status: 404 }); } } };
+for (const q of ['Apakah hukum melabur dalam mata wang kripto seperti Bitcoin?', 'Adakah insurans konvensional halal?', 'Hukum kad kredit dan caj bayaran lewat', 'Hukum pemindahan organ', 'Bolehkah melabur dalam saham syarikat yang ada sedikit aktiviti tidak patuh syariah?']) {
+  const hits = await search(env, expand(q), 3);
+  console.log(`Carian: ${q}`);
+  for (const h of hits) console.log(`  ${h.id} (${h.skor}): ${h.teks.replace(/\s+/g, ' ').slice(0, 150)}`);
+}
