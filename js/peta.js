@@ -33,6 +33,7 @@
   let regionNames = null;
   try { regionNames = new Intl.DisplayNames(['ms'], { type: 'region' }); } catch (e) { /* pelayar lama */ }
   const countryName = p => {
+    if (p.a2 === 'PS') return 'Palestin'; // satu wilayah Palestin pada peta ini
     if (regionNames && p.a2) {
       try { const n = regionNames.of(p.a2); if (n && n !== p.a2) return n; } catch (e) { /* kod tidak sah */ }
     }
