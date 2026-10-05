@@ -29,7 +29,7 @@ import { bina } from './peta.mjs';
 const run = promisify(execFile);
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const CACHE = join(ROOT, '.cache'), OUT = join(ROOT, 'aset', 'rujukan'), TMP = join(tmpdir(), 'padan-pdf');
-const VERSI = 3, SAMPEL = 12, SELARI = 4, MAX_MB = 350;
+const VERSI = 4, SAMPEL = 12, SELARI = 4, MAX_MB = 350;
 const DEADLINE = Date.now() + (+process.env.PADAN_MINIT || 24) * 60000;
 const UA = 'Mozilla/5.0 (BijakLabur rujukan; +https://bijaklabur.my)';
 const summary = s => process.env.GITHUB_STEP_SUMMARY ? appendFile(process.env.GITHUB_STEP_SUMMARY, s + '\n') : null;
@@ -105,7 +105,8 @@ async function baca(file, p, ocr) {
   }
   const png = join(TMP, `p${p}`);
   await run('pdftoppm', ['-f', p, '-l', p, '-r', '200', '-gray', '-png', '-singlefile', file, png]).catch(() => {});
-  const { stdout } = await run('tesseract', [png + '.png', '-', '-l', 'ara', '--psm', '6'], { maxBuffer: 1 << 24 }).catch(() => ({ stdout: '' }));
+  // Satu bebenang bagi setiap proses tesseract: beberapa proses serentak dengan OpenMP berbilang bebenang menjadi sangat perlahan
+  const { stdout } = await run('tesseract', [png + '.png', '-', '-l', 'ara', '--psm', '6'], { maxBuffer: 1 << 24, env: { ...process.env, OMP_THREAD_LIMIT: '1' } }).catch(() => ({ stdout: '' }));
   await rm(png + '.png', { force: true });
   return stdout;
 }
@@ -134,7 +135,11 @@ async function selari(items, fn) {
   await Promise.all(Array.from({ length: SELARI }, async () => { while (q.length && masa()) await fn(q.shift()); }));
 }
 
-/* Langkah 1: sampel. Diterima jika >= 65% sampel sepadan dan halaman Shamela menaik mengikut muka surat PDF */
+/*
+ * Langkah 1: sampel. Diterima jika sekurang-kurangnya 4 sampel (35%) sepadan dan halaman Shamela menaik mengikut muka surat
+ * PDF. Edisi bertahqiq mempunyai banyak muka surat mukadimah, nota kaki dan indeks yang tidak sepadan, manakala syarah
+ * (yang mengandungi matan) jarang mencapai ambang padanan kerana teks matan bercampur dengan huraian.
+ */
 async function semakSampel(file, np, halaman) {
   const ps = [...new Set(Array.from({ length: SAMPEL }, (_, i) => Math.max(1, Math.round(np * (0.05 + 0.9 * i / (SAMPEL - 1))))))];
   const hasil = [];
@@ -144,7 +149,7 @@ async function semakSampel(file, np, halaman) {
   let naik = 0;
   for (let i = 1; i < ok.length; i++) if (ok[i].n >= ok[i - 1].n) naik++;
   console.log(`    ${np} muka surat; sampel (PDF→Shamela): ${hasil.map(h => h.n ? `${h.p}→${h.n}(${h.s})` : `${h.p}:x`).join(' ')}`);
-  return ok.length >= hasil.length * 0.65 && naik >= (ok.length - 1) * 0.85;
+  return ok.length >= Math.max(4, hasil.length * 0.35) && naik >= (ok.length - 1) * 0.85;
 }
 
 /* Langkah 2: baca semua muka surat yang belum dibaca */
@@ -168,7 +173,9 @@ const simpan = async () => { await mkdir(CACHE, { recursive: true }); await writ
 await mkdir(TMP, { recursive: true });
 await summary('### PDF cetakan kitab (padanan OCR)\n\n| Kitab | Penerbit | Edisi | PDF | Halaman Shamela dipetakan |\n|---|---|---|---|---|');
 
-for (const b of KITAB) {
+// Kitab yang sudah diketahui mempunyai PDF sepadan didahulukan supaya had masa tidak dihabiskan pada calon yang ditolak
+const TERTIB = ['fathqarib', 'manhaji', 'abisyuja', 'minhaj'];
+for (const b of [...KITAB].sort((x, y) => (TERTIB.indexOf(x.k) + 1 || 99) - (TERTIB.indexOf(y.k) + 1 || 99))) {
   console.log(`\n=== ${b.k} (Shamela ${b.id})`);
   const c = cache.kitab[b.k] ||= { cuba: {} };
   let halaman;
@@ -197,6 +204,7 @@ for (const b of KITAB) {
         await muatTurun([url, ...servers.map(s => `${s}/${nama}`)], file);
         const np = +((await run('pdfinfo', [file])).stdout.match(/Pages:\s+(\d+)/) || [])[1] || 0;
         if (!lama && !(np > 1 && await semakSampel(file, np, halaman))) {
+          if (!masa()) { console.log('    had masa: sampel belum lengkap'); continue; }
           console.log('    ditolak: bukan teks kitab yang sama');
           (c.ditolak ||= []).push(url);
           continue;
