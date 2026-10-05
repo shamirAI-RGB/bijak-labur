@@ -419,7 +419,7 @@ WLY02|Wilayah Persekutuan|Labuan`.split('\n').map(l => { const [jakimCode, neger
   const cityDlg = document.createElement('dialog');
   cityDlg.className = 'city-dlg'; cityDlg.setAttribute('aria-labelledby', 'cityTitle');
   cityDlg.innerHTML = `<h2 id="cityTitle">Waktu solat di luar Malaysia</h2>
-    <p class="muted small">Cari bandar di mana-mana negara. Waktu dikira oleh Aladhan mengikut kaedah pihak berkuasa terdekat (Asar mazhab Syafie), dalam zon waktu bandar itu.</p>
+    <p class="muted small">Cari bandar di mana-mana negara. Waktu dikira mengikut kaedah pihak berkuasa terdekat (Asar mazhab Syafie), dalam zon waktu bandar itu.</p>
     <form id="cityForm" class="inline-form"><input id="cityQ" placeholder="Cth. London, Makkah, Tokyo" autocomplete="off" required minlength="2"><button class="btn" type="submit">${icon('search')}Cari</button></form>
     <ul class="city-list" id="cityList"></ul>
     <div class="actions end"><button type="button" class="btn ghost" id="cityClose">Tutup</button></div>`;
@@ -438,7 +438,7 @@ WLY02|Wilayah Persekutuan|Labuan`.split('\n').map(l => { const [jakimCode, neger
       list.onclick = ev => {
         const b = ev.target.closest('[data-i]'); if (!b) return;
         const r = res[+b.dataset.i];
-        if (r.country_code === 'MY') { cityDlg.close(); toast('Untuk Malaysia, pilih zon JAKIM atau tekan Lokasi saya.'); return; }
+        if (r.country_code === 'MY') { cityDlg.close(); toast('Untuk Malaysia, pilih zon rasmi atau tekan Lokasi saya.'); return; }
         cityDlg.close();
         useZone('GL', { name: r.name, country: r.country || '', lat: r.latitude, lon: r.longitude, tz: r.timezone });
         toast(`Waktu solat untuk ${r.name}`);

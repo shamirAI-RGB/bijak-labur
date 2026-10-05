@@ -97,7 +97,7 @@ const FiqhData = (() => {
       q: ['2:43', '4:103'], h: ['b8'], app: ['#solat', 'Lihat waktu solat zon anda'] },
     { bab: 'solat', k: 'waktu', t: 'Waktu solat', hukum: 'wajib',
       ringkas: 'Solat ialah kewajipan yang ditentukan waktunya. Menunaikan solat sebelum masuk waktu tidak sah, dan melewatkannya hingga keluar waktu tanpa uzur adalah berdosa.',
-      q: ['4:103', '17:78'], app: ['#solat', 'Waktu solat rasmi JAKIM untuk zon anda'] },
+      q: ['4:103', '17:78'], app: ['#solat', 'Waktu solat rasmi untuk zon anda'] },
     { bab: 'solat', k: 'fatihah', t: 'Membaca al-Fatihah dalam setiap rakaat', hukum: 'wajib',
       ringkas: 'Dalam mazhab Syafie, membaca al-Fatihah ialah rukun solat dalam setiap rakaat, bagi imam, makmum dan orang yang solat bersendirian.',
       h: ['b756'], app: ['#ibadah/quran/1', 'Buka Surah al-Fatihah'] },

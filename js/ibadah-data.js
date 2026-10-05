@@ -207,7 +207,7 @@ const IbadahData = (function () {
   };
 
   const FAQ = [
-    ['Dari mana waktu solat diambil?', 'Daripada data rasmi JAKIM melalui api.waktusolat.app, mengikut zon yang anda pilih. Data disimpan dalam peranti untuk kegunaan luar talian.'],
+    ['Dari mana waktu solat diambil?', 'Daripada data waktu solat rasmi Malaysia, mengikut zon yang anda pilih. Data disimpan dalam peranti untuk kegunaan luar talian.'],
     ['Kenapa tarikh Hijri berbeza sehari?', 'Kalendar dikira mengikut Umm al-Qura. Malaysia menentukan awal bulan melalui rukyah dan hisab, jadi tarikh boleh berbeza sehari. Laraskan dalam Tetapan.'],
     ['Adakah Al-Quran boleh dibaca tanpa internet?', 'Surah yang pernah dibuka disimpan dalam peranti dan boleh dibaca semula tanpa internet. Audio memerlukan internet.'],
     ['Di mana data saya disimpan?', 'Semua rekod solat, tasbih, penanda dan profil disimpan dalam peranti anda sahaja. Tiada akaun diperlukan.'],

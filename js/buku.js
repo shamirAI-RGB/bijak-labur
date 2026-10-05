@@ -84,12 +84,12 @@
     if (t === 'podcast') body = `<h3>${esc(h.tajuk)}</h3><div class="row-gap"><button class="btn" type="button" data-act="${S.play ? 'henti' : 'main'}">${icon(S.play ? 'pause' : 'play')}${S.play ? 'Henti' : 'Main podcast'}</button>
         <button class="btn ghost" type="button" data-act="skrip">${icon('download')}Skrip</button></div>
         <ol class="bk-pod">${h.baris.map((b, i) => `<li class="${b.penutur === 'A' ? 'a' : 'b'}${S.play && S.play.i === i ? ' now' : ''}"><b>${b.penutur === 'A' ? 'Aina' : 'Hakim'}</b><span>${esc(b.teks)}</span></li>`).join('')}</ol>`;
-    return `<div class="bk-out">${body}</div><div class="bk-foot">${h.penghala ? '<span class="muted small">Dijawab oleh model sandaran kerana Gemini sibuk.</span>' : ''}${go}</div>`;
+    return `<div class="bk-out">${body}</div><div class="bk-foot">${h.penghala ? '<span class="muted small">Dijawab oleh model sandaran kerana AI utama sibuk.</span>' : ''}${go}</div>`;
   }
 
   function render() {
     root.innerHTML = `<div class="page-head"><p class="eyebrow">Belajar dengan AI</p><h1 id="h-buku">Buku Nota AI</h1>
-        <p class="lead">Muat naik nota kuliah atau bab buku, kemudian tanya soalan, buat ringkasan, kuiz, kad imbas dan podcast. Diilhamkan oleh Open Notebook: AI hanya menjawab daripada sumber anda, dengan petikan yang disahkan.</p></div>
+        <p class="lead">Muat naik nota kuliah atau bab buku, kemudian tanya soalan, buat ringkasan, kuiz, kad imbas dan podcast. AI hanya menjawab daripada sumber anda, dengan petikan yang disahkan.</p></div>
       <div class="bk-grid">${sumberHTML()}
         <div class="card bk-studio">
           <div class="row-between bk-head"><div class="segmented bk-tabs" role="tablist">${TABS.map(([k, n]) => `<button role="tab" class="seg${S.tab === k ? ' active' : ''}" aria-selected="${S.tab === k}" data-tab="${k}">${n}</button>`).join('')}</div>
@@ -97,7 +97,7 @@
           ${!active().length ? `<div class="bk-empty"><p class="muted">Tambah sekurang-kurangnya satu sumber untuk bermula.</p></div>` : S.tab === 'tanya' ? tanyaHTML() : hasilHTML(S.tab)}
           ${S.err ? `<p class="error">${esc(S.err)}</p>` : ''}
         </div></div>
-      <p class="note">${icon('alert')}<span>AI boleh tersilap walaupun berpandukan sumber. Semak petikan sebelum menggunakan jawapan dalam tugasan. Teks sumber dihantar kepada Google (Gemini) untuk diproses dan tidak disimpan di pelayan Bijak Labur. Jangan muat naik dokumen sulit atau maklumat peribadi.</span></p>`;
+      <p class="note">${icon('alert')}<span>AI boleh tersilap walaupun berpandukan sumber. Semak petikan sebelum menggunakan jawapan dalam tugasan. Teks sumber dihantar kepada penyedia AI untuk diproses dan tidak disimpan di pelayan Bijak Labur. Jangan muat naik dokumen sulit atau maklumat peribadi.</span></p>`;
     const chat = $('.bk-chat', root); if (chat) chat.scrollTop = chat.scrollHeight;
   }
 

@@ -245,7 +245,7 @@
       try {
         const j = await getJSON(`https://${wiki}.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&redirects=1&titles=${encodeURIComponent(t)}&format=json&origin=*`);
         const p = Object.values(j.query.pages)[0];
-        return { name: 'Wikipedia: ' + p.title, kind: 'Wikipedia', url: `https://${wiki}.wikipedia.org/wiki/${encodeURIComponent(p.title.replace(/ /g, '_'))}`, text: p.extract || '' };
+        return { name: 'Ensiklopedia: ' + p.title, kind: 'Ensiklopedia', url: `https://${wiki}.wikipedia.org/wiki/${encodeURIComponent(p.title.replace(/ /g, '_'))}`, text: p.extract || '' };
       } catch { return null; }
     }));
     return pages.filter(p => p && p.text);
@@ -269,26 +269,26 @@
     const j = await getJSON(`https://api.openalex.org/works?search=${q}&per_page=3&select=id,display_name,doi,publication_year,abstract_inverted_index`);
     return (j.results || []).filter(w => w.abstract_inverted_index).map(w => {
       const pos = []; Object.entries(w.abstract_inverted_index).forEach(([word, idx]) => idx.forEach(i => { pos[i] = word; }));
-      return article('OpenAlex', w.display_name, w.publication_year, w.doi || w.id, w.doi, pos.filter(Boolean).join(' '));
+      return article('Jurnal akademik', w.display_name, w.publication_year, w.doi || w.id, w.doi, pos.filter(Boolean).join(' '));
     });
   });
   // Crossref: metadata rasmi DOI daripada penerbit, termasuk abstrak jika penerbit menyediakannya
   const crossref = (sents, tick) => searchEach(sents, 5, 12, tick, async q => {
     const j = await getJSON(`https://api.crossref.org/works?query=${q}&rows=4&select=DOI,title,abstract,published,URL`);
     return (j.message && j.message.items || []).filter(w => w.abstract).map(w =>
-      article('Crossref', (w.title || [''])[0], w.published && w.published['date-parts'] && w.published['date-parts'][0][0], w.URL || `https://doi.org/${w.DOI}`, w.DOI, w.abstract));
+      article('Pangkalan DOI', (w.title || [''])[0], w.published && w.published['date-parts'] && w.published['date-parts'][0][0], w.URL || `https://doi.org/${w.DOI}`, w.DOI, w.abstract));
   });
   // Semantic Scholar: abstrak merentas semua bidang (had kadar ketat, jadi sedikit carian sahaja)
   const semScholar = (sents, tick) => searchEach(sents, 3, 10, tick, async q => {
     const j = await getJSON(`https://api.semanticscholar.org/graph/v1/paper/search?query=${q}&limit=4&fields=title,abstract,year,url,externalIds`);
-    return (j.data || []).filter(w => w.abstract).map(w => article('Semantic Scholar', w.title, w.year, w.url, w.externalIds && w.externalIds.DOI, w.abstract));
+    return (j.data || []).filter(w => w.abstract).map(w => article('Jurnal akademik', w.title, w.year, w.url, w.externalIds && w.externalIds.DOI, w.abstract));
   });
   // DOAJ: jurnal akses terbuka, termasuk banyak jurnal universiti Malaysia
   const doaj = (sents, tick) => searchEach(sents, 4, 8, tick, async q => {
     const j = await getJSON(`https://doaj.org/api/search/articles/${q}?pageSize=4`);
     return (j.results || []).map(r => r.bibjson || {}).filter(b => b.abstract).map(b => {
       const doi = (b.identifier || []).find(x => /doi/i.test(x.type));
-      return article('DOAJ', b.title, b.year, (b.link || [])[0] && b.link[0].url || (doi && `https://doi.org/${doi.id}`), doi && doi.id, b.abstract);
+      return article('Jurnal akses terbuka', b.title, b.year, (b.link || [])[0] && b.link[0].url || (doi && `https://doi.org/${doi.id}`), doi && doi.id, b.abstract);
     });
   });
   // Europe PMC: sains hayat dan kesihatan; teks penuh dimuat turun untuk artikel akses terbuka
@@ -296,7 +296,7 @@
     const hits = await searchEach(sents, 4, 6, tick, async q => {
       const j = await getJSON(`https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=${q}&format=json&resultType=core&pageSize=3`);
       return (j.resultList && j.resultList.result || []).filter(w => w.abstractText).map(w => Object.assign(
-        article('Europe PMC', w.title, w.pubYear, w.doi ? `https://doi.org/${w.doi}` : `https://europepmc.org/article/${w.source}/${w.id}`, w.doi, w.abstractText),
+        article('Jurnal sains kesihatan', w.title, w.pubYear, w.doi ? `https://doi.org/${w.doi}` : `https://europepmc.org/article/${w.source}/${w.id}`, w.doi, w.abstractText),
         { pmcid: w.isOpenAccess === 'Y' && w.pmcid }));
     });
     await Promise.all(hits.filter(h => h.pmcid).slice(0, 3).map(async h => {
@@ -435,7 +435,7 @@
         : `<div class="diff"><del>${esc(vis(s.orig)) || '␣'}</del> → <ins>${esc(vis(s.rep)) || '(buang)'}</ins></div>`;
       const acts = s.applied ? 'Diterima' : s.dismissed ? 'Diabaikan'
         : `${s.rep !== null ? `<button class="btn sm" data-apply="${s.id}">Terima</button>` : ''}<button class="btn sm ghost" data-dismiss="${s.id}">Abaikan</button>`;
-      return `<div class="sugg ${s.applied || s.dismissed ? 'done' : ''}" id="sg-${s.id}" style="--c:${c.c}"><div class="cat">${c.name}${s.src === 'LanguageTool' ? ' · LT' : ''}</div>${diff}<div class="why">${esc(s.msg)}</div><div class="acts">${acts}</div></div>`;
+      return `<div class="sugg ${s.applied || s.dismissed ? 'done' : ''}" id="sg-${s.id}" style="--c:${c.c}"><div class="cat">${c.name}${s.src === 'LanguageTool' ? ' · lanjutan' : ''}</div>${diff}<div class="why">${esc(s.msg)}</div><div class="acts">${acts}</div></div>`;
     }).join('');
   }
 
@@ -481,7 +481,7 @@
   function renderSources() {
     const p = state.plag, t = state.orig;
     if (!p.perSource.length) {
-      $('#sourceList').innerHTML = `<p class="muted small">${p.checked ? `Tiada padanan ketara ditemui dalam ${p.nSearched} sumber yang disemak.` : 'Aktifkan carian dalam talian atau tampal teks sumber untuk semakan plagiarisme.'} Nota: semakan ini meliputi Wikipedia, abstrak artikel akademik (OpenAlex) dan teks yang anda tampal, bukan pangkalan data tertutup seperti Turnitin.</p>`;
+      $('#sourceList').innerHTML = `<p class="muted small">${p.checked ? `Tiada padanan ketara ditemui dalam ${p.nSearched} sumber yang disemak.` : 'Aktifkan carian dalam talian atau tampal teks sumber untuk semakan plagiarisme.'} Nota: semakan ini meliputi ensiklopedia dalam talian, abstrak artikel akademik dan teks yang anda tampal, bukan pangkalan data tertutup sistem semakan universiti.</p>`;
       return;
     }
     $('#sourceList').innerHTML = `<p class="muted small src-sum">${p.perSource.length} daripada ${p.nSearched} sumber yang disemak mempunyai teks yang sama. Klik sumber untuk melihat petikan sebelah-menyebelah.</p>` + p.perSource.map(s => {
@@ -570,7 +570,7 @@
       let sugg = localSuggestions(text, lang);
       if ($('#optLT').checked && lang === 'en') {
         prog('Menyemak tatabahasa…');
-        try { sugg = sugg.concat(await languageTool(text, lang)); } catch { toast('Semakan LanguageTool tidak tersedia; guna semakan asas.'); }
+        try { sugg = sugg.concat(await languageTool(text, lang)); } catch { toast('Semakan tatabahasa lanjutan tidak tersedia; guna semakan asas.'); }
       }
       if (expertP) {
         prog('Ulasan pakar sedang menilai…');

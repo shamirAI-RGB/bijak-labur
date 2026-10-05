@@ -94,7 +94,7 @@
         <div>
           <p class="eyebrow">Untuk pelajar UiTM</p>
           <h1 id="h-jadual">Jadual kelas</h1>
-          <p class="lead">${S.items.length ? esc(`${S.campusName || 'Kampus ' + S.campus}${S.label ? ' · ' + S.label : ''}`) : 'Pilih kampus, masukkan kod kursus dan kumpulan anda, dan jadual mingguan anda tersusun sendiri daripada data rasmi iCress UiTM.'}</p>
+          <p class="lead">${S.items.length ? esc(`${S.campusName || 'Kampus ' + S.campus}${S.label ? ' · ' + S.label : ''}`) : 'Pilih kampus, masukkan kod kursus dan kumpulan anda, dan jadual mingguan anda tersusun sendiri daripada data jadual rasmi UiTM.'}</p>
         </div>
         ${S.items.length && !ui.editing ? `<div class="jd-head-acts">
           <button class="btn sm ghost" data-act="edit">${icon('sliders')}Urus kursus</button>
@@ -103,7 +103,7 @@
       ${S.demo && S.items.length ? `<p class="jd-demo">${icon('alert')}<span>Ini jadual contoh. Tekan <b>Urus kursus</b> untuk membina jadual anda sendiri.</span></p>` : ''}
       ${ui.editing ? setupHTML() : ''}
       ${S.items.length && !ui.editing ? viewHTML() : ''}
-      <p class="note">${icon('alert')}<span>Data jadual dibaca daripada laman awam iCress UiTM dan boleh berubah. Sahkan dengan jadual rasmi di MyStudent. Bijak Labur tidak bergabung dengan UiTM.</span></p>`;
+      <p class="note">${icon('alert')}<span>Data jadual dibaca daripada sumber jadual awam UiTM dan boleh berubah. Sahkan dengan jadual rasmi di MyStudent. Bijak Labur tidak bergabung dengan UiTM.</span></p>`;
     if (ui.editing) bindSetup(); else bindView();
   }
 
@@ -195,7 +195,7 @@
           <button class="seg${ui.mode === 'hari' ? ' active' : ''}" data-mode="hari" role="tab" aria-selected="${ui.mode === 'hari'}">Hari</button>
         </div>
         <div class="jd-acts">
-          <button class="icon-btn" data-act="refresh" aria-label="Kemas kini daripada iCress" title="Kemas kini daripada iCress">${icon('refresh')}</button>
+          <button class="icon-btn" data-act="refresh" aria-label="Kemas kini jadual" title="Kemas kini jadual">${icon('refresh')}</button>
           <button class="icon-btn" data-act="ics" aria-label="Simpan ke kalendar telefon" title="Simpan ke kalendar">${icon('calendar')}</button>
         </div>
       </div>
@@ -205,7 +205,7 @@
         <div><b>${esc(it.course)}</b> <span class="muted">${esc(it.group)}</span><div class="small muted">${esc(nice(it.name))}</div></div>
         <span class="small muted num">${dur(it.slots.reduce((a, s) => a + s.e - s.s, 0))}</span>
       </div>`).join('')}</div>
-      ${S.updated && !S.demo ? `<p class="source">Dikemas kini ${new Date(S.updated).toLocaleString('ms-MY', { dateStyle: 'medium', timeStyle: 'short' })} daripada iCress UiTM</p>` : ''}
+      ${S.updated && !S.demo ? `<p class="source">Dikemas kini ${new Date(S.updated).toLocaleString('ms-MY', { dateStyle: 'medium', timeStyle: 'short' })}</p>` : ''}
       <div class="card jd-save">
         <h3>Simpan dan kongsi jadual</h3>
         <div class="jd-save-g">

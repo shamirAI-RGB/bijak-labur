@@ -399,7 +399,7 @@
       </div>
       <div class="chips" id="learnTabs" role="tablist" aria-label="Modul"></div>
       <div id="learnContent"></div>
-      <p class="note"><svg class="ic"><use href="#i-alert"/></svg><span>Kandungan ini untuk pendidikan sahaja dan bukan nasihat kewangan. Pelaburan melibatkan risiko, termasuk kehilangan modal. Bijak Labur tidak bergabung dengan Moomoo atau Futu.</span></p>
+      <p class="note"><svg class="ic"><use href="#i-alert"/></svg><span>Kandungan ini untuk pendidikan sahaja dan bukan nasihat kewangan. Pelaburan melibatkan risiko, termasuk kehilangan modal. Bijak Labur tidak bergabung dengan mana-mana broker yang disebut.</span></p>
     </section>
 
     <!-- PASARAN -->
@@ -454,7 +454,7 @@
           </form>
           <div id="alList"></div>
         </div>
-        <p class="source">Sumber: Binance (data pasaran awam, masa nyata). CoinGecko digunakan jika sambungan terputus.</p>
+        <p class="source">Data pasaran awam, dikemas kini secara masa nyata.</p>
       </div>
 
       <div id="seg-stock" class="hidden">
@@ -466,11 +466,11 @@
         <div class="card flush"><div id="tvStock" class="tv-box"></div></div>
         <div class="card">
           <h3>Bursa Malaysia</h3>
-          <p class="muted small">Penyedia carta percuma tidak membenarkan paparan data Bursa dalam app pihak ketiga. Buka kaunter di bawah dalam Moomoo atau TradingView.</p>
+          <p class="muted small">Carta Bursa Malaysia belum boleh dipaparkan di sini. Buka kaunter di bawah dalam app broker anda.</p>
           <div class="list" id="bursaList"></div>
         </div>
         <div class="card flush"><div id="tvMovers" class="tv-box short"></div></div>
-        <p class="source">Carta saham AS oleh TradingView. Sahkan harga dalam Moomoo sebelum membuat transaksi.</p>
+        <p class="source">Sahkan harga dalam app broker anda sebelum membuat transaksi.</p>
       </div>
     </section>
 
@@ -541,7 +541,7 @@
 
       <div class="block-head"><h2 id="monthTitle">Jadual bulanan</h2></div>
       <div class="card flush"><div class="tbl-wrap"><table id="monthTable" class="month"></table></div></div>
-      <p class="source">Data waktu solat rasmi JAKIM melalui api.waktusolat.app. Disimpan dalam peranti untuk kegunaan luar talian. Arah kiblat dikira daripada koordinat Kaabah (21.4225° U, 39.8262° T).</p>
+      <p class="source">Data waktu solat rasmi Malaysia. Disimpan dalam peranti untuk kegunaan luar talian. Arah kiblat dikira daripada koordinat Kaabah (21.4225° U, 39.8262° T).</p>
     </section>
 
     <!-- PUSTAKA KANAK-KANAK -->
@@ -593,19 +593,19 @@
             <label for="sources">Teks sumber untuk dibandingkan <span class="muted">(pilihan)</span></label>
             <textarea id="sources" class="short" placeholder="Tampal teks rujukan atau kerja pelajar lain. Pisahkan setiap sumber dengan baris ---"></textarea>
           </div>
-          <label class="check"><input type="checkbox" id="optWeb" checked><span>Cari padanan dalam talian (Wikipedia dan 5 pangkalan artikel akademik)</span></label>
+          <label class="check"><input type="checkbox" id="optWeb" checked><span>Cari padanan dalam talian (ensiklopedia dan 5 pangkalan artikel akademik)</span></label>
           <label class="check"><input type="checkbox" id="optExpert" checked><span>Ulasan pakar AI: markah rubrik dan tatabahasa Bahasa Melayu baku (DBP) serta Inggeris</span></label>
-          <label class="check"><input type="checkbox" id="optRefs" checked><span>Sahkan senarai rujukan (Crossref dan OpenAlex) dan padanan sitasi</span></label>
-          <label class="check"><input type="checkbox" id="optLT" checked><span>Semakan tatabahasa LanguageTool (teks Inggeris)</span></label>
+          <label class="check"><input type="checkbox" id="optRefs" checked><span>Sahkan senarai rujukan (pangkalan DOI akademik) dan padanan sitasi</span></label>
+          <label class="check"><input type="checkbox" id="optLT" checked><span>Semakan tatabahasa lanjutan (teks Inggeris)</span></label>
           <button class="btn block" id="checkBtn">Semak sekarang</button>
-          <p class="muted small privacy-note">Analisis asas dibuat dalam peranti anda. Jika pilihan di atas ditanda, petikan teks dihantar ke Wikipedia, pangkalan artikel akademik (OpenAlex, Crossref, Semantic Scholar, DOAJ, Europe PMC) dan LanguageTool, dan teks penuh dihantar melalui pelayan Bijak Labur kepada Google Gemini untuk ulasan pakar. Teks tidak disimpan oleh pelayan Bijak Labur.</p>
+          <p class="muted small privacy-note">Analisis asas dibuat dalam peranti anda. Jika pilihan di atas ditanda, petikan teks dihantar ke pangkalan rujukan awam dan perkhidmatan semakan tatabahasa, dan teks penuh dihantar melalui pelayan Bijak Labur kepada penyedia AI untuk ulasan pakar. Teks tidak disimpan oleh pelayan Bijak Labur.</p>
         </div>
       </div>
 
       <div id="results" class="hidden">
         <div class="card">
           <div class="gauges" id="gauges"></div>
-          <p class="muted small center">Peratus di atas ialah anggaran berdasarkan ciri statistik teks dan carian sumber terbuka. Ia bukan bukti muktamad dan tidak setara dengan Turnitin.</p>
+          <p class="muted small center">Peratus di atas ialah anggaran berdasarkan ciri statistik teks dan carian sumber terbuka. Ia bukan bukti muktamad dan tidak setara dengan sistem semakan rasmi universiti.</p>
         </div>
         <div class="card hidden"><h3>Ulasan pakar</h3><div id="expertBox"></div></div>
         <div class="card hidden"><h3>Semakan rujukan</h3><div id="refBox"></div></div>
@@ -676,7 +676,7 @@
                   <div class="field hidden" id="pfPriceWrap"><label for="pfPrice">Harga semasa seunit</label><input id="pfPrice" type="number" step="any" min="0" inputmode="decimal"></div>
                   <button class="btn" type="submit"><svg class="ic"><use href="#i-plus"/></svg>Tambah</button>
                 </form>
-                <p class="muted small">Harga kripto dikemas kini secara langsung dari Binance. Harga saham anda kemas kini sendiri dalam jadual (semak dalam Moomoo). Data disimpan dalam peranti ini sahaja.</p>
+                <p class="muted small">Harga kripto dikemas kini secara langsung. Harga saham anda kemas kini sendiri dalam jadual (semak dalam app broker anda). Data disimpan dalam peranti ini sahaja.</p>
               </div>
             </div>
           </div>
@@ -772,11 +772,11 @@
             <button class="btn sm ghost" type="button" id="storeRestore">Pulihkan pembelian</button>
             <button class="btn sm ghost" type="button" id="storeManage">Urus langganan</button>
           </div>
-          <p class="muted small" data-web-only>Bayaran diproses dengan selamat oleh ToyyibPay melalui FPX (RHB, Maybank, CIMB, Bank Islam dan bank lain) atau kad debit dan kredit. Bijak Labur tidak menyimpan butiran bank atau kad anda. <a href="terma.html">Terma dan polisi bayaran balik</a>.</p>
+          <p class="muted small" data-web-only>Bayaran diproses dengan selamat oleh gerbang pembayaran berlesen melalui FPX (RHB, Maybank, CIMB, Bank Islam dan bank lain) atau kad debit dan kredit. Bijak Labur tidak menyimpan butiran bank atau kad anda. <a href="terma.html">Terma dan polisi bayaran balik</a>.</p>
           <details class="card restore" id="restore" data-web-only>
             <summary>Sudah membayar? Aktifkan Premium pada akaun anda</summary>
             <form id="restoreForm" class="form-grid" autocomplete="on">
-              <div class="field"><label for="restoreCode">Kod bil ToyyibPay</label><input id="restoreCode" placeholder="Dalam resit e-mel, cth. 8x2kf1ab" autocapitalize="off"></div>
+              <div class="field"><label for="restoreCode">Kod bil</label><input id="restoreCode" placeholder="Dalam resit e-mel, cth. 8x2kf1ab" autocapitalize="off"></div>
               <div class="field"><label for="restoreEmail">E-mel semasa membayar</label><input id="restoreEmail" type="email" autocomplete="email"></div>
               <button class="btn" id="restoreGo" type="submit">Aktifkan</button>
             </form>
@@ -794,7 +794,7 @@
       <div class="field"><label for="payName">Nama penuh</label><input id="payName" autocomplete="name" required maxlength="60"></div>
       <div class="field"><label for="payEmail">E-mel</label><input id="payEmail" type="email" autocomplete="email" required maxlength="100"></div>
       <div class="field"><label for="payPhone">No. telefon</label><input id="payPhone" type="tel" autocomplete="tel" inputmode="tel" required placeholder="0123456789"></div>
-      <p class="muted small">Anda akan dibawa ke halaman ToyyibPay untuk membayar melalui FPX atau kad. Resit dan kod bil dihantar ke e-mel anda.</p>
+      <p class="muted small">Anda akan dibawa ke halaman pembayaran selamat untuk membayar melalui FPX atau kad. Resit dan kod bil dihantar ke e-mel anda.</p>
       <p class="err" id="payErr" role="alert"></p>
       <div class="actions end">
         <button class="btn ghost" type="button" id="payCancel">Batal</button>
@@ -806,8 +806,8 @@
   <div class="q-mini hidden" id="qMini" role="region" aria-label="Pemain Al-Quran"></div>
 
   <footer class="site-footer">
-    <p>Bijak Labur ialah projek pendidikan percuma dan bukan nasihat kewangan. Tidak bergabung dengan Moomoo, Futu, JAKIM atau Binance.</p>
-    <p><a href="privacy.html">Dasar privasi</a> · <button type="button" class="link-btn" data-say-settings>Tetapan suara</button> · <a href="terma.html">Terma</a> · Data: Binance, CoinGecko, TradingView, api.waktusolat.app, LanguageTool, Wikipedia, OpenAlex, Crossref, Semantic Scholar, DOAJ, Europe PMC, iCress UiTM.</p>
+    <p>Bijak Labur ialah projek pendidikan percuma dan bukan nasihat kewangan. Tidak bergabung dengan mana-mana broker, bursa atau badan rasmi yang disebut.</p>
+    <p><a href="privacy.html">Dasar privasi</a> · <button type="button" class="link-btn" data-say-settings>Tetapan suara</button> · <a href="terma.html">Terma</a></p>
   </footer>
 
   <nav class="tabbar" aria-label="Navigasi">

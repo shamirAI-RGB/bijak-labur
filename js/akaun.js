@@ -155,7 +155,7 @@ const Akaun = (function () {
     'auth/missing-verification-code': 'Masukkan kod 6 digit.',
     'auth/quota-exceeded': 'Had SMS harian telah dicapai. Cuba kaedah lain atau esok.',
     'auth/requires-recent-login': 'Sila log masuk semula, kemudian tetapkan kata laluan.',
-    'auth/unauthorized-domain': 'Domain ini belum dibenarkan dalam Firebase.',
+    'auth/unauthorized-domain': 'Domain ini belum dibenarkan untuk log masuk.',
     'auth/operation-not-allowed': 'Kaedah log masuk ini belum dihidupkan.',
     'auth/billing-not-enabled': 'Log masuk dengan SMS belum dibuka. Guna Google, Facebook atau e-mel buat masa ini.',
     'auth/invalid-app-credential': 'Pengesahan keselamatan gagal. Muat semula halaman dan cuba lagi.',
@@ -175,7 +175,7 @@ const Akaun = (function () {
       return;
     }
     const m = MSG[e.code];
-    if (m !== '') showErr(m || (e.message || 'Log masuk gagal.').replace(/^Firebase:\s*/, ''));
+    if (m !== '') showErr(m || (e.message || 'Log masuk gagal.').replace(/^Firebase:\s*/, '').replace(/\s*\(auth\/[\w-]+\)\.?/, ''));
   }
 
   async function social(kind) {

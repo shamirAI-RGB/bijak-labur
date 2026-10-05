@@ -100,16 +100,16 @@
     ['Umum', 'Perlukah saya daftar akaun?', 'Tidak buat masa ini. Anda boleh guna sebagai tetamu. Tetapan, profil dan rekod disimpan dalam peranti anda sahaja.'],
     ['Umum', 'Bagaimana pasang Bijak Labur seperti app?', 'Di iPhone, buka bijaklabur.my dalam Safari, tekan butang Kongsi, kemudian Add to Home Screen. Di Android, buka dalam Chrome dan tekan Install app, atau guna Pasang app dalam menu ini.'],
     ['Umum', 'Bolehkah saya guna tanpa internet?', 'Halaman utama, pelajaran dan waktu solat yang sudah dimuat turun boleh dibuka tanpa internet. Harga pasaran, audio Al-Quran dan semakan plagiat memerlukan internet.'],
-    ['Belajar & pasaran', 'Adakah ini nasihat kewangan?', 'Tidak. Bijak Labur ialah bahan pendidikan. Buat kajian sendiri dan rujuk penasihat berlesen sebelum melabur. Kami tidak bergabung dengan Moomoo atau Futu.'],
-    ['Belajar & pasaran', 'Dari mana harga kripto dan saham diambil?', 'Harga kripto masa nyata daripada Binance (CoinGecko sebagai sandaran). Carta saham AS daripada widget TradingView. Saham Bursa Malaysia dibuka di laman luar kerana tidak disediakan oleh widget percuma.'],
+    ['Belajar & pasaran', 'Adakah ini nasihat kewangan?', 'Tidak. Bijak Labur ialah bahan pendidikan. Buat kajian sendiri dan rujuk penasihat berlesen sebelum melabur. Kami tidak bergabung dengan mana-mana broker yang disebut.'],
+    ['Belajar & pasaran', 'Dari mana harga kripto dan saham diambil?', 'Harga kripto dan carta saham AS daripada data pasaran awam yang dikemas kini secara masa nyata. Untuk saham Bursa Malaysia, semak kaunter dalam app broker anda.'],
     ['Belajar & pasaran', 'Bagaimana tahu saham atau kripto patuh Syariah?', 'Bahagian Belajar dan Fiqh menerangkan kaedah saringan Suruhanjaya Sekuriti dan pandangan ulama, dengan rujukan. Untuk keputusan muktamad, rujuk senarai rasmi SC dan Majlis Penasihat Syariah.'],
-    ['Waktu solat & ibadah', 'Dari mana waktu solat diambil?', 'Daripada data rasmi JAKIM melalui api.waktusolat.app, mengikut zon yang anda pilih di halaman Waktu Solat.'],
+    ['Waktu solat & ibadah', 'Dari mana waktu solat diambil?', 'Daripada data waktu solat rasmi Malaysia, mengikut zon yang anda pilih di halaman Waktu Solat.'],
     ['Waktu solat & ibadah', 'Kenapa notifikasi azan tidak keluar?', 'Benarkan notifikasi apabila diminta. Di iPhone, notifikasi pelayar hanya berfungsi selepas laman dipasang ke Home Screen.'],
     ['Waktu solat & ibadah', 'Kenapa tarikh Hijri berbeza sehari?', 'Kalendar dikira mengikut Umm al-Qura. Malaysia menentukan awal bulan melalui rukyah dan hisab. Laraskan dalam Tetapan ibadah.'],
-    ['Semak kertas kerja', 'Setepat mana peratus AI dan plagiarisme?', 'Peratus AI ialah anggaran berdasarkan gaya penulisan, bukan bukti. Plagiarisme disemak terhadap Wikipedia dan pangkalan jurnal terbuka (OpenAlex, Crossref, Semantic Scholar, DOAJ, Europe PMC), bukan pangkalan peribadi Turnitin.'],
+    ['Semak kertas kerja', 'Setepat mana peratus AI dan plagiarisme?', 'Peratus AI ialah anggaran berdasarkan gaya penulisan, bukan bukti. Plagiarisme disemak terhadap ensiklopedia dalam talian dan pangkalan jurnal akademik terbuka, bukan pangkalan peribadi sistem semakan universiti.'],
     ['Semak kertas kerja', 'Adakah kertas kerja saya dimuat naik ke pelayan?', 'Teks diproses dalam pelayar anda. Hanya potongan ayat pendek dihantar ke enjin carian sumber terbuka untuk mencari padanan.'],
     ['Premium & bayaran', 'Bagaimana cuba Premium percuma?', 'Buka halaman Premium dan mulakan percubaan percuma 3 hari. Dalam app telefon, percubaan dan langganan diuruskan oleh Google Play atau App Store.'],
-    ['Premium & bayaran', 'Saya sudah bayar tetapi Premium tidak aktif.', 'Di laman web, buka halaman Premium, tekan "Sudah membayar? Aktifkan Premium pada peranti ini", kemudian masukkan kod bil ToyyibPay dan e-mel semasa membayar. Dalam app, guna akaun Google Play atau App Store yang sama. Jika masih gagal, hantar soalan kepada kami.']
+    ['Premium & bayaran', 'Saya sudah bayar tetapi Premium tidak aktif.', 'Di laman web, buka halaman Premium, tekan "Sudah membayar? Aktifkan Premium pada peranti ini", kemudian masukkan kod bil dan e-mel semasa membayar. Dalam app, guna akaun Google Play atau App Store yang sama. Jika masih gagal, hantar soalan kepada kami.']
   ];
   const root = $('#view-soalan');
   let rendered = false;
