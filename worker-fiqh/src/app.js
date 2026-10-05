@@ -15,7 +15,7 @@
  */
 import Anthropic from '@anthropic-ai/sdk';
 import { BY_ID, CORPUS_TEXT } from './corpus.js';
-import { DOC, search, expand, pagesText, pageUrl, cetakan } from './rujukan.js';
+import { DOC, search, expand, pagesText, pageUrl, cetakan, assetTag } from './rujukan.js';
 import { GEMINI_MODEL, GEMINI_FALLBACKS, geminiModels, geminiGenerate, geminiText } from './gemini.js';
 import { semak, MIN_CHARS, MAX_CHARS } from './semak.js';
 import { kalori, check as checkKalori } from './kalori.js';
@@ -262,7 +262,8 @@ async function tanya(req, env, url, h) {
   if (q.length < 5 || q.length > MAX_Q) return json({ error: `Soalan mesti antara 5 hingga ${MAX_Q} aksara.` }, 400, h);
 
   const cache = typeof caches !== 'undefined' ? caches.default : null;
-  const key = new Request(`${url.origin}/tanya-cache-2?q=${encodeURIComponent(norm(q))}`);
+  // Kunci cache mengandungi cap peta PDF kitab, supaya jawapan yang disimpan sebelum pemasangan baharu tidak dipaparkan lagi
+  const key = new Request(`${url.origin}/tanya-cache-3?q=${encodeURIComponent(norm(q))}&r=${await assetTag(env)}`);
   const hit = cache && await cache.match(key);
   if (hit) return json(await hit.json(), 200, h);
 

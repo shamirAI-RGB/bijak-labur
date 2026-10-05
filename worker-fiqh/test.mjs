@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import worker, { NOTA_PDF, kataKunci, verify, collectRetrieved, norm, normUrl, parseAnswer, MODEL, GEMINI_MODEL, GEMINI_FALLBACKS, DOMAINS } from './src/app.js';
 import { BY_ID, CORPUS_TEXT } from './src/corpus.js';
-import { MODEN, KITAB, buildIndex, search, expand, pageUrl, tokens, cetakan, cetakPdf } from './src/rujukan.js';
+import { MODEN, KITAB, buildIndex, search, expand, pageUrl, tokens, cetakan, cetakPdf, assetTag } from './src/rujukan.js';
 import { clean, semakBody, systemFor } from './src/semak.js';
 import { clean as cleanK, kaloriBody, check as checkK } from './src/kalori.js';
 import { blocked, check as checkG, promptBody, GAYA, FLUX } from './src/gambar.js';
@@ -270,6 +270,20 @@ greply = () => gem({ status: 'jawab', ringkasan: 'x', huraian: ['y'], sumber: [{
 d = await (await call({ q: 'Hukum jual beli emas dengan emas!' }, 'https://bijaklabur.my', { ...genv, ...kenv })).json();
 assert.deepEqual([d.sumber[0].pdf, d.sumber[0].pdf_url, d.sumber[0].penerbit, d.sumber[0].disahkan], [147, 'https://archive.org/download/x/x.pdf#page=147', 'Dar Ibn Hazm', true]);
 assert.equal(d.nota_pdf, undefined);
+
+// Cache jawapan: kunci mengandungi cap (ETag) peta PDF kitab, jadi pemasangan baharu dengan peta berbeza tidak memaparkan jawapan lama
+{
+  const puts = [];
+  globalThis.caches = { default: { match: async () => undefined, put: async req => { puts.push(req.url); } } };
+  const bertanda = tag => ({ ...genv, RUJUKAN: { fetch: async req => { const r = await kenv.RUJUKAN.fetch(req); return new Response(req.method === 'HEAD' ? null : r.body, { status: r.status, headers: { etag: `"${tag}"` } }); } } });
+  await call({ q: 'Hukum jual beli emas dengan emas!' }, 'https://bijaklabur.my', bertanda('peta1'));
+  await call({ q: 'Hukum jual beli emas dengan emas!' }, 'https://bijaklabur.my', bertanda('peta2'));
+  delete globalThis.caches;
+  assert.equal(puts.length, 2, 'jawapan disimpan dalam cache');
+  assert.ok(puts[0].includes('/tanya-cache-3?') && puts[0].endsWith('&r=peta1') && puts[1].endsWith('&r=peta2'), puts.join(' '));
+  assert.equal(await assetTag(genv), '');
+  assert.equal(await assetTag(kenv), '');
+}
 
 // Tanpa aset rujukan (muat turun gagal), Tanya AI tetap berjalan seperti biasa
 d = await (await call({ q: 'Apakah hukum melabur kripto lagi?' }, 'https://bijaklabur.my', genv)).json();
