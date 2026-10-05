@@ -621,7 +621,7 @@
       <div class="page-head">
         <p class="eyebrow">Untuk pelajar</p>
         <h1 id="h-semak">Semak kertas kerja</h1>
-        <p class="lead">Tampal teks atau muat naik fail. Anda akan dapat ulasan dan markah seperti pensyarah, pembetulan Bahasa Melayu baku dan Inggeris yang boleh diterima satu demi satu, pengesahan setiap rujukan, serta anggaran peratus AI dan plagiarisme.</p>
+        <p class="lead">Tampal teks atau muat naik fail. Anda akan dapat ulasan dan markah seperti pensyarah, pembetulan Bahasa Melayu baku dan Inggeris yang boleh diterima satu demi satu, pengesahan setiap rujukan, anggaran peratus AI dan plagiarisme, serta jadual tindakan seterusnya dan laporan audit yang boleh dimuat turun.</p>
       </div>
       <div class="checker-input">
         <div class="card">
@@ -653,6 +653,16 @@
         <div class="card">
           <div class="gauges" id="gauges"></div>
           <p class="muted small center">Peratus di atas ialah anggaran berdasarkan ciri statistik teks dan carian sumber terbuka. Ia bukan bukti muktamad dan tidak setara dengan sistem semakan rasmi universiti.</p>
+        </div>
+        <div class="card hidden" id="auditCard">
+          <div class="row-between wrap">
+            <h3>Tindakan seterusnya</h3>
+            <div class="row-gap">
+              <button class="btn sm ghost" id="auditCopy" type="button"><svg class="ic"><use href="#i-copy"/></svg>Salin laporan</button>
+              <button class="btn sm" id="auditDl" type="button"><svg class="ic"><use href="#i-download"/></svg>Laporan audit (.md)</button>
+            </div>
+          </div>
+          <div id="auditBox" aria-live="polite"></div>
         </div>
         <div class="card hidden"><h3>Ulasan pakar</h3><div id="expertBox"></div></div>
         <div class="card hidden"><h3>Semakan rujukan</h3><div id="refBox"></div></div>
@@ -881,6 +891,7 @@
   <script src="js/ibadah.js" defer></script>
   <script src="js/semak-pakar.js" defer></script>
   <script src="js/checker.js" defer></script>
+  <script src="js/semak-audit.js" defer></script>
   <script src="js/akaun.js" defer></script>
   <script src="js/premium.js" defer></script>
   <script src="js/pustaka-data.js" defer></script>

@@ -550,6 +550,7 @@
   window.CheckerReport = () => state.ai && {
     ai: state.ai.pct, plag: state.plag.checked ? state.plag.pct : null, quality: state.quality, text: state.text,
     stats: state.statItems || [], signals: state.ai.signals, sources: state.plag.perSource.map(s => ({ name: s.name, url: s.url, pct: s.pct })),
+    matches: state.plag.perSource.flatMap(s => s.matches.slice(0, 10).map(m => ({ src: s.name, type: m.type, sim: m.sim, text: state.orig.slice(m.ds, m.de) }))),
     expert: state.expert && !state.expert.error ? state.expert : null, refs: state.refs,
     sugg: state.sugg.filter(s => !s.dismissed).map(s => ({ cat: CATS[s.cat].name, from: s.orig, to: s.rep === null ? '(semak semula ayat)' : s.applied ? s.rep + ' (diterima)' : s.rep || '(buang)', why: s.msg }))
   };
