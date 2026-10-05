@@ -9,3 +9,4 @@
 - framer-motion 11.11.17, MIT: https://github.com/framer/motion (Pejabat AI Agent sahaja)
 - Adhan 4.4.6 (Batoul Apps), MIT: https://github.com/batoulapps/adhan-js (waktu solat anggaran luar talian)
 - Mermaid 11 (rajah dijana semasa pembinaan, bukan dimuat dalam pelayar), MIT: https://github.com/mermaid-js/mermaid
+- globe.gl 2.46.2 (Vasco Asturiano, termasuk three.js), MIT: https://github.com/vasturiano/globe.gl (Peta Dunia 3D sahaja). Tekstur `data/peta/bumi-gelap.jpg` daripada contoh three-globe (MIT); sempadan negara `data/peta/negara.json` daripada Natural Earth 1:110m (domain awam)
