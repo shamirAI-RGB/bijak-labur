@@ -43,6 +43,9 @@ jobs:
         continue-on-error: true
         run: node scripts/muat-rujukan.mjs
       - run: mkdir -p aset/rujukan
+      - name: Siasat PDF cetakan kitab
+        continue-on-error: true
+        run: node scripts/cari-pdf-kitab.mjs
       # Semak kunci Gemini dan uji setiap model dengan permintaan Tanya AI sebenar (tanpa mendedahkan kunci)
       - name: Semak Gemini
         if: env.HAS_GEMINI == 'true'
