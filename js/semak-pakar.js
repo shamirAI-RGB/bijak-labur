@@ -143,10 +143,11 @@
   const CHIP = { sah: ['Disahkan', 'up'], mungkin: ['Hampir sepadan', 'warn'], tiada: ['⚠ AMARAN MERAH', 'down'], laman: ['Laman web', 'info'], ralat: ['Tidak dapat disemak', 'muted'] };
   function refsHTML(r) {
     if (!r) return '';
+    const web = u => /^https?:\/\//i.test(u || '');
     if (!r.found) return '<p class="muted small">Tiada bahagian "Rujukan" atau "References" dikesan. Letakkan senarai rujukan di hujung teks di bawah tajuk Rujukan untuk disemak.</p>';
     const n = k => r.items.filter(i => i.status === k).length;
     return `<div class="rf-sum"><span class="rf-chip up">${n('sah')} disahkan</span><span class="rf-chip warn">${n('mungkin')} hampir sepadan</span><span class="rf-chip down">${n('tiada')} tidak dijumpai</span>${n('laman') ? `<span class="rf-chip info">${n('laman')} laman web</span>` : ''}</div>
-      <ol class="rf-list">${r.items.map(i => { const [l, c] = CHIP[i.status]; return `<li><span class="rf-chip ${c}">${l}</span><span class="rf-ref">${esc(i.ref)}</span>${i.title && i.status !== 'sah' ? `<span class="muted small">Paling hampir: ${i.url ? `<a href="${esc(i.url)}" target="_blank" rel="noopener">${esc(i.title)}</a>` : esc(i.title)}</span>` : i.url ? `<a class="small" href="${esc(i.url)}" target="_blank" rel="noopener">${esc(i.via || 'Buka')}</a>` : ''}${i.note ? `<span class="muted small">${esc(i.note)}</span>` : ''}</li>`; }).join('')}</ol>
+      <ol class="rf-list">${r.items.map(i => { const [l, c] = CHIP[i.status]; return `<li><span class="rf-chip ${c}">${l}</span><span class="rf-ref">${esc(i.ref)}</span>${i.title && i.status !== 'sah' ? `<span class="muted small">Paling hampir: ${web(i.url) ? `<a href="${esc(i.url)}" target="_blank" rel="noopener">${esc(i.title)}</a>` : esc(i.title)}</span>` : web(i.url) ? `<a class="small" href="${esc(i.url)}" target="_blank" rel="noopener">${esc(i.via || 'Buka')}</a>` : ''}${i.note ? `<span class="muted small">${esc(i.note)}</span>` : ''}</li>`; }).join('')}</ol>
       ${r.missing.length ? `<h4>Disitasi dalam teks tetapi tiada dalam senarai rujukan</h4><ul class="rf-plain">${r.missing.map(m => `<li>${esc(m)}</li>`).join('')}</ul>` : ''}
       ${r.unused.length ? `<h4>Dalam senarai rujukan tetapi tidak disitasi dalam teks</h4><ul class="rf-plain">${r.unused.map(m => `<li>${esc(m)}</li>`).join('')}</ul>` : ''}
       ${!r.missing.length && !r.unused.length && r.cites ? `<p class="muted small">${icon('check')} Semua ${r.cites} sitasi dalam teks sepadan dengan senarai rujukan.</p>` : ''}`;

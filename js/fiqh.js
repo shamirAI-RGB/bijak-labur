@@ -155,6 +155,7 @@
   function fillSources(my) {
     $$('[data-ayah]', el).forEach(async n => {
       const ref = n.dataset.ayah;
+      if (!/^\d{1,3}:\d{1,3}$/.test(ref)) return;
       try {
         const a = await ayah(ref); if (my !== seq) return;
         n.innerHTML = `<div class="row-between"><b>Surah ${esc(a.surah)} (${a.s}:${a.a})</b><span class="fq-links"><a class="link-btn" href="#ibadah/quran/${a.s}/${a.a}">Buka</a>${ext(`https://quran.com/${a.s}/${a.a}`, 'quran.com')}</span></div><p class="ar fq-ar" lang="ar" dir="rtl">${esc(a.ar)}</p><p class="fq-tr">${esc(a.ms)}</p>`;

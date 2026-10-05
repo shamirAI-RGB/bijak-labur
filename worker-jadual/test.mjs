@@ -129,5 +129,30 @@ assert.deepEqual(fromStudent(null), { items: [], dates: 0 });
   assert.equal((await req('abc1234567')).status, 400);
   status = 404; assert.equal((await req('2023999999')).status, 404);
   status = 500; assert.equal((await req('2023999999')).status, 502);
+  // Tanpa asal yang dibenarkan: ditolak sebelum menghubungi UiTM
+  asked = '';
+  r = await worker.fetch(new Request('https://j.example/pelajar?id=2023123456'), env2, null, { fetch: f, cache: null });
+  assert.equal(r.status, 403); assert.equal(asked, '');
+  // Had kadar
+  const tolak = { PELAJAR_LIMIT: { limit: async () => ({ success: false }) }, JADUAL_LIMIT: { limit: async () => ({ success: false }) } };
+  assert.equal((await worker.fetch(new Request('https://j.example/pelajar?id=2023123456', { headers: { origin: 'https://bijaklabur.my' } }), { ...env2, ...tolak }, null, { fetch: f, cache: null })).status, 429);
+  assert.equal((await worker.fetch(new Request('https://j.example/campuses'), { ...env2, ...tolak }, null, { fetch: f, cache: null })).status, 429);
+}
+
+// Parameter rawak tidak mengubah kunci cache
+{
+  const keys = [];
+  const cache = { match: async k => { keys.push(k.url); return new Response('{}', { headers: { 'content-type': 'application/json' } }); }, put: async () => {} };
+  await worker.fetch(new Request('https://j.example/courses?campus=b&x=1'), env, null, { fetch: fake, cache });
+  await worker.fetch(new Request('https://j.example/courses?zz=9&campus=B'), env, null, { fetch: fake, cache });
+  assert.deepEqual(keys, ['https://j.example/courses?campus=B', 'https://j.example/courses?campus=B']);
+}
+
+// Pautan iCress ke hos luar tidak diikuti (kuki sesi tidak bocor)
+{
+  const urls = [];
+  const f = async u => { urls.push(String(u)); return new Response('', { status: 302, headers: { location: 'https://jahat.example/curi' } }); };
+  const r = await worker.fetch(new Request('https://j.example/campuses'), env, null, { fetch: f, cache: null });
+  assert.equal(r.status, 502); assert.ok(urls.every(u => u.startsWith(BASE)));
 }
 console.log('Semua ujian pelayan jadual lulus');

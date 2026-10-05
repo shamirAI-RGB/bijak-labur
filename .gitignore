@@ -6,3 +6,9 @@ www/
 worker-fiqh/aset/
 .wrangler/
 worker-fiqh/.cache/
+.env
+.env.*
+.dev.vars
+*.pem
+*.p8
+*.p12
