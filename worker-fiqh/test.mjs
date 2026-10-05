@@ -10,6 +10,7 @@ import { geminiGenerate, toJsonSchema, ROUTER_MODEL } from './src/gemini.js';
 import { check as checkB, clean as cleanB, verifyQuotes, bukuBody, SCHEMAS as SB } from './src/buku.js';
 import { check as checkJ, clean as cleanJ, redact } from './src/kerja.js';
 import { check as checkM, clean as cleanM } from './src/manusia.js';
+import { check as checkA, clean as cleanA, normalZon, auditBody, systemFor as sysA } from './src/audit.js';
 
 const env = { ANTHROPIC_API_KEY: 'sk-test', ALLOWED_ORIGINS: 'https://bijaklabur.my' };
 const W = 'https://fiqh.example.workers.dev';
@@ -504,4 +505,76 @@ assert.equal(d.status, 'tidak_pasti');
   r = await post('/buku', { tugas: 'kad', sumber: [{ teks }] }, { ...aenv, AI: { run: async () => ({ response: { kad: [{ depan: 'Apa itu fotosintesis?', belakang: 'Proses membuat makanan.' }] } }) } });
   d = await r.json(); assert.equal(r.status, 200); assert.equal(d.kad.length, 1); assert.equal(d.penghala, 'workers-ai');
 }
+// Audit lanjutan Semak Kertas: rubrik tesis, NC industri, laras akademik, carta alir dan pelan lantai 20 x 80 kaki
+{
+  const T = 'Pengenalan. Kajian ini menilai pemprosesan ayam beku di sebuah kilang PKS. Ayam diterima dan disimpan dalam bilik sejuk pada suhu 10°C sebelum dipotong. ' +
+    'Pekerja tak perlu cuci tangan kerana mereka pakai sarung tangan. Ayam yang dah siap dibungkus terus dihantar dengan lori biasa. Kesimpulannya kilang ini bagus. '.repeat(2);
+  assert.equal(checkA({ text: 'pendek' }).error, 'Teks terlalu pendek untuk audit lanjutan.');
+  assert.equal(checkA({ text: 'x'.repeat(60001) }).status, 413);
+  assert.equal(checkA({ text: T, lang: 'en' }).lang, 'en');
+  assert.match(sysA('ms'), /NC \(Non-Conformance\)/);
+  assert.match(sysA('ms'), /bukan Bahasa Indonesia/);
+  assert.ok(JSON.parse(auditBody(T, 'ms')).generationConfig.responseSchema.properties.nc);
+  const ans = {
+    bidang: 'Sains Makanan: Keselamatan Makanan', profil: 'Pemeriksa Sains Makanan', soalan: 'Nilai pemprosesan ayam beku.',
+    rubrik: { pengenalan: { skor: 30, ulasan: 'Objektif kabur.', ada: true }, literatur: { skor: 4.3, ulasan: 'Tiada.', ada: true }, analisis: { skor: 10, ulasan: 'u', ada: true }, metodologi: { skor: 12, ulasan: 'u', ada: false }, kesimpulan: { skor: -2, ulasan: 'u', ada: false } },
+    hujah: [
+      { bahagian: 'Kesimpulan', petikan: 'Kesimpulannya kilang ini bagus', jenis: 'tanpa-sokongan', isu: 'Dakwaan tanpa bukti.', kesan: 'Analisis: hilang 3 markah', tahap: 'rendah', cadangan: 'Sokong dengan data.' },
+      { bahagian: 'P2', petikan: 'ayat rekaan yang tiada', jenis: 'pelik', isu: 'Generalisasi melulu.', kesan: 'k', tahap: 'tinggi', cadangan: 'c' },
+      { bahagian: 'P5', jenis: 'lari-tajuk', isu: '', kesan: 'k', tahap: 'tinggi', cadangan: 'c' }
+    ],
+    peta: { akar: 'Pemprosesan ayam', cabang: [{ label: 'Penerimaan', anak: ['Suhu', '', 'a', 'b', 'c', 'd'] }, { label: 'Penyimpanan', anak: [] }, { label: '' }] },
+    industri: true,
+    nc: [
+      { bahagian: 'P3', petikan: 'Pekerja tak perlu cuci tangan', titik: 'Kebersihan diri', standard: 'MS 1514', huraian: 'h', cadangan: 'c', tahap: 'minor' },
+      { bahagian: 'P2', petikan: 'disimpan dalam bilik sejuk pada suhu 10°C', titik: 'CCP simpanan dingin', standard: 'MS 1480', huraian: 'Suhu terlalu tinggi.', cadangan: 'Simpan pada 0 hingga 4°C.', tahap: 'major' },
+      { bahagian: 'P4', petikan: 'petikan yang tiada dalam teks langsung', titik: 'Pengangkutan', standard: 'MS 2400-1', huraian: 'Lori biasa.', cadangan: 'Lori bertebat.', tahap: 'major' },
+      { bahagian: 'x', titik: '', huraian: 'h', cadangan: 'c', tahap: 'major' }
+    ],
+    laras: [
+      { asal: 'Pekerja tak perlu cuci tangan', baru: 'Pekerja tidak perlu mencuci tangan', sebab: 'Bahasa basahan.' },   // muncul dua kali: dibuang
+      { asal: 'Ayam diterima dan disimpan', baru: 'Pekerja menerima dan menyimpan ayam', sebab: 'Ayat pasif mengaburkan pelaku.' },
+      { asal: 'tiada dalam teks', baru: 'x', sebab: 's' }
+    ],
+    aliran: { tajuk: 'Pemprosesan ayam', langkah: [{ label: 'Terima ayam', jenis: 'mula', suhu: '' }, { label: 'Simpan dingin', jenis: 'ccp', suhu: '10°C' }, { label: 'Potong', jenis: 'pelik' }, { label: '' }] },
+    fasiliti: { berkaitan: true, zon: [{ nama: 'Penerimaan', panjang: 10, jenis: 'mentah' }, { nama: 'Bilik sejuk', panjang: 25, jenis: 'sejuk' }, { nama: 'Pemotongan', panjang: 30, jenis: 'proses' }, { nama: 'Tandas', panjang: 1, jenis: 'kebersihan' }, { nama: 'Penghantaran', panjang: 20, jenis: 'siap' }] }
+  };
+  const c = cleanA(ans, T);
+  assert.deepEqual(RUBRIK_SKOR(c), [20, 4.5, 10, 12, 0]);
+  assert.equal(c.rubrik.metodologi.ada, false); assert.equal(c.rubrik.kesimpulan.ada, true);   // hanya literatur dan metodologi boleh tidak berkaitan
+  assert.equal(c.jumlah, Math.round((20 + 4.5 + 10 + 0) / 80 * 100));                          // metodologi dikecualikan
+  assert.equal(c.bidang, 'Sains Makanan: Keselamatan Makanan');
+  assert.equal(c.hujah.length, 2); assert.equal(c.hujah[0].tahap, 'tinggi'); assert.equal(c.hujah[0].jenis, 'struktur'); assert.equal(c.hujah[0].petikan, '');
+  assert.equal(c.hujah[1].petikan, 'Kesimpulannya kilang ini bagus');
+  assert.equal(c.peta.cabang.length, 2); assert.deepEqual(c.peta.cabang[0].anak, ['Suhu', 'a', 'b', 'c']);
+  assert.equal(c.nc.length, 3);
+  assert.deepEqual(c.nc.map(n => n.kod), ['NC-01', 'NC-02', 'NC-03']);
+  assert.equal(c.nc[0].tahap, 'major');                       // major didahulukan
+  assert.equal(c.nc.find(n => n.titik === 'Pengangkutan').petikan, '');   // petikan rekaan dikosongkan
+  assert.equal(c.laras.length, 1); assert.equal(c.laras[0].asal, 'Ayam diterima dan disimpan');
+  assert.equal(c.aliran.langkah.length, 3); assert.equal(c.aliran.langkah[2].jenis, 'proses');
+  assert.equal(c.fasiliti.berkaitan, true); assert.equal(c.fasiliti.lebar, 20); assert.equal(c.fasiliti.panjang, 80);
+  assert.equal(c.fasiliti.zon.reduce((t, z) => t + z.panjang, 0), 80);
+  assert.ok(c.fasiliti.zon.every(z => z.panjang >= 4 && Number.isInteger(z.panjang)));
+  // Bukan tugasan industri: tiada NC; bukan fasiliti: tiada zon
+  const c2 = cleanA({ ...ans, industri: false, fasiliti: { berkaitan: false, zon: ans.fasiliti.zon } }, T);
+  assert.equal(c2.nc.length, 0); assert.equal(c2.fasiliti.berkaitan, false); assert.equal(c2.fasiliti.zon.length, 0);
+  const c0 = cleanA(null, T);
+  assert.deepEqual(c0.nc, []); assert.deepEqual(c0.hujah, []); assert.equal(c0.jumlah, 0); assert.deepEqual(c0.aliran.langkah, []); assert.deepEqual(c0.peta.cabang, []);
+  assert.match(sysA('ms'), /ralat logik/); assert.match(sysA('en'), /academic British English/);
+  for (const zs of [[{ panjang: 1 }, { panjang: 1 }], [{ panjang: 300 }, { panjang: 2 }, { panjang: 2 }, { panjang: 2 }, { panjang: 2 }, { panjang: 2 }, { panjang: 2 }, { panjang: 2 }, { panjang: 2 }], [{ panjang: 0 }, { panjang: 'x' }, { panjang: 50 }]]) {
+    const n = normalZon(zs); assert.equal(n.reduce((t, z) => t + z.panjang, 0), 80, JSON.stringify(n)); assert.ok(n.every(z => z.panjang >= 4));
+  }
+  // Laluan /audit
+  const aenv = { GEMINI_API_KEY: 'g', ALLOWED_ORIGINS: env.ALLOWED_ORIGINS };
+  const post = (body, e = aenv, origin = 'https://bijaklabur.my') => worker.fetch(new Request(W + '/audit', { method: 'POST', headers: { origin, 'content-type': 'application/json' }, body: JSON.stringify(body) }), e);
+  globalThis.fetch = async () => new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify(ans) }] }, finishReason: 'STOP' }] }));
+  let r = await post({ text: T, lang: 'ms' }), d = await r.json();
+  assert.equal(r.status, 200, JSON.stringify(d)); assert.equal(d.nc.length, 3); assert.equal(d.fasiliti.zon.length, 5);
+  assert.equal((await post({ text: T }, aenv, 'https://jahat.example')).status, 403);
+  assert.equal((await post({ text: T }, { ALLOWED_ORIGINS: env.ALLOWED_ORIGINS })).status, 503);
+  assert.equal((await post({ text: 'pendek' })).status, 400);
+  assert.equal((await post({ text: T }, { ...aenv, AUDIT_LIMIT: { limit: async () => ({ success: false }) } })).status, 429);
+}
+function RUBRIK_SKOR(c) { return ['pengenalan', 'literatur', 'analisis', 'metodologi', 'kesimpulan'].map(k => c.rubrik[k].skor); }
 console.log('Semua ujian Tanya AI lulus');

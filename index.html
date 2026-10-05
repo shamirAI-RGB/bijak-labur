@@ -626,7 +626,7 @@
       <div class="page-head">
         <p class="eyebrow">Untuk pelajar</p>
         <h1 id="h-semak">Semak kertas kerja</h1>
-        <p class="lead">Tampal teks atau muat naik fail. Anda akan dapat ulasan dan markah seperti pensyarah, pembetulan Bahasa Melayu baku dan Inggeris yang boleh diterima satu demi satu, pengesahan setiap rujukan, anggaran peratus AI dan plagiarisme, serta jadual tindakan seterusnya dan laporan audit yang boleh dimuat turun.</p>
+        <p class="lead">Tampal teks atau muat naik fail. Anda akan dapat ulasan dan markah seperti pensyarah, pembetulan Bahasa Melayu baku dan Inggeris yang boleh diterima satu demi satu, pengesahan setiap rujukan, anggaran peratus AI dan plagiarisme, audit struktur hujah dan peta konsep, serta jadual tindakan seterusnya dan laporan audit yang boleh dimuat turun.</p>
       </div>
       <div class="checker-input">
         <div class="card">
@@ -649,6 +649,7 @@
           <label class="check"><input type="checkbox" id="optExpert" checked><span>Ulasan pakar AI: markah rubrik dan tatabahasa Bahasa Melayu baku (DBP) serta Inggeris</span></label>
           <label class="check"><input type="checkbox" id="optRefs" checked><span>Sahkan senarai rujukan (pangkalan DOI akademik) dan padanan sitasi</span></label>
           <label class="check"><input type="checkbox" id="optLT" checked><span>Semakan tatabahasa lanjutan (teks Inggeris)</span></label>
+          <label class="check"><input type="checkbox" id="optAudit" checked><span>Audit lanjutan: rubrik ikut bidang (gred A+ hingga F), struktur hujah, laras akademik, peta konsep, skrip anotasi PDF, dan audit NC jika tugasan industri makanan</span></label>
           <button class="btn block" id="checkBtn">Semak sekarang</button>
           <p class="muted small privacy-note">Analisis asas dibuat dalam peranti anda. Jika pilihan di atas ditanda, petikan teks dihantar ke pangkalan rujukan awam dan perkhidmatan semakan tatabahasa, dan teks penuh dihantar melalui pelayan Bijak Labur kepada penyedia AI untuk ulasan pakar. Teks tidak disimpan oleh pelayan Bijak Labur.</p>
         </div>
@@ -670,6 +671,7 @@
           <div id="auditBox" aria-live="polite"></div>
         </div>
         <div class="card hidden"><h3>Ulasan pakar</h3><div id="expertBox"></div></div>
+        <div class="card hidden" id="industriCard"><h3>Audit lanjutan</h3><div id="industriBox"></div></div>
         <div class="card hidden"><h3>Semakan rujukan</h3><div id="refBox"></div></div>
         <div class="card hidden" id="slopCard" aria-live="polite"></div>
         <div class="two-col">
@@ -895,6 +897,7 @@
   <script src="js/fiqh.js" defer></script>
   <script src="js/ibadah.js" defer></script>
   <script src="js/semak-pakar.js" defer></script>
+  <script src="js/semak-industri.js" defer></script>
   <script src="js/checker.js" defer></script>
   <script src="js/semak-audit.js" defer></script>
   <script src="js/akaun.js" defer></script>
