@@ -66,6 +66,18 @@ const asset = async (env, path) => {
 };
 const assetJson = async (env, path) => { const r = await asset(env, path); return r ? r.json() : null; };
 
+/**
+ * Cap kandungan (ETag) fail aset, atau '' jika tiada. Digunakan dalam kunci cache jawapan Tanya AI supaya jawapan lama
+ * disegarkan apabila rujukan atau peta PDF berubah pada pemasangan baharu (cache Cloudflare tidak dikosongkan oleh pemasangan).
+ */
+export async function assetTag(env, path = 'rujukan/cetakan.json') {
+  if (!env.RUJUKAN) return '';
+  try {
+    const r = await env.RUJUKAN.fetch(new Request(`https://aset/${path}`, { method: 'HEAD' }));
+    return r.ok ? (r.headers.get('etag') || '').replace(/[^\w-]/g, '').slice(0, 40) : '';
+  } catch { return ''; }
+}
+
 /** Teks satu muka surat, atau null */
 export async function page(env, k, n) {
   if (!env.RUJUKAN || !DOC[k] || !(n >= 1)) return null;
