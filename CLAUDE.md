@@ -14,7 +14,7 @@ Laman bijaklabur.my (GitHub Pages, cawangan `main`) dan app Android/iOS (Capacit
   - `worker-jadual/`: jadual UiTM
   - `worker-nota/`: kedai nota, 4 ruang iklan halaman utama (`/iklan`) dan teks laman yang diubah oleh pemilik (`/kandungan`)
   - `worker-agen/`: agen.bijaklabur.my melencong ke `pejabat-agen.html` (Pejabat AI Agent pemilik)
-- `pejabat-agen.html`: Pejabat AI Agent (8 watak animasi), hanya untuk pemilik (kunci pemilik disemak melalui `nota.bijaklabur.my/admin/check`). Sumber React dalam `pejabat-agen/App.jsx`; bina dengan `node scripts/bina-pejabat-agen.mjs` (arahan pemasangan dalam fail itu). Jangan sunting `js/pejabat-agen.js` atau `css/pejabat-agen.css` secara terus.
+- `pejabat-agen.html`: Pejabat AI Agent (8 watak animasi yang memaparkan kerja sebenar daripada API GitHub awam: PR, commit, Actions, issue `pantau`), hanya untuk pemilik (kunci pemilik disemak melalui `nota.bijaklabur.my/admin/check`). Sumber React dalam `pejabat-agen/App.jsx`; bina dengan `node scripts/bina-pejabat-agen.mjs` (arahan pemasangan dalam fail itu). Jangan sunting `js/pejabat-agen.js` atau `css/pejabat-agen.css` secara terus.
 - Mod Pemilik (`js/pemilik.js`): pemilik menyunting teks secara langsung. Kunci teks dijana daripada struktur (`<view>.judul`, `<view>.lead`, `<view>.kad.<href>.tajuk`, `<view>.<id h->`, `<view>.h2.<n>`, `<view>.nota.<n>`); jangan ubah susunan elemen ini tanpa sebab kerana teks yang disimpan pemilik bergantung padanya. Elemen ber-id (kecuali `h-...`) dan elemen yang mengandungi elemen lain tidak boleh disunting.
 
 ## Peraturan wajib
