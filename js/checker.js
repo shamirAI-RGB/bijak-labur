@@ -9,7 +9,8 @@
     tatabahasa: { name: 'Tatabahasa', c: 'var(--warn)' },
     tandabaca: { name: 'Tanda baca', c: 'var(--info)' },
     gaya: { name: 'Gaya / bunyi AI', c: 'var(--purple)' },
-    kejelasan: { name: 'Kejelasan', c: 'var(--brand)' }
+    kejelasan: { name: 'Kejelasan', c: 'var(--brand)' },
+    laras: { name: 'Laras akademik', c: 'var(--gold)' }
   };
 
   /* ---------- Pengesanan bahasa ---------- */
@@ -173,7 +174,7 @@
     list.sort((a, b) => a.start - b.start || (b.rep != null) - (a.rep != null));
     const out = []; let lastEnd = -1;
     for (const s of list) {
-      if (s.rep === null && s.cat === 'kejelasan') { out.push(s); continue; } // nota peringkat ayat tidak menyekat yang lain
+      if (s.cat === 'laras' || (s.rep === null && s.cat === 'kejelasan')) { out.push(s); continue; } // cadangan peringkat ayat tidak menyekat yang lain
       if (s.start < lastEnd) continue;
       if (s.rep !== null && s.rep === s.orig) continue;
       out.push(s); lastEnd = s.end;
@@ -513,6 +514,7 @@
     renderSources();
     renderStats(state.orig, state.sents); renderSugg(); renderAnnotated();
     if (window.SemakPakar) SemakPakar.render(state);
+    if (window.SemakIndustri) SemakIndustri.render(state);
   }
 
   $('#viewTabs').innerHTML = [['fix', 'Pembetulan'], ['ai', 'Peta AI'], ['plag', 'Plagiarisme']].map(([k, v]) => `<button class="seg ${k === 'fix' ? 'active' : ''}" data-v="${k}">${v}</button>`).join('');
@@ -550,7 +552,8 @@
   window.CheckerReport = () => state.ai && {
     ai: state.ai.pct, plag: state.plag.checked ? state.plag.pct : null, quality: state.quality, text: state.text,
     stats: state.statItems || [], signals: state.ai.signals, sources: state.plag.perSource.map(s => ({ name: s.name, url: s.url, pct: s.pct })),
-    expert: state.expert && !state.expert.error ? state.expert : null, refs: state.refs,
+    matches: state.plag.perSource.flatMap(s => s.matches.slice(0, 10).map(m => ({ src: s.name, type: m.type, sim: m.sim, text: state.orig.slice(m.ds, m.de) }))),
+    expert: state.expert && !state.expert.error ? state.expert : null, refs: state.refs, audit: state.audit && !state.audit.error ? state.audit : null,
     sugg: state.sugg.filter(s => !s.dismissed).map(s => ({ cat: CATS[s.cat].name, from: s.orig, to: s.rep === null ? '(semak semula ayat)' : s.applied ? s.rep + ' (diterima)' : s.rep || '(buang)', why: s.msg }))
   };
 
@@ -562,11 +565,14 @@
     prog('Menganalisis…');
     try {
       const lang = $('#lang').value === 'auto' ? detectLang(text) : $('#lang').value;
-      Object.assign(state, { text, orig: text, lang, sents: sentences(text), expert: null, refs: null });
+      Object.assign(state, { text, orig: text, lang, sents: sentences(text), expert: null, refs: null, audit: null });
       // Ulasan pakar (Gemini) dan pemeriksa rujukan berjalan serentak dengan semakan lain
       const SP = window.SemakPakar, wantX = SP && $('#optExpert') && $('#optExpert').checked && text.length >= 200;
       const expertP = wantX ? SP.expert(text, lang).catch(e => ({ error: e.message })) : null;
       const refsP = SP && $('#optRefs') && $('#optRefs').checked ? SP.references(text).catch(() => null) : null;
+      // Audit lanjutan universal (rubrik ikut bidang, struktur hujah, NC industri, peta konsep) juga berjalan serentak
+      const SI = window.SemakIndustri, wantA = SI && $('#optAudit') && $('#optAudit').checked && text.length >= 200;
+      const auditP = wantA ? SI.fetch(text, lang).catch(e => ({ error: e.message })) : null;
       let sugg = localSuggestions(text, lang);
       if ($('#optLT').checked && lang === 'en') {
         prog('Menyemak tatabahasa…');
@@ -576,6 +582,11 @@
         prog('Ulasan pakar sedang menilai…');
         state.expert = await expertP;
         if (state.expert && !state.expert.error) sugg = sugg.concat(SP.toSuggestions(text, state.expert.pembetulan));
+      }
+      if (auditP) {
+        prog('Audit lanjutan sedang berjalan…');
+        state.audit = await auditP;
+        if (state.audit && !state.audit.error && SP) sugg = sugg.concat(SP.toSuggestions(text, state.audit.laras.map(l => ({ asal: l.asal, baru: l.baru, jenis: 'laras', sebab: l.sebab }))));
       }
       state.sugg = dedupe(sugg);
       const spellErrs = state.sugg.filter(s => s.cat === 'ejaan' || s.cat === 'tandabaca').length;

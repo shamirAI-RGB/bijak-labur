@@ -60,6 +60,13 @@ type = "ratelimit"
 namespace_id = "2007"
 simple = { limit = 4, period = 60 }
 
+# Semak Kertas, audit lanjutan (rubrik tesis, NC industri, carta alir, pelan lantai): 3 seminit bagi setiap alamat IP
+[[unsafe.bindings]]
+name = "AUDIT_LIMIT"
+type = "ratelimit"
+namespace_id = "2008"
+simple = { limit = 3, period = 60 }
+
 # Workers AI: FLUX untuk Studio Gambar, dan Llama sebagai penghala sandaran apabila kuota Gemini habis. Peringkat percuma 10,000 neuron sehari; tiada caj pada pelan percuma.
 [ai]
 binding = "AI"

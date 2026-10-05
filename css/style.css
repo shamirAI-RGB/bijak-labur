@@ -591,6 +591,27 @@ a.card:active, .shortcut:active, .tool-card:active { transform: translateY(0) sc
 .rf-sum { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
 .rf-chip { display: inline-block; padding: 2px 9px; border-radius: 99px; font-size: .74rem; font-weight: 650; white-space: nowrap; --c: var(--muted); color: color-mix(in srgb, var(--c) 75%, var(--text)); background: color-mix(in srgb, var(--c) 13%, transparent); }
 .rf-chip.up { --c: var(--up); } .rf-chip.down { --c: var(--down); } .rf-chip.warn { --c: var(--warn); } .rf-chip.info { --c: var(--info); }
+.audit-score { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 4px 0 12px; }
+.audit-score b { font-size: 2rem; }
+.audit-grid { display: grid; gap: 12px; }
+@media (min-width: 760px) { .audit-grid { grid-template-columns: repeat(3, 1fr); } }
+.audit-col { border: 1px solid var(--border); border-radius: 12px; padding: 12px; background: var(--surface-2); min-width: 0; }
+.audit-h { display: grid; justify-items: start; gap: 4px; margin-bottom: 8px; }
+.audit-col ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: .9rem; overflow-wrap: anywhere; }
+.ia-profil { display: flex; gap: 8px; align-items: flex-start; margin: 0 0 12px; font-size: .92rem; }
+.ia-profil .ic { color: var(--brand); width: 18px; height: 18px; margin-top: 2px; flex: none; }
+.ia-block { display: block; }
+#industriBox blockquote { margin: 6px 0 0; padding: 4px 8px; border-left: 3px solid var(--down); background: var(--surface-2); border-radius: 6px; font-size: .85rem; }
+#industriBox td.wrap { min-width: 170px; }
+#industriBox .row-gap { margin: 8px 0 4px; }
+.ia-fig { margin: 8px 0; padding: 8px; border: 1px solid var(--border); border-radius: 12px; background: #fff; overflow-x: auto; text-align: center; }
+.ia-fig svg { max-width: 100%; height: auto; }
+.ia-peta { display: grid; gap: 10px; }
+.ia-akar { justify-self: start; padding: 6px 14px; border-radius: 99px; background: var(--brand); color: var(--brand-ink); font-weight: 700; }
+.ia-cabang { margin: 0; padding: 0 0 0 14px; border-left: 2px dashed var(--brand); list-style: none; display: grid; gap: 8px; counter-reset: cb; }
+.ia-cabang > li { counter-increment: cb; padding: 8px 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); overflow-wrap: anywhere; }
+.ia-cabang > li > b::before { content: counter(cb) ". "; color: var(--brand); }
+.ia-cabang ul { margin: 4px 0 0; padding-left: 18px; font-size: .9rem; }
 .rf-list { margin: 0; padding-left: 20px; display: grid; gap: 12px; }
 .rf-list li { display: grid; gap: 4px; justify-items: start; }
 .rf-ref { font-size: .9rem; overflow-wrap: anywhere; }

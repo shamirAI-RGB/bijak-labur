@@ -48,14 +48,17 @@ export async function routerGenerate(env, body) {
   return { candidates: [{ content: { parts: [{ text }] }, finishReason: 'STOP' }], penghala: 'workers-ai' };
 }
 
-/** body = rentetan JSON permintaan generateContent. Memulangkan jawapan JSON Gemini (atau penyedia sandaran). */
-export async function geminiGenerate(env, body) {
+/**
+ * body = rentetan JSON permintaan generateContent. Memulangkan jawapan JSON Gemini (atau penyedia sandaran).
+ * routerBody (pilihan) = permintaan yang lebih kecil untuk penyedia sandaran, yang mengehadkan jawapan kepada 4096 token.
+ */
+export async function geminiGenerate(env, body, routerBody = body) {
   try { return await geminiOnly(env, body); }
   catch (err) {
     // Kuota habis, sibuk atau tiada kunci: cuba penyedia sandaran. Ralat lain (cth. 400) dikekalkan.
     if (![429, 529, 500, 503, 504, 404].includes(err.status)) throw err;
     let d = null;
-    try { d = await routerGenerate(env, body); } catch (e) { console.log('penghala gagal', String(e && e.message || e).slice(0, 200)); }
+    try { d = await routerGenerate(env, routerBody); } catch (e) { console.log('penghala gagal', String(e && e.message || e).slice(0, 200)); }
     if (d) return d;
     throw err;
   }

@@ -140,7 +140,7 @@
       ${x.penambahbaikan.length ? `<h4>Penambahbaikan</h4><ol class="xp-list">${x.penambahbaikan.map(p => `<li><b>${esc(p.isu)}</b>${p.petikan ? `<blockquote>${esc(p.petikan)}</blockquote>` : ''}<span>${esc(p.cadangan)}</span></li>`).join('')}</ol>` : ''}
       <p class="muted small">${x.pembetulan.length} pembetulan bahasa daripada ulasan pakar dimasukkan ke dalam senarai cadangan di bawah. Markah dan ulasan dijana oleh AI sebagai panduan, bukan markah rasmi pensyarah.</p>`;
   }
-  const CHIP = { sah: ['Disahkan', 'up'], mungkin: ['Hampir sepadan', 'warn'], tiada: ['Tidak dijumpai', 'down'], laman: ['Laman web', 'info'], ralat: ['Tidak dapat disemak', 'muted'] };
+  const CHIP = { sah: ['Disahkan', 'up'], mungkin: ['Hampir sepadan', 'warn'], tiada: ['⚠ AMARAN MERAH', 'down'], laman: ['Laman web', 'info'], ralat: ['Tidak dapat disemak', 'muted'] };
   function refsHTML(r) {
     if (!r) return '';
     if (!r.found) return '<p class="muted small">Tiada bahagian "Rujukan" atau "References" dikesan. Letakkan senarai rujukan di hujung teks di bawah tajuk Rujukan untuk disemak.</p>';
