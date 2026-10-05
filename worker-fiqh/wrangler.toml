@@ -64,5 +64,12 @@ simple = { limit = 4, period = 60 }
 [ai]
 binding = "AI"
 
+# Rujukan rasmi moden: teks setiap muka surat PDF dan indeks carian, dibina oleh scripts/muat-rujukan.mjs
+# semasa pemasangan (tidak disimpan dalam repo). run_worker_first: teks tidak dihidangkan terus kepada umum.
+[assets]
+directory = "./aset"
+binding = "RUJUKAN"
+run_worker_first = true
+
 # Rahsia (ditetapkan oleh GitHub Actions, jangan tulis di sini): ANTHROPIC_API_KEY (Claude) atau GEMINI_API_KEY (Gemini percuma)
 # Pilihan: GEMINI_MODEL (lalai gemini-flash-lite-latest)

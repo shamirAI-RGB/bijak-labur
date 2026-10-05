@@ -1,6 +1,6 @@
 // Diagnosis Gemini dengan permintaan sebenar Tanya AI (korpus + soalan). Digunakan oleh fiqh.yml.
 // GEMINI_API_KEY=... node worker-fiqh/diag.mjs
-import { geminiModels, geminiBody } from './src/index.js';
+import { geminiModels, geminiBody } from './src/app.js';
 
 const key = process.env.GEMINI_API_KEY;
 if (!key) { console.log('GEMINI_API_KEY tiada'); process.exit(0); }

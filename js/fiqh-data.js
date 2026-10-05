@@ -205,6 +205,20 @@ const FiqhData = (() => {
   ];
 
   /* Pautan carian ke sumber asal */
+  /* Rujukan rasmi moden (PDF percuma daripada penerbit asal). Teks setiap muka surat diindeks oleh pelayan Tanya AI
+     (worker-fiqh/scripts/muat-rujukan.mjs) supaya AI boleh memetik muka surat yang tepat. url#page=N membuka muka surat itu. */
+  const MODEN = [
+    { k: 'jakim', name: 'Kompilasi Pandangan Hukum Muzakarah Jawatankuasa Fatwa Majlis Kebangsaan', by: 'Jabatan Kemajuan Islam Malaysia (JAKIM)', tahun: 2016, bahasa: 'ms',
+      skop: 'Ibadah, akidah, perubatan, halal, kewangan dan isu sosial semasa', url: 'https://www.islam.gov.my/images/ePenerbitan/KOMPILASI_MUZAKARAH_MKI_2016.pdf' },
+    { k: 'scmps', name: 'Keputusan Majlis Penasihat Syariah Suruhanjaya Sekuriti Malaysia', by: 'Suruhanjaya Sekuriti Malaysia', tahun: 2023, bahasa: 'ms',
+      skop: 'Saham, sukuk, unit amanah, derivatif, aset digital dan pasaran modal Islam', url: 'https://www.sc.com.my/api/documentms/download.ashx?id=7c96654e-e943-4123-9a4a-9be4ac1da3e3' },
+    { k: 'bnmsr', name: 'Shariah Resolutions in Islamic Finance (Second Edition)', by: 'Majlis Penasihat Syariah, Bank Negara Malaysia', tahun: 2010, bahasa: 'en',
+      skop: 'Perbankan Islam, takaful, pembiayaan, deposit dan instrumen pasaran wang', url: 'https://financialmarkets.bnm.gov.my/uploads/files/Shariah_Resolutions_BNM_2nd_Edition.pdf' },
+    { k: 'iifa', name: 'Resolutions and Recommendations of the Council of the Islamic Fiqh Academy 1985-2000', by: 'Akademi Fiqh Islam Antarabangsa (OIC), terbitan IsDB', tahun: 2000, bahasa: 'en',
+      skop: 'Isu antarabangsa: mata wang, saham, insurans, perubatan, pemindahan organ dan keluarga', url: 'https://archive.org/download/resolutions-and-recommendations-of-the-council-of-the-islamic-fiqh-academy/resolutions-and-recommendations-of-the-council-of-the-islamic-fiqh-academy.pdf',
+      asal: 'https://isdbinstitute.org/product/resolutions-and-recommendations-of-the-council-of-the-islamic-fiqh-academy-1985-2000/' }
+  ];
+
   const CARI = [
     ['sunnah.com', 'Hadis (6 kitab utama)', q => `https://sunnah.com/search?q=${encodeURIComponent(q)}`],
     ['Al-Maktabah al-Shamela', 'Kitab turath (teks Arab)', q => `https://shamela.ws/search?q=${encodeURIComponent(q)}`],
@@ -212,7 +226,7 @@ const FiqhData = (() => {
     ['Keputusan MPS SC', 'Pasaran modal Islam', () => F.scSenarai.url]
   ];
 
-  return { KITAB, shamela, H, KOLEKSI, F, HUKUM, BAB, MASALAH, CARI, ISTILAH };
+  return { KITAB, shamela, H, KOLEKSI, F, HUKUM, BAB, MASALAH, CARI, ISTILAH, MODEN };
 })();
 // Pelayan Tanya AI (worker-fiqh) memuat fail yang sama sebagai korpus rujukan yang telah disemak
 if (typeof globalThis !== 'undefined') globalThis.FiqhData = FiqhData;

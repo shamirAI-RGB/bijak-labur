@@ -47,7 +47,7 @@
     el.innerHTML = head + `
       <p class="lead">Setiap jawapan dipautkan terus kepada sumbernya. Teks ayat dan hadis dimuat daripada pangkalan data asal semasa anda membukanya, bukan ditulis semula oleh AI. Rujukan yang tidak dapat disahkan tidak dimasukkan.</p>
       ${chainVisual()}
-      <a class="card fq-ai-cta" href="#ibadah/fiqh/tanya"><span class="fq-ai-ico">${icon('quote')}</span><span class="q-main"><b>Tanya AI berasaskan rujukan</b><small>Jawapan hanya daripada kitab muktabar, Al-Quran, hadis dan fatwa rasmi, dengan pautan ke muka surat sumber.</small></span>${icon('chev', 'ic chev')}</a>
+      <a class="card fq-ai-cta" href="#ibadah/fiqh/tanya"><span class="fq-ai-ico">${icon('quote')}</span><span class="q-main"><b>Tanya AI berasaskan rujukan</b><small>Jawapan hanya daripada kitab muktabar, Al-Quran, hadis, fatwa dan keputusan rasmi moden, dengan pautan ke muka surat sumber.</small></span>${icon('chev', 'ic chev')}</a>
       <div class="search-in"><svg class="ic"><use href="#i-search"/></svg><input id="fqFind" placeholder="Cari masalah, cth. riba, forex, CFD, kripto" aria-label="Cari masalah fiqh" autocomplete="off"></div>
       <div id="fqHits"></div>
       <h2 class="grid-title">Bab</h2>
@@ -62,6 +62,9 @@
         <div class="fq-out" id="fqOut">${outLinks('')}</div></div>
       <h2 class="grid-title">Perpustakaan kitab muktabar</h2>
       <div class="list">${D.BAB[0].kitab.concat(D.BAB[4].kitab).filter(([k]) => !kitabSeen.has(k) && kitabSeen.add(k)).map(([k]) => { const b = D.KITAB[k]; return `<a class="fq-kitab" href="${D.shamela(b.id)}" target="_blank" rel="noopener"><span class="fq-kitab-ar" lang="ar" dir="rtl">${b.ar}</span><span class="q-main"><b>${esc(b.name)}</b><small>${esc(b.by)}</small></span><span class="fq-lvl-tag">${b.lvl}</span>${icon('link')}</a>`; }).join('')}</div>
+      <h2 class="grid-title">Rujukan rasmi moden</h2>
+      <p class="muted small">Himpunan keputusan rasmi untuk isu semasa seperti kewangan Islam, pelaburan, perubatan dan teknologi. Tanya AI mencari dalam teks dokumen ini dan memaut terus ke muka surat PDF yang dipetik.</p>
+      <div class="list">${D.MODEN.map(m => `<a class="fq-kitab" href="${esc(m.url)}" target="_blank" rel="noopener"><span class="fq-kitab-ar fq-pdf">PDF</span><span class="q-main"><b>${esc(m.name)}</b><small>${esc(m.by)}, ${m.tahun} · ${esc(m.skop)}</small></span><span class="fq-lvl-tag">${m.bahasa === 'ms' ? 'BM' : 'EN'}</span>${icon('link')}</a>`).join('')}</div>
       <p class="note">${icon('alert')}<span>Bahagian ini untuk belajar dan bukan fatwa. Untuk kes peribadi, rujuk Jabatan Mufti negeri anda atau guru yang bertauliah.</span></p>`;
   }
   function outLinks(q) {
@@ -170,7 +173,7 @@
 
   /* ---------- Tanya AI ---------- */
   const CONTOH = ['Apakah hukum trading forex secara individu?', 'Bolehkah solat jamak dan qasar jika pulang hari?', 'Adakah saham perlu dizakatkan?', 'Apakah rukun wuduk dalam mazhab Syafie?'];
-  const JENIS = { kitab: ['Kitab muktabar', '#f2704d'], quran: ['Al-Quran', '#1f9d63'], hadis: ['Hadis', '#7b5cf0'], fatwa: ['Fatwa', '#1192d6'], bijaklabur: ['Rujukan Bijak Labur', '#c9853a'], lain: ['Sumber rasmi', '#66718f'] };
+  const JENIS = { kitab: ['Kitab muktabar', '#f2704d'], quran: ['Al-Quran', '#1f9d63'], hadis: ['Hadis', '#7b5cf0'], fatwa: ['Fatwa', '#1192d6'], dokumen: ['Rujukan rasmi moden', '#0f8b8d'], bijaklabur: ['Rujukan Bijak Labur', '#c9853a'], lain: ['Sumber rasmi', '#66718f'] };
   const isAr = t => /[\u0600-\u06FF]/.test(t);
   let asking = false;
 
@@ -179,7 +182,7 @@
       <div class="fq-crumb"><a href="#ibadah/fiqh">Fiqh</a>${icon('chev')}<span>Tanya AI</span></div>
       <div class="fq-hero" style="--c:#c9853a"><span lang="ar" dir="rtl">اسأل</span><div><h2>Tanya AI berasaskan rujukan</h2><p>Setiap jawapan mesti bersandarkan sumber yang boleh anda buka sendiri.</p></div></div>
       <ol class="fq-flow fq-ai-rules">
-        <li><span class="num">1</span>AI hanya boleh memetik kitab muktabar (Shamela), Al-Quran, hadis dan fatwa rasmi Malaysia.</li>
+        <li><span class="num">1</span>AI hanya boleh memetik kitab muktabar (Shamela), Al-Quran, hadis, fatwa rasmi Malaysia dan ${D.MODEN.length} dokumen keputusan rasmi moden untuk isu semasa.</li>
         <li><span class="num">2</span>Setiap petikan disemak dengan teks halaman sumber. Petikan yang tidak sepadan dibuang.</li>
         <li><span class="num">3</span>Jika tiada sumber yang sah, AI menjawab "tidak pasti" dan meminta anda merujuk mufti.</li>
       </ol>
@@ -199,7 +202,7 @@
     if (q.length < 5) { box.innerHTML = '<p class="muted small">Tulis soalan sekurang-kurangnya 5 huruf.</p>'; return; }
     asking = true;
     const btn = $('[data-fq-ask]'); if (btn) btn.disabled = true;
-    box.innerHTML = `<div class="card fq-ai-wait"><span class="fq-ai-spin" aria-hidden="true"></span><div><b>Mencari dalam kitab dan fatwa</b><p class="muted small">AI sedang membuka muka surat sumber dan menyemak petikan. Ini mungkin mengambil masa sehingga satu minit.</p></div></div>`;
+    box.innerHTML = `<div class="card fq-ai-wait"><span class="fq-ai-spin" aria-hidden="true"></span><div><b>Mencari dalam kitab, fatwa dan dokumen rasmi</b><p class="muted small">AI sedang membuka muka surat sumber dan menyemak petikan. Ini mungkin mengambil masa sehingga satu minit.</p></div></div>`;
     const my = seq;
     try {
       const r = await fetch(AI_API + '/tanya', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ q }) });
@@ -231,13 +234,13 @@
 
   function sourceCard(s) {
     const [label, c] = JENIS[s.jenis] || JENIS.lain;
-    const page = s.shamela ? `Shamela, muka surat ${esc(s.shamela)}` : '';
+    const page = s.shamela ? `Shamela, muka surat ${esc(s.shamela)}` : s.pdf ? `${s.oleh ? esc(s.oleh) + ' · ' : ''}PDF, muka surat ${esc(s.pdf)}` : '';
     const printed = [s.jilid && `juz ${esc(s.jilid)}`, s.halaman && `hlm. ${esc(s.halaman)}`].filter(Boolean).join(', ');
     if (s.jenis === 'quran') return `<div class="fq-src fq-ai-src" style="--c:${c}" data-ayah="${esc(s.ref)}"><p class="muted small">Memuatkan ayat ${esc(s.ref)}</p></div>`;
     const hk = s.id && s.id.startsWith('hadis:') && D.H[s.id.slice(6)] ? s.id.slice(6) : '';
     const live = hk ? `<p class="fq-isi"><span>Isi ringkas</span>${esc(D.H[hk].isi)}</p><div class="fq-live"><p class="muted small">Memuatkan teks hadis</p></div>` : '';
     return `<div class="fq-src fq-ai-src" style="--c:${c}"${hk ? ` data-hadith="${hk}"` : ''}>
-      <div class="row-between"><span class="fq-ai-kind">${label}</span>${ext(s.url, s.jenis === 'kitab' ? 'Buka muka surat' : 'Buka sumber')}</div>
+      <div class="row-between"><span class="fq-ai-kind">${label}</span>${ext(s.url, s.jenis === 'kitab' || s.pdf ? 'Buka muka surat' : 'Buka sumber')}</div>
       <b>${esc(s.tajuk)}</b>${page || printed ? `<p class="small muted">${[page, printed].filter(Boolean).join(' · ')}</p>` : ''}
       ${s.petikan ? `<blockquote class="${isAr(s.petikan) ? 'ar fq-ar' : 'fq-tr'}"${isAr(s.petikan) ? ' lang="ar" dir="rtl"' : ''}>${esc(s.petikan)}</blockquote>` : ''}
       ${s.maksud ? `<p class="fq-tr">${esc(s.maksud)}</p>` : ''}
@@ -249,7 +252,7 @@
 
   function aiCite({ d, q }) {
     const out = [`Soalan: ${q}`, '', d.ringkasan || '', ...(d.huraian || []), d.khilaf ? 'Perbezaan pendapat: ' + d.khilaf : '', '', 'Rujukan:'];
-    (d.sumber || []).forEach(s => out.push(`- ${s.tajuk}${s.shamela ? `, Shamela hlm. ${s.shamela}` : ''}${s.halaman ? `, hlm. ${s.halaman}` : ''} (${s.url})${s.petikan ? `\n  "${s.petikan}"` : ''}`));
+    (d.sumber || []).forEach(s => out.push(`- ${s.tajuk}${s.shamela ? `, Shamela hlm. ${s.shamela}` : ''}${s.pdf ? `, PDF hlm. ${s.pdf}` : ''}${s.halaman ? `, hlm. ${s.halaman}` : ''} (${s.url})${s.petikan ? `\n  "${s.petikan}"` : ''}`));
     out.push('', 'Dijana oleh Tanya AI Bijak Labur. Bukan fatwa; semak sumber asal.');
     return out.filter((l, i, a) => l || a[i - 1]).join('\n');
   }
