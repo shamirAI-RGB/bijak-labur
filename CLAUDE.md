@@ -13,7 +13,7 @@ Laman bijaklabur.my (GitHub Pages, cawangan `main`) dan app Android/iOS (Capacit
   - `worker-fiqh/`: Tanya AI, `/semak`, `/kalori`, `/gambar` (FLUX), `/buku` (Buku Nota AI), `/kerja` (Kerjaya AI), `/manusia` (gaya AI). Gemini percuma, dengan penghala sandaran ke Workers AI (`src/gemini.js`) apabila kuota Gemini habis
   - `worker-jadual/`: jadual UiTM
   - `worker-nota/`: kedai nota, 4 ruang iklan halaman utama (`/iklan`) dan teks laman yang diubah oleh pemilik (`/kandungan`)
-  - `worker-agen/`: pintu peribadi Flowise di agen.bijaklabur.my (Cloudflare Access + semakan token sendiri, proksi ke Hugging Face Space peribadi; `flowise/` ialah Dockerfile Space itu). Pautan hanya dalam panel Mod Pemilik
+  - `worker-agen/`: agen.bijaklabur.my melencong ke Activepieces Cloud (AI Agent pemilik). Pautan hanya dalam panel Mod Pemilik
 - Mod Pemilik (`js/pemilik.js`): pemilik menyunting teks secara langsung. Kunci teks dijana daripada struktur (`<view>.judul`, `<view>.lead`, `<view>.kad.<href>.tajuk`, `<view>.<id h->`, `<view>.h2.<n>`, `<view>.nota.<n>`); jangan ubah susunan elemen ini tanpa sebab kerana teks yang disimpan pemilik bergantung padanya. Elemen ber-id (kecuali `h-...`) dan elemen yang mengandungi elemen lain tidak boleh disunting.
 
 ## Peraturan wajib
