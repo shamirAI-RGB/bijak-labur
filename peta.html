@@ -34,6 +34,7 @@
       <button type="button" class="hud-btn" id="toggleRotation">Hentikan Putaran</button>
       <button type="button" class="hud-btn" id="generateRoutes">Jana Laluan Baharu</button>
       <button type="button" class="hud-btn" id="focusMalaysia">Fokus Malaysia</button>
+      <button type="button" class="hud-btn hud-btn--gps" id="gpsBtn" aria-pressed="false">Hidupkan GPS</button>
     </div>
   </div>
 
@@ -43,6 +44,17 @@
     <div class="data-row"><span>Populasi:</span><span class="data-value" id="country-pop">-</span></div>
     <div class="data-row"><span>Lat/Lng:</span><span class="data-value" id="country-coords">-</span></div>
     <p class="hud-hint">Halakan atau ketik negara untuk butiran.</p>
+    <div class="gps-box" id="gps-box" hidden>
+      <h2 class="hud-title hud-title--gps">GPS Saya</h2>
+      <div class="data-row"><span>Status:</span><span class="data-value" id="gps-status">-</span></div>
+      <div class="data-row"><span>Anda di:</span><span class="data-value" id="gps-country">-</span></div>
+      <div class="data-row"><span>Koordinat:</span><span class="data-value" id="gps-coords">-</span></div>
+      <div class="data-row"><span>Ketepatan:</span><span class="data-value" id="gps-acc">-</span></div>
+      <div class="data-row gps-extra"><span>Kelajuan:</span><span class="data-value" id="gps-speed">-</span></div>
+      <div class="data-row gps-extra"><span>Ketinggian:</span><span class="data-value" id="gps-alt">-</span></div>
+      <div class="data-row"><span>Hab terdekat:</span><span class="data-value" id="gps-hub">-</span></div>
+      <button type="button" class="hud-btn hud-btn--gps" id="gpsFocus">Fokus Lokasi Saya</button>
+    </div>
   </div>
 
   <div id="tooltip" role="tooltip">

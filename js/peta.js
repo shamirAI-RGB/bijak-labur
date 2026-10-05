@@ -44,9 +44,9 @@
     if (n >= 1e6) return (n / 1e6).toLocaleString('ms-MY', { maximumFractionDigits: 1 }) + ' juta';
     return n.toLocaleString('ms-MY');
   };
-  const fmtCoord = (lat, lng) => {
+  const fmtCoord = (lat, lng, dp = 2) => {
     if (typeof lat !== 'number' || typeof lng !== 'number') return '-';
-    return `${Math.abs(lat).toFixed(2)}°${lat >= 0 ? 'U' : 'S'}, ${Math.abs(lng).toFixed(2)}°${lng >= 0 ? 'T' : 'B'}`;
+    return `${Math.abs(lat).toFixed(dp)}°${lat >= 0 ? 'U' : 'S'}, ${Math.abs(lng).toFixed(dp)}°${lng >= 0 ? 'T' : 'B'}`;
   };
 
   // Pusat kewangan utama (bursa saham); Kuala Lumpur sentiasa menjadi hab
@@ -70,6 +70,7 @@
   const CAP = 'rgba(10, 20, 30, 0.7)';
   const CAP_HOT = 'rgba(255, 0, 255, 0.6)';
   const CAP_SEL = 'rgba(0, 255, 255, 0.45)';
+  const GPS_COLOR = '#39ff14';
 
   const narrow = () => window.innerWidth < 720;
   let hovered = null;
@@ -91,17 +92,23 @@
     // Titik dan label pusat kewangan
     .pointsData(HUBS)
     .pointLat('lat').pointLng('lng')
-    .pointColor(d => d.name === 'Kuala Lumpur' ? '#ffff00' : '#00ffff')
+    .pointColor(d => d.me ? GPS_COLOR : d.name === 'Kuala Lumpur' ? '#ffff00' : '#00ffff')
     .pointAltitude(0.015)
-    .pointRadius(d => d.name === 'Kuala Lumpur' ? 0.6 : 0.35)
+    .pointRadius(d => d.me ? 0.45 : d.name === 'Kuala Lumpur' ? 0.6 : 0.35)
     .labelsData(HUBS)
     .labelLat('lat').labelLng('lng')
     .labelText('name')
     .labelSize(0.9)
     .labelDotRadius(0)
     .labelAltitude(0.02)
-    .labelColor(() => 'rgba(160, 216, 239, 0.85)')
+    .labelColor(d => d.me ? GPS_COLOR : 'rgba(160, 216, 239, 0.85)')
     .labelResolution(2)
+    // Gelang denyut GPS pada lokasi pengguna
+    .ringLat('lat').ringLng('lng')
+    .ringColor(() => t => `rgba(57, 255, 20, ${Math.max(0, 1 - t)})`)
+    .ringMaxRadius('r')
+    .ringPropagationSpeed('speed')
+    .ringRepeatPeriod(reduceMotion ? 0 : 900)
     // Laluan
     .arcColor('color')
     .arcDashLength(0.4)
@@ -132,6 +139,8 @@
     .then(res => { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
     .then(geo => {
       const features = (geo && Array.isArray(geo.features)) ? geo.features : [];
+      countries = features;
+      if (me) { const f = countryAt(me.lat, me.lng); if (f) $('gps-country').textContent = countryName(f.properties || {}); }
       world.polygonsData(features)
         .onPolygonHover(d => {
           hovered = d || null;
@@ -165,6 +174,8 @@
       $('peta-count').textContent = '0';
     });
 
+  let baseArcs = [];
+  let userArcs = [];
   // Laluan rawak antara pusat kewangan; separuh daripadanya bermula dari Kuala Lumpur
   function generateArcs() {
     const pick = () => HUBS[Math.floor(Math.random() * HUBS.length)];
@@ -181,8 +192,13 @@
         color: COLORS[Math.floor(Math.random() * COLORS.length)]
       });
     }
-    world.arcsData(arcs);
-    $('peta-arcs').textContent = String(arcs.length);
+    baseArcs = arcs;
+    paintArcs();
+  }
+  function paintArcs() {
+    const all = baseArcs.concat(userArcs);
+    world.arcsData(all);
+    $('peta-arcs').textContent = String(all.length);
   }
   generateArcs();
 
@@ -232,5 +248,120 @@
     const my = (world.polygonsData() || []).find(d => d.properties && d.properties.a2 === 'MY');
     if (my) { selected = my; refreshPolygons(); showCountry(my); }
     world.pointOfView({ lat: 4.2, lng: 108, altitude: narrow() ? 2.2 : 1.4 }, reduceMotion ? 0 : 1200);
+  });
+  /* ---------- GPS masa nyata ---------- */
+  const gpsBtn = $('gpsBtn');
+  const gpsBox = $('gps-box');
+  let watchId = null;
+  let me = null;
+  let firstFix = false;
+  let countries = [];
+
+  // Jarak bulatan besar (km)
+  const haversine = (a, b) => {
+    const R = 6371, rad = Math.PI / 180;
+    const dLat = (b.lat - a.lat) * rad, dLng = (b.lng - a.lng) * rad;
+    const h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(dLng / 2) ** 2;
+    return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+  };
+  const fmtKm = km => km < 1 ? `${Math.round(km * 1000)} m` : `${km.toLocaleString('ms-MY', { maximumFractionDigits: km < 100 ? 1 : 0 })} km`;
+  // Titik dalam poligon (ray casting), berfungsi luar talian dengan data negara.json
+  const inRing = (lng, lat, ring) => {
+    let inside = false;
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      const [xi, yi] = ring[i], [xj, yj] = ring[j];
+      if ((yi > lat) !== (yj > lat) && lng < (xj - xi) * (lat - yi) / (yj - yi) + xi) inside = !inside;
+    }
+    return inside;
+  };
+  const inPolygon = (lng, lat, poly) => inRing(lng, lat, poly[0]) && !poly.slice(1).some(h => inRing(lng, lat, h));
+  const countryAt = (lat, lng) => countries.find(f => {
+    const g = f.geometry;
+    if (!g) return false;
+    const polys = g.type === 'Polygon' ? [g.coordinates] : g.type === 'MultiPolygon' ? g.coordinates : [];
+    return polys.some(p => inPolygon(lng, lat, p));
+  }) || null;
+
+  const setGps = (text, bad) => {
+    const el = $('gps-status');
+    el.textContent = text;
+    el.classList.toggle('is-ok', !bad && watchId !== null && !!me);
+    el.classList.toggle('is-bad', !!bad);
+  };
+  const paintMe = () => {
+    const extra = me ? [{ name: 'Anda', lat: me.lat, lng: me.lng, me: true }] : [];
+    world.pointsData(HUBS.concat(extra)).labelsData(HUBS.concat(extra));
+    world.ringsData(me ? [
+      { lat: me.lat, lng: me.lng, r: 4, speed: 3 },
+      // Gelang ketepatan: jejari sebenar dalam darjah (minimum supaya tetap kelihatan)
+      { lat: me.lat, lng: me.lng, r: Math.max(0.3, (me.acc || 0) / 111320), speed: 0.6 }
+    ] : []);
+    if (me) {
+      const near = HUBS.map(h => ({ h, d: haversine(me, h) })).sort((a, b) => a.d - b.d);
+      const targets = [HUBS[0]].concat(near.filter(x => x.h !== HUBS[0]).slice(0, 3).map(x => x.h));
+      userArcs = targets.filter(h => haversine(me, h) > 5).map(h => ({
+        startLat: me.lat, startLng: me.lng, endLat: h.lat, endLng: h.lng, color: GPS_COLOR
+      }));
+      $('gps-hub').textContent = `${near[0].h.name} (${fmtKm(near[0].d)})`;
+    } else {
+      userArcs = [];
+    }
+    paintArcs();
+  };
+  const flyToMe = () => {
+    if (!me) return;
+    controls.autoRotate = false;
+    syncRotateLabel();
+    world.pointOfView({ lat: me.lat, lng: me.lng, altitude: narrow() ? 1.6 : 1.1 }, reduceMotion ? 0 : 1500);
+  };
+
+  function onPos(pos) {
+    const c = pos.coords;
+    me = { lat: c.latitude, lng: c.longitude, acc: c.accuracy };
+    $('gps-coords').textContent = fmtCoord(me.lat, me.lng, 5);
+    $('gps-acc').textContent = typeof c.accuracy === 'number' ? `± ${fmtKm(c.accuracy / 1000)}` : '-';
+    $('gps-speed').textContent = typeof c.speed === 'number' && c.speed >= 0 ? `${(c.speed * 3.6).toLocaleString('ms-MY', { maximumFractionDigits: 1 })} km/j` : '-';
+    $('gps-alt').textContent = typeof c.altitude === 'number' ? `${Math.round(c.altitude)} m` : '-';
+    const f = countryAt(me.lat, me.lng);
+    $('gps-country').textContent = f ? countryName(f.properties || {}) : 'Lautan / tidak diketahui';
+    setGps(`Aktif · ${new Date(pos.timestamp || Date.now()).toLocaleTimeString('ms-MY')}`);
+    paintMe();
+    if (!firstFix) { firstFix = true; flyToMe(); }
+  }
+  function onErr(err) {
+    const msg = !err ? 'Ralat GPS'
+      : err.code === 1 ? 'Akses lokasi ditolak. Benarkan lokasi dalam tetapan pelayar.'
+      : err.code === 2 ? 'Isyarat GPS tiada. Cuba di kawasan terbuka.'
+      : err.code === 3 ? 'GPS lambat. Masih mencuba...'
+      : 'Ralat GPS';
+    setGps(msg, err && err.code !== 3);
+    if (err && err.code === 1) stopGps(true);
+  }
+  function startGps() {
+    if (!('geolocation' in navigator)) { gpsBox.hidden = false; setGps('Peranti ini tidak menyokong GPS.', true); return; }
+    if (!window.isSecureContext) { gpsBox.hidden = false; setGps('GPS memerlukan sambungan HTTPS.', true); return; }
+    gpsBox.hidden = false;
+    firstFix = false;
+    setGps('Mencari isyarat GPS...');
+    watchId = navigator.geolocation.watchPosition(onPos, onErr, { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 });
+    gpsBtn.textContent = 'Matikan GPS';
+    gpsBtn.setAttribute('aria-pressed', 'true');
+  }
+  function stopGps(keepMsg) {
+    if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+    watchId = null;
+    me = null;
+    paintMe();
+    gpsBtn.textContent = 'Hidupkan GPS';
+    gpsBtn.setAttribute('aria-pressed', 'false');
+    if (!keepMsg) gpsBox.hidden = true;
+  }
+  gpsBtn.addEventListener('click', () => { if (watchId === null) startGps(); else stopGps(); });
+  $('gpsFocus').addEventListener('click', flyToMe);
+  // Jimat bateri: GPS berhenti semasa tab tersembunyi dan bersambung semula selepas itu
+  document.addEventListener('visibilitychange', () => {
+    if (watchId === null) return;
+    if (document.hidden) { navigator.geolocation.clearWatch(watchId); watchId = -1; }
+    else if (watchId === -1) watchId = navigator.geolocation.watchPosition(onPos, onErr, { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 });
   });
 })();
