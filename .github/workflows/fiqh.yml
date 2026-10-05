@@ -29,10 +29,20 @@ jobs:
       - run: npm ci
       - name: Uji
         run: node test.mjs
-      # Rujukan rasmi moden: muat turun 4 PDF daripada laman rasmi, ekstrak teks setiap muka surat dan bina indeks carian
-      # ke worker-fiqh/aset (tidak disimpan dalam repo). Dokumen yang gagal dimuat turun dilangkau.
-      - name: Muat turun dan indeks rujukan PDF
-        run: node scripts/muat-rujukan.mjs || mkdir -p aset/rujukan
+      # Teks kitab Shamela yang telah dimuat turun disimpan antara larian, supaya setiap halaman hanya diambil sekali
+      - name: Cache teks kitab
+        uses: actions/cache@v4
+        with:
+          path: worker-fiqh/.cache
+          key: shamela-v1-${{ github.run_id }}
+          restore-keys: shamela-v1-
+      # Rujukan: muat turun 4 PDF rasmi moden dan teks kitab muktabar (Shamela), ambil teks setiap muka surat dan bina
+      # indeks carian ke worker-fiqh/aset (tidak disimpan dalam repo). Dokumen yang gagal dimuat turun dilangkau.
+      - name: Muat turun dan indeks rujukan
+        timeout-minutes: 30
+        continue-on-error: true
+        run: node scripts/muat-rujukan.mjs
+      - run: mkdir -p aset/rujukan
       # Semak kunci Gemini dan uji setiap model dengan permintaan Tanya AI sebenar (tanpa mendedahkan kunci)
       - name: Semak Gemini
         if: env.HAS_GEMINI == 'true'

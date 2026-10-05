@@ -5,3 +5,4 @@ www/
 *.jks
 worker-fiqh/aset/
 .wrangler/
+worker-fiqh/.cache/

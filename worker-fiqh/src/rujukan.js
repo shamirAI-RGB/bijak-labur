@@ -1,16 +1,20 @@
 /*
- * Rujukan rasmi moden: carian teks setiap muka surat PDF (FiqhData.MODEN).
+ * Carian teks penuh setiap muka surat: dokumen rasmi moden (PDF, FiqhData.MODEN) dan kitab muktabar
+ * mazhab Syafie di Shamela (FiqhData.KITAB). Nombor muka surat kitab ialah nombor halaman Shamela,
+ * jadi pautan https://shamela.ws/book/ID/N membuka muka surat yang sama.
  *
  * Teks dan indeks dibina semasa pemasangan (scripts/muat-rujukan.mjs) ke dalam folder aset worker:
  *   rujukan/meta.json          { docs: { k: bilangan muka surat }, avgdl, dl: { "k:n": panjang } }
  *   rujukan/i/<baldi>.json     { istilah: [[k, n, kekerapan], ...] }
- *   rujukan/p/<k>/<n>.txt      teks muka surat n (n bermula dari 1, sama seperti #page=n dalam pelayar PDF)
+ *   rujukan/p/<k>/<n>.txt      teks muka surat n (PDF: n bermula dari 1, sama seperti #page=n; kitab: halaman Shamela)
  * Aset ini tidak dihidangkan terus kepada umum (run_worker_first); pelayan hanya memetik muka surat yang relevan.
  */
 import '../../js/fiqh-data.js';
 
-export const MODEN = globalThis.FiqhData.MODEN;
-export const DOC = Object.fromEntries(MODEN.map(d => [d.k, d]));
+const D = globalThis.FiqhData;
+export const MODEN = D.MODEN;
+export const KITAB = Object.entries(D.KITAB).map(([k, b]) => ({ ...b, k, jenis: 'kitab', url: D.shamela(b.id) }));
+export const DOC = Object.fromEntries([...MODEN.map(d => [d.k, { ...d, jenis: 'dokumen' }]), ...KITAB.map(d => [d.k, d])]);
 export const BUCKETS = 64;
 const K1 = 1.2, B = 0.75;
 
@@ -24,7 +28,10 @@ export const normText = s => String(s || '').normalize('NFKC')
   .replace(/[أإآٱ]/g, 'ا').replace(/ى/g, 'ي')
   .toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
 
-export const tokens = s => normText(s).split(' ').filter(t => t.length >= 3 && t.length <= 30 && !STOP.has(t));
+// Arab: buang awalan "al" (dan wa/bi/fa/ka + al, li + l) serta seragamkan ta marbutah, supaya الربا, والربا dan ربا sepadan
+const AR = /[\u0600-\u06FF]/;
+const stem = t => !AR.test(t) ? t : t.replace(/ة/g, 'ه').replace(/^(?:[وفبك]?ال|لل)(?=..)/, '');
+export const tokens = s => normText(s).split(' ').map(stem).filter(t => (AR.test(t) ? t.length >= 2 : t.length >= 3) && t.length <= 30 && !STOP.has(t));
 
 export function bucket(t) {
   let h = 0x811c9dc5;
@@ -97,13 +104,20 @@ export async function search(env, query, limit = 6) {
   const ranked = [...score.values()].map(x => ({ ...x, skor: x.skor * (1 + 0.3 * (x.padan - 1)) })).sort((a, b) => b.skor - a.skor);
   const top = ranked.filter(x => ranked.length && x.skor >= ranked[0].skor * 0.4).slice(0, limit);
   const texts = await Promise.all(top.map(x => page(env, x.k, x.n)));
-  return top.map((x, i) => ({ id: `pdf:${x.k}:${x.n}`, k: x.k, n: x.n, skor: +x.skor.toFixed(2), teks: texts[i] || '' })).filter(x => x.teks);
+  return top.map((x, i) => ({ id: `${DOC[x.k] && DOC[x.k].jenis === 'kitab' ? 'kitab' : 'pdf'}:${x.k}:${x.n}`, k: x.k, n: x.n, skor: +x.skor.toFixed(2), teks: texts[i] || '' })).filter(x => x.teks);
 }
 
 /** Pautan yang membuka PDF asal pada muka surat itu */
-export const pageUrl = (k, n) => `${DOC[k].url}#page=${n}`;
+export const pageUrl = (k, n) => DOC[k].jenis === 'kitab' ? D.shamela(DOC[k].id, n) : `${DOC[k].url}#page=${n}`;
 
-/* Dua daripada empat dokumen dalam Bahasa Inggeris: tambah istilah Inggeris dan Arab bagi soalan dalam Bahasa Melayu */
+/* Juz dan halaman cetakan yang tertera pada halaman Shamela, cth. "[الجزء: 1 ¦ الصفحة: 142]" */
+const DIGIT = s => String(s).replace(/[٠-٩]/g, d => d.charCodeAt(0) - 0x660);
+export function cetakan(teks) {
+  const m = String(teks || '').match(/الجزء\s*:\s*([٠-٩\d]+)\s*¦?\s*الصفحة\s*:\s*([٠-٩\d]+)/) || String(teks || '').match(/()الصفحة\s*:\s*([٠-٩\d]+)/);
+  return m ? { jilid: m[1] ? DIGIT(m[1]) : '', halaman: DIGIT(m[2]) } : { jilid: '', halaman: '' };
+}
+
+/* Dua dokumen moden dalam Bahasa Inggeris dan kitab dalam Bahasa Arab: tambah istilah Inggeris dan Arab bagi soalan dalam Bahasa Melayu */
 const GLOSARI = {
   riba: 'usury interest', faedah: 'interest riba', bunga: 'interest riba', pinjaman: 'loan qard', hutang: 'debt dayn',
   saham: 'shares stock equity securities', pelaburan: 'investment', pelabur: 'investor investment', dagang: 'trading trade', dagangan: 'trading',
@@ -121,13 +135,30 @@ const GLOSARI = {
   halal: 'permissible lawful', haram: 'prohibited unlawful', hukum: 'ruling', makanan: 'food', daging: 'meat', sembelihan: 'slaughter', alkohol: 'alcohol',
   vaksin: 'vaccine', gelatin: 'gelatin', rokok: 'smoking tobacco', vape: 'smoking', internet: 'internet', talian: 'online electronic', melabur: 'investment invest', labur: 'investment'
 };
+// Istilah fiqh dalam kitab Arab
+const ARAB = {
+  riba: 'ربا', faedah: 'ربا', bunga: 'ربا', pinjaman: 'قرض', hutang: 'دين قرض', jual: 'بيع', beli: 'بيع شراء', jualbeli: 'بيع', emas: 'ذهب', perak: 'فضة',
+  tukaran: 'صرف', forex: 'صرف', mata: 'نقد', wang: 'دراهم دنانير نقد', sewa: 'إجارة', upah: 'إجارة أجرة', gadai: 'رهن', cagaran: 'رهن', syarikat: 'شركة', perkongsian: 'شركة',
+  mudarabah: 'قراض مضاربة', untung: 'ربح', keuntungan: 'ربح', ansuran: 'أجل', tangguh: 'أجل', hibah: 'هبة', hadiah: 'هبة هدية', wakaf: 'وقف', wasiat: 'وصية', ejen: 'وكالة',
+  wakalah: 'وكالة', judi: 'قمار ميسر', perjudian: 'قمار', gharar: 'غرر', zakat: 'زكاة', nisab: 'نصاب', fitrah: 'فطر', haul: 'حول', perniagaan: 'تجارة', niaga: 'تجارة',
+  solat: 'صلاة', sembahyang: 'صلاة', jemaah: 'جماعة', jumaat: 'جمعة', musafir: 'سفر مسافر', jamak: 'جمع', qasar: 'قصر', qada: 'قضاء', azan: 'أذان', imam: 'إمام', makmum: 'مأموم',
+  wuduk: 'وضوء', mandi: 'غسل', junub: 'جنابة', tayammum: 'تيمم', najis: 'نجاسة نجس', haid: 'حيض', nifas: 'نفاس', air: 'ماء', kiblat: 'قبلة', aurat: 'عورة',
+  puasa: 'صوم صيام', sahur: 'سحور', fidyah: 'فدية', kafarah: 'كفارة', iktikaf: 'اعتكاف', haji: 'حج', umrah: 'عمرة', korban: 'أضحية', akikah: 'عقيقة',
+  nikah: 'نكاح', kahwin: 'نكاح', wali: 'ولي', mahar: 'صداق مهر', talak: 'طلاق', cerai: 'طلاق', idah: 'عدة', rujuk: 'رجعة', nafkah: 'نفقة', susuan: 'رضاع',
+  faraid: 'فرائض ميراث', pusaka: 'ميراث', waris: 'ميراث وارث', nazar: 'نذر', sumpah: 'يمين', makanan: 'أطعمة', sembelihan: 'ذبائح ذكاة', arak: 'خمر', alkohol: 'خمر مسكر',
+  mayat: 'ميت جنازة', jenazah: 'جنازة', kubur: 'قبر', doa: 'دعاء', niat: 'نية', saham: 'شركة', insurans: 'غرر', denda: 'غرامة', curi: 'سرقة', zina: 'زنا'
+};
 export function expand(q) {
   const extra = [];
-  for (const t of normText(q).split(' ')) if (GLOSARI[t]) extra.push(GLOSARI[t]);
+  for (const t of normText(q).split(' ')) { if (GLOSARI[t]) extra.push(GLOSARI[t]); if (ARAB[t]) extra.push(ARAB[t]); }
   return extra.length ? `${q} ${extra.join(' ')}` : q;
 }
 
-/* Blok teks untuk model: setiap muka surat dengan id pdf:k:n */
+/* Blok teks untuk model: setiap muka surat dengan id pdf:k:n atau kitab:k:n */
 export const PDF_MAX = 3500;
-export const pagesText = hits => hits.map(h =>
-  `[${h.id}] (dokumen) ${DOC[h.k].name}, ${DOC[h.k].by}. Muka surat PDF ${h.n}.\n${h.teks.slice(0, PDF_MAX)}`).join('\n\n');
+export const pagesText = hits => hits.map(h => {
+  const d = DOC[h.k];
+  return d.jenis === 'kitab'
+    ? `[${h.id}] (kitab) ${d.name} (${d.ar}), ${d.by}. Halaman Shamela ${h.n}.\n${h.teks.slice(0, PDF_MAX)}`
+    : `[${h.id}] (dokumen) ${d.name}, ${d.by}. Muka surat PDF ${h.n}.\n${h.teks.slice(0, PDF_MAX)}`;
+}).join('\n\n');
