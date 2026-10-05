@@ -1,0 +1,41 @@
+/* Akademi Pelaburan: laluan Moomoo dan Kripto, tiga tahap dan AI Coach (js/akademi.js) */
+.akd { display: grid; gap: 14px; }
+.akd .seg { display: inline-flex; align-items: center; gap: 6px; }
+.akd .seg .ic { width: 16px; height: 16px; }
+.akd-title { margin: 0; font-size: 1.15rem; }
+.akd-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.akd-step { display: flex; align-items: center; gap: 10px; text-align: left; padding: 10px 12px; border-radius: var(--radius); border: 1.5px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; font: inherit; min-width: 0; }
+.akd-step small { display: block; color: var(--muted); font-size: .72rem; }
+.akd-step b { display: block; font-size: .9rem; overflow: hidden; text-overflow: ellipsis; }
+.akd-step > span:last-child { min-width: 0; }
+.akd-n { flex: none; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: .85rem; background: var(--surface-2); color: var(--muted); }
+.akd-step.past .akd-n { background: var(--brand-soft); color: var(--brand); }
+.akd-step.active { border-color: var(--brand); background: var(--brand-soft); }
+.akd-step.active .akd-n { background: var(--brand); color: var(--brand-ink); }
+.akd-level h3 { margin: 2px 0 12px; }
+.akd-mods { display: grid; gap: 12px; }
+.akd-mod { display: flex; gap: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+.akd-mod:first-child { border-top: 0; padding-top: 0; }
+.akd-i { flex: none; width: 24px; height: 24px; border-radius: 7px; display: grid; place-items: center; font-size: .8rem; font-weight: 700; background: var(--surface-2); color: var(--brand); }
+.akd-mod p { margin: 4px 0 0; line-height: 1.55; }
+.akd-sy { display: flex; gap: 8px; align-items: flex-start; padding: 8px 10px; border-radius: 10px; background: color-mix(in srgb, var(--warn) 10%, transparent); font-size: .88rem; }
+.akd-sy .ic { flex: none; width: 16px; height: 16px; color: var(--warn); margin-top: 2px; }
+.akd-links { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 4px; }
+.akd-links .link-btn { display: inline-flex; align-items: center; gap: 5px; text-align: left; }
+.akd-links .ic { width: 15px; height: 15px; flex: none; }
+.akd-coach-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.akd-coach-head small { display: block; }
+.akd-clear { margin-left: auto; }
+.akd-av { flex: none; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--brand); color: var(--brand-ink); }
+.akd-av .ic { width: 18px; height: 18px; }
+.akd-chat ul, .akd-chat ol { margin: 0 0 8px; padding-left: 20px; line-height: 1.6; }
+.akd-chat .bk-wait { display: flex; align-items: center; gap: 10px; }
+.akd-chat .st-spin { width: 18px; height: 18px; border-width: 2px; }
+.akd-err { color: var(--down); }
+.akd-ask { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 6px; }
+.akd-ask textarea { flex: 1; min-width: 0; resize: vertical; }
+@media (max-width: 560px) {
+  .akd-steps { gap: 6px; }
+  .akd-step { flex-direction: column; align-items: flex-start; gap: 6px; padding: 8px 10px; }
+  .akd-ask { flex-direction: column; align-items: stretch; }
+}

@@ -31,6 +31,7 @@
   };
 
   const MODULES = [
+    { id: 'akademi', name: 'Laluan & AI Coach', akademi: true },
     {
       id: 'mula', name: 'Mula di Moomoo', lessons: [
         { id: 'm1', t: 'Apa itu Moomoo dan kenapa ramai guna', h: `
@@ -379,8 +380,10 @@
   ];
 
   const allLessons = MODULES.flatMap(m => m.lessons || []);
+  // Untuk Akademi Pelaburan (akademi.js): pautan ke pelajaran berkaitan
+  window.LEARN_LESSONS = Object.fromEntries(MODULES.flatMap(m => (m.lessons || []).map(l => [l.id, { t: l.t, mod: m.id }])));
   let done = new Set(store.get('learnDone', []));
-  let current = store.get('learnTab', 'mula');
+  let current = store.get('learnTab', 'akademi');
 
   function updateProgress() {
     const pct = Math.round(done.size / allLessons.length * 100);
@@ -403,6 +406,8 @@
   function renderModule() {
     const m = MODULES.find(x => x.id === current) || MODULES[0];
     const box = $('#learnContent');
+    if (window.Akademi) window.Akademi.leave();
+    if (m.akademi) return window.Akademi ? window.Akademi.render(box, openLesson) : (box.innerHTML = '');
     if (m.calc) return renderCalc(box);
     if (m.quiz) return renderQuiz(box);
     box.innerHTML = m.lessons.map((l, i) => `
@@ -413,6 +418,15 @@
         </div>
       </details>`).join('');
     initLev(box);
+  }
+
+  // Buka satu pelajaran dari Akademi Pelaburan
+  function openLesson(id) {
+    const l = window.LEARN_LESSONS[id]; if (!l) return;
+    current = l.mod; store.set('learnTab', current); renderTabs(); renderModule();
+    const det = $(`#learnContent details[data-id="${id}"]`); if (!det) return;
+    $$('#learnContent details').forEach(d => { d.open = d === det; });
+    det.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   // Simulator leverage dalam pelajaran jn3

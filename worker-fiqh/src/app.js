@@ -23,6 +23,7 @@ import { gambar, check as checkGambar } from './gambar.js';
 import { buku, check as checkBuku } from './buku.js';
 import { kerja, check as checkKerja } from './kerja.js';
 import { manusia, check as checkManusia } from './manusia.js';
+import { coach, check as checkCoach } from './coach.js';
 import { audit, check as checkAudit } from './audit.js';
 export { GEMINI_MODEL, GEMINI_FALLBACKS, geminiModels };
 
@@ -352,12 +353,13 @@ async function gambarRoute(req, env, h) {
   }
 }
 
-/* Laluan AI generik: Buku Nota (/buku), Kerjaya (/kerja), No AI Slop (/manusia), audit lanjutan Semak Kertas (/audit) */
+/* Laluan AI generik: Buku Nota (/buku), Kerjaya (/kerja), No AI Slop (/manusia), audit lanjutan Semak Kertas (/audit), AI Coach Akademi (/coach) */
 const AI_ROUTES = {
   '/buku': { nama: 'Buku Nota AI', limit: 'BUKU_LIMIT', check: checkBuku, run: buku, maxBytes: 600_000 },
   '/kerja': { nama: 'Kerjaya AI', limit: 'KERJA_LIMIT', check: checkKerja, run: kerja, maxBytes: 150_000 },
   '/manusia': { nama: 'Semakan gaya AI', limit: 'MANUSIA_LIMIT', check: checkManusia, run: manusia, maxBytes: 200_000 },
-  '/audit': { nama: 'Audit lanjutan', limit: 'AUDIT_LIMIT', check: checkAudit, run: audit, maxBytes: 400_000 }
+  '/audit': { nama: 'Audit lanjutan', limit: 'AUDIT_LIMIT', check: checkAudit, run: audit, maxBytes: 400_000 },
+  '/coach': { nama: 'AI Coach', limit: 'COACH_LIMIT', check: checkCoach, run: coach, maxBytes: 30_000 }
 };
 
 async function aiRoute(req, env, h, r) {
