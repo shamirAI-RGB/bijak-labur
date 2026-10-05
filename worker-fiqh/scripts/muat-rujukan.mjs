@@ -83,8 +83,14 @@ async function shamelaBook(b) {
   let pages = null, tried = [];
   try { const c = JSON.parse(await readFile(file, 'utf8')); pages = c.pages; tried = c.tried || []; } catch {}
   if (!pages) {
-    const first = await get(`https://shamela.ws/book/${b.id}/1`);
-    if (!first || first.status !== 200) throw new Error(`halaman 1: ${first ? first.status + ' ' + (first.error || '') : '404'}`);
+    // Sesetengah buku tiada halaman 1; halaman utama buku juga mengandungi pautan ke halaman-halamannya
+    let first = await get(`https://shamela.ws/book/${b.id}/1`);
+    if (!first || first.status !== 200) {
+      console.log(`  halaman 1: ${first ? first.status + ' ' + (first.error || '') : '404'}; cuba halaman utama buku`);
+      first = await get(`https://shamela.ws/book/${b.id}`);
+      if (!first || first.status !== 200) throw new Error(`halaman utama: ${first ? first.status + ' ' + (first.error || '') : '404'}`);
+      first.html = first.html.replace(/class="[^"]*\bnass\b/g, 'class="x');
+    }
     // Butang halaman terakhir dalam navigasi
     const nums = [...first.html.matchAll(new RegExp(`/book/${b.id}/(\\d+)`, 'g'))].map(m => +m[1]);
     const last = Math.min(Math.max(1, ...nums), 6000);
@@ -161,7 +167,7 @@ if (!ok) console.log('Tiada dokumen berjaya dimuat; Tanya AI berjalan tanpa ruju
 // Contoh carian sebenar, supaya kualiti padanan boleh dilihat dalam log
 const env = { RUJUKAN: { fetch: async req => { const p = new URL(req.url).pathname.slice(1); return files.has(p) ? new Response(files.get(p)) : new Response('', { status: 404 }); } } };
 for (const q of ['Hukum jual beli emas secara ansuran', 'Adakah sah solat jika terkena najis?', 'Apakah hukum melabur dalam mata wang kripto seperti Bitcoin?', 'Adakah insurans konvensional halal?', 'Hukum kad kredit dan caj bayaran lewat', 'Hukum pemindahan organ', 'Bolehkah melabur dalam saham syarikat yang ada sedikit aktiviti tidak patuh syariah?']) {
-  const hits = await search(env, expand(q), 3);
+  const hits = await search(env, expand(q), 6);
   console.log(`Carian: ${q}`);
   for (const h of hits) console.log(`  ${h.id} (${h.skor}): ${h.teks.replace(/\s+/g, ' ').slice(0, 150)}`);
 }

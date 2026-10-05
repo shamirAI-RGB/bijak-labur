@@ -224,7 +224,8 @@ const KT = 'فصل في الربا. والرِّبَا حرامٌ في الذه�
 const kfiles = buildIndex({ ...PDF, fathqarib: [...Array(141).fill(''), 'كتاب الطهارة: المياه التي يجوز التطهير بها سبع مياه', KT] });
 const kenv = { RUJUKAN: { fetch: async req => { const p = new URL(req.url).pathname.slice(1); return kfiles.has(p) ? new Response(kfiles.get(p)) : new Response('', { status: 404 }); } } };
 hits = await search(kenv, expand('Hukum jual beli emas dengan emas'));
-assert.equal(hits[0].id, 'kitab:fathqarib:143', JSON.stringify(hits.map(h => h.id)));
+// Halaman kitab tetap diberi walaupun skor teks Melayu lebih tinggi
+assert.deepEqual(hits.filter(h => h.k === 'fathqarib').map(h => h.id), ['kitab:fathqarib:143'], JSON.stringify(hits.map(h => h.id)));
 greply = () => gem({ status: 'jawab', ringkasan: 'Mesti sama timbangan dan tunai.', huraian: ['Syarat tukaran emas.'], sumber: [
   { id: 'kitab:fathqarib:143', petikan: 'ولا يجوز بيع الذهب بالذهب إلا متماثلا نقدا', maksud: 'Tidak harus menjual emas dengan emas kecuali sama dan tunai.' }
 ] });
