@@ -4,3 +4,4 @@ www/
 *.keystore
 *.jks
 worker-fiqh/aset/
+.wrangler/
