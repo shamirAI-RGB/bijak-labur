@@ -10,6 +10,7 @@ import { geminiGenerate, toJsonSchema, ROUTER_MODEL } from './src/gemini.js';
 import { check as checkB, clean as cleanB, verifyQuotes, bukuBody, SCHEMAS as SB } from './src/buku.js';
 import { check as checkJ, clean as cleanJ, redact } from './src/kerja.js';
 import { check as checkM, clean as cleanM } from './src/manusia.js';
+import { check as checkC, coachBody, systemFor as sysC } from './src/coach.js';
 import { check as checkA, clean as cleanA, normalZon, auditBody, systemFor as sysA } from './src/audit.js';
 
 const env = { ANTHROPIC_API_KEY: 'sk-test', ALLOWED_ORIGINS: 'https://bijaklabur.my' };
@@ -504,6 +505,21 @@ assert.equal(d.status, 'tidak_pasti');
   // Melalui penghala Workers AI apabila Gemini habis kuota
   r = await post('/buku', { tugas: 'kad', sumber: [{ teks }] }, { ...aenv, AI: { run: async () => ({ response: { kad: [{ depan: 'Apa itu fotosintesis?', belakang: 'Proses membuat makanan.' }] } }) } });
   d = await r.json(); assert.equal(r.status, 200); assert.equal(d.kad.length, 1); assert.equal(d.penghala, 'workers-ai');
+
+  // AI Coach Akademi Pelaburan
+  assert.ok(checkC({ laluan: 'forex', soalan: 'Apa?' }).error);
+  assert.ok(checkC({ laluan: 'moomoo', soalan: ' ' }).error);
+  assert.equal(checkC({ laluan: 'moomoo', soalan: 'x'.repeat(1001) }).status, 413);
+  const cc = checkC({ laluan: 'kripto', tahap: 'dewa', soalan: 'Apa itu HODL?', sejarah: [{ peranan: 'coach', teks: 'Hai' }, ...Array(8).fill({ peranan: 'pelajar', teks: 'y' }), { peranan: 'x', teks: '' }] });
+  assert.equal(cc.tahap, 'beginner'); assert.equal(cc.sejarah.length, 5);
+  const cb = JSON.parse(coachBody({ ...cc, sejarah: [{ peranan: 'coach', teks: 'Hai' }, { peranan: 'pelajar', teks: 'A' }, { peranan: 'coach', teks: 'B' }] }));
+  assert.deepEqual(cb.contents.map(c => c.role), ['user', 'model', 'user']);
+  assert.match(sysC('moomoo', 'professional'), /Pakar Dagangan Moomoo/); assert.match(sysC('kripto', 'beginner'), /seed phrase/);
+  globalThis.fetch = async () => new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: '**HODL** bermaksud simpan jangka panjang.\n\n\n\nSelesai.' }] }, finishReason: 'STOP' }] }));
+  r = await post('/coach', { laluan: 'kripto', tahap: 'beginner', soalan: 'Apa itu HODL?' }); d = await r.json();
+  assert.equal(r.status, 200, JSON.stringify(d)); assert.equal(d.jawapan, '**HODL** bermaksud simpan jangka panjang.\n\nSelesai.');
+  assert.equal((await post('/coach', { laluan: 'kripto', soalan: 'A?' }, aenv, 'https://jahat.example')).status, 403);
+  assert.equal((await post('/coach', { laluan: 'moomoo', soalan: 'A?' }, { ...aenv, COACH_LIMIT: { limit: async () => ({ success: false }) } })).status, 429);
 }
 // Audit lanjutan Semak Kertas: rubrik tesis, NC industri, laras akademik, carta alir dan pelan lantai 20 x 80 kaki
 {
