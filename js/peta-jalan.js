@@ -76,12 +76,15 @@
     p.catch(() => cacheCari.delete(url));
     return p;
   };
+  // Nama negara mengikut peta ini: Palestin bagi seluruh wilayah itu
+  const namaNegara = n => /^(israel|palestinian territory|palestine|palestinian territories|state of palestine)$/i.test(String(n || '').trim()) ? 'Palestin' : n;
   const alamatPendek = r => {
-    const a = r.address || {};
+    const a = Object.assign({}, r.address || {});
+    if (a.country) a.country = namaNegara(a.country);
     const bahagian = [a.road || a.pedestrian || a.neighbourhood || a.suburb, a.city || a.town || a.village || a.municipality || a.county, a.state, a.country];
-    return bahagian.filter((x, i, arr) => x && arr.indexOf(x) === i).join(', ') || r.display_name || '';
+    return bahagian.filter((x, i, arr) => x && arr.indexOf(x) === i).join(', ') || String(r.display_name || '').replace(/\b(Israel|Palestinian Territory|Palestinian Territories|State of Palestine)\b/gi, 'Palestin');
   };
-  const namaTempat = r => r.name || (r.display_name || '').split(',')[0] || 'Tempat';
+  const namaTempat = r => namaNegara(r.name || (r.display_name || '').split(',')[0] || 'Tempat');
   const keTempat = r => ({ name: namaTempat(r), alamat: alamatPendek(r), lat: +r.lat, lng: +r.lon, jenis: r.type || '', kategori: r.category || r.class || '' });
 
   /* ---------- Keadaan ---------- */
