@@ -28,6 +28,27 @@ class_name = "Akaun"
 tag = "v1"
 new_sqlite_classes = ["Akaun"]
 
+# Komuniti: satu Durable Object (SQLite) untuk rakan, lokasi, sembang, acara, servis dan notifikasi
+[[durable_objects.bindings]]
+name = "KOMUNITI"
+class_name = "Komuniti"
+
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["Komuniti"]
+
+# Moderasi Komuniti mengesahkan kunci pemilik melalui pelayan nota (sumber tunggal kunci Mod Pemilik)
+[[services]]
+binding = "NOTA_SVC"
+service = "bijak-labur-nota"
+
+# Komuniti: 90 permintaan seminit bagi setiap akaun dan setiap alamat IP
+[[unsafe.bindings]]
+name = "KOMUNITI_LIMIT"
+type = "ratelimit"
+namespace_id = "1002"
+simple = { limit = 90, period = 60 }
+
 # Suara HD: 40 permintaan seminit bagi setiap alamat IP (yang sudah dicache tidak dikira)
 [[unsafe.bindings]]
 name = "TTS_LIMIT"
