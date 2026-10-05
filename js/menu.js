@@ -19,10 +19,20 @@
 
   /* ---------- Akaun (diisi oleh modul akaun kemudian) ---------- */
   function paintAccount() {
-    const nama = store.get('nama', '');
-    $('#kmName').textContent = nama || 'Tetamu';
-    $('#kmSub').textContent = nama ? 'Tetamu · data dalam peranti ini' : 'Data disimpan dalam peranti ini';
+    const A = typeof Akaun !== 'undefined' ? Akaun : null, u = A && A.user, nama = store.get('nama', '');
+    const st = A ? A.state : 'off', signedIn = !!u && st === 'active';
+    const shown = signedIn ? (u.name || u.email || u.phone) : (nama || 'Tetamu');
+    $('#kmName').textContent = shown;
+    $('#kmAvatar').innerHTML = signedIn ? esc(shown.trim().charAt(0).toUpperCase()) : icon('user');
+    $('#kmAvatar').classList.toggle('on', signedIn);
+    $('#kmSub').textContent = signedIn ? (u.name && (u.email || u.phone) ? (u.email || u.phone) : 'Akaun aktif pada peranti ini')
+      : u && st !== 'loading' ? 'Lengkapkan langkah akaun anda'
+      : st === 'loading' ? 'Memeriksa akaun...'
+      : 'Tetamu · log masuk untuk Premium';
+    const slot = $('[data-account-slot]', menu);
+    slot.setAttribute('aria-label', signedIn ? `Akaun: ${shown}` : 'Log masuk atau daftar akaun');
   }
+  document.addEventListener('akaunchange', () => { if ($('[data-account-slot] #kmName', menu)) paintAccount(); });
   // Modul akaun boleh menggantikan kandungan slot ini, cth. Menu.setAccount('<b>Nama</b>...')
   window.Menu = {
     setAccount(html) { const slot = $('[data-account-slot]', menu); if (slot) slot.innerHTML = html; },
@@ -53,7 +63,7 @@
     if (menu.hidden) return;
     if (e.key === 'Escape') { e.preventDefault(); close(true); return; }
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-      const items = $$('.km-item:not(.hidden), .seg', menu), i = items.indexOf(document.activeElement);
+      const items = $$('.km-account, .km-item:not(.hidden), .seg', menu), i = items.indexOf(document.activeElement);
       e.preventDefault();
       items[(i + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length].focus();
     }
@@ -90,7 +100,7 @@
       return;
     }
     // Pautan dan butang lain (Suara bacaan, Ruang soalan, dll.) menutup menu selepas ditekan
-    if (e.target.closest('.km-item')) close();
+    if (e.target.closest('.km-item, .km-account')) close();
   });
 
   /* ---------- Ruang Soalan ---------- */

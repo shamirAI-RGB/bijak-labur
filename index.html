@@ -217,10 +217,11 @@
       <div class="kebab">
         <button class="icon-btn" id="menuBtn" aria-label="Menu tetapan dan bantuan" title="Tetapan" aria-haspopup="true" aria-expanded="false" aria-controls="mainMenu"><svg class="ic"><use href="#i-dots"/></svg></button>
         <div class="kebab-menu" id="mainMenu" role="dialog" aria-label="Tetapan dan bantuan" hidden>
-          <div class="km-account" data-account-slot>
+          <button type="button" class="km-account" data-account-slot data-akaun-open>
             <span class="km-avatar" id="kmAvatar" aria-hidden="true"><svg class="ic"><use href="#i-user"/></svg></span>
-            <div class="km-acc-text"><b id="kmName">Tetamu</b><span class="muted small" id="kmSub">Data disimpan dalam peranti ini</span></div>
-          </div>
+            <span class="km-acc-text"><b id="kmName">Tetamu</b><span class="muted small" id="kmSub">Log masuk atau daftar akaun</span></span>
+            <svg class="ic km-chev" aria-hidden="true"><use href="#i-chev"/></svg>
+          </button>
           <div class="km-group">
             <p class="km-label">Paparan</p>
             <div class="km-row"><span>Tema</span><div class="segmented small" role="group" aria-label="Tema">
