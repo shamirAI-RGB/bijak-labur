@@ -174,7 +174,7 @@
     list.sort((a, b) => a.start - b.start || (b.rep != null) - (a.rep != null));
     const out = []; let lastEnd = -1;
     for (const s of list) {
-      if (s.rep === null && s.cat === 'kejelasan') { out.push(s); continue; } // nota peringkat ayat tidak menyekat yang lain
+      if (s.cat === 'laras' || (s.rep === null && s.cat === 'kejelasan')) { out.push(s); continue; } // cadangan peringkat ayat tidak menyekat yang lain
       if (s.start < lastEnd) continue;
       if (s.rep !== null && s.rep === s.orig) continue;
       out.push(s); lastEnd = s.end;

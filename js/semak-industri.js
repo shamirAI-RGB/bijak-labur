@@ -26,7 +26,8 @@
 
   /* ---------- Kod Mermaid ---------- */
   // Aksara khas dalam label Mermaid ditulis sebagai kod entiti supaya tidak memecahkan sintaks
-  const mm = s => String(s == null ? '' : s).replace(/[\r\n]+/g, ' ').replace(/#/g, '#35;').replace(/"/g, '#quot;').replace(/</g, '#lt;').replace(/>/g, '#gt;').trim();
+  // (% dan ` juga dikodkan: %%{init}%% ialah arahan Mermaid, dan ` di awal label memulakan rentetan markdown)
+  const mm = s => String(s == null ? '' : s).replace(/[\r\n]+/g, ' ').replace(/#/g, '#35;').replace(/%/g, '#37;').replace(/`/g, '#96;').replace(/"/g, '#quot;').replace(/</g, '#lt;').replace(/>/g, '#gt;').trim();
   const SHAPE = { mula: ['(["', '"])'], tamat: ['(["', '"])'], proses: ['["', '"]'], keputusan: ['{"', '"}'], ccp: ['[["', '"]]'], simpan: ['[("', '")]'] };
 
   function mermaidAliran(al) {
@@ -71,13 +72,14 @@
   /* ---------- SVG (dilukis dalam peranti, warna tetap supaya sama apabila dimuat turun) ---------- */
   const x = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   function wrap(s, n, max = 2) {
-    const words = String(s).split(/\s+/), lines = [];
+    // Perkataan yang lebih panjang daripada satu baris dipecahkan supaya tidak melimpah keluar kotak
+    const words = String(s).split(/\s+/).flatMap(w => { const c = Array.from(w), out = []; for (let i = 0; i < c.length; i += n) out.push(c.slice(i, i + n).join('')); return out; }), lines = [];
     let cur = '';
     for (const w of words) {
       if ((cur + ' ' + w).trim().length > n && cur) { lines.push(cur); cur = w; } else cur = (cur + ' ' + w).trim();
     }
     if (cur) lines.push(cur);
-    if (lines.length > max) { lines.length = max; lines[max - 1] = lines[max - 1].slice(0, n - 1) + '…'; }
+    if (lines.length > max) { lines.length = max; lines[max - 1] = Array.from(lines[max - 1]).slice(0, n - 1).join('') + '…'; }
     return lines;
   }
   const textLines = (lines, cx, cy, size, attrs = '') => {
@@ -93,11 +95,13 @@
     const H = top * 2 + L.length * BH + (L.length - 1) * GAP;
     let g = '';
     L.forEach((s, i) => {
-      const y = top + i * (BH + GAP), x0 = cx - BW / 2, lab = (s.jenis === 'ccp' ? 'CCP: ' : '') + s.label + (s.suhu ? ' (' + s.suhu + ')' : '');
+      const y = top + i * (BH + GAP), x0 = cx - BW / 2, lab = (s.jenis === 'ccp' ? 'CCP: ' : '') + s.label, dec = s.jenis === 'keputusan';
       const ccp = s.jenis === 'ccp', fill = ccp ? '#fde2e2' : s.jenis === 'keputusan' ? '#fff1d6' : s.jenis === 'simpan' ? '#dbeafe' : '#f8fafc', stroke = ccp ? '#b42318' : '#475569';
       if (s.jenis === 'keputusan') g += `<polygon points="${x0},${y + BH / 2} ${cx},${y} ${x0 + BW},${y + BH / 2} ${cx},${y + BH}" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>`;
       else g += `<rect x="${x0}" y="${y}" width="${BW}" height="${BH}" rx="${s.jenis === 'mula' || s.jenis === 'tamat' ? BH / 2 : 6}" fill="${fill}" stroke="${stroke}" stroke-width="${ccp ? 2.5 : 1.5}"/>`;
-      g += textLines(wrap(lab, s.jenis === 'keputusan' ? 26 : 38), cx, y + BH / 2, 12, `fill="#111827" ${FONT}`);
+      // Parameter suhu atau masa sentiasa dipaparkan pada baris sendiri supaya tidak terpotong; label rombus lebih sempit
+      const n = dec ? 18 : 38, lines = [...wrap(lab, n, s.suhu ? 1 : 2), ...(s.suhu ? wrap(s.suhu, dec ? 20 : 38, 1) : [])];
+      g += textLines(lines, cx, y + BH / 2, dec ? 11 : 12, `fill="#111827" ${FONT}`);
       if (i < L.length - 1) g += `<line x1="${cx}" y1="${y + BH}" x2="${cx}" y2="${y + BH + GAP - 2}" stroke="#334155" stroke-width="1.6" stroke-dasharray="4 4" marker-end="url(#fl-ah)"/>`;
     });
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${x(al.tajuk || 'Carta alir proses')}">
@@ -112,7 +116,7 @@
     fa.zon.forEach(z => {
       const h = z.panjang * S, [f, s] = ZON[z.jenis] || ZON.proses;
       g += `<rect x="${left}" y="${y}" width="${PW}" height="${h}" fill="${f}" stroke="${s}" stroke-width="1"/>`;
-      const lines = h >= 40 ? [...wrap(z.nama, 15, 2), `${fa.lebar} x ${z.panjang} kaki`] : [wrap(z.nama, 15, 1)[0] + ` (${z.panjang} kaki)`];
+      const lines = [...wrap(z.nama, 15, h >= 40 ? 2 : 1), `${fa.lebar} x ${z.panjang} kaki`];
       g += textLines(lines, left + 18 + (PW - 18) / 2, y + h / 2, 10, `fill="#111827" ${FONT}`);
       y += h;
     });
@@ -150,7 +154,9 @@
       if (f.length < 3 || !/\p{L}/u.test(f)) return;
       out.push({ cari: f, tajuk: s.cat, komen: `${s.cat}: "${f}" -> ${s.to}. ${s.why}` });
     });
-    return out.slice(0, 200);
+    // Satu entri bagi setiap frasa: skrip menganotasi setiap kemunculannya pada semua muka surat
+    const seen = new Set();
+    return out.filter(i => { const k = i.cari.toLowerCase(); return !seen.has(k) && seen.add(k); }).slice(0, 200);
   }
 
   function python(r) {
@@ -190,10 +196,17 @@ ${lines.map(l => `    "${l}"`).join('\n')}
 ).decode("utf-8"))
 
 
+TANDA = ".,;:!?()[]{}\\"'“”‘’"
+
+
 def cari(page, teks):
-    """Cari teks pada muka surat. Jika frasa panjang tidak dijumpai (cth. dipecah oleh sempang), cuba 6 perkataan pertama."""
-    kuad = page.search_for(teks, quads=True)
+    """Cari teks pada muka surat. Satu perkataan dipadankan sebagai perkataan penuh (bukan sebahagian perkataan lain).
+    Jika frasa panjang tidak dijumpai (cth. dipecah oleh sempang), cuba 6 perkataan pertama."""
     perkataan = teks.split()
+    if len(perkataan) == 1:
+        k = perkataan[0].strip(TANDA).lower()
+        return [fitz.Rect(w[:4]).quad for w in page.get_text("words") if w[4].strip(TANDA).lower() == k] if k else []
+    kuad = page.search_for(teks, quads=True)
     if not kuad and len(perkataan) > 6:
         kuad = page.search_for(" ".join(perkataan[:6]), quads=True)
     return kuad
@@ -208,15 +221,14 @@ def main():
     dijumpai, tiada = 0, []
     for isu in DATA["isu"]:
         jumpa = False
-        for page in doc:
+        for page in doc:  # setiap muka surat yang mengandungi isu ini dianotasi
             kuad = cari(page, isu["cari"])
             if not kuad:
                 continue
-            for q in kuad:
-                serlah = page.add_highlight_annot(q)
-                serlah.set_colors(stroke=MERAH)
-                serlah.set_info(title="Bijak Labur: " + isu["tajuk"], content=isu["komen"])
-                serlah.update()
+            serlah = page.add_highlight_annot(kuad)  # satu serlahan bagi semua kemunculan pada muka surat ini
+            serlah.set_colors(stroke=MERAH)
+            serlah.set_info(title="Bijak Labur: " + isu["tajuk"], content=isu["komen"])
+            serlah.update()
             r = kuad[0].rect
             titik = fitz.Point(min(r.x1 + 4, page.rect.width - 24), max(r.y0 - 4, 4))
             nota = page.add_text_annot(titik, isu["komen"], icon="Comment")
@@ -224,7 +236,6 @@ def main():
             nota.set_colors(stroke=MERAH)
             nota.update()
             jumpa = True
-            break
         if jumpa:
             dijumpai += 1
         else:

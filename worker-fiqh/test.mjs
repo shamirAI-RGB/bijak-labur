@@ -575,6 +575,21 @@ assert.equal(d.status, 'tidak_pasti');
   assert.equal((await post({ text: T }, { ALLOWED_ORIGINS: env.ALLOWED_ORIGINS })).status, 503);
   assert.equal((await post({ text: 'pendek' })).status, 400);
   assert.equal((await post({ text: T }, { ...aenv, AUDIT_LIMIT: { limit: async () => ({ success: false }) } })).status, 429);
+  // Penyedia sandaran menerima permintaan yang lebih kecil (had 4096 token) dengan had item yang lebih rendah
+  globalThis.fetch = async () => new Response('{}', { status: 429 });
+  let seen = null;
+  r = await post({ text: T }, { ...aenv, AI: { run: async (m, input) => { seen = input; return { response: ans }; } } }); d = await r.json();
+  assert.equal(r.status, 200, JSON.stringify(d)); assert.equal(d.penghala, undefined); assert.equal(d.nc.length, 3);
+  assert.equal(seen.max_tokens, 4096); assert.match(seen.messages[0].content, /sehingga 6 isu/); assert.doesNotMatch(seen.messages[0].content, /sehingga 12 isu/);
+  assert.match(sysA('ms'), /sehingga 12 isu/);
+  // Jawapan sandaran yang terpotong: 429 (cuba lagi), bukan 502
+  r = await post({ text: T }, { ...aenv, AI: { run: async () => ({ response: '{"rubrik": {"pengenalan"' }) } });
+  assert.equal(r.status, 429);
+  // Nilai panjang zon tidak terhingga dan petikan yang terlalu pendek atau sebahagian perkataan
+  const nz = normalZon([{ panjang: Infinity }, { panjang: 10 }, { panjang: -Infinity }]);
+  assert.equal(nz.reduce((t, z) => t + z.panjang, 0), 80); assert.ok(nz.every(z => Number.isFinite(z.panjang) && z.panjang >= 4));
+  const c3 = cleanA({ ...ans, hujah: [{ bahagian: 'x', petikan: 'yam', jenis: 'struktur', isu: 'i', kesan: 'k', tahap: 'tinggi', cadangan: 'c' }, { bahagian: 'x', petikan: 'iterima dan disimpan dalam', jenis: 'struktur', isu: 'i', kesan: 'k', tahap: 'tinggi', cadangan: 'c' }], nc: [{ ...ans.nc[1], petikan: 'a' }] }, T);
+  assert.deepEqual(c3.hujah.map(h => h.petikan), ['', '']); assert.equal(c3.nc[0].petikan, '');
 }
 function RUBRIK_SKOR(c) { return ['pengenalan', 'literatur', 'analisis', 'metodologi', 'kesimpulan'].map(k => c.rubrik[k].skor); }
 console.log('Semua ujian Tanya AI lulus');

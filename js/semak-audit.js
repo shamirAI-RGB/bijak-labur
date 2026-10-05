@@ -96,6 +96,7 @@
   /* ---------- Laporan Markdown ---------- */
   const cell = s => String(s == null ? '' : s).replace(/\s+/g, ' ').replace(/\|/g, '\\|').trim();
   const code = s => '`' + String(s || '').replace(/\s+/g, ' ').replace(/`/g, "'").trim() + '`';
+  const tcode = s => code(s).replace(/\|/g, '\\|');   // dalam sel jadual, | memecahkan lajur walaupun dalam kod
   const REF = { sah: '✅ Disahkan', mungkin: '🟡 Hampir sepadan', tiada: '🔴 [⚠ AMARAN MERAH] Tidak dijumpai, disyaki palsu', laman: 'ℹ️ Laman web', ralat: '❔ Tidak dapat disemak' };
   const TAHAP = { tinggi: '🔴 Tinggi', sederhana: '🟡 Sederhana', rendah: '🟢 Rendah' };
 
@@ -161,14 +162,14 @@
     else {
       if (a.hujah.length) {
         L.push('| Bahagian/Perenggan | Isu Struktur Hujah | Kesan Kepada Markah | Cadangan Penambahbaikan (Actionable Advice) |', '|---|---|---|---|');
-        a.hujah.forEach(h => L.push(`| ${cell(h.bahagian)}${h.petikan ? '<br>' + code(short(h.petikan, 160)) : ''} | ${TAHAP[h.tahap]} · **${SI().HUJAH[h.jenis]}**: ${cell(h.isu)} | ${cell(h.kesan)} | ${cell(h.cadangan)} |`));
+        a.hujah.forEach(h => L.push(`| ${cell(h.bahagian)}${h.petikan ? '<br>' + tcode(short(h.petikan, 160)) : ''} | ${TAHAP[h.tahap]} · **${SI().HUJAH[h.jenis]}**: ${cell(h.isu)} | ${cell(h.kesan)} | ${cell(h.cadangan)} |`));
       } else L.push('Tiada kelompongan hujah yang ketara ditemui.');
       L.push('');
       if (a.industri) {
         L.push('### Audit pematuhan standard dan kawalan kritikal (industri)', '');
         if (a.nc.length) {
           L.push('| Bahagian/Perenggan | Titik Kawalan/Risiko | Kod NC | Huraian Pelanggaran Standard | Cadangan Penambahbaikan (Untuk Markah Penuh) |', '|---|---|---|---|---|');
-          a.nc.forEach(n => L.push(`| ${cell(n.bahagian)}${n.petikan ? '<br>' + code(short(n.petikan, 160)) : ''} | ${cell(n.titik)} | ${n.tahap === 'major' ? '🔴' : '🟡'} **${n.kod}** (${n.tahap}) | ${n.standard ? `**${cell(n.standard)}**: ` : ''}${cell(n.huraian)} | ${cell(n.cadangan)} |`));
+          a.nc.forEach(n => L.push(`| ${cell(n.bahagian)}${n.petikan ? '<br>' + tcode(short(n.petikan, 160)) : ''} | ${cell(n.titik)} | ${n.tahap === 'major' ? '🔴' : '🟡'} **${n.kod}** (${n.tahap}) | ${n.standard ? `**${cell(n.standard)}**: ` : ''}${cell(n.huraian)} | ${cell(n.cadangan)} |`));
           L.push('', 'Penilaian AI sebagai panduan pembelajaran, bukan audit pensijilan rasmi. Sahkan nombor klausa dengan dokumen standard rasmi.');
         } else L.push('Tiada NC ditemui dalam prosedur dan parameter yang dibincangkan.');
         L.push('');
@@ -181,7 +182,8 @@
     if (pm) L.push('### Peta konsep', '', '```mermaid', pm, '```', '');
     if (am) L.push(`### Carta alir${a.aliran.tajuk ? ': ' + a.aliran.tajuk : ''}`, '', '```mermaid', am, '```', '');
     if (fm) L.push(`### Pelan lantai lot kedai ${a.fasiliti.lebar} x ${a.fasiliti.panjang} kaki`, '', 'Garisan putus-putus menegak (`-.->`) ialah aliran bahan mentah satu hala dari pintu masuk ke pintu keluar.', '', '```mermaid', fm, '```', '');
-    if (!pm && !am && !fm) L.push('Audit lanjutan tidak dijalankan.', '');
+    if (!a) L.push('Audit lanjutan tidak dijalankan.', '');
+    else if (!pm && !am && !fm) L.push('Tiada struktur yang cukup untuk dilukis sebagai peta konsep atau carta alir.', '');
     else L.push('Tampal kod di atas ke mermaid.live, Notion, Obsidian atau GitHub untuk melihat rajahnya.', '');
 
     /* FASA 4 */
@@ -189,7 +191,7 @@
     if (r.sugg.length) {
       L.push('| # | Jenis | Ayat asal | Pembetulan | Mengapa diubah |', '|---|---|---|---|---|');
       const order = s => s.cat === 'Laras akademik' ? 0 : 1;
-      [...r.sugg].sort((p, q) => order(p) - order(q)).slice(0, 120).forEach((s, i) => L.push(`| ${i + 1} | ${cell(s.cat)} | ${code(short(s.from, 160))} | ${code(short(s.to, 160))} | ${cell(s.why)} |`));
+      [...r.sugg].sort((p, q) => order(p) - order(q)).slice(0, 120).forEach((s, i) => L.push(`| ${i + 1} | ${cell(s.cat)} | ${tcode(short(s.from, 160))} | ${tcode(short(s.to, 160))} | ${cell(s.why)} |`));
       if (r.sugg.length > 120) L.push('', `+${r.sugg.length - 120} cadangan lagi dalam aplikasi.`);
     } else L.push('Tiada isu bahasa ditemui.');
     L.push('');
