@@ -1,0 +1,86 @@
+/* Buku pesanan kripto, saringan Syariah saham, penjejak haul zakat dan Audit Halal */
+[data-view="halal"] #view-halal { display: block; }
+
+/* Rajah Mermaid (SVG statik, sentiasa di atas latar cerah supaya teks rajah jelas dalam mod gelap) */
+.rajah { margin: 0 0 14px; text-align: center; }
+.rajah img { display: block; margin: 8px auto 0; max-width: 100%; max-height: 560px; width: auto; height: auto; background: #fff; border-radius: 10px; padding: 10px; }
+.rajah figcaption { font-weight: 600; text-align: left; }
+.card.rajah { margin-bottom: 14px; }
+
+/* Buku pesanan */
+.ob-press { height: 8px; border-radius: 99px; background: color-mix(in srgb, var(--down) 55%, transparent); overflow: hidden; margin: 6px 0 4px; }
+.ob-press span { display: block; height: 100%; width: 50%; background: var(--up); transition: width .4s ease; }
+.ob-press-txt { margin: 0 0 10px; }
+.ob-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ob-row { position: relative; display: flex; justify-content: space-between; gap: 8px; padding: 3px 6px; font-size: .82rem; line-height: 1.35; }
+.ob-row > span:not(.ob-bar) { position: relative; z-index: 1; }
+.ob-th { color: var(--muted); font-size: .72rem; padding-bottom: 6px; }
+.ob-bar { position: absolute; top: 1px; bottom: 1px; right: 0; border-radius: 4px; }
+.ob-row.bid .ob-bar { background: color-mix(in srgb, var(--up) 16%, transparent); }
+.ob-row.ask .ob-bar { background: color-mix(in srgb, var(--down) 16%, transparent); }
+.ob-row.bid > span:nth-child(2) { color: var(--up); }
+.ob-row.ask > span:nth-child(2) { color: var(--down); }
+.ob-side { min-height: 220px; }
+.ob-stat { display: flex; gap: 24px; margin: 12px 0 6px; flex-wrap: wrap; }
+.ob-stat dt { font-size: .72rem; color: var(--muted); }
+.ob-stat dd { margin: 0; font-weight: 600; }
+.ob-help summary { cursor: pointer; font-size: .86rem; color: var(--brand); padding: 6px 0; }
+@media (max-width: 420px) { .ob-row { font-size: .74rem; padding: 3px 3px; } .ob-grid { gap: 6px; } }
+
+/* Saringan Syariah */
+.sg-card .chips { margin: 4px 0 12px; align-items: center; }
+.sg-form { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.sg-form fieldset { border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px 4px; margin: 0; min-width: 0; }
+.sg-form legend { font-weight: 600; padding: 0 6px; font-size: .9rem; }
+.sg-form .field { margin-bottom: 8px; }
+.sg-check { display: flex; gap: 8px; align-items: flex-start; font-size: .84rem; margin: 6px 0 10px; }
+.sg-check input { margin-top: 3px; width: 18px; height: 18px; min-height: 0; flex: none; padding: 0; accent-color: var(--brand); }
+.sg-verdict { display: flex; flex-direction: column; gap: 2px; border-radius: 12px; padding: 12px 14px; margin: 14px 0 10px; background: var(--surface-2); border: 1px solid var(--border); }
+.sg-verdict.ok { background: color-mix(in srgb, var(--up) 12%, transparent); border-color: color-mix(in srgb, var(--up) 40%, transparent); }
+.sg-verdict.bad { background: color-mix(in srgb, var(--down) 12%, transparent); border-color: color-mix(in srgb, var(--down) 40%, transparent); }
+.sg-verdict.warn { background: color-mix(in srgb, var(--warn) 14%, transparent); border-color: color-mix(in srgb, var(--warn) 40%, transparent); }
+.sg-tests { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; margin-bottom: 10px; }
+.sg-test { border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; }
+.sg-tl { display: flex; justify-content: space-between; gap: 8px; font-size: .84rem; }
+.sg-bar { position: relative; height: 6px; border-radius: 99px; background: var(--surface-2); margin: 6px 0 4px; }
+.sg-bar span { display: block; height: 100%; border-radius: 99px; background: var(--muted); }
+.sg-test.ok .sg-bar span { background: var(--up); }
+.sg-test.bad .sg-bar span { background: var(--down); }
+.sg-bar i { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--text); opacity: .55; }
+@media (max-width: 640px) { .sg-form { grid-template-columns: 1fr; } }
+
+/* Penjejak haul */
+.zh-out .zk-lines { margin: 10px 0 8px; }
+.zh-bar { height: 8px; border-radius: 99px; background: var(--surface-2); overflow: hidden; margin: 6px 0; }
+.zh-bar span { display: block; height: 100%; background: var(--brand); }
+
+/* Audit Halal */
+.ah-meta .stat-row { margin: 12px 0; }
+.ah-grp summary { display: flex; justify-content: space-between; align-items: center; cursor: pointer; list-style: none; }
+.ah-grp summary::-webkit-details-marker { display: none; }
+.ah-item { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border); }
+.ah-grp[open] summary { margin-bottom: 8px; }
+.ah-item p { margin: 0; font-size: .9rem; flex: 1; min-width: 0; }
+.ah-item.ah-y p::before, .ah-item.ah-n p::before { content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; vertical-align: middle; }
+.ah-item.ah-y p::before { background: var(--up); }
+.ah-item.ah-n p::before { background: var(--down); }
+.ah-item.ah-na p { color: var(--muted); }
+.ah-item .seg[data-st="n"].active { background: var(--down); color: #fff; }
+.ah-ncr-row { padding: 12px 14px; border-bottom: 1px solid var(--border); }
+.ah-ncr-row:last-child { border-bottom: 0; }
+.ah-ncr-row p { margin: 4px 0; }
+.ah-ncr-row.tutup { opacity: .65; }
+.ah-ncr-top { display: flex; gap: 8px; align-items: center; }
+.ah-ncr-top select { margin-left: auto; font-size: .8rem; padding: 4px 6px; }
+.ah-ncr-top .q-del { position: static; opacity: .7; }
+.ah-kat { font-size: .72rem; font-weight: 600; border-radius: 99px; padding: 2px 8px; background: var(--surface-2); }
+.ah-kat.major { background: color-mix(in srgb, var(--down) 16%, transparent); color: var(--down); }
+.ah-late { color: var(--down); }
+.ah-empty { padding: 12px 14px; margin: 0; }
+.ah-ncr-form textarea { width: 100%; }
+@media (max-width: 640px) { .ah-item { flex-direction: column; align-items: stretch; } }
+@media print {
+  .topbar, .tabbar, .site-footer, .ah-meta .actions, #hlAddNcr, .ah-ncr-form, .ah-ncr-top .q-del { display: none !important; }
+  .ah-grp { break-inside: avoid; }
+  .ah-grp:not([open]) > *:not(summary) { display: block; }
+}

@@ -169,6 +169,7 @@
   const tz = () => -new Date().getTimezoneOffset() * 60;
   async function loadChart() {
     $('#chartTitle').textContent = `${chartSym}/USDT`;
+    document.dispatchEvent(new CustomEvent('chartsym', { detail: chartSym }));
     if (!series) return;
     const c = chartColors();
     try {

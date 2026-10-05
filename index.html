@@ -103,6 +103,7 @@
   <link rel="stylesheet" href="css/jejak.css">
   <link rel="stylesheet" href="css/iklan.css">
   <link rel="stylesheet" href="css/komuniti.css">
+  <link rel="stylesheet" href="css/alat-syariah.css">
   <link rel="stylesheet" href="css/rupa.css">
 </head>
 <body>
@@ -206,6 +207,7 @@
             <a href="#kerja" data-nav="kerja">Kerjaya AI</a>
             <a href="#sihat" data-nav="sihat">Sihat: kalori dan langkah</a>
             <a href="#jejak" data-nav="jejak">Jejak Aktiviti (GPS)</a>
+            <a href="#halal" data-nav="halal">Audit Halal</a>
           </div>
         </details>
         <a href="#nota" data-nav="nota">Nota</a>
@@ -332,6 +334,11 @@
               <div class="sc-body"><div class="sc-title">Nota IC220</div><div class="sc-sub">Nota Pengurusan Industri Halal daripada pengasas. Lihat pratonton dan beli melalui WhatsApp</div></div>
               <svg class="ic chev"><use href="#i-chev"/></svg>
             </a>
+            <a class="card shortcut" href="#halal">
+              <span class="sc-ico"><svg class="ic"><use href="#i-shield"/></svg></span>
+              <div class="sc-body"><div class="sc-title">Audit Halal</div><div class="sc-sub">Senarai semak audit dalaman dan log ketakakuran (NCR) untuk pelajar industri halal</div></div>
+              <svg class="ic chev"><use href="#i-chev"/></svg>
+            </a>
             <a class="card shortcut" href="#semak">
               <span class="sc-ico"><svg class="ic"><use href="#i-file"/></svg></span>
               <div class="sc-body"><div class="sc-title">Semak kertas kerja</div><div class="sc-sub">Anggaran AI, plagiarisme dan pembetulan bahasa</div></div>
@@ -439,6 +446,23 @@
           <div id="cryptoChart" class="chart-box"></div>
         </div>
 
+        <div class="card ob-card" id="obCard">
+          <div class="chart-head">
+            <h3>Buku pesanan <span class="muted" id="obTitle">BTC/USDT</span></h3>
+            <span class="live" id="obStatus">Menunggu</span>
+          </div>
+          <div class="ob-press" aria-hidden="true"><span id="obPress"></span></div>
+          <p class="small muted ob-press-txt" id="obPressTxt">Beli 50% · Jual 50%</p>
+          <div class="ob-grid">
+            <div><div class="ob-row ob-th"><span>Bida (USDT)</span><span>Kuantiti</span></div><div id="obBids" class="ob-side"></div></div>
+            <div><div class="ob-row ob-th"><span>Tawaran (USDT)</span><span>Kuantiti</span></div><div id="obAsks" class="ob-side"></div></div>
+          </div>
+          <dl class="ob-stat"><div><dt>Harga tengah</dt><dd class="num" id="obMid">-</dd></div><div><dt>Spread</dt><dd class="num" id="obSpread">-</dd></div></dl>
+          <details class="ob-help"><summary>Cara membaca buku pesanan</summary>
+            <p class="small">Bida ialah pesanan beli yang sedang menunggu, dan tawaran ialah pesanan jual. Bar menunjukkan jumlah terkumpul pada setiap paras harga. Spread ialah beza antara tawaran terendah dan bida tertinggi; spread kecil bermaksud pasaran cair. Peratus beli dan jual hanya membandingkan 10 paras teratas, jadi ia bukan ramalan harga. Data ini daripada pasaran Spot sahaja, tanpa futures atau leveraj.</p>
+          </details>
+        </div>
+
         <div class="card sy-card">
           <h3>Status Syariah</h3>
           <div id="syInfo"></div>
@@ -478,6 +502,7 @@
           <div class="list" id="bursaList"></div>
         </div>
         <div class="card flush"><div id="tvMovers" class="tv-box short"></div></div>
+        <div class="card sg-card" id="saringan"></div>
         <p class="source">Sahkan harga dalam app broker anda sebelum membuat transaksi.</p>
       </div>
     </section>
@@ -584,6 +609,8 @@
 
     <!-- NOTA IC220 -->
     <section class="view" id="view-nota" aria-labelledby="h-nota"></section>
+
+    <section class="view" id="view-halal" aria-labelledby="h-halal"></section>
 
     <section class="view" id="view-semak" aria-labelledby="h-semak">
       <div class="page-head">
@@ -839,6 +866,8 @@
   <script src="js/learn-visuals.js" defer></script>
   <script src="js/learn.js" defer></script>
   <script src="js/market.js" defer></script>
+  <script src="js/bukupesanan.js" defer></script>
+  <script src="js/saringan.js" defer></script>
   <script src="js/solat.js" defer></script>
   <script src="js/quran-src.js" defer></script>
   <script src="js/ibadah-data.js" defer></script>
@@ -865,6 +894,7 @@
   <script src="js/jejak.js" defer></script>
   <script src="js/komuniti.js" defer></script>
   <script src="js/iklan.js" defer></script>
+  <script src="js/halal.js" defer></script>
   <script src="js/pemilik.js" defer></script>
   <div class="azan-bar hidden" id="azanBar" role="status" aria-live="polite">
     <svg class="ic"><use href="#i-volume"/></svg><span id="azanBarText">Azan sedang berbunyi</span>

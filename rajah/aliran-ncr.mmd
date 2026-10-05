@@ -1,0 +1,12 @@
+flowchart TD
+  A[Penemuan audit] --> B[Rekod NCR<br/>Major atau Minor]
+  B --> C[Analisis punca<br/>5 Mengapa]
+  C --> D[Tindakan<br/>pembetulan]
+  D --> E{Berkesan?}
+  E -- Ya --> F[Tutup NCR]
+  E -- Tidak --> C
+  F --> G[Tindakan pencegahan<br/>kemas kini prosedur]
+  classDef ok fill:#e3f4ec,stroke:#0f8a5f,color:#0b3d2c
+  classDef no fill:#fbe5e1,stroke:#c8402f,color:#5a1a10
+  class F ok
+  class A no

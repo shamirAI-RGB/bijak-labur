@@ -1,0 +1,16 @@
+flowchart TD
+  A[Sediakan dokumen<br/>bahan, pembekal, aliran proses] --> B[Mohon dalam talian<br/>MYeHALAL]
+  B --> C[Bayar fi pensijilan]
+  C --> D[Semakan dokumen<br/>oleh pegawai halal]
+  D -- Tidak lengkap --> A
+  D -- Lengkap --> E[Audit premis<br/>di lapangan]
+  E --> F{Panel Pengesahan<br/>Halal}
+  F -- Lulus --> G[Sijil halal<br/>dikeluarkan]
+  F -- Ketakakuran --> H[Tindakan pembetulan<br/>NCR ditutup]
+  H --> F
+  G --> I[Pemantauan dan<br/>audit berkala]
+  I --> J[Pembaharuan sijil]
+  classDef ok fill:#e3f4ec,stroke:#0f8a5f,color:#0b3d2c
+  classDef warn fill:#fff1d6,stroke:#b26b00,color:#4a2c00
+  class G ok
+  class H warn
