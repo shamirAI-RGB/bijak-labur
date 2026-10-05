@@ -1,7 +1,7 @@
 name: Pelayan Tanya AI Fiqh
 
 # Uji pelayan Tanya AI Fiqh, dan pasang ke Cloudflare Workers apabila rahsia Cloudflare telah ditetapkan.
-# Korpus rujukan datang daripada js/fiqh-data.js, jadi perubahan pada fail itu juga memasang semula pelayan.
+# Korpus rujukan dan senarai PDF rujukan moden datang daripada js/fiqh-data.js, jadi perubahan pada fail itu juga memasang semula pelayan.
 on:
   push:
     branches: [main]
@@ -29,6 +29,10 @@ jobs:
       - run: npm ci
       - name: Uji
         run: node test.mjs
+      # Rujukan rasmi moden: muat turun 4 PDF daripada laman rasmi, ekstrak teks setiap muka surat dan bina indeks carian
+      # ke worker-fiqh/aset (tidak disimpan dalam repo). Dokumen yang gagal dimuat turun dilangkau.
+      - name: Muat turun dan indeks rujukan PDF
+        run: node scripts/muat-rujukan.mjs || mkdir -p aset/rujukan
       # Semak kunci Gemini dan uji setiap model dengan permintaan Tanya AI sebenar (tanpa mendedahkan kunci)
       - name: Semak Gemini
         if: env.HAS_GEMINI == 'true'
@@ -90,6 +94,8 @@ jobs:
             | jq -r 'if .kad then "buku OK: \(.kad | length) kad, contoh: \(.kad[0].depan) -> \(.kad[0].belakang)\(if .penghala then " (penghala)" else "" end)" else "buku GAGAL: \(.error)" end'
           curl -sS -X POST "$F/kerja" -H "$O" -H "$C" -d '{"tugas":"cadang","resume":"Graduan Ijazah Sarjana Muda Perakaunan UiTM 2025. Latihan industri 6 bulan di firma audit kecil: menyediakan penyata bank, lejar am dan cukai SST. Mahir Excel, SQL Account dan AutoCount. Bendahari persatuan pelajar."}' \
             | jq -r 'if .jawatan then "kerja OK: \([.jawatan[].tajuk] | join(", "))" else "kerja GAGAL: \(.error)" end'
+          curl -sS -X POST "$F/tanya" -H "$O" -H "$C" -d '{"q":"Apakah hukum melabur dalam mata wang kripto seperti Bitcoin?"}' \
+            | jq -r 'if .status then "tanya \(.status): \([.sumber[] | "\(.jenis)\(if .pdf then " hlm \(.pdf)" else "" end)\(if .disahkan then " (disahkan)" else "" end)"] | join(", "))" else "tanya GAGAL: \(.error)" end'
           sleep 5
           echo "--- Log pelayan ---"
           jq -r 'select(.logs) | .logs[] | .message | map(tostring) | join(" ")' tail.log 2>/dev/null | grep -v '^$' | head -40 || true

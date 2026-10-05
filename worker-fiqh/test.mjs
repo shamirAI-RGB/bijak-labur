@@ -1,7 +1,8 @@
 // Ujian pelayan Tanya AI Fiqh tanpa rangkaian: node worker-fiqh/test.mjs
 import assert from 'node:assert/strict';
-import worker, { verify, collectRetrieved, norm, normUrl, parseAnswer, MODEL, GEMINI_MODEL, GEMINI_FALLBACKS, DOMAINS } from './src/index.js';
+import worker, { verify, collectRetrieved, norm, normUrl, parseAnswer, MODEL, GEMINI_MODEL, GEMINI_FALLBACKS, DOMAINS } from './src/app.js';
 import { BY_ID, CORPUS_TEXT } from './src/corpus.js';
+import { MODEN, buildIndex, search, expand, pageUrl, tokens } from './src/rujukan.js';
 import { clean, semakBody, systemFor } from './src/semak.js';
 import { clean as cleanK, kaloriBody, check as checkK } from './src/kalori.js';
 import { blocked, check as checkG, promptBody, GAYA, FLUX } from './src/gambar.js';
@@ -177,6 +178,47 @@ assert.deepEqual(d, { ok: true, service: 'bijak-labur-fiqh', ai: true, penyedia:
 d = await (await worker.fetch(new Request(W + '/'), { ...genv, ...env })).json();
 assert.equal(d.penyedia, 'claude');
 
+
+// Rujukan rasmi moden (PDF): carian muka surat, petikan disemak, pautan ke muka surat PDF yang sama
+assert.equal(MODEN.length, 4);
+for (const m of MODEN) assert.match(m.url, /^https:\/\//);
+const PDF = {
+  jakim: ['Kandungan', 'Hukum Melabur Dalam Mata Wang Kripto. Muzakarah memutuskan bahawa urus niaga mata wang kripto adalah tidak dibenarkan kerana mengandungi unsur gharar.', 'Hukum Vaksin Covid-19. Penggunaan vaksin adalah harus dan wajib bagi golongan yang ditetapkan oleh kerajaan.'],
+  bnmsr: ['Credit card based on ujrah. The SAC resolved that a credit card structured on ujrah is permissible.', 'Late payment charges ta`widh and gharamah may be imposed on defaulting customers.']
+};
+const files = buildIndex(PDF);
+assert.ok(files.has('rujukan/p/jakim/2.txt') && files.has('rujukan/meta.json') && files.has('rujukan/i/0.json'));
+const renv = { RUJUKAN: { fetch: async req => { const p = new URL(req.url).pathname.slice(1); return files.has(p) ? new Response(files.get(p)) : new Response('', { status: 404 }); } } };
+let hits = await search(renv, expand('Apakah hukum melabur kripto?'));
+assert.equal(hits[0].id, 'pdf:jakim:2');
+assert.ok(hits[0].teks.includes('mata wang kripto'));
+hits = await search(renv, expand('Bolehkah bank kenakan denda bayaran lewat kad kredit?'));
+assert.ok(hits.some(h => h.id === 'pdf:bnmsr:2') && hits.some(h => h.id === 'pdf:bnmsr:1'), JSON.stringify(hits.map(h => h.id)));
+assert.deepEqual(await search({}, 'kripto'), []);
+assert.deepEqual(await search(renv, 'dan yang'), []);
+assert.ok(!tokens('dan yang the').length);
+assert.equal(pageUrl('jakim', 2), MODEN.find(m => m.k === 'jakim').url + '#page=2');
+
+globalThis.fetch = async (u, init) => { gurl = String(u); gsent = JSON.parse(init.body); return greply(); };
+greply = () => gem({ status: 'jawab', ringkasan: 'Tidak dibenarkan menurut Muzakarah.', huraian: ['Ada unsur gharar.'], sumber: [
+  { id: 'pdf:jakim:2', petikan: 'urus niaga mata wang kripto adalah tidak dibenarkan', maksud: 'x' },
+  { id: 'pdf:jakim:3', petikan: 'Penggunaan vaksin adalah harus' }, // muka surat ini tidak diberi kepada model: dibuang
+  { id: 'pdf:jakim:2', petikan: 'rekaan yang tiada dalam muka surat' }
+] });
+d = await (await call({ q: 'Apakah hukum melabur kripto?' }, 'https://bijaklabur.my', { ...genv, ...renv })).json();
+const parts = gsent.contents[0].parts.map(p => p.text);
+assert.ok(parts.some(t => t.startsWith('Dokumen rujukan rasmi moden') && t.includes('[pdf:jakim:2]') && t.includes('Muka surat PDF 2')));
+assert.ok(!parts.some(t => t.includes('[pdf:jakim:3]')));
+assert.match(gsent.systemInstruction.parts[0].text, /pdf:KOD:MUKASURAT/);
+assert.equal(d.status, 'jawab');
+assert.equal(d.sumber.length, 2, JSON.stringify(d.sumber));
+assert.deepEqual([d.sumber[0].jenis, d.sumber[0].pdf, d.sumber[0].disahkan, d.sumber[0].url], ['dokumen', 2, true, pageUrl('jakim', 2)]);
+assert.match(d.sumber[0].oleh, /JAKIM/);
+assert.equal(d.sumber[1].disahkan, false); assert.equal(d.sumber[1].petikan, '');
+// Tanpa aset rujukan (muat turun gagal), Tanya AI tetap berjalan seperti biasa
+d = await (await call({ q: 'Apakah hukum melabur kripto lagi?' }, 'https://bijaklabur.my', genv)).json();
+assert.ok(!gsent.contents[0].parts.some(p => p.text.startsWith('Dokumen rujukan')));
+assert.equal(d.status, 'tidak_pasti');
 
 // Semak Kertas: ulasan pakar
 {
