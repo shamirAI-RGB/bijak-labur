@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ms">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Peta Dunia 3D · Bijak Labur</title>
+  <meta name="description" content="Peta dunia 3D interaktif Bijak Labur: pusingkan bumi, lihat populasi setiap negara dan laluan antara pusat kewangan utama dunia dari Kuala Lumpur.">
+  <link rel="canonical" href="https://bijaklabur.my/peta.html">
+  <meta name="theme-color" content="#000000">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Bijak Labur">
+  <meta property="og:title" content="Peta Dunia 3D · Bijak Labur">
+  <meta property="og:description" content="Pusingkan bumi, lihat populasi negara dan laluan antara pusat kewangan dunia.">
+  <meta property="og:url" content="https://bijaklabur.my/peta.html">
+  <meta property="og:image" content="https://bijaklabur.my/images/og-bijaklabur.png">
+  <meta property="og:locale" content="ms_MY">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <link rel="stylesheet" href="css/peta.css">
+</head>
+<body>
+  <div id="globe-container" aria-label="Peta dunia 3D. Seret untuk memusing, cubit atau tatal untuk zum." role="img"></div>
+
+  <div class="hud-panel hud-left">
+    <a class="hud-back" href="./">&larr; Bijak Labur</a>
+    <h1 class="hud-title">Peta Dunia 3D</h1>
+    <div class="data-row"><span>Status:</span><span class="data-value is-ok" id="peta-status">Memuatkan...</span></div>
+    <div class="data-row"><span>Negara dimuat:</span><span class="data-value" id="peta-count">-</span></div>
+    <div class="data-row"><span>Laluan aktif:</span><span class="data-value" id="peta-arcs">-</span></div>
+    <p class="hud-note">&gt; Laluan antara pusat kewangan dunia</p>
+    <div class="hud-btns">
+      <button type="button" class="hud-btn" id="toggleRotation">Hentikan Putaran</button>
+      <button type="button" class="hud-btn" id="generateRoutes">Jana Laluan Baharu</button>
+      <button type="button" class="hud-btn" id="focusMalaysia">Fokus Malaysia</button>
+    </div>
+  </div>
+
+  <div class="hud-panel hud-right" aria-live="polite">
+    <h2 class="hud-title hud-title--alt">Radar Negara</h2>
+    <div class="data-row"><span>Negara:</span><span class="data-value" id="selected-country">Tiada</span></div>
+    <div class="data-row"><span>Populasi:</span><span class="data-value" id="country-pop">-</span></div>
+    <div class="data-row"><span>Lat/Lng:</span><span class="data-value" id="country-coords">-</span></div>
+    <p class="hud-hint">Halakan atau ketik negara untuk butiran.</p>
+  </div>
+
+  <div id="tooltip" role="tooltip">
+    <div class="tooltip-title" id="tt-name">Negara</div>
+    <div class="tooltip-sub" id="tt-sub"></div>
+  </div>
+
+  <noscript><p class="peta-msg">Peta ini memerlukan JavaScript.</p></noscript>
+  <script src="js/vendor/globe.gl.min.js" defer></script>
+  <script src="js/peta.js" defer></script>
+</body>
+</html>

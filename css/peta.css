@@ -1,0 +1,174 @@
+/* Peta Dunia 3D (peta.html): HUD cyan/magenta di atas glob WebGL */
+@font-face { font-family: "Geist"; src: url("../fonts/Geist-Variable.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
+
+:root {
+  --cyan: #00ffff;
+  --magenta: #ff00ff;
+  --panel: rgba(10, 15, 30, 0.6);
+  --soft: #a0d8ef;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #000;
+  font-family: "Geist", system-ui, sans-serif;
+  overflow: hidden;
+  color: #fff;
+}
+
+/* Langit berbintang dengan CSS (tiada imej besar perlu dimuat turun) */
+body {
+  background:
+    radial-gradient(1px 1px at 12% 18%, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 72% 12%, #cfefff 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 38% 82%, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 88% 64%, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 22% 58%, #ffe6ff 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 58% 36%, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 6% 90%, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 94% 30%, #fff 50%, transparent 51%),
+    radial-gradient(ellipse at 50% 50%, #050b18 0%, #000 70%);
+  background-size: 320px 320px, 410px 410px, 290px 290px, 360px 360px, 270px 270px, 450px 450px, 380px 380px, 330px 330px, 100% 100%;
+  background-color: #000;
+}
+
+#globe-container {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+}
+
+.hud-panel {
+  position: fixed;
+  z-index: 10;
+  box-sizing: border-box;
+  background: var(--panel);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.1);
+}
+
+.hud-left { top: 24px; left: 24px; width: 320px; }
+.hud-right { top: 24px; right: 24px; width: 260px; }
+
+.hud-back {
+  display: inline-block;
+  margin-bottom: 10px;
+  color: var(--soft);
+  font-size: 14px;
+  text-decoration: none;
+}
+.hud-back:hover, .hud-back:focus-visible { color: var(--cyan); text-decoration: underline; }
+
+.hud-title {
+  margin: 0 0 12px;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--cyan);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  border-bottom: 1px solid rgba(0, 255, 255, 0.3);
+  padding-bottom: 10px;
+  text-shadow: 0 0 10px var(--cyan);
+}
+.hud-title--alt {
+  font-size: 19px;
+  color: var(--magenta);
+  border-color: var(--magenta);
+  text-shadow: 0 0 10px var(--magenta);
+}
+
+.data-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  font-size: 15px;
+  color: var(--soft);
+}
+.data-value { font-weight: 700; color: #fff; text-align: right; font-feature-settings: "tnum" 1; }
+.data-value.is-ok { color: #3f3; }
+.data-value.is-bad { color: #ff6b6b; }
+
+.hud-note { color: var(--cyan); font-size: 13px; margin: 14px 0 4px; }
+.hud-hint { color: var(--soft); font-size: 13px; margin: 12px 0 0; opacity: 0.8; }
+
+.hud-btn {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  background: linear-gradient(90deg, rgba(0, 255, 255, 0.1), transparent);
+  border: 1px solid var(--cyan);
+  border-radius: 4px;
+  color: var(--cyan);
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.3s, color 0.3s, box-shadow 0.3s;
+}
+.hud-btn:hover, .hud-btn:focus-visible {
+  background: var(--cyan);
+  color: #000;
+  box-shadow: 0 0 15px var(--cyan);
+  outline: none;
+}
+
+#tooltip {
+  position: fixed;
+  z-index: 20;
+  pointer-events: none;
+  background: rgba(0, 0, 0, 0.85);
+  border: 1px solid var(--magenta);
+  padding: 12px 15px;
+  color: #fff;
+  border-radius: 8px;
+  display: none;
+  max-width: 240px;
+  box-shadow: 0 0 15px rgba(255, 0, 255, 0.4);
+  transform: translate(-50%, calc(-100% - 18px));
+}
+.tooltip-title { font-size: 18px; font-weight: 700; color: var(--magenta); margin-bottom: 4px; }
+.tooltip-sub { font-size: 14px; color: #ccc; }
+
+.peta-msg {
+  position: fixed;
+  z-index: 30;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  max-width: 320px;
+  margin: 0;
+  padding: 18px 20px;
+  background: var(--panel);
+  border: 1px solid var(--magenta);
+  border-radius: 10px;
+  text-align: center;
+  color: #fff;
+}
+
+/* Telefon: panel kiri di atas (butang sebaris), panel kanan di bawah */
+@media (max-width: 720px) {
+  .hud-panel { padding: 12px 14px; }
+  .hud-left { top: max(10px, env(safe-area-inset-top)); left: 10px; right: 10px; width: auto; }
+  .hud-right { top: auto; bottom: max(10px, env(safe-area-inset-bottom)); left: 10px; right: 10px; width: auto; }
+  .hud-title { font-size: 18px; margin-bottom: 8px; padding-bottom: 6px; }
+  .hud-title--alt { font-size: 15px; }
+  .data-row { font-size: 13px; margin-bottom: 4px; }
+  .hud-left .data-row, .hud-note, .hud-hint { display: none; }
+  .hud-back { margin-bottom: 4px; font-size: 13px; }
+  .hud-btns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .hud-btn { margin-top: 0; padding: 8px 4px; font-size: 11px; letter-spacing: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hud-btn { transition: none; }
+}

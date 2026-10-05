@@ -39,7 +39,7 @@ await check('kritikal', 'Laman utama', async () => {
   if (!/Bijak Labur/.test(html)) throw new Error('kandungan tidak dijangka');
   return `${Math.round(html.length / 1024)} KB`;
 });
-for (const p of ['tentang.html', 'privacy.html', 'terma.html', 'padam-data.html', 'sitemap.xml', 'robots.txt', 'manifest.webmanifest', 'sw.js'])
+for (const p of ['tentang.html', 'peta.html', 'privacy.html', 'terma.html', 'padam-data.html', 'sitemap.xml', 'robots.txt', 'manifest.webmanifest', 'sw.js'])
   await check('kritikal', `/${p}`, async () => { await ok(`${SITE}/${p}`); });
 
 // Setiap skrip, gaya dan ikon yang dirujuk oleh index.html mesti wujud (tangkap fail tertinggal semasa pasang)
