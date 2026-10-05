@@ -104,9 +104,50 @@ WLY02|Wilayah Persekutuan|Labuan`.split('\n').map(l => { const [jakimCode, neger
   const hijriStr = h => { if (!h) return ''; const [y, m, d] = h.split('-').map(Number); return `${d} ${HIJRI[m - 1]} ${y}H`; };
 
   let zones = FALLBACK_ZONES, zone = store.get('zone', 'WLY01'), month = null, nextMonth = null;
-  let notified = store.get('notified', {}), notifOn = store.get('azanNotif', false);
+  let notified = store.get('notified', {}), notifOn = store.get('azanNotif', false), azanSound = store.get('azanSound', true);
   let azanOff = store.get('azanOff', []), dayOff = 0, listSig = '', homeSig = '';
   let rekod = store.get('rekod', {});
+
+  /* Pemain azan dalam pelayar. Pelayar hanya membenarkan bunyi selepas pengguna menyentuh laman,
+     jadi elemen audio yang sama "dibuka" pada sentuhan pertama dan digunakan semula apabila masuk waktu. */
+  const Azan = (() => {
+    const SRC = 'audio/azan.mp3';
+    const SILENT = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
+    const el = new Audio(); el.preload = 'none';
+    let unlocked = false, blobUrl = null, label = '';
+    const btn = (ic, t) => `${icon(ic)}${t}`;
+    function paint(state) { // 'main', 'sekat' atau ''
+      $('#azanBar').classList.toggle('hidden', !state);
+      $('#azanBarText').textContent = state === 'sekat' ? `${label}. Tekan Main untuk mendengar.` : label;
+      $('#azanStop').innerHTML = state === 'sekat' ? btn('play', 'Main') : btn('pause', 'Hentikan');
+      $('#azanUji').setAttribute('aria-pressed', String(state === 'main'));
+      $('#azanUji').innerHTML = state === 'main' ? btn('pause', 'Hentikan azan') : btn('play', 'Dengar azan');
+    }
+    // Ambil sebagai blob (bukan permintaan Range) supaya service worker boleh menyimpannya untuk luar talian
+    async function src() {
+      if (!blobUrl) try { const r = await fetch(SRC); if (r.ok) blobUrl = URL.createObjectURL(await r.blob()); } catch {}
+      return blobUrl || SRC;
+    }
+    function unlock() {
+      if (unlocked || !el.paused) return;
+      unlocked = true;
+      el.src = SILENT;
+      el.play().then(() => el.pause()).catch(() => { unlocked = false; });
+    }
+    async function play(text) {
+      label = text;
+      const s = await src();
+      if (el.src !== s) el.src = s;
+      el.currentTime = 0;
+      try { await el.play(); paint('main'); } catch { paint('sekat'); }
+    }
+    function stop() { el.pause(); paint(''); }
+    el.addEventListener('ended', () => paint(''));
+    $('#azanStop').addEventListener('click', () => el.paused ? play(label) : stop());
+    const onFirst = () => { if (store.get('azanSound', true)) unlock(); if (unlocked) ['click', 'touchend', 'keydown'].forEach(t => document.removeEventListener(t, onFirst, true)); };
+    ['click', 'touchend', 'keydown'].forEach(t => document.addEventListener(t, onFirst, true));
+    return { play, stop, unlock, playing: () => !el.paused && el.src !== SILENT };
+  })();
 
   function renderZones() {
     const byState = {};
@@ -217,11 +258,11 @@ WLY02|Wilayah Persekutuan|Labuan`.split('\n').map(l => { const [jakimCode, neger
     const pick = dayOff ? dayRow(dayOff) : show;
     const st = (k, main) => dayOff ? '' : main ? state(k) : (show[k] <= now ? 'past' : '');
     if (pick) {
-      const sig = dayOff + PRAYERS.map(([k, , main]) => st(k, main)).join() + azanOff.join() + notifOn + pick.day;
+      const sig = dayOff + PRAYERS.map(([k, , main]) => st(k, main)).join() + azanOff.join() + notifOn + azanSound + pick.day;
       if (sig !== listSig) {
         listSig = sig;
         $('#todayGrid').innerHTML = PRAYERS.map(([k, n, main]) => {
-          const s = st(k, main), on = notifOn && !azanOff.includes(k);
+          const s = st(k, main), on = (notifOn || azanSound) && !azanOff.includes(k);
           return `<li class="${main ? '' : 'minor'} ${s}"><span class="pr-ico">${icon(ICON[k])}</span><span class="pr-name">${n}${s === 'next' ? '<small>Seterusnya</small>' : ''}</span><span class="pr-time">${fmtT(pick[k])}</span>${main ? `<button type="button" class="pr-bell" data-k="${k}" aria-pressed="${on}" aria-label="Azan ${n} ${on ? 'aktif' : 'tidak aktif'}">${icon(on ? 'bell' : 'bell-off')}</button>` : '<span></span>'}</li>`;
         }).join('');
       }
@@ -245,13 +286,17 @@ WLY02|Wilayah Persekutuan|Labuan`.split('\n').map(l => { const [jakimCode, neger
       $('#homeNextTime').textContent = fmtT(nx.ts) + (nx.off ? ', esok' : '');
       $('#homeCount').textContent = cd;
     }
-    if (notifOn && !plugin('LocalNotifications')) {
+    // Dalam pelayar: notifikasi dan azan semasa laman dibuka (app asli menggunakan notifikasi berjadual)
+    if ((notifOn || azanSound) && !plugin('LocalNotifications')) {
       for (const [k, n] of MAIN) {
         if (azanOff.includes(k)) continue;
         const key = `${zone}_${d[k]}`;
+        // Simpanan dikongsi antara tab, jadi hanya satu tab yang berbunyi
+        notified = store.get('notified', {});
         if (now >= d[k] && now - d[k] < 120 && !notified[key]) {
           notified = { [key]: 1 }; store.set('notified', notified);
-          Notify.show(`Telah masuk waktu ${n}`, `${fmtT(d[k])} · ${zoneInfo().daerah}`);
+          if (notifOn) Notify.show(`Telah masuk waktu ${n}`, `${fmtT(d[k])} · ${zoneInfo().daerah}`);
+          if (azanSound) Azan.play(`Azan ${n} · ${zoneInfo().daerah.split(',')[0]}`);
         }
       }
     }
@@ -264,9 +309,12 @@ WLY02|Wilayah Persekutuan|Labuan`.split('\n').map(l => { const [jakimCode, neger
       const pending = await LN.getPending();
       if (pending.notifications.length) await LN.cancel({ notifications: pending.notifications.map(n => ({ id: n.id })) });
       if (!notifOn) return;
+      // Android: saluran "Azan" dengan bunyi res/raw/azan.mp3. iOS: azan.caf (had iOS 30 saat)
+      if (azanSound && LN.createChannel) await LN.createChannel({ id: 'azan', name: 'Azan waktu solat', description: 'Azan berbunyi apabila masuk waktu solat', importance: 5, visibility: 1, sound: 'azan.mp3', vibration: true }).catch(() => {});
+      const bunyi = azanSound ? { channelId: 'azan', sound: 'azan.caf' } : {};
       const now = Date.now() / 1000, list = [];
       [month, nextMonth].filter(Boolean).forEach(src => src.prayers.forEach(d => MAIN.forEach(([k, n]) => {
-        if (!azanOff.includes(k) && d[k] > now && list.length < 60) list.push({ id: d[k] % 2147483647, title: `Waktu ${n}`, body: `Telah masuk waktu ${n} (${fmtT(d[k])}) · ${zoneInfo().daerah}`, schedule: { at: new Date(d[k] * 1000), allowWhileIdle: true } });
+        if (!azanOff.includes(k) && d[k] > now && list.length < 60) list.push({ id: d[k] % 2147483647, title: `Waktu ${n}`, body: `Telah masuk waktu ${n} (${fmtT(d[k])}) · ${zoneInfo().daerah}`, schedule: { at: new Date(d[k] * 1000), allowWhileIdle: true }, ...bunyi });
       })));
       if (list.length) await LN.schedule({ notifications: list });
     } catch {}
@@ -299,14 +347,14 @@ WLY02|Wilayah Persekutuan|Labuan`.split('\n').map(l => { const [jakimCode, neger
   $('#todayGrid').addEventListener('click', async e => {
     const b = e.target.closest('.pr-bell'); if (!b) return;
     const k = b.dataset.k;
-    if (!notifOn) {
+    if (!notifOn && !azanSound) {
+      azanSound = true; store.set('azanSound', true); Azan.unlock();
       notifOn = await Notify.request(); store.set('azanNotif', notifOn); paintSwitch();
-      if (!notifOn) return;
       azanOff = azanOff.filter(x => x !== k);
     } else azanOff = azanOff.includes(k) ? azanOff.filter(x => x !== k) : [...azanOff, k];
     store.set('azanOff', azanOff); listSig = ''; tick(); scheduleNative();
     const n = MAIN.find(p => p[0] === k)[1];
-    toast(azanOff.includes(k) ? `Peringatan ${n} dimatikan` : `Peringatan ${n} diaktifkan`);
+    toast(azanOff.includes(k) ? `Azan ${n} dimatikan` : `Azan ${n} diaktifkan`);
   });
 
   /* Rekod solat harian dan bilangan hari berturut-turut */
@@ -461,11 +509,26 @@ WLY02|Wilayah Persekutuan|Labuan`.split('\n').map(l => { const [jakimCode, neger
       } catch { toast('Lokasi tidak dapat dikesan. Sila pilih zon atau cari bandar.'); }
     }, () => toast('Kebenaran lokasi ditolak.'), { timeout: 15000, maximumAge: 600000 });
   });
+  const native = () => !!plugin('LocalNotifications');
   const paintSwitch = () => {
     $('#notifBtn').setAttribute('aria-checked', String(notifOn));
     $('#notifSub').textContent = notifOn ? 'Aktif untuk zon ' + zone + '. Tekan loceng untuk setiap waktu.' : 'Notifikasi apabila masuk waktu';
+    $('#azanBtn').setAttribute('aria-checked', String(azanSound));
+    $('#azanSub').textContent = !azanSound ? 'Azan tidak dimainkan'
+      : native() ? (notifOn ? 'Azan berbunyi walaupun app ditutup' : 'Hidupkan peringatan di atas supaya azan berbunyi walaupun app ditutup')
+      : 'Berbunyi apabila masuk waktu semasa laman ini dibuka';
     listSig = ''; if (month) tick();
   };
+  $('#azanBtn').addEventListener('click', async () => {
+    azanSound = !azanSound; store.set('azanSound', azanSound);
+    if (azanSound) {
+      Azan.unlock(); toast('Azan akan berbunyi apabila masuk waktu');
+      // Dalam app, azan berbunyi melalui notifikasi berjadual: minta kebenaran jika belum
+      if (native() && !notifOn) { notifOn = await Notify.request(); store.set('azanNotif', notifOn); }
+    } else { Azan.stop(); toast('Bunyi azan dimatikan'); }
+    paintSwitch(); scheduleNative();
+  });
+  $('#azanUji').addEventListener('click', () => Azan.playing() ? Azan.stop() : Azan.play('Contoh azan'));
   $('#notifBtn').addEventListener('click', async () => {
     if (notifOn) notifOn = false;
     else { notifOn = await Notify.request(); if (notifOn) toast('Peringatan waktu solat diaktifkan'); }

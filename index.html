@@ -525,6 +525,12 @@
             <button class="switch" id="notifBtn" role="switch" aria-checked="false" aria-label="Peringatan waktu solat"><span></span></button>
           </div>
 
+          <div class="card toggle-row">
+            <span class="sc-ico"><svg class="ic"><use href="#i-volume"/></svg></span>
+            <div class="sc-body"><div class="sc-title">Bunyi azan</div><div class="sc-sub" id="azanSub">Azan berbunyi apabila masuk waktu</div><button type="button" class="azan-uji" id="azanUji"><svg class="ic"><use href="#i-play"/></svg>Dengar azan</button></div>
+            <button class="switch" id="azanBtn" role="switch" aria-checked="true" aria-label="Bunyi azan"><span></span></button>
+          </div>
+
           <div class="card qibla">
             <div class="row-between"><h2>Arah kiblat</h2><span class="muted small num" id="qiblaDeg">&nbsp;</span></div>
             <div class="qibla-dial" id="qiblaDial" aria-hidden="true">
@@ -860,5 +866,9 @@
   <script src="js/komuniti.js" defer></script>
   <script src="js/iklan.js" defer></script>
   <script src="js/pemilik.js" defer></script>
+  <div class="azan-bar hidden" id="azanBar" role="status" aria-live="polite">
+    <svg class="ic"><use href="#i-volume"/></svg><span id="azanBarText">Azan sedang berbunyi</span>
+    <button type="button" class="btn sm" id="azanStop"><svg class="ic"><use href="#i-pause"/></svg>Hentikan</button>
+  </div>
 </body>
 </html>
