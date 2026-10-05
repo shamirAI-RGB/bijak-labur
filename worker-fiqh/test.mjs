@@ -1,8 +1,8 @@
 // Ujian pelayan Tanya AI Fiqh tanpa rangkaian: node worker-fiqh/test.mjs
 import assert from 'node:assert/strict';
-import worker, { verify, collectRetrieved, norm, normUrl, parseAnswer, MODEL, GEMINI_MODEL, GEMINI_FALLBACKS, DOMAINS } from './src/app.js';
+import worker, { NOTA_PDF, kataKunci, verify, collectRetrieved, norm, normUrl, parseAnswer, MODEL, GEMINI_MODEL, GEMINI_FALLBACKS, DOMAINS } from './src/app.js';
 import { BY_ID, CORPUS_TEXT } from './src/corpus.js';
-import { MODEN, KITAB, buildIndex, search, expand, pageUrl, tokens, cetakan } from './src/rujukan.js';
+import { MODEN, KITAB, buildIndex, search, expand, pageUrl, tokens, cetakan, cetakPdf } from './src/rujukan.js';
 import { clean, semakBody, systemFor } from './src/semak.js';
 import { clean as cleanK, kaloriBody, check as checkK } from './src/kalori.js';
 import { blocked, check as checkG, promptBody, GAYA, FLUX } from './src/gambar.js';
@@ -82,7 +82,7 @@ const msg = (content, stop = 'end_turn') => ({ id: 'm', type: 'message', role: '
 let turn = 0;
 reply = () => ++turn === 1
   ? msg(blocks, 'pause_turn')
-  : msg([{ type: 'text', text: JSON.stringify({ status: 'jawab', ringkasan: 'Riba haram secara qat\'i.', huraian: ['Kitab Fath al-Qarib menyebut riba haram.'], sumber: [{ id: 'kitab:fathqarib:142', url: 'https://shamela.ws/book/35120/143', petikan: 'والربا حرام في الذهب والفضة' }, { id: 'quran:2:275' }] }) }]);
+  : msg([{ type: 'text', text: JSON.stringify({ status: 'jawab', ringkasan: 'Riba haram secara qat\'i.', huraian: ['Kitab Fath al-Qarib menyebut riba haram.'], sumber: [{ id: 'kitab:fathqarib:142', url: 'https://shamela.ws/book/35120/143', petikan: 'والربا حرام في الذهب والفضة', maksud: 'Riba haram pada emas dan perak.' }, { id: 'quran:2:275' }] }) }]);
 let r = await call({ q: 'Apakah hukum riba dalam jual beli emas?' });
 let d = await r.json();
 assert.equal(r.status, 200, JSON.stringify(d));
@@ -233,6 +233,34 @@ d = await (await call({ q: 'Hukum jual beli emas dengan emas' }, 'https://bijakl
 assert.ok(gsent.contents[0].parts.some(p => p.text.includes('[kitab:fathqarib:143] (kitab) Fath al-Qarib') && p.text.includes('Halaman Shamela 143')));
 assert.deepEqual([d.sumber[0].jenis, d.sumber[0].url, d.sumber[0].shamela, d.sumber[0].jilid, d.sumber[0].halaman, d.sumber[0].disahkan],
   ['kitab', 'https://shamela.ws/book/35120/143', '143', '1', '181', true]);
+
+// Belum ada PDF cetakan yang dipadankan: ayat amaran dipaparkan
+assert.equal(d.nota_pdf, NOTA_PDF);
+// Petikan Arab tanpa terjemahan Bahasa Melayu tidak dipaparkan
+greply = () => gem({ status: 'jawab', ringkasan: 'x', huraian: ['y'], sumber: [{ id: 'kitab:fathqarib:143', petikan: 'ولا يجوز بيع الذهب بالذهب إلا متماثلا نقدا' }] });
+d = await (await call({ q: 'Hukum jual beli emas dengan emas?' }, 'https://bijaklabur.my', { ...genv, ...kenv })).json();
+assert.deepEqual([d.sumber[0].petikan, d.sumber[0].disahkan], ['', false]);
+
+// Istilah carian daripada model untuk soalan yang tiada dalam glosari (semua bab fiqh)
+greply = () => gem({ ar: ['طهارة', 'مياه'], en: ['purification'], ms: ['bersuci'] });
+assert.equal(await kataKunci({ ...genv, ...kenv }, 'Air apa yang boleh digunakan untuk mengangkat hadas?'), 'طهارة مياه purification bersuci');
+assert.equal(await kataKunci(genv, 'x'), '');
+greply = () => new Response('{}', { status: 500 });
+assert.equal(await kataKunci({ ...genv, ...kenv }, 'x'), '');
+greply = () => gem({ ar: ['طهارة', 'مياه'] });
+hits = await search(kenv, expand('Air apa yang boleh digunakan untuk mengangkat hadas?') + ' ' + await kataKunci({ ...genv, ...kenv }, 'q'));
+assert.ok(hits.some(h => h.id === 'kitab:fathqarib:142'), JSON.stringify(hits.map(h => h.id)));
+
+// Edisi cetakan: halaman cetakan + offset jilid = muka surat PDF
+const CET = { penerbit: 'Dar Ibn Hazm', edisi: 'Pertama, 1425H', pdf: [{ url: 'https://archive.org/download/x/x.pdf', offset: 4, dari: 1, hingga: 300, padan: 6 }] };
+assert.deepEqual(cetakPdf(CET, 143), { penerbit: 'Dar Ibn Hazm', edisi: 'Pertama, 1425H', pdf: 147, pdf_url: 'https://archive.org/download/x/x.pdf#page=147' });
+assert.deepEqual(cetakPdf(CET, 400), { penerbit: 'Dar Ibn Hazm', edisi: 'Pertama, 1425H' });
+assert.equal(cetakPdf(null, 1), null);
+kfiles.set('rujukan/cetakan.json', JSON.stringify({ fathqarib: CET }));
+greply = () => gem({ status: 'jawab', ringkasan: 'x', huraian: ['y'], sumber: [{ id: 'kitab:fathqarib:143', petikan: 'ولا يجوز بيع الذهب بالذهب إلا متماثلا نقدا', maksud: 'Tidak harus menjual emas dengan emas kecuali sama dan tunai.' }] });
+d = await (await call({ q: 'Hukum jual beli emas dengan emas!' }, 'https://bijaklabur.my', { ...genv, ...kenv })).json();
+assert.deepEqual([d.sumber[0].pdf, d.sumber[0].pdf_url, d.sumber[0].penerbit, d.sumber[0].disahkan], [147, 'https://archive.org/download/x/x.pdf#page=147', 'Dar Ibn Hazm', true]);
+assert.equal(d.nota_pdf, undefined);
 
 // Tanpa aset rujukan (muat turun gagal), Tanya AI tetap berjalan seperti biasa
 d = await (await call({ q: 'Apakah hukum melabur kripto lagi?' }, 'https://bijaklabur.my', genv)).json();
