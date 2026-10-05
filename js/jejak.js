@@ -13,7 +13,8 @@
     lari: { nama: 'Lari', vmax: 7, acc: 30, stride: 0.6 },
     basikal: { nama: 'Basikal', vmax: 14, acc: 35, stride: 0 }   // had 50 km/j: lebih laju dianggap kenderaan
   };
-  const KL = [3.139, 101.687];
+  // Pusat lalai peta: UiTM Shah Alam (dari pautan Google Maps Shamir)
+  const PUSAT = [3.0716068, 101.4902525];
   const profil = () => Object.assign({ tinggi: 165, berat: 60 }, store.get('sihat_profil', {}));
   const day = (d = new Date()) => d.toLocaleDateString('en-CA');
 
@@ -65,7 +66,7 @@
     try { await loadScript('js/vendor/leaflet.js'); } catch { $('#jkMap', root).innerHTML = '<p class="muted jk-nomap">Peta tidak dapat dimuatkan. Penjejakan tetap berfungsi.</p>'; return; }
     const el = $('#jkMap', root); if (!el || map) return;
     const last = T.pts.length ? T.pts[T.pts.length - 1] : here;
-    map = L.map(el, { zoomControl: true, attributionControl: true }).setView(last ? [last[0], last[1]] : KL, last ? 16 : 12);
+    map = L.map(el, { zoomControl: true, attributionControl: true }).setView(last ? [last[0], last[1]] : PUSAT, 16);
     map.attributionControl.setPrefix(false);
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' }).addTo(map);
     const brand = getComputedStyle(document.documentElement).getPropertyValue('--brand').trim() || '#0f5a46';
