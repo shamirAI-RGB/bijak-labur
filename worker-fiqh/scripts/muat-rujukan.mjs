@@ -83,8 +83,14 @@ async function shamelaBook(b) {
   let pages = null, tried = [];
   try { const c = JSON.parse(await readFile(file, 'utf8')); pages = c.pages; tried = c.tried || []; } catch {}
   if (!pages) {
-    const first = await get(`https://shamela.ws/book/${b.id}/1`);
-    if (!first || first.status !== 200) throw new Error(`halaman 1: ${first ? first.status + ' ' + (first.error || '') : '404'}`);
+    // Sesetengah buku tiada halaman 1; halaman utama buku juga mengandungi pautan ke halaman-halamannya
+    let first = await get(`https://shamela.ws/book/${b.id}/1`);
+    if (!first || first.status !== 200) {
+      console.log(`  halaman 1: ${first ? first.status + ' ' + (first.error || '') : '404'}; cuba halaman utama buku`);
+      first = await get(`https://shamela.ws/book/${b.id}`);
+      if (!first || first.status !== 200) throw new Error(`halaman utama: ${first ? first.status + ' ' + (first.error || '') : '404'}`);
+      first.html = first.html.replace(/class="[^"]*\bnass\b/g, 'class="x');
+    }
     // Butang halaman terakhir dalam navigasi
     const nums = [...first.html.matchAll(new RegExp(`/book/${b.id}/(\\d+)`, 'g'))].map(m => +m[1]);
     const last = Math.min(Math.max(1, ...nums), 6000);
