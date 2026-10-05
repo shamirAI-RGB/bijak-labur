@@ -102,7 +102,11 @@ export async function search(env, query, limit = 6) {
   // Utamakan muka surat yang mengandungi lebih banyak istilah berbeza
   // Buang muka surat yang hanya berkongsi istilah umum (cth. "hukum") dengan soalan
   const ranked = [...score.values()].map(x => ({ ...x, skor: x.skor * (1 + 0.3 * (x.padan - 1)) })).sort((a, b) => b.skor - a.skor);
-  const top = ranked.filter(x => ranked.length && x.skor >= ranked[0].skor * 0.4).slice(0, limit);
+  // Kitab Arab dan dokumen moden disaring berasingan (skor teks Melayu lebih tinggi daripada teks Arab), supaya kedua-duanya diberi kepada model
+  const pick = (list, n) => list.filter(x => x.skor >= list[0].skor * 0.4).slice(0, n);
+  const kitab = ranked.filter(x => DOC[x.k] && DOC[x.k].jenis === 'kitab'), moden = ranked.filter(x => !(DOC[x.k] && DOC[x.k].jenis === 'kitab'));
+  const nk = kitab.length ? Math.min(3, Math.ceil(limit / 2)) : 0;
+  const top = [...(moden.length ? pick(moden, limit - Math.min(nk, kitab.length)) : []), ...(kitab.length ? pick(kitab, nk) : [])];
   const texts = await Promise.all(top.map(x => page(env, x.k, x.n)));
   return top.map((x, i) => ({ id: `${DOC[x.k] && DOC[x.k].jenis === 'kitab' ? 'kitab' : 'pdf'}:${x.k}:${x.n}`, k: x.k, n: x.n, skor: +x.skor.toFixed(2), teks: texts[i] || '' })).filter(x => x.teks);
 }
