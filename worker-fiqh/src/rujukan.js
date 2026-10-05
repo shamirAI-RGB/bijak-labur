@@ -131,14 +131,19 @@ export const pageUrl = (k, n) => DOC[k].jenis === 'kitab' ? D.shamela(DOC[k].id,
 
 /*
  * Edisi cetakan dan PDF bergambar bagi setiap kitab (rujukan/cetakan.json, dibina oleh scripts/padan-pdf.mjs):
- *   { k: { penerbit, edisi, sumber, fail: [url PDF], peta: { halamanShamela: [indeksFail, mukaSuratPdf] } } }
+ *   { k: { penerbit, edisi, sumber, fail: [url PDF], peta: { halamanShamela: [indeksFail, mukaSuratPdf] },
+ *          paparan: [{ gambar, lihat, off } atau null bagi setiap fail] } }
  * Peta dibina dengan OCR: setiap muka surat PDF dibaca dan dipadankan dengan teks halaman Shamela. Halaman yang tiada
- * dalam peta belum disahkan pada PDF.
+ * dalam peta belum disahkan pada PDF. paparan: templat URL gambar satu muka surat dan halaman BookReader archive.org
+ * ({n} = muka surat PDF + off), yang jauh lebih ringan daripada PDF penuh.
  */
 export function cetakPdf(c, n) {
   if (!c) return null;
   const info = { penerbit: c.penerbit || '', edisi: c.edisi || '' }, m = c.peta && c.peta[n], url = m && (c.fail || [])[m[0]];
-  return url ? { ...info, pdf: m[1], pdf_url: `${url}#page=${m[1]}` } : info;
+  if (!url) return info;
+  const v = (c.paparan || [])[m[0]], leaf = v && String(m[1] + (v.off || 0));
+  const papar = v && v.gambar ? { gambar_url: v.gambar.replace('{n}', leaf), lihat_url: v.lihat.replace('{n}', leaf) } : {};
+  return { ...info, pdf: m[1], pdf_url: `${url}#page=${m[1]}`, ...papar };
 }
 
 /* Juz dan halaman cetakan yang tertera pada halaman Shamela, cth. "[الجزء: 1 ¦ الصفحة: 142]" */

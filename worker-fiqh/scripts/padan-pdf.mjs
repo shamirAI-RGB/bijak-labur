@@ -78,7 +78,9 @@ async function failPdf(id) {
   const files = (m?.files || []).filter(f => /\.pdf$/i.test(f.name) && +f.size > 0 && +f.size < MAX_MB * 1e6);
   const asal = files.filter(f => f.source === 'original');
   const servers = [m?.d1, m?.d2].filter(Boolean).map(d => `https://${d}${m.dir}`);
-  return { meta: m?.metadata || {}, servers, files: (asal.length ? asal : files).slice(0, 12).sort((a, b) => a.name.localeCompare(b.name, 'en', { numeric: true })) };
+  // Buku yang boleh dipaparkan satu muka surat demi satu oleh archive.org (terbitan _jp2), dinamakan mengikut fail asalnya
+  const buku = (m?.files || []).map(f => f.name.match(/^(.+)_jp2\.(zip|tar)$/)).filter(Boolean).map(x => x[1]);
+  return { meta: m?.metadata || {}, servers, buku, files: (asal.length ? asal : files).slice(0, 12).sort((a, b) => a.name.localeCompare(b.name, 'en', { numeric: true })) };
 }
 
 // Pautan archive.org/download melencong ke pelayan data; jika gagal, cuba pelayan data terus (d1, d2)
@@ -165,6 +167,56 @@ async function bacaPenuh(file, np, halaman, ocr) {
   return Object.keys(ocr).length >= np;
 }
 
+/*
+ * Paparan ringan: gambar satu muka surat daripada archive.org (puluhan hingga ratusan KB) dan halaman BookReader pada muka
+ * surat itu, sebagai ganti PDF penuh (beberapa hingga puluhan MB) yang lambat dibuka, terutamanya di telefon. Indeks muka surat
+ * archive.org (n0 biasanya muka surat pertama PDF) disahkan dengan OCR: gambar bagi muka surat PDF yang telah dipadankan
+ * dibaca, dan mesti sepadan dengan halaman Shamela yang sama. Bentuk gambar pertama yang lulus mengikut keutamaan dipilih:
+ * lebar 800 piksel (kira-kira 50 hingga 300 KB) cukup jelas untuk dibaca di skrin telefon, manakala saiz "medium"
+ * lebih kecil tetapi baris Arab berharakat sukar dibaca. Fail tanpa gambar yang disahkan kekal dengan pautan PDF.
+ */
+const PAPARAN = 2;
+async function gambar(url, file) {
+  try {
+    const r = await fetch(url, { headers: { 'user-agent': UA }, redirect: 'follow', signal: AbortSignal.timeout(45000) });
+    if (!r.ok || !/^image\//.test(r.headers.get('content-type') || '')) return `HTTP ${r.status} ${r.headers.get('content-type') || ''}`.trim();
+    const b = Buffer.from(await r.arrayBuffer());
+    await writeFile(file, b);
+    return b.length;
+  } catch (e) { return e.message; }
+}
+async function paparan(c, halaman) {
+  if (!c.buku) return;
+  const id = c.item, awal = `https://archive.org/download/${id}/`;
+  for (const x of c.fail) {
+    if (x.paparan?.v === PAPARAN || !masa()) continue;
+    const base = decodeURIComponent(x.url.slice(awal.length)).replace(/\.pdf$/i, '');
+    const ocr = cache.ocr[x.url] || {};
+    const [p, v] = Object.entries(ocr).filter(([, v]) => v).sort((a, b) => b[1][1] - a[1][1])[0] || [];
+    if (!c.buku.includes(base) || !v) { console.log(`  paparan ${base}: tiada gambar muka surat di archive.org`); x.paparan = { v: PAPARAN }; continue; }
+    const sub = c.buku.length > 1 ? `${id}/${base.split('/').map(encodeURIComponent).join('/')}` : id;
+    const iiif = `https://iiif.archive.org/iiif/3/${c.buku.length > 1 ? `${id}%2F${encodeURIComponent(base)}` : id}$`;
+    const calon = [`https://archive.org/download/${sub}/page/n{n}_w800.jpg`, `https://archive.org/download/${sub}/page/n{n}_medium.jpg`,
+      `${iiif}{n}/full/800,/0/default.jpg`, `https://archive.org/download/${sub}/page/n{n}.jpg`, `${iiif}{n}/full/max/0/default.jpg`];
+    let pilih = null;
+    for (const off of [-1, 0]) {
+      for (const t of calon) {
+        if (!masa()) break;
+        const url = t.replace('{n}', +p + off), file = join(TMP, 'g.jpg'), saiz = await gambar(url, file);
+        if (typeof saiz !== 'number') { console.log(`    ${url}: ${saiz}`); continue; }
+        const { stdout } = await run('tesseract', [file, '-', '-l', 'ara', '--psm', '6'], { maxBuffer: 1 << 24, env: { ...process.env, OMP_THREAD_LIMIT: '1' } }).catch(() => ({ stdout: '' }));
+        const m = padan(stdout, halaman), lulus = m?.n === v[0];
+        console.log(`    ${url}: ${(saiz / 1024).toFixed(0)} KB, OCR → Shamela ${m ? m.n : '-'} (dijangka ${v[0]})${lulus ? ' lulus' : ''}`);
+        if (lulus) { pilih = { t, off }; break; }
+      }
+      if (pilih) break;
+    }
+    if (!pilih && !masa()) continue;
+    x.paparan = pilih ? { v: PAPARAN, gambar: pilih.t, lihat: `https://archive.org/details/${sub}/page/n{n}/mode/1up`, off: pilih.off } : { v: PAPARAN };
+    console.log(`  paparan ${base}: ${pilih ? `${pilih.t} (indeks = muka surat ${pilih.off < 0 ? '- 1' : ''})` : 'tiada gambar yang disahkan; kekal dengan pautan PDF'}`);
+  }
+}
+
 /* ---------- utama ---------- */
 let cache = {};
 try { cache = JSON.parse(await readFile(join(CACHE, 'cetakan.json'), 'utf8')); } catch {}
@@ -188,7 +240,7 @@ for (const b of [...KITAB].sort((x, y) => (TERTIB.indexOf(x.k) + 1 || 99) - (TER
     if (!masa()) break;
     if (!c.item && id in c.cuba) continue;
     console.log(`  calon ${id}`);
-    const { meta, files, servers } = await failPdf(id);
+    const { meta, files, servers, buku } = await failPdf(id);
     console.log(`    "${meta.title || ''}" | ${files.length} PDF`);
     if (c.item === id && c.penerbit === undefined) c.penerbit = String(meta.publisher || '');
     const diterima = c.item === id ? c.fail : [];
@@ -222,10 +274,15 @@ for (const b of [...KITAB].sort((x, y) => (TERTIB.indexOf(x.k) + 1 || 99) - (TER
         await simpan();
       }
     }
+    if (c.item === id) c.buku = buku;
     if (c.item) break;
     if (masa()) c.cuba[id] = 0;
   }
-  if (c.item) c.peta = bina(c.fail.map(x => cache.ocr[x.url] || {}), N);
+  if (c.item) {
+    c.peta = bina(c.fail.map(x => cache.ocr[x.url] || {}), N);
+    await paparan(c, halaman);
+    await simpan();
+  }
   const pct = Math.round(Object.keys(c.peta || {}).length / N * 100);
   console.log(`  hasil: ${c.item || 'tiada PDF sepadan'}; ${pct}% halaman Shamela dipetakan`);
   const e = EDISI[c.item] || {};
@@ -236,7 +293,8 @@ await simpan();
 await mkdir(OUT, { recursive: true });
 const out = Object.fromEntries(Object.entries(cache.kitab).filter(([, c]) => c.item).map(([k, c]) => {
   const e = EDISI[c.item] || { penerbit: c.penerbit || '', edisi: c.judul || '' };
-  return [k, { penerbit: e.penerbit, edisi: e.edisi, sumber: `https://archive.org/details/${c.item}`, fail: c.fail.map(x => x.url), peta: c.peta || {} }];
+  const papar = c.fail.map(x => x.paparan?.gambar ? { lihat: x.paparan.lihat, gambar: x.paparan.gambar, off: x.paparan.off } : null);
+  return [k, { penerbit: e.penerbit, edisi: e.edisi, sumber: `https://archive.org/details/${c.item}`, fail: c.fail.map(x => x.url), peta: c.peta || {}, ...(papar.some(Boolean) ? { paparan: papar } : {}) }];
 }));
 await writeFile(join(OUT, 'cetakan.json'), JSON.stringify(out));
 for (const [k, c] of Object.entries(out)) console.log(`${k}: ${Object.keys(c.peta).length} halaman dipetakan; contoh ${JSON.stringify(Object.entries(c.peta).slice(0, 10))}`);

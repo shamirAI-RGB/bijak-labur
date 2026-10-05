@@ -13,6 +13,12 @@
   const sunnahUrl = h => `https://sunnah.com/${h.c}:${h.n}`;
   const hRef = h => `${D.KOLEKSI[h.c]} ${h.n.replace(/[a-z]$/, '')}`;
   const ext = (href, label) => /^https:\/\//.test(href) ? `<a class="link-btn" href="${esc(href)}" target="_blank" rel="noopener">${label}${icon('link')}</a>` : '';
+  // Muka surat cetakan kitab: gambar satu muka surat dari archive.org (dimuat hanya apabila dibuka), bukan PDF penuh yang berat
+  const cetakPage = s => /^https:\/\/(iiif\.)?archive\.org\//.test(s.gambar_url || '')
+    ? `<details class="fq-cetak"><summary>${icon('book')}Lihat muka surat ${esc(s.pdf)} dalam cetakan</summary>
+        <img data-src="${esc(s.gambar_url)}" alt="Muka surat ${esc(s.pdf)} cetakan ${esc(s.tajuk)}" decoding="async">
+        <p class="small fq-links">${ext(s.lihat_url, 'Buka di archive.org')}${ext(s.pdf_url, 'PDF penuh')}</p></details>`
+    : s.pdf_url ? `<p class="small">${ext(s.pdf_url, `Buka PDF cetakan, muka surat ${esc(s.pdf)}`)}</p>` : '';
 
   /* ---------- Muat sumber ---------- */
   const cache = {};
@@ -244,7 +250,7 @@
       <div class="row-between"><span class="fq-ai-kind">${label}</span>${ext(s.url, s.jenis === 'kitab' || s.pdf ? 'Buka muka surat' : 'Buka sumber')}</div>
       <b>${esc(s.tajuk)}</b>${page || printed ? `<p class="small muted">${[page, printed].filter(Boolean).join(' · ')}</p>` : ''}
       ${s.penerbit || s.edisi ? `<p class="small muted">Cetakan: ${esc([s.penerbit, s.edisi && (s.penerbit ? 'cetakan ' + s.edisi : s.edisi), s.tahun].filter(Boolean).join(', '))}</p>` : ''}
-      ${s.pdf_url ? `<p class="small">${ext(s.pdf_url, `Buka PDF cetakan, muka surat ${esc(s.pdf)}`)}</p>` : ''}
+      ${cetakPage(s)}
       ${s.petikan ? `<blockquote class="${isAr(s.petikan) ? 'ar fq-ar' : 'fq-tr'}"${isAr(s.petikan) ? ' lang="ar" dir="rtl"' : ''}>${esc(s.petikan)}</blockquote>` : ''}
       ${s.maksud ? `<p class="fq-tr">${esc(s.maksud)}</p>` : ''}
       ${s.untuk ? `<p class="small muted">Menyokong: ${esc(s.untuk)}</p>` : ''}
@@ -281,6 +287,13 @@
       box.innerHTML = hits.length ? `<div class="list">${hits.map(hitRow).join('')}</div>` : `<p class="muted small">Tiada masalah sepadan. Cuba cari dalil terus dari sumber di bawah.</p>`;
     } else if (e.target.id === 'fqDalil') $('#fqOut').innerHTML = outLinks(e.target.value.trim());
   });
+  // Gambar muka surat cetakan dimuat apabila pengguna membukanya
+  document.addEventListener('toggle', e => {
+    const img = e.target.open && e.target.matches && e.target.matches('.fq-cetak') && $('img[data-src]', e.target);
+    if (!img || img.src) return;
+    img.addEventListener('error', () => { if (img.isConnected) img.outerHTML = '<p class="muted small">Gambar muka surat tidak dapat dimuat. Cuba pautan di bawah.</p>'; }, { once: true });
+    img.src = img.dataset.src;
+  }, true);
   document.addEventListener('keydown', e => {
     if (e.target.id === 'fqDalil' && e.key === 'Enter') searchAyat();
     if (e.target.id === 'fqAsk' && e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ask(); }
