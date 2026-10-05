@@ -243,7 +243,7 @@
     return `<div class="fq-src fq-ai-src" style="--c:${c}"${hk ? ` data-hadith="${hk}"` : ''}>
       <div class="row-between"><span class="fq-ai-kind">${label}</span>${ext(s.url, s.jenis === 'kitab' || s.pdf ? 'Buka muka surat' : 'Buka sumber')}</div>
       <b>${esc(s.tajuk)}</b>${page || printed ? `<p class="small muted">${[page, printed].filter(Boolean).join(' · ')}</p>` : ''}
-      ${s.penerbit ? `<p class="small muted">Cetakan: ${esc([s.penerbit, s.edisi && 'cetakan ' + s.edisi, s.tahun].filter(Boolean).join(', '))}</p>` : ''}
+      ${s.penerbit || s.edisi ? `<p class="small muted">Cetakan: ${esc([s.penerbit, s.edisi && (s.penerbit ? 'cetakan ' + s.edisi : s.edisi), s.tahun].filter(Boolean).join(', '))}</p>` : ''}
       ${s.pdf_url ? `<p class="small">${ext(s.pdf_url, `Buka PDF cetakan, muka surat ${esc(s.pdf)}`)}</p>` : ''}
       ${s.petikan ? `<blockquote class="${isAr(s.petikan) ? 'ar fq-ar' : 'fq-tr'}"${isAr(s.petikan) ? ' lang="ar" dir="rtl"' : ''}>${esc(s.petikan)}</blockquote>` : ''}
       ${s.maksud ? `<p class="fq-tr">${esc(s.maksud)}</p>` : ''}
@@ -255,7 +255,7 @@
 
   function aiCite({ d, q }) {
     const out = [`Soalan: ${q}`, '', d.ringkasan || '', ...(d.huraian || []), d.khilaf ? 'Perbezaan pendapat: ' + d.khilaf : '', '', 'Rujukan:'];
-    (d.sumber || []).forEach(s => out.push(`- ${s.tajuk}${s.shamela ? `, Shamela hlm. ${s.shamela}` : ''}${s.penerbit ? `, cetakan ${[s.penerbit, s.edisi, s.tahun].filter(Boolean).join(', ')}` : ''}${s.pdf ? `, PDF hlm. ${s.pdf}${s.pdf_url ? ` (${s.pdf_url})` : ''}` : ''}${s.halaman ? `, hlm. ${s.halaman}` : ''} (${s.url})${s.petikan ? `\n  "${s.petikan}"` : ''}`));
+    (d.sumber || []).forEach(s => out.push(`- ${s.tajuk}${s.shamela ? `, Shamela hlm. ${s.shamela}` : ''}${s.penerbit || s.edisi ? `, cetakan ${[s.penerbit, s.edisi, s.tahun].filter(Boolean).join(', ')}` : ''}${s.pdf ? `, PDF hlm. ${s.pdf}${s.pdf_url ? ` (${s.pdf_url})` : ''}` : ''}${s.halaman ? `, hlm. ${s.halaman}` : ''} (${s.url})${s.petikan ? `\n  "${s.petikan}"` : ''}`));
     if (d.nota_pdf) out.push('', d.nota_pdf);
     out.push('', 'Dijana oleh Tanya AI Bijak Labur. Bukan fatwa; semak sumber asal.');
     return out.filter((l, i, a) => l || a[i - 1]).join('\n');

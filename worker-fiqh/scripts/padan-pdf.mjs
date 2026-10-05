@@ -43,7 +43,7 @@ const CALON = {
   manhaji: ['fmhji', 'Encycloped405', '1_20240927_20240927_1217']
 };
 // Penerbit dan edisi setiap item (daripada tajuk item, atau kad buku Shamela bagi edisi yang sama).
-// Item lain dipaparkan dengan tajuk item archive.org sebagai edisi.
+// Item lain dipaparkan dengan penerbit dalam metadata archive.org (jika ada) dan tajuk item sebagai edisi.
 const EDISI = {
   'fath-al-qarib-ibn-hazm': { penerbit: 'الجفان والجابي، دار ابن حزم، بيروت', edisi: 'الأولى، 1425 هـ - 2005 م' },
   ghayahtaqrib: { penerbit: 'دار ابن حزم', edisi: 'تحقيق ماجد الحموي' },
@@ -190,6 +190,7 @@ for (const b of [...KITAB].sort((x, y) => (TERTIB.indexOf(x.k) + 1 || 99) - (TER
     console.log(`  calon ${id}`);
     const { meta, files, servers } = await failPdf(id);
     console.log(`    "${meta.title || ''}" | ${files.length} PDF`);
+    if (c.item === id && c.penerbit === undefined) c.penerbit = String(meta.publisher || '');
     const diterima = c.item === id ? c.fail : [];
     for (const f of files) {
       if (!masa()) break;
@@ -217,7 +218,7 @@ for (const b of [...KITAB].sort((x, y) => (TERTIB.indexOf(x.k) + 1 || 99) - (TER
       } catch (e) { console.log(`    gagal: ${e.message}`); }
       finally {
         await rm(file, { force: true });
-        if (diterima.length && !c.item) Object.assign(c, { item: id, fail: diterima, judul: String(meta.title || '') });
+        if (diterima.length && !c.item) Object.assign(c, { item: id, fail: diterima, judul: String(meta.title || ''), penerbit: String(meta.publisher || '') });
         await simpan();
       }
     }
@@ -234,7 +235,7 @@ for (const b of [...KITAB].sort((x, y) => (TERTIB.indexOf(x.k) + 1 || 99) - (TER
 await simpan();
 await mkdir(OUT, { recursive: true });
 const out = Object.fromEntries(Object.entries(cache.kitab).filter(([, c]) => c.item).map(([k, c]) => {
-  const e = EDISI[c.item] || { penerbit: '', edisi: c.judul || '' };
+  const e = EDISI[c.item] || { penerbit: c.penerbit || '', edisi: c.judul || '' };
   return [k, { penerbit: e.penerbit, edisi: e.edisi, sumber: `https://archive.org/details/${c.item}`, fail: c.fail.map(x => x.url), peta: c.peta || {} }];
 }));
 await writeFile(join(OUT, 'cetakan.json'), JSON.stringify(out));

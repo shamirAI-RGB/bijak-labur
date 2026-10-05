@@ -262,6 +262,8 @@ assert.equal(cetakPdf(null, 1), null);
   const { bina } = await import('./scripts/peta.mjs');
   const o = { 19: [1, .5], 20: [2, .5], 22: [4, .5], 23: [5, .5], 24: [6, .5], 25: [7, .5], 26: [7, .4], 29: [8, .5], 30: [200, .3], 31: 0 };
   assert.deepEqual(bina([o, { 1: [9, .5] }], 300), { 1: [0, 19], 2: [0, 20], 3: [0, 21], 4: [0, 22], 5: [0, 23], 6: [0, 24], 7: [0, 25], 8: [0, 29], 9: [1, 1] });
+  // Halaman pertama yang jauh terpisah (mukadimah pentahqiq memetik teks kitab) dibuang
+  assert.deepEqual(bina([{ 15: [1, .4], 65: [2, .5], 67: [3, .5], 69: [4, .5] }], 406), { 2: [0, 65], 3: [0, 67], 4: [0, 69] });
 }
 kfiles.set('rujukan/cetakan.json', JSON.stringify({ fathqarib: CET }));
 greply = () => gem({ status: 'jawab', ringkasan: 'x', huraian: ['y'], sumber: [{ id: 'kitab:fathqarib:143', petikan: 'ولا يجوز بيع الذهب بالذهب إلا متماثلا نقدا', maksud: 'Tidak harus menjual emas dengan emas kecuali sama dan tunai.' }] });
