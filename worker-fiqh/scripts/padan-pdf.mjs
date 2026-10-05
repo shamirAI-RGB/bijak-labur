@@ -171,10 +171,11 @@ async function bacaPenuh(file, np, halaman, ocr) {
  * Paparan ringan: gambar satu muka surat daripada archive.org (puluhan hingga ratusan KB) dan halaman BookReader pada muka
  * surat itu, sebagai ganti PDF penuh (10 hingga ratusan MB) yang lambat dibuka, terutamanya di telefon. Indeks muka surat
  * archive.org (n0 biasanya muka surat pertama PDF) disahkan dengan OCR: gambar bagi muka surat PDF yang telah dipadankan
- * dibaca, dan mesti sepadan dengan halaman Shamela yang sama. Antara saiz gambar yang lulus, yang paling kecil dipilih
- * (masih cukup jelas untuk dibaca oleh OCR). Fail tanpa gambar yang disahkan kekal dengan pautan PDF.
+ * dibaca, dan mesti sepadan dengan halaman Shamela yang sama. Bentuk gambar pertama yang lulus mengikut keutamaan dipilih:
+ * lebar 800 piksel (kira-kira 50 hingga 300 KB) cukup jelas untuk dibaca di skrin telefon, manakala saiz "medium"
+ * lebih kecil tetapi baris Arab berharakat sukar dibaca. Fail tanpa gambar yang disahkan kekal dengan pautan PDF.
  */
-const PAPARAN = 1;
+const PAPARAN = 2;
 async function gambar(url, file) {
   try {
     const r = await fetch(url, { headers: { 'user-agent': UA }, redirect: 'follow', signal: AbortSignal.timeout(45000) });
@@ -206,7 +207,7 @@ async function paparan(c, halaman) {
         const { stdout } = await run('tesseract', [file, '-', '-l', 'ara', '--psm', '6'], { maxBuffer: 1 << 24, env: { ...process.env, OMP_THREAD_LIMIT: '1' } }).catch(() => ({ stdout: '' }));
         const m = padan(stdout, halaman), lulus = m?.n === v[0];
         console.log(`    ${url}: ${(saiz / 1024).toFixed(0)} KB, OCR → Shamela ${m ? m.n : '-'} (dijangka ${v[0]})${lulus ? ' lulus' : ''}`);
-        if (lulus && (!pilih || saiz < pilih.saiz)) pilih = { t, off, saiz };
+        if (lulus) { pilih = { t, off }; break; }
       }
       if (pilih) break;
     }
