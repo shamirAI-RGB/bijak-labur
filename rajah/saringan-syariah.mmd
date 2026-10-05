@@ -1,0 +1,15 @@
+flowchart TD
+  A[Syarikat tersenarai di Bursa] --> B{Aktiviti 5%<br/>di bawah 5% hasil<br/>dan untung?}
+  B -- Tidak --> X[Tidak patuh Syariah]
+  B -- Ya --> C{Aktiviti 20%<br/>di bawah 20% hasil<br/>dan untung?}
+  C -- Tidak --> X
+  C -- Ya --> D{Tunai konvensional<br/>/ jumlah aset<br/>di bawah 33%?}
+  D -- Tidak --> X
+  D -- Ya --> E{Hutang berfaedah<br/>/ jumlah aset<br/>di bawah 33%?}
+  E -- Tidak --> X
+  E -- Ya --> F[Penilaian kualitatif<br/>imej awam dan maslahah]
+  F --> G[Patuh Syariah<br/>dalam senarai MPS SC]
+  classDef ok fill:#e3f4ec,stroke:#0f8a5f,color:#0b3d2c
+  classDef no fill:#fbe5e1,stroke:#c8402f,color:#5a1a10
+  class G ok
+  class X no

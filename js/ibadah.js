@@ -453,6 +453,17 @@
           <div class="zk-due"><span id="zsLbl">Zakat 2.5%</span><b class="num" id="zsOut">RM0.00</b></div>
           <p class="muted small" id="zsNote">Nisab ialah nilai 85 gram emas.</p></div>
       </div>
+      <div class="two-col">
+        <div class="card"><h3>Zakat saham</h3>
+          <div class="form-grid"><div class="field"><label for="zsV">Nilai pasaran saham pada hari cukup haul (RM)</label><input id="zsV" type="number" min="0" step="any" value="${z.v || ''}" inputmode="decimal"></div>
+          <div class="field"><label for="zsD">Dividen yang diterima dan masih disimpan (RM)</label><input id="zsD" type="number" min="0" step="any" value="${z.d || ''}" inputmode="decimal"></div></div>
+          <div class="zk-due"><span>Zakat saham 2.5%</span><b class="num" id="zvOut">RM0.00</b></div>
+          <p class="muted small" id="zvNote">Nisab dikira atas jumlah simpanan dan saham, berdasarkan harga emas di atas.</p></div>
+        <div class="card"><h3>Penjejak haul</h3>
+          <div class="field"><label for="zhS">Tarikh harta mula mencapai nisab</label><input id="zhS" type="date" value="${esc(z.h || '')}" max="${isoKL(new Date())}"></div>
+          <div id="zhOut" class="zh-out"></div>
+          <p class="muted small">Haul ialah setahun Hijrah (354 atau 355 hari), jadi ia tiba kira-kira 11 hari lebih awal setiap tahun Masihi.</p></div>
+      </div>
       <a class="card shortcut hidden" href="#premium" data-premium-entry>${tileIcon('zakat', 'sm')}<div class="sc-body"><div class="sc-title">Zakat pelaburan</div><div class="sc-sub">Saham, kripto dan portfolio dalam Bijak Labur Premium</div></div>${icon('chev', 'ic chev')}</a>
       <p class="source">Kiraan ringkas untuk panduan. Rujuk pusat zakat negeri anda sebelum membayar.</p>`;
     const vis = $('.desk-nav [data-premium-entry]');
@@ -462,13 +473,40 @@
   const rm = v => 'RM' + (v || 0).toLocaleString('ms-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   function calcZakat() {
     const n = +$('#zfN').value || 0, r = +$('#zfR').value || 0, s = +$('#zsS').value || 0, g = +$('#zsG').value || 0;
-    store.set('zakatIb', { n, r, s, g });
+    const v = +$('#zsV').value || 0, d = +$('#zsD').value || 0, h = $('#zhS').value;
+    store.set('zakatIb', { n, r, s, g, v, d, h });
     $('#zfOut').textContent = rm(n * r);
+    paintHaul(h);
     const nisab = g * 85;
-    if (!g) { $('#zsOut').textContent = rm(0); $('#zsNote').textContent = 'Masukkan harga emas untuk mengira nisab (85 gram).'; return; }
-    const due = s >= nisab ? s * 0.025 : 0;
-    $('#zsOut').textContent = rm(due);
-    $('#zsNote').textContent = s >= nisab ? `Simpanan melebihi nisab ${rm(nisab)}. Wajib zakat jika cukup haul.` : `Belum cukup nisab ${rm(nisab)}. Tiada zakat simpanan.`;
+    if (!g) {
+      $('#zsOut').textContent = $('#zvOut').textContent = rm(0);
+      $('#zsNote').textContent = $('#zvNote').textContent = 'Masukkan harga emas untuk mengira nisab (85 gram).';
+      return;
+    }
+    // Simpanan dan saham digabungkan untuk nisab; zakat saham ialah 2.5% atas nilai pasaran dan dividen
+    const all = s + v + d, sv = v + d;
+    $('#zsOut').textContent = rm(all >= nisab ? s * 0.025 : 0);
+    $('#zsNote').textContent = s >= nisab ? `Simpanan melebihi nisab ${rm(nisab)}. Wajib zakat jika cukup haul.`
+      : s && all >= nisab ? `Simpanan sahaja belum cukup nisab, tetapi bersama saham jumlahnya melebihi nisab ${rm(nisab)}. Wajib zakat jika cukup haul.`
+      : `Belum cukup nisab ${rm(nisab)}. Tiada zakat simpanan.`;
+    $('#zvOut').textContent = rm(all >= nisab ? sv * 0.025 : 0);
+    $('#zvNote').textContent = !sv ? 'Masukkan nilai saham untuk mengira.' : all >= nisab ? `Jumlah simpanan dan saham ${rm(all)} melebihi nisab ${rm(nisab)}. Zakat saham wajib jika cukup haul.` : `Jumlah simpanan dan saham ${rm(all)} belum cukup nisab ${rm(nisab)}.`;
+  }
+  /* Penjejak haul: tarikh mula (Masihi) -> tarikh Hijrah yang sama tahun hadapan */
+  function haulEnd(start) {
+    const h0 = hijri(start), key = x => x.y * 10000 + x.m * 100 + x.d, target = key({ y: h0.y + 1, m: h0.m, d: h0.d });
+    for (let i = 350; i <= 360; i++) { const dt = new Date(start.getTime() + i * day); if (key(hijri(dt)) >= target) return dt; }
+    return new Date(start.getTime() + 354 * day);
+  }
+  function paintHaul(iso) {
+    const out = $('#zhOut');
+    if (!iso) { out.innerHTML = '<p class="muted small">Pilih tarikh untuk melihat bila zakat perlu dibayar.</p>'; return; }
+    const [y, m, dd] = iso.split('-').map(Number), start = klNoon(y, m, dd), end = haulEnd(start), now = todayKL();
+    const total = Math.round((end - start) / day), left = Math.round((end - now) / day), done = Math.min(100, Math.max(0, (total - left) / total * 100));
+    out.innerHTML = `<dl class="zk-lines"><div><dt>Mula</dt><dd>${esc(gShort.format(start))} · ${esc(hStr(hijri(start)))}</dd></div>
+      <div><dt>Cukup haul</dt><dd><b>${esc(gShort.format(end))}</b> · ${esc(hStr(hijri(end)))}</dd></div></dl>
+      <div class="zh-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${done.toFixed(0)}"><span style="width:${done.toFixed(1)}%"></span></div>
+      <p class="small"><b>${left > 0 ? `${left} hari lagi` : left === 0 ? 'Cukup haul hari ini' : `Sudah cukup haul ${-left} hari lalu`}</b>${left <= 0 ? '. Kira dan bayar zakat jika harta masih melebihi nisab.' : ''}</p>`;
   }
 
   /* ---------- Tetapan ---------- */
@@ -565,11 +603,11 @@
       });
     } else if (id === 'asmaFind') { const q = e.target.value.toLowerCase().trim(); $$('.asma', root).forEach(a => a.classList.toggle('hidden', !!q && !a.dataset.q.includes(q))); }
     else if (['tkG', 'tkHd', 'tkHm', 'tkHy'].includes(id)) convert();
-    else if (['zfN', 'zfR', 'zsS', 'zsG'].includes(id)) calcZakat();
+    else if (['zfN', 'zfR', 'zsS', 'zsG', 'zsV', 'zsD', 'zhS'].includes(id)) calcZakat();
     else if (id === 'setAr') { store.set('arSize', +e.target.value); applyArSize(); }
     else if (id === 'pfName') { store.set('nama', e.target.value.trim()); if (window.greet) greet(); }
   });
-  root.addEventListener('change', e => { if (e.target.id === 'setQari') { store.set('qari', e.target.value); toast('Qari ditukar'); } });
+  root.addEventListener('change', e => { if (e.target.id === 'zhS') calcZakat(); if (e.target.id === 'setQari') { store.set('qari', e.target.value); toast('Qari ditukar'); } });
   async function copy(text) { try { await navigator.clipboard.writeText(text); toast('Disalin'); } catch { toast('Tidak dapat menyalin'); } }
   function applyArSize() { document.documentElement.style.setProperty('--ar-size', store.get('arSize', 28) + 'px'); }
   applyArSize();
