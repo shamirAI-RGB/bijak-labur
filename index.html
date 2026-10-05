@@ -358,12 +358,17 @@
         </div>
 
         <div class="home-side">
-          <div class="block-head">
-            <h2>Kripto</h2>
+          <div class="block-head home-mkt-head">
+            <h2 class="sr-only">Harga pasaran</h2>
+            <div class="segmented small" role="tablist" aria-label="Senarai harga" id="homeSeg">
+              <button type="button" role="tab" class="seg active" data-hseg="crypto" aria-selected="true" aria-controls="homeTicker">Kripto</button>
+              <button type="button" role="tab" class="seg" data-hseg="stock" aria-selected="false" aria-controls="homeStocks">Saham</button>
+            </div>
             <span class="live" id="homeLive">Menyambung</span>
-            <a class="more" href="#pasaran">Semua pasaran</a>
+            <a class="more" href="#pasaran" id="homeMore">Semua pasaran</a>
           </div>
-          <div class="list" id="homeTicker"></div>
+          <div class="list" id="homeTicker" role="tabpanel"></div>
+          <div class="list hidden" id="homeStocks" role="tabpanel"></div>
         </div>
       </div>
 
