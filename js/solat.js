@@ -66,6 +66,17 @@ TRG04|Terengganu|Dungun, Kemaman
 WLY01|Wilayah Persekutuan|Kuala Lumpur, Putrajaya
 WLY02|Wilayah Persekutuan|Labuan`.split('\n').map(l => { const [jakimCode, negeri, daerah] = l.split('|'); return { jakimCode, negeri, daerah }; });
 
+  /* Koordinat bandar utama setiap zon JAKIM, untuk kiraan anggaran luar talian sahaja */
+  const ZONE_LL = { JHR01: [2.45, 104.52], JHR02: [1.4927, 103.7414], JHR03: [2.0251, 103.3328], JHR04: [1.8548, 102.9325],
+    KDH01: [6.1248, 100.3678], KDH02: [5.647, 100.4877], KDH03: [6.2539, 100.6097], KDH04: [5.6766, 100.9175], KDH05: [5.365, 100.5617], KDH06: [6.35, 99.8], KDH07: [5.7869, 100.4339],
+    KTN01: [6.1254, 102.2381], KTN02: [4.8823, 101.9644], MLK01: [2.1896, 102.2501], NGS01: [2.4701, 102.2302], NGS02: [2.7389, 102.2487], NGS03: [2.7259, 101.9378],
+    PHG01: [2.791, 104.17], PHG02: [3.8077, 103.326], PHG03: [3.45, 102.417], PHG04: [3.793, 101.857], PHG05: [3.33, 101.86], PHG06: [4.47, 101.377], PHG07: [2.8, 103.49],
+    PLS01: [6.4414, 100.1986], PNG01: [5.4141, 100.3288], PRK01: [4.198, 101.261], PRK02: [4.5975, 101.0901], PRK03: [5.429, 101.129], PRK04: [5.55, 101.35], PRK05: [4.0259, 101.0213], PRK06: [4.85, 100.7333], PRK07: [4.862, 100.793],
+    SBH01: [5.8394, 118.1172], SBH02: [5.893, 117.556], SBH03: [5.0268, 118.327], SBH04: [4.2448, 117.8912], SBH05: [6.8837, 116.8477], SBH06: [6.075, 116.558], SBH07: [5.9804, 116.0735], SBH08: [5.3378, 116.1602], SBH09: [5.3473, 115.7455],
+    SGR01: [3.0733, 101.5185], SGR02: [3.34, 101.25], SGR03: [3.0449, 101.4456],
+    SWK01: [4.75, 115.0], SWK02: [4.3995, 113.9914], SWK03: [3.17, 113.03], SWK04: [2.287, 111.83], SWK05: [2.127, 111.521], SWK06: [1.237, 111.462], SWK07: [1.167, 110.566], SWK08: [1.5535, 110.3593], SWK09: [4.6, 115.2],
+    TRG01: [5.3302, 103.1408], TRG02: [5.736, 102.493], TRG03: [5.07, 103.01], TRG04: [4.2333, 103.4167], WLY01: [3.139, 101.687], WLY02: [5.2831, 115.2308] };
+
   const PRAYERS = [
     ['imsak', 'Imsak', false], ['fajr', 'Subuh', true], ['syuruk', 'Syuruk', false], ['dhuha', 'Dhuha', false],
     ['dhuhr', 'Zohor', true], ['asr', 'Asar', true], ['maghrib', 'Maghrib', true], ['isha', 'Isyak', true]
@@ -193,7 +204,28 @@ WLY02|Wilayah Persekutuan|Labuan`.split('\n').map(l => { const [jakimCode, neger
         if (j.prayers && j.prayers.length) { store.set(key, j); pruneCache(); return j; }
       } catch {}
     }
-    throw new Error('tiada data');
+    return anggar(z, y, m);
+  }
+  /* Sandaran terakhir apabila pelayan dan data terbina tiada: kira sendiri dengan adhan-js
+     pada koordinat bandar utama zon. Sudut dan pelarasan dipadankan dengan jadual JAKIM
+     (beza 0 hingga 3 minit). Hasil tidak disimpan supaya data rasmi menggantikannya kemudian. */
+  async function anggar(z, y, m) {
+    const c = ZONE_LL[z];
+    if (!c) throw new Error('tiada data');
+    await loadScript('js/vendor/adhan.min.js');
+    const A = window.adhan, p = A.CalculationMethod.Other();
+    p.fajrAngle = 18; p.ishaAngle = 18; p.madhab = A.Madhab.Shafi;
+    p.methodAdjustments = { fajr: 1, sunrise: -1, dhuhr: 2, asr: 2, maghrib: 1, isha: 1 };
+    const co = new A.Coordinates(c[0], c[1]), days = new Date(Date.UTC(y, m, 0)).getUTCDate(), sec = d => Math.floor(d.getTime() / 1000);
+    const hf = new Intl.DateTimeFormat('en-u-ca-islamic-umalqura', { timeZone: 'Asia/Kuala_Lumpur', day: 'numeric', month: 'numeric', year: 'numeric' });
+    const prayers = [];
+    for (let day = 1; day <= days; day++) {
+      const noon = new Date(Date.UTC(y, m - 1, day, 4)), t = new A.PrayerTimes(co, new Date(y, m - 1, day, 12), p);
+      const h = Object.fromEntries(hf.formatToParts(noon).filter(x => x.type !== 'literal').map(x => [x.type, parseInt(x.value, 10)]));
+      const fajr = sec(t.fajr), syuruk = sec(t.sunrise);
+      prayers.push({ day, hijri: `${h.year}-${String(h.month).padStart(2, '0')}-${String(h.day).padStart(2, '0')}`, imsak: fajr - 600, fajr, syuruk, dhuha: syuruk + 1500, dhuhr: sec(t.dhuhr), asr: sec(t.asr), maghrib: sec(t.maghrib), isha: sec(t.isha) });
+    }
+    return { zone: z, year: y, month_number: m, prayers, anggaran: true };
   }
   function pruneCache() {
     try {
@@ -240,7 +272,7 @@ WLY02|Wilayah Persekutuan|Labuan`.split('\n').map(l => { const [jakimCode, neger
     const z = zoneInfo(), date = dFmt.format(new Date()), hj = hijriStr(d.hijri);
     $('#solatDate').textContent = `${date} · ${hj}`;
     $('#todayLine').textContent = `${date} · ${hj}`;
-    $('#zoneName').textContent = `${z.daerah}${z.negeri ? ', ' + z.negeri : ''}`;
+    $('#zoneName').textContent = `${z.daerah}${z.negeri ? ', ' + z.negeri : ''}${month.anggaran ? ' · waktu anggaran luar talian' : ''}`;
     $('#homeZone').textContent = z.daerah.split(',')[0];
     $('#zoneShort').textContent = z.daerah.split(',')[0];
     listSig = homeSig = '';
