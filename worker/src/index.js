@@ -7,12 +7,14 @@
  * POST /claim     { billcode, email, device }           -> { licence, plan, exp }  (perlu log masuk)
  * POST /akaun/... akaun dan had satu peranti, lihat akaun.js
  * GET  /tts?t=teks&v=ms-f&r=1                          -> audio/mpeg  Suara HD (Azure Speech neural, peringkat F0 percuma)
+ * POST /komuniti/...  GET /komuniti/gambar/:id         Komuniti (rakan, sembang, acara, servis), lihat komuniti.js
  *
  * Setiap tuntutan disahkan terus dengan ToyyibPay. Hak Premium disimpan pada akaun (Durable Object),
  * dan lesen untuk peranti aktif ditandatangani (ECDSA P-256) supaya app boleh mengesahkannya tanpa talian.
  */
 import { Akaun, handleAkaun, authed, callDO, licenceFor } from './akaun.js';
-export { Akaun };
+import { Komuniti, handleKomuniti } from './komuniti.js';
+export { Akaun, Komuniti };
 
 export const PLANS = {
   pelajar: { name: 'Pelajar', m1: 500, y1: 3900 },
@@ -27,7 +29,7 @@ function cors(req, env) {
   const origin = req.headers.get('origin') || '';
   const allowed = (env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
   if (!allowed.includes(origin)) return {};
-  return { 'access-control-allow-origin': origin, 'access-control-allow-methods': 'POST, GET, OPTIONS', 'access-control-allow-headers': 'content-type, authorization', 'access-control-max-age': '86400', vary: 'origin' };
+  return { 'access-control-allow-origin': origin, 'access-control-allow-methods': 'POST, GET, OPTIONS', 'access-control-allow-headers': 'content-type, authorization, x-kunci-pemilik', 'access-control-max-age': '86400', vary: 'origin' };
 }
 
 const b64url = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -199,7 +201,13 @@ export default {
         return json(r.data, r.status, h);
       }
       if (req.method === 'GET' && url.pathname === '/tts') return await tts(req, env, url, h);
-      if (url.pathname === '/') return json({ ok: true, service: 'bijak-labur-premium', tts: !!env.AZURE_SPEECH_KEY, akaun: !!(env.FIREBASE_PROJECT_ID && env.AKAUN) }, 200, h);
+      if (url.pathname.startsWith('/komuniti/')) {
+        // Hanya laman dan app Bijak Labur (kecuali gambar, yang dipaparkan dalam <img>)
+        if (!h['access-control-allow-origin'] && !url.pathname.startsWith('/komuniti/gambar/')) return json({ error: 'Tidak dibenarkan.' }, 403, h);
+        const r = await handleKomuniti(req, env, url.pathname, authed);
+        return r.response || json(r.data, r.status, h);
+      }
+      if (url.pathname === '/') return json({ ok: true, service: 'bijak-labur-premium', tts: !!env.AZURE_SPEECH_KEY, akaun: !!(env.FIREBASE_PROJECT_ID && env.AKAUN), komuniti: !!env.KOMUNITI }, 200, h);
       return json({ error: 'Tidak dijumpai' }, 404, h);
     } catch (e) {
       console.log('ralat', e && e.stack || e);

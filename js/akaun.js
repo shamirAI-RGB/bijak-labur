@@ -50,7 +50,9 @@ const Akaun = (function () {
     get active() { return state === 'active'; },
     get licence() { return user && licence && licence.uid === user.uid ? licence.token : null; },
     get info() { return info; },
-    call, open, signOut, sync
+    call, open, signOut, sync,
+    // Token ID untuk pelayan lain (cth. Komuniti); force = muat semula token
+    token: force => user ? user.getIdToken(!!force) : Promise.reject(Object.assign(new Error('Sila log masuk dahulu.'), { status: 401 }))
   };
 
   function announce() { paintButton(); document.dispatchEvent(new CustomEvent('akaunchange')); if (dlg.open) renderPane(); }
