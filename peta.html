@@ -2,11 +2,11 @@
 <html lang="ms">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://tile.openstreetmap.org https://server.arcgisonline.com https://*.basemaps.cartocdn.com; font-src 'self'; connect-src 'self' https://nominatim.openstreetmap.org https://routing.openstreetmap.de https://router.project-osrm.org https://api.open-meteo.com https://api.aladhan.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Peta Dunia 3D · Bijak Labur</title>
-  <meta name="description" content="Peta dunia 3D interaktif Bijak Labur: pusingkan bumi, lihat populasi setiap negara dan laluan antara pusat kewangan utama dunia dari Kuala Lumpur.">
+  <title>Peta Dunia 3D dan Navigasi GPS · Bijak Labur</title>
+  <meta name="description" content="Peta Bijak Labur: glob 3D interaktif dan peta jalan dengan GPS langsung, carian tempat, arah perjalanan (kereta, basikal, jalan kaki) dan navigasi suara dalam Bahasa Melayu.">
   <link rel="canonical" href="https://bijaklabur.my/peta.html">
   <meta name="theme-color" content="#000000">
   <meta property="og:type" content="website">
@@ -18,6 +18,7 @@
   <meta property="og:locale" content="ms_MY">
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <link rel="stylesheet" href="css/leaflet.css">
   <link rel="stylesheet" href="css/peta.css">
 </head>
 <body>
@@ -35,6 +36,7 @@
       <button type="button" class="hud-btn" id="generateRoutes">Jana Laluan Baharu</button>
       <button type="button" class="hud-btn" id="focusMalaysia">Fokus Malaysia</button>
       <button type="button" class="hud-btn hud-btn--gps" id="gpsBtn" aria-pressed="false">Hidupkan GPS</button>
+      <button type="button" class="hud-btn hud-btn--jalan" id="openJalan">Peta Jalan &amp; Navigasi</button>
     </div>
   </div>
 
@@ -54,6 +56,7 @@
       <div class="data-row gps-extra"><span>Ketinggian:</span><span class="data-value" id="gps-alt">-</span></div>
       <div class="data-row"><span>Hab terdekat:</span><span class="data-value" id="gps-hub">-</span></div>
       <button type="button" class="hud-btn hud-btn--gps" id="gpsFocus">Fokus Lokasi Saya</button>
+      <button type="button" class="hud-btn hud-btn--jalan" id="gpsArah">Cari Arah Perjalanan</button>
     </div>
   </div>
 
@@ -62,8 +65,12 @@
     <div class="tooltip-sub" id="tt-sub"></div>
   </div>
 
+  <div id="jalan" hidden></div>
+
   <noscript><p class="peta-msg">Peta ini memerlukan JavaScript.</p></noscript>
   <script src="js/vendor/globe.gl.min.js" defer></script>
+  <script src="js/vendor/leaflet.js" defer></script>
   <script src="js/peta.js" defer></script>
+  <script src="js/peta-jalan.js" defer></script>
 </body>
 </html>

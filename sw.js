@@ -1,7 +1,7 @@
 /* Service worker: simpan app shell untuk kegunaan luar talian */
-const CACHE = 'bijak-labur-v65';
+const CACHE = 'bijak-labur-v66';
 const SHELL = ['./', 'index.html', 'css/style.css', 'css/langit.css', 'css/ibadah.css', 'css/belajar-visual.css', 'css/fiqh.css', 'css/pustaka.css', 'css/suara.css', 'css/jadual.css', 'css/nota.css', 'css/akaun.css', 'js/ibadah-data.js', 'js/ibadah.js', 'js/fiqh-data.js', 'js/fiqh.js', 'js/quran-src.js', 'fonts/Geist-Variable.woff2', 'fonts/AmiriQuran-Arabic.woff2', 'js/boot.js', 'js/app.js', 'js/suara.js', 'js/learn-visuals.js', 'js/learn.js', 'js/market.js', 'js/solat.js', 'js/semak-pakar.js', 'js/checker.js', 'js/akaun.js', 'js/premium.js', 'js/pustaka-data.js', 'js/pustaka.js', 'js/pro.js', 'js/pro-invest.js', 'js/pro-study.js', 'js/jadual.js', 'js/nota.js', 'js/sihat.js', 'js/studio.js', 'js/buku.js', 'js/kerja.js', 'js/gaya-ai.js', 'js/jejak.js', 'js/komuniti.js', 'css/komuniti.css', 'js/iklan.js', 'js/pemilik.js', 'css/sihat.css', 'css/studio.css', 'css/buku.css', 'css/jejak.css', 'css/iklan.css', 'js/vendor/lightweight-charts.js', 'css/menu.css', 'js/menu.js', 'js/bukupesanan.js', 'js/saringan.js', 'js/halal.js', 'css/alat-syariah.css', 'js/vendor/adhan.min.js', 'images/rajah/saringan-syariah.svg', 'images/rajah/pensijilan-halal.svg', 'images/rajah/aliran-ncr.svg', 'css/rupa.css', 'fonts/Fraunces-Variable.woff2', 'audio/azan.mp3',
-  'manifest.webmanifest', 'peta.html', 'css/peta.css', 'js/peta.js', 'privacy.html', 'terma.html', 'terma-app.html', 'tentang.html', 'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-180.png'];
+  'manifest.webmanifest', 'peta.html', 'css/peta.css', 'js/peta.js', 'js/peta-jalan.js', 'privacy.html', 'terma.html', 'terma-app.html', 'tentang.html', 'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-180.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -20,7 +20,8 @@ self.addEventListener('fetch', e => {
     e.respondWith(fetch(req).then(r => {
       const copy = r.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); return r;
     }).catch(() => caches.match(e.request, { ignoreSearch: true }).then(r => r || caches.match('index.html'))));
-  } else if (/cdn\.jsdelivr\.net|cdnjs\.cloudflare\.com|api\.alquran\.cloud|api\.quran\.com/.test(url.host)) {
+  } else if (/cdn\.jsdelivr\.net|cdnjs\.cloudflare\.com|api\.alquran\.cloud|api\.quran\.com|tile\.openstreetmap\.org|basemaps\.cartocdn\.com|server\.arcgisonline\.com/.test(url.host)) {
+    // Jubin peta yang pernah dilihat kekal tersedia luar talian
     // Simpan respons yang berjaya sahaja, supaya ralat sementara (cth. 500) tidak tersimpan selama-lamanya
     e.respondWith(caches.match(e.request).then(r => r || fetch(e.request).then(res => {
       if (res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); }
