@@ -14,7 +14,8 @@ src = src
   .replace(/^import React, \{([^}]+)\} from "react";$/m, 'const {$1} = React;')
   .replace(/^import \{([^}]+)\} from "framer-motion";$/m, 'const {$1} = Motion;')
   .replace(/^export default function /m, 'function ')
-  .replace(/^export (async )?function /m, '$1function ');
+  .replace(/^export (async )?function /gm, '$1function ')
+  .replace(/^export const /gm, 'const ');
 if (/^\s*(import|export) /m.test(src)) throw new Error('import/export masih ada dalam App.jsx');
 const { code } = Babel.transform(src + '\nReactDOM.createRoot(document.getElementById("pejabat")).render(<PejabatAgen />);\n',
   { presets: [['react', { runtime: 'classic' }]], comments: false, minified: false });

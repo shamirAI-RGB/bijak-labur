@@ -4,7 +4,6 @@
 const {
   useEffect,
   useMemo,
-  useRef,
   useState
 } = React;
 const {
@@ -19,8 +18,7 @@ const AGENTS = [{
   color: "#ff8a3d",
   room: "#fff1e0",
   accent: "#f26b1d",
-  statuses: ["Mencari dalam 42 sumber...", "Membaca kertas kajian baharu...", "Menarik blok data...", "Meringkaskan dapatan..."],
-  tasks: ["Imbasan pasaran S4", "Jadual harga pesaing", "Sumber saringan Syariah"]
+  sumber: "Mengambil data waktu solat (aliran Data waktu solat)"
 }, {
   id: "cat",
   name: "Clara Whiskers",
@@ -29,8 +27,7 @@ const AGENTS = [{
   color: "#8fa3c7",
   room: "#eef2ff",
   accent: "#5b6fa8",
-  statuses: ["Menulis draf...", "Meringkaskan perenggan 3...", "Membetulkan nada dan tatabahasa...", "Menggilap tajuk..."],
-  tasks: ["Surat berita mingguan", "Blog: apa itu DCA", "Penerangan App Store"]
+  sumber: "Kemas kini terkini pada cawangan main"
 }, {
   id: "raccoon",
   name: "Rocco Bandit",
@@ -39,8 +36,7 @@ const AGENTS = [{
   color: "#8a8f9c",
   room: "#e8fbef",
   accent: "#18a957",
-  statuses: ["Menyusun binaan #217...", "Menggodam API...", "Menjalankan 128 ujian...", "Memasang ke pelayan..."],
-  tasks: ["Baiki cache waktu solat", "Logik cuba semula webhook", "Percepat muat carta"]
+  sumber: "PR daripada AI Agent harian dan Claude"
 }, {
   id: "bunny",
   name: "Bella Hopps",
@@ -49,8 +45,7 @@ const AGENTS = [{
   color: "#f4f1f6",
   room: "#fff0f6",
   accent: "#ec4899",
-  statuses: ["Melakar rangka skrin...", "Memilih palet warna...", "Menggerakkan bentuk 2px ke kiri...", "Mengeksport ikon..."],
-  tasks: ["Skrin pengenalan", "Ikon app baharu", "Semakan mod gelap"]
+  sumber: "Terbitan laman GitHub Pages"
 }, {
   id: "lion",
   name: "Leo Mane",
@@ -59,8 +54,7 @@ const AGENTS = [{
   color: "#f2b33d",
   room: "#fff8db",
   accent: "#d97706",
-  statuses: ["Menyemak peta jalan...", "Memantau pasukan...", "Membahagikan tugasan sprint...", "Meluluskan keluaran..."],
-  tasks: ["Perancangan sprint 14", "Bantu Pembangun yang tersekat", "Laporan bulanan"]
+  sumber: "Binaan app Android dan iOS"
 }, {
   id: "hound",
   name: "Hugo Bloodhound",
@@ -69,8 +63,7 @@ const AGENTS = [{
   color: "#b07a4f",
   room: "#f3ece4",
   accent: "#8b5a2b",
-  statuses: ["Memeriksa dakwaan #12...", "Membandingkan sumber...", "Mengesahkan petikan...", "Mengecop: disahkan"],
-  tasks: ["Sahkan statistik surat berita", "Semak rujukan fatwa", "Audit data harga"]
+  sumber: "Pemantau setiap jam dan issue pantau"
 }, {
   id: "squirrel",
   name: "Sunny Nutkin",
@@ -79,8 +72,7 @@ const AGENTS = [{
   color: "#c8682f",
   room: "#e6f6ff",
   accent: "#0284c7",
-  statuses: ["Menganalisis data...", "Membina carta...", "Memproses 18 ribu baris...", "Mengesan trend..."],
-  tasks: ["Kohort pengekalan", "Jadual turun naik kripto", "Pengguna aktif harian"]
+  sumber: "Angka daripada Actions, commit dan PR"
 }, {
   id: "bird",
   name: "Bree Songbird",
@@ -89,8 +81,7 @@ const AGENTS = [{
   color: "#38bdf8",
   room: "#ecfeff",
   accent: "#0891b2",
-  statuses: ["Menjawab 3 mesej...", "Sedang dalam panggilan...", "Menghantar kemas kini...", "Menyalurkan permintaan..."],
-  tasks: ["Balas e-mel pengguna", "Terbitkan nota keluaran", "Ringkasan mesyuarat pasukan"]
+  sumber: "Pemasangan pelayan Cloudflare Workers"
 }];
 const INK = "#2b2140";
 function Eyes({
@@ -926,15 +917,320 @@ function Scene({
       return null;
   }
 }
+const GH = "https://api.github.com/repos/shamirAI-RGB/bijak-labur";
+const SOURCES = {
+  runs: GH + "/actions/runs?per_page=100",
+  solat: GH + "/actions/workflows/solat-data.yml/runs?per_page=5",
+  pantau: GH + "/actions/workflows/pantau.yml/runs?per_page=5",
+  pulls: GH + "/pulls?state=all&sort=updated&direction=desc&per_page=20",
+  issues: GH + "/issues?state=all&labels=pantau&per_page=10",
+  commits: GH + "/commits?sha=main&per_page=15"
+};
+const CACHE_KEY = "pejabat_gh";
+const FRESH_MS = 10 * 60 * 1000;
+const RUN_KEYS = ["id", "name", "status", "conclusion", "html_url", "created_at", "updated_at", "run_started_at"];
+const pickKeys = (o, keys) => Object.fromEntries(keys.map(k => [k, o?.[k]]));
+function slim(d) {
+  const runs = x => ({
+    workflow_runs: (x?.workflow_runs || []).map(r => pickKeys(r, RUN_KEYS))
+  });
+  const list = x => Array.isArray(x) ? x : [];
+  return {
+    runs: runs(d.runs),
+    solat: runs(d.solat),
+    pantau: runs(d.pantau),
+    pulls: list(d.pulls).map(p => pickKeys(p, ["id", "number", "title", "state", "draft", "html_url", "created_at", "closed_at", "merged_at", "updated_at"])),
+    issues: list(d.issues).map(i => ({
+      ...pickKeys(i, ["id", "number", "title", "state", "html_url", "created_at", "closed_at", "updated_at"]),
+      pull_request: !!i.pull_request
+    })),
+    commits: list(d.commits).map(c => ({
+      sha: c.sha,
+      html_url: c.html_url,
+      commit: {
+        message: firstLine(c.commit?.message),
+        committer: {
+          date: c.commit?.committer?.date
+        },
+        author: {
+          date: c.commit?.author?.date
+        }
+      }
+    }))
+  };
+}
+async function loadGithub(fetchFn = fetch, force = false) {
+  const cached = read(CACHE_KEY, null);
+  if (!force && cached && Date.now() - cached.at < FRESH_MS) return {
+    data: cached.data,
+    at: cached.at,
+    error: ""
+  };
+  try {
+    const entries = await Promise.all(Object.entries(SOURCES).map(async ([k, url]) => {
+      const r = await fetchFn(url, {
+        headers: {
+          Accept: "application/vnd.github+json"
+        }
+      });
+      if (!r.ok) throw new Error(r.status === 403 || r.status === 429 ? "had" : "http " + r.status);
+      return [k, await r.json()];
+    }));
+    const data = slim(Object.fromEntries(entries));
+    const at = Date.now();
+    write(CACHE_KEY, {
+      at,
+      data
+    });
+    return {
+      data,
+      at,
+      error: ""
+    };
+  } catch (e) {
+    const msg = e.message === "had" ? "GitHub mengehadkan bilangan semakan buat sementara. Data terakhir dipaparkan; cuba lagi dalam beberapa minit." : "Tidak dapat menghubungi GitHub. Data terakhir dipaparkan.";
+    return {
+      data: cached ? cached.data : null,
+      at: cached ? cached.at : 0,
+      error: cached ? msg : msg.replace("Data terakhir dipaparkan; cuba", "Cuba").replace(" Data terakhir dipaparkan.", " Semak sambungan internet dan cuba lagi.")
+    };
+  }
+}
+function lalu(at, now) {
+  const m = Math.floor((now - new Date(at).getTime()) / 60000);
+  if (m < 1) return "baru sahaja";
+  if (m < 60) return `${m} minit lalu`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h} jam lalu`;
+  return `${Math.floor(h / 24)} hari lalu`;
+}
+const firstLine = t => String(t || "").split("\n")[0].slice(0, 90);
+function runItem(r) {
+  let tone = "ok",
+    label = "berjaya";
+  if (r.status !== "completed") {
+    tone = "run";
+    label = "sedang berjalan";
+  } else if (r.conclusion === "failure" || r.conclusion === "timed_out") {
+    tone = "fail";
+    label = "gagal";
+  } else if (r.conclusion !== "success") {
+    tone = "rehat";
+    label = r.conclusion === "cancelled" ? "dibatalkan" : r.conclusion === "skipped" ? "dilangkau" : String(r.conclusion);
+  }
+  const name = r.name === "pages build and deployment" ? "Terbitan laman" : r.name;
+  return {
+    key: "run" + r.id,
+    text: `${name}: ${label}`,
+    at: r.status === "completed" ? r.updated_at : r.run_started_at || r.created_at,
+    start: r.run_started_at || r.created_at,
+    url: r.html_url,
+    tone
+  };
+}
+function prItem(p) {
+  if (p.state === "open" && p.draft) return {
+    key: "pr" + p.id,
+    text: `PR #${p.number} (draf) sedang disediakan: ${firstLine(p.title)}`,
+    at: p.created_at,
+    url: p.html_url,
+    tone: "run"
+  };
+  if (p.state === "open") return {
+    key: "pr" + p.id,
+    text: `PR #${p.number} menunggu semakan: ${firstLine(p.title)}`,
+    at: p.created_at,
+    url: p.html_url,
+    tone: "run"
+  };
+  if (p.merged_at) return {
+    key: "pr" + p.id,
+    text: `PR #${p.number} di-merge: ${firstLine(p.title)}`,
+    at: p.merged_at,
+    url: p.html_url,
+    tone: "ok"
+  };
+  return {
+    key: "pr" + p.id,
+    text: `PR #${p.number} ditutup: ${firstLine(p.title)}`,
+    at: p.closed_at || p.updated_at,
+    url: p.html_url,
+    tone: "rehat"
+  };
+}
+function issueItem(i) {
+  return i.state === "open" ? {
+    key: "is" + i.id,
+    text: `Masalah ditemui #${i.number}: ${firstLine(i.title)}`,
+    at: i.created_at,
+    url: i.html_url,
+    tone: "fail"
+  } : {
+    key: "is" + i.id,
+    text: `Masalah selesai #${i.number}: ${firstLine(i.title)}`,
+    at: i.closed_at || i.updated_at,
+    url: i.html_url,
+    tone: "ok"
+  };
+}
+const byTime = (a, b) => new Date(b.at) - new Date(a.at);
+const sameDay = (a, now) => new Date(a).toDateString() === new Date(now).toDateString();
+function deriveAgents(data, now = Date.now()) {
+  const runs = (data?.runs?.workflow_runs || []).map(runItem);
+  const rawRuns = data?.runs?.workflow_runs || [];
+  const pick = pred => rawRuns.filter(pred).map(runItem);
+  const pulls = Array.isArray(data?.pulls) ? data.pulls : [];
+  const issues = Array.isArray(data?.issues) ? data.issues.filter(i => !i.pull_request) : [];
+  const commits = Array.isArray(data?.commits) ? data.commits : [];
+  const items = {
+    fox: (data?.solat?.workflow_runs || []).map(runItem),
+    cat: commits.map(c => ({
+      key: "c" + c.sha,
+      text: `Kemas kini laman: ${firstLine(c.commit?.message)}`,
+      at: c.commit?.committer?.date || c.commit?.author?.date,
+      url: c.html_url,
+      tone: "ok"
+    })),
+    raccoon: pulls.map(prItem),
+    bunny: pick(r => r.name === "pages build and deployment"),
+    lion: pick(r => r.name === "Android" || r.name === "iOS"),
+    hound: [...(data?.pantau?.workflow_runs || []).map(runItem), ...issues.map(issueItem)],
+    squirrel: [],
+    bird: pick(r => /^(Pelayan|Pintu)/.test(r.name))
+  };
+  const completed = rawRuns.filter(r => r.status === "completed" && r.conclusion !== "skipped" && r.conclusion !== "cancelled").slice(0, 30);
+  const passRate = completed.length ? Math.round(completed.filter(r => r.conclusion === "success").length / completed.length * 100) : null;
+  const commitsToday = commits.filter(c => sameDay(c.commit?.committer?.date, now)).length;
+  const mergedWeek = pulls.filter(p => p.merged_at && now - new Date(p.merged_at) < 7 * 864e5).length;
+  const openPRs = pulls.filter(p => p.state === "open").length;
+  const openIssues = issues.filter(i => i.state === "open").length;
+  const doneToday = rawRuns.filter(r => r.conclusion === "success" && sameDay(r.updated_at, now)).length + pulls.filter(p => p.merged_at && sameDay(p.merged_at, now)).length;
+  const latestAny = [...runs, ...items.cat].sort(byTime)[0];
+  items.squirrel = [passRate != null && {
+    key: "s1",
+    text: `Kadar lulus ${completed.length} semakan terakhir: ${passRate}%`,
+    at: latestAny?.at || new Date(now).toISOString(),
+    tone: passRate >= 80 ? "ok" : "fail"
+  }, {
+    key: "s2",
+    text: `${commitsToday} kemas kini laman hari ini`,
+    at: latestAny?.at || new Date(now).toISOString(),
+    tone: "ok"
+  }, {
+    key: "s3",
+    text: `${mergedWeek} PR di-merge dalam 7 hari`,
+    at: latestAny?.at || new Date(now).toISOString(),
+    tone: "ok"
+  }].filter(Boolean);
+  const state = {};
+  for (const a of AGENTS) {
+    const list = (items[a.id] || []).filter(x => x.at).sort(byTime);
+    const running = list.find(x => x.tone === "run");
+    const latest = list[0];
+    let st;
+    if (!latest || !data) st = {
+      tone: "rehat",
+      status: "Tiada rekod terkini",
+      progress: 0,
+      busy: false
+    };else if (a.id === "squirrel") st = {
+      tone: passRate != null && passRate < 80 ? "fail" : "ok",
+      status: list.map(x => x.text).slice(0, 2).join(" · "),
+      progress: passRate ?? 0,
+      busy: now - new Date(latest.at) < 2 * 3600e3
+    };else if (running) {
+      const mins = (now - new Date(running.start || running.at)) / 60000;
+      st = {
+        tone: "run",
+        status: a.id === "raccoon" ? `${list.filter(x => x.tone === "run").length} PR menunggu semakan anda` : `Sedang: ${running.text}`,
+        progress: a.id === "raccoon" ? 50 : Math.min(92, 10 + mins * 12),
+        busy: true
+      };
+    } else {
+      const fresh = now - new Date(latest.at) < 2 * 3600e3;
+      st = {
+        tone: latest.tone,
+        status: `${latest.text} · ${lalu(latest.at, now)}`,
+        progress: latest.tone === "rehat" ? 0 : 100,
+        busy: fresh
+      };
+    }
+    state[a.id] = {
+      ...st,
+      items: list.slice(0, 10)
+    };
+  }
+  const feed = Object.entries(state).filter(([id]) => id !== "squirrel").flatMap(([id, s]) => s.items.map(x => ({
+    ...x,
+    id
+  }))).sort(byTime).slice(0, 20);
+  return {
+    state,
+    feed,
+    stats: {
+      openPRs,
+      openIssues,
+      doneToday,
+      passRate
+    }
+  };
+}
+const TONE = {
+  run: {
+    dot: null,
+    label: "Sedang bekerja",
+    bar: null
+  },
+  ok: {
+    dot: "#16a34a",
+    label: "Selesai",
+    bar: "#16a34a"
+  },
+  fail: {
+    dot: "#dc2626",
+    label: "Perlu perhatian",
+    bar: "#dc2626"
+  },
+  rehat: {
+    dot: "#94a3b8",
+    label: "Rehat",
+    bar: "#94a3b8"
+  }
+};
+function ItemLink({
+  item,
+  now,
+  accent
+}) {
+  const color = item.tone === "fail" ? "#dc2626" : item.tone === "run" ? accent : item.tone === "ok" ? "#16a34a" : "#94a3b8";
+  const body = React.createElement(React.Fragment, null, React.createElement("span", {
+    className: "mt-1 h-2 w-2 shrink-0 rounded-full",
+    style: {
+      background: color
+    }
+  }), React.createElement("span", {
+    className: "min-w-0 flex-1 [overflow-wrap:anywhere]"
+  }, item.text), React.createElement("span", {
+    className: "shrink-0 tabular-nums text-slate-400"
+  }, lalu(item.at, now)));
+  return item.url ? React.createElement("a", {
+    href: item.url,
+    target: "_blank",
+    rel: "noopener noreferrer",
+    className: "flex items-start gap-2 rounded-lg px-1 py-0.5 hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-violet-300"
+  }, body) : React.createElement("div", {
+    className: "flex items-start gap-2 px-1 py-0.5"
+  }, body);
+}
 function Room({
   agent,
-  status,
-  busy,
+  st,
   onOpen,
   onHover,
   hovered
 }) {
-  const walking = agent.id === "lion" && busy;
+  const walking = agent.id === "lion" && st.busy;
+  const dot = TONE[st.tone].dot || agent.accent;
   return React.createElement(motion.button, {
     type: "button",
     layout: true,
@@ -949,14 +1245,14 @@ function Room({
     whileTap: {
       scale: 0.98
     },
-    className: "group relative h-56 w-full overflow-visible rounded-3xl border-4 border-white text-left shadow-[0_8px_0_rgba(43,33,64,0.15)] outline-none focus-visible:ring-4 focus-visible:ring-violet-400",
+    className: `group relative h-56 w-full overflow-visible rounded-3xl border-4 text-left shadow-[0_8px_0_rgba(43,33,64,0.15)] outline-none focus-visible:ring-4 focus-visible:ring-violet-400 ${st.tone === "fail" ? "border-red-400" : "border-white"}`,
     style: {
       background: `linear-gradient(180deg, ${agent.room} 0 72%, #f8e7c8 72% 100%)`,
       zIndex: hovered ? 30 : 1
     },
-    "aria-label": `${agent.name}, ${agent.role}. ${status}`
+    "aria-label": `${agent.name}, ${agent.role}. ${st.status}`
   }, React.createElement("div", {
-    className: "pointer-events-none absolute inset-0 overflow-hidden rounded-[20px]"
+    className: `pointer-events-none absolute inset-0 overflow-hidden rounded-[20px] ${st.busy ? "" : "opacity-80 saturate-50"}`
   }, React.createElement("div", {
     className: "absolute inset-x-0 bottom-0 h-[28%] opacity-50",
     style: {
@@ -964,29 +1260,38 @@ function Room({
     }
   }), React.createElement(Scene, {
     agent: agent,
-    busy: busy
+    busy: st.busy
   })), React.createElement("div", {
     className: `absolute bottom-6 left-1/2 -translate-x-1/2 ${walking ? "ao-walk" : ""}`
   }, React.createElement(Critter, {
     id: agent.id,
     size: 96
-  })), React.createElement("div", {
+  })), !st.busy && React.createElement("div", {
+    className: "ao-zzz pointer-events-none absolute bottom-28 left-[58%] text-sm font-black text-slate-400",
+    "aria-hidden": "true"
+  }, "z", React.createElement("span", {
+    className: "text-xs"
+  }, "z")), React.createElement("div", {
     className: "absolute left-3 top-[-14px] flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 shadow-md"
   }, React.createElement("span", {
     className: "relative flex h-2.5 w-2.5"
-  }, React.createElement("span", {
+  }, st.tone === "run" && React.createElement("span", {
     className: "absolute inline-flex h-full w-full animate-ping rounded-full opacity-60",
     style: {
-      background: agent.accent
+      background: dot
     }
   }), React.createElement("span", {
     className: "relative inline-flex h-2.5 w-2.5 rounded-full",
     style: {
-      background: agent.accent
+      background: dot
     }
   })), React.createElement("span", {
     className: "text-[11px] font-black tracking-wide text-[#2b2140]"
-  }, agent.role)), React.createElement(AnimatePresence, null, hovered && React.createElement(motion.div, {
+  }, agent.role)), st.tone === "fail" && React.createElement("div", {
+    className: "absolute right-3 top-4 z-10 rounded-full bg-red-600 px-2.5 py-1 text-[10px] font-black text-white shadow-md"
+  }, "Perlu perhatian"), React.createElement("div", {
+    className: "absolute inset-x-3 bottom-[-12px] truncate rounded-full bg-white/95 px-3 py-1 text-center text-[10px] font-bold text-slate-600 shadow"
+  }, st.status), React.createElement(AnimatePresence, null, hovered && React.createElement(motion.div, {
     initial: {
       opacity: 0,
       y: 8,
@@ -1007,29 +1312,26 @@ function Room({
       stiffness: 380,
       damping: 26
     },
-    className: "pointer-events-none absolute left-1/2 top-10 z-20 w-56 -translate-x-1/2 rounded-2xl bg-[#2b2140] p-3 text-white shadow-xl"
+    className: "pointer-events-none absolute left-1/2 top-10 z-20 w-60 -translate-x-1/2 rounded-2xl bg-[#2b2140] p-3 text-white shadow-xl"
   }, React.createElement("div", {
     className: "text-sm font-black"
   }, agent.name), React.createElement("div", {
     className: "text-[11px] font-semibold text-white/70"
-  }, agent.species, " \xB7 ", agent.role), React.createElement("div", {
-    className: "mt-2 flex items-center gap-2 rounded-xl bg-white/10 px-2 py-1.5 text-xs"
+  }, agent.role, " \xB7 ", TONE[st.tone].label), React.createElement("div", {
+    className: "mt-2 flex items-start gap-2 rounded-xl bg-white/10 px-2 py-1.5 text-xs"
   }, React.createElement("span", {
-    className: "h-2 w-2 shrink-0 rounded-full",
+    className: "mt-1 h-2 w-2 shrink-0 rounded-full",
     style: {
-      background: agent.accent
+      background: dot
     }
-  }), React.createElement("span", {
-    className: "truncate"
-  }, status)), React.createElement("div", {
+  }), React.createElement("span", null, st.status)), React.createElement("div", {
     className: "mt-1.5 text-[10px] text-white/60"
   }, "Klik untuk butiran"))));
 }
 function AgentModal({
   agent,
-  status,
-  progress,
-  log,
+  st,
+  now,
   onClose
 }) {
   useEffect(() => {
@@ -1037,6 +1339,7 @@ function AgentModal({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
+  const bar = TONE[st.tone].bar || agent.accent;
   return React.createElement(motion.div, {
     className: "fixed inset-0 z-50 grid place-items-center bg-[#2b2140]/50 p-4 backdrop-blur-sm",
     initial: {
@@ -1074,7 +1377,7 @@ function AgentModal({
       damping: 24
     },
     onClick: e => e.stopPropagation(),
-    className: "relative w-full max-w-md overflow-hidden rounded-[28px] border-4 border-white bg-white shadow-2xl"
+    className: "relative max-h-[90vh] w-full max-w-md overflow-y-auto rounded-[28px] border-4 border-white bg-white shadow-2xl"
   }, React.createElement("div", {
     className: "relative flex h-40 items-end justify-center",
     style: {
@@ -1099,23 +1402,23 @@ function AgentModal({
     className: "text-2xl font-black text-[#2b2140]"
   }, agent.name), React.createElement("div", {
     className: "text-sm font-semibold text-slate-500"
-  }, "Agen ", agent.species.toLowerCase(), " \xB7 dalam talian")), React.createElement("div", {
+  }, agent.sumber)), React.createElement("div", {
     className: "rounded-2xl bg-slate-50 p-3 ring-1 ring-slate-100"
   }, React.createElement("div", {
     className: "mb-2 flex items-center justify-between text-xs font-bold text-slate-500"
-  }, React.createElement("span", null, "Status langsung"), React.createElement("span", {
+  }, React.createElement("span", null, "Status sebenar \xB7 ", TONE[st.tone].label), st.tone !== "fail" && st.tone !== "rehat" && React.createElement("span", {
     className: "tabular-nums"
-  }, Math.round(progress), "%")), React.createElement("div", {
+  }, Math.round(st.progress), "%")), React.createElement("div", {
     className: "mb-2 text-sm font-bold text-[#2b2140]"
-  }, status), React.createElement("div", {
+  }, st.status), React.createElement("div", {
     className: "h-2.5 overflow-hidden rounded-full bg-slate-200"
   }, React.createElement(motion.div, {
     className: "h-full rounded-full",
     style: {
-      background: agent.accent
+      background: bar
     },
     animate: {
-      width: `${progress}%`
+      width: `${st.progress}%`
     },
     transition: {
       type: "spring",
@@ -1124,26 +1427,15 @@ function AgentModal({
     }
   }))), React.createElement("div", null, React.createElement("div", {
     className: "mb-2 text-xs font-black uppercase tracking-[0.12em] text-slate-400"
-  }, "Barisan tugasan"), React.createElement("ul", {
-    className: "space-y-1.5"
-  }, agent.tasks.map((t, i) => React.createElement("li", {
-    key: t,
-    className: "flex items-center gap-2 text-sm font-semibold text-slate-700"
-  }, React.createElement("span", {
-    className: `grid h-5 w-5 place-items-center rounded-full text-[10px] font-black ${i === 0 ? "text-white" : "bg-slate-100 text-slate-400"}`,
-    style: i === 0 ? {
-      background: agent.accent
-    } : undefined
-  }, i === 0 ? "▶" : i + 1), t)))), React.createElement("div", null, React.createElement("div", {
-    className: "mb-2 text-xs font-black uppercase tracking-[0.12em] text-slate-400"
-  }, "Aktiviti terkini"), React.createElement("ul", {
-    className: "max-h-28 space-y-1 overflow-y-auto text-xs text-slate-500"
-  }, log.length === 0 && React.createElement("li", null, "Menunggu kemas kini pertama..."), log.map(l => React.createElement("li", {
-    key: l.key,
-    className: "flex gap-2"
-  }, React.createElement("span", {
-    className: "tabular-nums text-slate-400"
-  }, l.time), React.createElement("span", null, l.text))))))));
+  }, "Kerja terkini"), React.createElement("ul", {
+    className: "space-y-1 text-xs text-slate-600"
+  }, st.items.length === 0 && React.createElement("li", null, "Tiada rekod terkini daripada sumber ini."), st.items.map(it => React.createElement("li", {
+    key: it.key
+  }, React.createElement(ItemLink, {
+    item: it,
+    now: now,
+    accent: agent.accent
+  }))))))));
 }
 function Paw() {
   return React.createElement("svg", {
@@ -1174,50 +1466,42 @@ function Paw() {
     r: "2.2"
   }));
 }
-const clock = () => new Date().toLocaleTimeString("ms-MY", {
+const jam = t => new Date(t).toLocaleTimeString("ms-MY", {
   hour: "2-digit",
-  minute: "2-digit",
-  second: "2-digit"
+  minute: "2-digit"
 });
 function Office() {
-  const reduced = useMemo(() => typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches, []);
-  const [busy, setBusy] = useState(!reduced);
-  const [status, setStatus] = useState(() => Object.fromEntries(AGENTS.map(a => [a.id, a.statuses[0]])));
-  const [progress, setProgress] = useState(() => Object.fromEntries(AGENTS.map((a, i) => [a.id, 20 + i * 9])));
-  const [feed, setFeed] = useState([]);
-  const [done, setDone] = useState(37);
+  const [gh, setGh] = useState({
+    data: null,
+    at: 0,
+    error: ""
+  });
+  const [loading, setLoading] = useState(true);
+  const [now, setNow] = useState(Date.now());
   const [openId, setOpenId] = useState(null);
   const [hoverId, setHoverId] = useState(null);
-  const tick = useRef(0);
+  const refresh = async force => {
+    setLoading(true);
+    setGh(await loadGithub(fetch, force));
+    setNow(Date.now());
+    setLoading(false);
+  };
   useEffect(() => {
-    if (!busy) return undefined;
-    const t = setInterval(() => {
-      tick.current += 1;
-      const a = AGENTS[Math.floor(Math.random() * AGENTS.length)];
-      const next = a.statuses[(a.statuses.indexOf(status[a.id]) + 1) % a.statuses.length];
-      setStatus(s => ({
-        ...s,
-        [a.id]: next
-      }));
-      setProgress(p => {
-        const v = p[a.id] + 8 + Math.random() * 18;
-        if (v >= 100) setDone(d => d + 1);
-        return {
-          ...p,
-          [a.id]: v >= 100 ? 6 : v
-        };
-      });
-      setFeed(f => [{
-        key: `${tick.current}-${a.id}`,
-        id: a.id,
-        time: clock(),
-        text: next
-      }, ...f].slice(0, 40));
-    }, 2200);
-    return () => clearInterval(t);
-  }, [busy, status]);
+    refresh(false);
+    const slow = setInterval(() => refresh(false), FRESH_MS);
+    const tick = setInterval(() => setNow(Date.now()), 30000);
+    return () => {
+      clearInterval(slow);
+      clearInterval(tick);
+    };
+  }, []);
+  const {
+    state,
+    feed,
+    stats
+  } = useMemo(() => deriveAgents(gh.data, now), [gh.data, now]);
   const open = AGENTS.find(a => a.id === openId);
-  const avg = Math.round(Object.values(progress).reduce((x, y) => x + y, 0) / AGENTS.length);
+  const working = AGENTS.filter(a => state[a.id].busy).length;
   return React.createElement("div", {
     className: "ao-root min-h-full bg-[#fff7e8] px-4 py-5 font-[ui-rounded,system-ui,sans-serif] text-[#2b2140] sm:px-6"
   }, React.createElement("div", {
@@ -1232,9 +1516,9 @@ function Office() {
     className: "font-[ui-rounded,system-ui,sans-serif] text-2xl font-bold leading-none sm:text-3xl"
   }, "Pejabat AI Agent"), React.createElement("p", {
     className: "text-xs font-semibold text-white/60"
-  }, "8 AI agent anda, terus dari lantai pejabat"))), React.createElement("div", {
+  }, "Kerja sebenar bijaklabur.my daripada GitHub", gh.at ? ` · dikemas kini ${jam(gh.at)}` : ""))), React.createElement("div", {
     className: "flex flex-wrap items-center gap-2"
-  }, [["Dalam talian", `${AGENTS.length}/8`], ["Tugasan siap hari ini", done], ["Purata kemajuan", `${avg}%`]].map(([k, v]) => React.createElement("div", {
+  }, [["Sedang bekerja", `${working}/8`], ["PR menunggu anda", stats.openPRs], ["Siap hari ini", stats.doneToday], ["Kadar lulus", stats.passRate == null ? "–" : `${stats.passRate}%`]].map(([k, v]) => React.createElement("div", {
     key: k,
     className: "rounded-2xl bg-white/10 px-3 py-1.5"
   }, React.createElement("div", {
@@ -1243,13 +1527,20 @@ function Office() {
     className: "text-lg font-black tabular-nums leading-tight"
   }, v))), React.createElement("button", {
     type: "button",
-    onClick: () => setBusy(b => !b),
-    className: "rounded-2xl bg-[#ffd23f] px-4 py-3 text-sm font-black text-[#2b2140] shadow-[0_4px_0_#c99a00] transition active:translate-y-1 active:shadow-none focus-visible:ring-4 focus-visible:ring-white"
-  }, busy ? "Jeda pejabat" : "Sambung pejabat"))), React.createElement("div", {
-    className: "grid gap-5 lg:grid-cols-[1fr_300px]"
+    onClick: () => refresh(true),
+    disabled: loading,
+    className: "rounded-2xl bg-[#ffd23f] px-4 py-3 text-sm font-black text-[#2b2140] shadow-[0_4px_0_#c99a00] transition active:translate-y-1 active:shadow-none disabled:opacity-60 focus-visible:ring-4 focus-visible:ring-white"
+  }, loading ? "Menyemak..." : "Muat semula"))), gh.error && React.createElement("div", {
+    role: "status",
+    className: "rounded-2xl bg-amber-100 px-4 py-3 text-sm font-semibold text-amber-900 ring-1 ring-amber-300"
+  }, gh.error), stats.openIssues > 0 && React.createElement("div", {
+    role: "status",
+    className: "rounded-2xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-800 ring-1 ring-red-200"
+  }, "Pemantau menemui ", stats.openIssues, " masalah yang belum selesai. Klik Penyemak Fakta untuk butiran."), React.createElement("div", {
+    className: "grid gap-5 lg:grid-cols-[1fr_320px]"
   }, React.createElement("section", {
     "aria-label": "Lantai pejabat",
-    className: "relative min-w-0 overflow-hidden rounded-[32px] border-4 border-white p-4 pt-6 shadow-[0_8px_0_rgba(43,33,64,0.12)] sm:p-6 sm:pt-8",
+    className: "relative min-w-0 self-start overflow-hidden rounded-[32px] border-4 border-white p-4 pt-6 shadow-[0_8px_0_rgba(43,33,64,0.12)] sm:p-6 sm:pt-8",
     style: {
       background: "linear-gradient(180deg,#7dd3fc 0%,#bae6fd 38%,#fde68a 38.2%,#fde68a 39%,#fff1d6 39%)"
     }
@@ -1280,99 +1571,82 @@ function Office() {
     key: j,
     className: "h-1.5 rounded-sm bg-white/50"
   }))))))), React.createElement("div", {
-    className: "relative grid grid-cols-1 gap-x-4 gap-y-8 pt-[12%] sm:grid-cols-2 xl:grid-cols-4"
+    className: "relative grid grid-cols-1 gap-x-4 gap-y-10 pt-[12%] sm:grid-cols-2 xl:grid-cols-4"
   }, AGENTS.map(a => React.createElement(Room, {
     key: a.id,
     agent: a,
-    status: status[a.id],
-    busy: busy,
+    st: state[a.id],
     hovered: hoverId === a.id,
     onHover: setHoverId,
     onOpen: setOpenId
   })))), React.createElement("aside", {
-    className: "grid min-w-0 content-start gap-5"
+    className: "flex min-w-0 flex-col gap-5 self-start"
   }, React.createElement("div", {
     className: "rounded-[28px] border-4 border-white bg-white p-4 shadow-[0_8px_0_rgba(43,33,64,0.12)]"
   }, React.createElement("h2", {
     className: "mb-3 text-sm font-black uppercase tracking-[0.12em] text-slate-400"
   }, "Pasukan"), React.createElement("ul", {
     className: "space-y-1"
-  }, AGENTS.map(a => React.createElement("li", {
-    key: a.id
-  }, React.createElement("button", {
-    type: "button",
-    onClick: () => setOpenId(a.id),
-    onMouseEnter: () => setHoverId(a.id),
-    onMouseLeave: () => setHoverId(null),
-    className: "flex w-full items-center gap-3 rounded-2xl px-2 py-1.5 text-left transition hover:bg-slate-50 focus-visible:ring-4 focus-visible:ring-violet-300"
-  }, React.createElement("span", {
-    className: "grid h-10 w-10 shrink-0 place-items-end overflow-hidden rounded-xl",
-    style: {
-      background: a.room
-    }
-  }, React.createElement(Critter, {
-    id: a.id,
-    size: 38
-  })), React.createElement("span", {
-    className: "min-w-0 flex-1"
-  }, React.createElement("span", {
-    className: "block text-sm font-black leading-tight"
-  }, a.name), React.createElement("span", {
-    className: "block truncate text-xs text-slate-500"
-  }, status[a.id])), React.createElement("span", {
-    className: "w-9 text-right text-xs font-black tabular-nums",
-    style: {
-      color: a.accent
-    }
-  }, Math.round(progress[a.id]), "%")))))), React.createElement("div", {
+  }, AGENTS.map(a => {
+    const st = state[a.id];
+    return React.createElement("li", {
+      key: a.id
+    }, React.createElement("button", {
+      type: "button",
+      onClick: () => setOpenId(a.id),
+      onMouseEnter: () => setHoverId(a.id),
+      onMouseLeave: () => setHoverId(null),
+      className: "flex w-full items-center gap-3 rounded-2xl px-2 py-1.5 text-left transition hover:bg-slate-50 focus-visible:ring-4 focus-visible:ring-violet-300"
+    }, React.createElement("span", {
+      className: "grid h-10 w-10 shrink-0 place-items-end overflow-hidden rounded-xl",
+      style: {
+        background: a.room
+      }
+    }, React.createElement(Critter, {
+      id: a.id,
+      size: 38
+    })), React.createElement("span", {
+      className: "min-w-0 flex-1"
+    }, React.createElement("span", {
+      className: "block text-sm font-black leading-tight"
+    }, a.role), React.createElement("span", {
+      className: "block truncate text-xs text-slate-500"
+    }, st.status)), React.createElement("span", {
+      className: "h-2.5 w-2.5 shrink-0 rounded-full",
+      style: {
+        background: TONE[st.tone].dot || a.accent
+      },
+      title: TONE[st.tone].label
+    })));
+  }))), React.createElement("div", {
     className: "rounded-[28px] border-4 border-white bg-white p-4 shadow-[0_8px_0_rgba(43,33,64,0.12)]"
   }, React.createElement("div", {
     className: "mb-3 flex items-center justify-between"
   }, React.createElement("h2", {
     className: "text-sm font-black uppercase tracking-[0.12em] text-slate-400"
-  }, "Aktiviti langsung"), React.createElement("span", {
-    className: `rounded-full px-2 py-0.5 text-[10px] font-black ${busy ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"}`
-  }, busy ? "LANGSUNG" : "DIJEDA")), React.createElement("ul", {
-    className: "max-h-72 space-y-2 overflow-y-auto pr-1"
-  }, feed.length === 0 && React.createElement("li", {
-    className: "text-xs text-slate-400"
-  }, "Agen sedang bersedia. Kemas kini dipaparkan di sini."), React.createElement(AnimatePresence, {
-    initial: false
-  }, feed.slice(0, 12).map(f => {
+  }, "Aktiviti sebenar"), React.createElement("span", {
+    className: `rounded-full px-2 py-0.5 text-[10px] font-black ${gh.error ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-700"}`
+  }, gh.error ? "TERTUNDA" : "LANGSUNG")), React.createElement("ul", {
+    className: "max-h-96 space-y-1 overflow-y-auto pr-1 text-xs text-slate-600"
+  }, !gh.data && React.createElement("li", {
+    className: "text-slate-400"
+  }, loading ? "Membaca GitHub..." : "Belum ada data."), feed.map(f => {
     const a = AGENTS.find(x => x.id === f.id);
-    return React.createElement(motion.li, {
-      key: f.key,
-      layout: true,
-      initial: {
-        opacity: 0,
-        x: -12
+    return React.createElement("li", {
+      key: f.key + f.id
+    }, React.createElement(ItemLink, {
+      item: {
+        ...f,
+        text: `${a.role}: ${f.text}`
       },
-      animate: {
-        opacity: 1,
-        x: 0
-      },
-      exit: {
-        opacity: 0
-      },
-      className: "flex items-start gap-2 text-xs"
-    }, React.createElement("span", {
-      className: "mt-1 h-2 w-2 shrink-0 rounded-full",
-      style: {
-        background: a.accent
-      }
-    }), React.createElement("span", {
-      className: "min-w-0"
-    }, React.createElement("b", null, a.name.split(" ")[0]), " ", React.createElement("span", {
-      className: "text-slate-500"
-    }, f.text)), React.createElement("span", {
-      className: "ml-auto shrink-0 tabular-nums text-slate-300"
-    }, f.time.slice(0, 5)));
-  }))))))), React.createElement(AnimatePresence, null, open && React.createElement(AgentModal, {
+      now: now,
+      accent: a.accent
+    }));
+  })))))), React.createElement(AnimatePresence, null, open && React.createElement(AgentModal, {
     key: open.id,
     agent: open,
-    status: status[open.id],
-    progress: progress[open.id],
-    log: feed.filter(f => f.id === open.id),
+    st: state[open.id],
+    now: now,
     onClose: () => setOpenId(null)
   })), React.createElement("style", null, CSS));
 }
@@ -1523,6 +1797,8 @@ const CSS = `
 @keyframes ao-wave{0%{height:20%}100%{height:100%}}
 .ao-cloud{animation:ao-cloud 40s linear infinite}
 @keyframes ao-cloud{0%{transform:translateX(-120px)}100%{transform:translateX(110vw)}}
+.ao-zzz{animation:ao-zzz 3s ease-in-out infinite}
+@keyframes ao-zzz{0%{transform:translate(0,6px);opacity:0}30%{opacity:1}100%{transform:translate(10px,-14px);opacity:0}}
 @media (prefers-reduced-motion: reduce){.ao-root *{animation-duration:0s!important;animation-iteration-count:1!important}}
 `;
 ReactDOM.createRoot(document.getElementById("pejabat")).render(React.createElement(PejabatAgen, null));
