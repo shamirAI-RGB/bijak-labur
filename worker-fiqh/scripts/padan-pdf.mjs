@@ -169,7 +169,7 @@ async function bacaPenuh(file, np, halaman, ocr) {
 
 /*
  * Paparan ringan: gambar satu muka surat daripada archive.org (puluhan hingga ratusan KB) dan halaman BookReader pada muka
- * surat itu, sebagai ganti PDF penuh (10 hingga ratusan MB) yang lambat dibuka, terutamanya di telefon. Indeks muka surat
+ * surat itu, sebagai ganti PDF penuh (beberapa hingga puluhan MB) yang lambat dibuka, terutamanya di telefon. Indeks muka surat
  * archive.org (n0 biasanya muka surat pertama PDF) disahkan dengan OCR: gambar bagi muka surat PDF yang telah dipadankan
  * dibaca, dan mesti sepadan dengan halaman Shamela yang sama. Bentuk gambar pertama yang lulus mengikut keutamaan dipilih:
  * lebar 800 piksel (kira-kira 50 hingga 300 KB) cukup jelas untuk dibaca di skrin telefon, manakala saiz "medium"
