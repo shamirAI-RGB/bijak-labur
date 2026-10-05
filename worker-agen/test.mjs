@@ -1,6 +1,6 @@
-// Ujian pintu Flowise tanpa rangkaian: node worker-agen/test.mjs
+// Ujian pintu Activepieces tanpa rangkaian: node worker-agen/test.mjs
 import assert from 'node:assert/strict';
-import worker, { config, verifyAccess, readToken, proxy } from './src/index.js';
+import worker, { config, verifyAccess, readToken, proxy, isWebhook, ping } from './src/index.js';
 
 const enc = o => Buffer.from(JSON.stringify(o)).toString('base64url');
 const pair = await crypto.subtle.generateKey({ name: 'RSASSA-PKCS1-v1_5', modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: 'SHA-256' }, true, ['sign', 'verify']);
@@ -13,13 +13,13 @@ async function jwt(body, { kid = 'k1', key = pair.privateKey } = {}) {
   return h + '.' + b + '.' + Buffer.from(sig).toString('base64url');
 }
 
-const ENV = { FLOWISE_SPACE_URL: 'https://pemilik-agen.hf.space/', HF_TOKEN: 'hf_ujian', ACCESS_TEAM: 'bijaklabur', ACCESS_AUD: 'aud123', ALLOWED_EMAIL: 'Pemilik@Contoh.my' };
+const ENV = { SPACE_URL: 'https://pemilik-agen.hf.space/', HF_TOKEN: 'hf_ujian', ACCESS_TEAM: 'bijaklabur', ACCESS_AUD: 'aud123', ALLOWED_EMAIL: 'Pemilik@Contoh.my' };
 const c = config(ENV);
 assert.equal(c.ready, true);
 assert.equal(c.upstream, 'https://pemilik-agen.hf.space');
 assert.deepEqual(c.emails, ['pemilik@contoh.my']);
 assert.equal(config({ ...ENV, HF_TOKEN: '' }).ready, false);
-assert.equal(config({ ...ENV, FLOWISE_SPACE_URL: 'https://jahat.example.com' }).ready, false);
+assert.equal(config({ ...ENV, SPACE_URL: 'https://jahat.example.com' }).ready, false);
 assert.equal(config({ ...ENV, ACCESS_TEAM: 'https://bijaklabur.cloudflareaccess.com' }).team, 'bijaklabur');
 
 let certCalls = 0;
@@ -34,7 +34,7 @@ globalThis.fetch = async (url, init = {}) => {
     const h = new Headers({ 'Content-Type': 'text/html' });
     h.append('Set-Cookie', 'token=abc; Path=/; HttpOnly; Domain=pemilik-agen.hf.space');
     h.append('Set-Cookie', 'refreshToken=def; Path=/; HttpOnly');
-    return new Response('<h1>Flowise</h1>', { status: 200, headers: h });
+    return new Response('<h1>Activepieces</h1>', { status: 200, headers: h });
   }
   throw new Error('rangkaian tidak dijangka: ' + url);
 };
@@ -72,7 +72,7 @@ assert.equal(upstreamCalls.length, 0, 'tiada permintaan ke Space sebelum lulus')
 
 r = await run('/canvas?id=1', { 'Cf-Access-Jwt-Assertion': tok, Cookie: 'token=abc; CF_Authorization=' + tok, Authorization: 'Bearer palsu' });
 assert.equal(r.status, 200);
-assert.equal(await r.text(), '<h1>Flowise</h1>');
+assert.equal(await r.text(), '<h1>Activepieces</h1>');
 const call = upstreamCalls.at(-1);
 assert.equal(call.url, 'https://pemilik-agen.hf.space/canvas?id=1');
 assert.equal(call.init.headers.get('Authorization'), 'Bearer hf_ujian');
@@ -93,6 +93,28 @@ assert.match(await r.text(), /sedang dihidupkan/);
 r = await proxy(new Request('https://agen.bijaklabur.my/api/v1/x', { method: 'POST', body: '{"a":1}', headers: { 'Content-Type': 'application/json' } }), c);
 assert.equal(r.status, 200);
 assert.equal(upstreamCalls.at(-1).init.method, 'POST');
+
+// Webhook: dibuka tanpa Access, kuki tidak dihantar, token HF ditambah
+assert.equal(isWebhook('/api/v1/webhooks/abc123'), true);
+assert.equal(isWebhook('/api/v1/webhooks/abc123/sync'), true);
+assert.equal(isWebhook('/api/v1/webhooks'), false);
+assert.equal(isWebhook('/api/v1/webhooks/../flows'), false);
+assert.equal(isWebhook('/api/v1/flows'), false);
+assert.equal(isWebhook('/api/v1/webhooksx/abc'), false);
+r = await worker.fetch(new Request('https://agen.bijaklabur.my/api/v1/webhooks/abc123/sync?x=1', { method: 'POST', body: '{"k":1}', headers: { Cookie: 'token=abc' } }), ENV);
+assert.equal(r.status, 200);
+assert.equal(upstreamCalls.at(-1).url, 'https://pemilik-agen.hf.space/api/v1/webhooks/abc123/sync?x=1');
+assert.equal(upstreamCalls.at(-1).init.headers.get('Cookie'), null);
+assert.equal(upstreamCalls.at(-1).init.headers.get('Authorization'), 'Bearer hf_ujian');
+r = await worker.fetch(new Request('https://agen.bijaklabur.my/api/v1/webhooks/abc', { method: 'POST' }), { ...ENV, ACCESS_AUD: '' });
+assert.equal(r.status, 503, 'webhook juga tertutup jika tetapan belum lengkap');
+r = await run('/api/v1/flows');
+assert.equal(r.status, 403, 'API lain tetap perlu Access');
+
+// Cron ketuk Space
+assert.equal(await ping(ENV), 200);
+assert.equal(upstreamCalls.at(-1).url, 'https://pemilik-agen.hf.space/api/v1/health');
+assert.equal(await ping({}), 0);
 
 r = await run('/robots.txt');
 assert.match(await r.text(), /Disallow: \//);

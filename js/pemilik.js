@@ -98,7 +98,7 @@
         <button class="km-item" type="button" data-pm="sunting">${icon('type')}<span><b>Sunting teks laman</b><small class="muted">Klik pada tajuk, penerangan atau kad di mana-mana halaman untuk mengubahnya</small></span></button>
         <button class="km-item" type="button" data-pm="iklan">${icon('star')}<span><b>Urus iklan (4 ruang)</b><small class="muted">Gambar, tajuk, pautan, tempoh dan kiraan klik</small></span></button>
         <a class="km-item" href="#nota" data-close>${icon('bookmark')}<span><b>Kedai nota</b><small class="muted">Tambah nota, QR bayaran dan WhatsApp</small></span></a>
-        <a class="km-item" href="https://agen.bijaklabur.my" target="_blank" rel="noopener noreferrer">${icon('layers')}<span><b>Pantau AI Agent (Flowise)</b><small class="muted">Hanya e-mel pemilik boleh masuk, dengan kod sekali guna</small></span></a>
+        <a class="km-item" href="https://agen.bijaklabur.my" target="_blank" rel="noopener noreferrer">${icon('layers')}<span><b>Pantau AI Agent (Activepieces)</b><small class="muted">Hanya e-mel pemilik boleh masuk, dengan kod sekali guna</small></span></a>
         <button class="km-item" type="button" data-pm="reset">${icon('refresh')}<span><b>Kembalikan semua teks asal</b><small class="muted">Buang semua perubahan teks</small></span></button>
         <button class="km-item" type="button" data-pm="keluar">${icon('door')}<span><b>Log keluar pemilik</b><small class="muted">Kunci dibuang daripada peranti ini</small></span></button>
       </div>`, d => d.addEventListener('click', async e => {

@@ -1,10 +1,12 @@
-/* Bijak Labur: pintu peribadi Flowise di agen.bijaklabur.my.
+/* Bijak Labur: pintu peribadi Activepieces (AI Agent pemilik) di agen.bijaklabur.my.
    Lapisan keselamatan:
    1. Cloudflare Access di hadapan domain (kod sekali guna ke e-mel pemilik).
    2. Worker ini mengesahkan sendiri token Access (RS256, aud, iss, tamat tempoh, e-mel), jadi jika Access
       tersalah tetap atau dimatikan, permintaan tetap ditolak.
    3. Space Hugging Face adalah peribadi; hanya Worker ini yang memegang token untuk membukanya.
-   4. Log masuk Flowise sendiri. */
+   4. Log masuk Activepieces sendiri.
+   Pengecualian: /api/v1/webhooks/... dibuka tanpa Access supaya perkhidmatan luar boleh mencetuskan flow
+   (ID flow dalam alamat itu sendiri ialah rahsia, seperti reka bentuk asal Activepieces). */
 
 const CERT_TTL = 3600 * 1000;
 let certCache = { team: '', at: 0, keys: {} };
@@ -18,7 +20,7 @@ const jsonPart = s => JSON.parse(new TextDecoder().decode(b64url(s)));
 
 export function config(env) {
   const c = {
-    upstream: (env.FLOWISE_SPACE_URL || '').trim().replace(/\/+$/, ''),
+    upstream: (env.SPACE_URL || '').trim().replace(/\/+$/, ''),
     hfToken: (env.HF_TOKEN || '').trim(),
     team: (env.ACCESS_TEAM || '').trim().replace(/^https?:\/\//, '').replace(/\.cloudflareaccess\.com.*$/, ''),
     aud: (env.ACCESS_AUD || '').trim(),
@@ -93,13 +95,16 @@ function stripAccessCookie(cookie) {
   return (cookie || '').split(/;\s*/).filter(p => p && !/^CF_Authorization=/.test(p)).join('; ');
 }
 
-export async function proxy(request, c, fetchFn = fetch) {
+/* Webhook Activepieces: /api/v1/webhooks/<flowId>[/sync|/test...] */
+export const isWebhook = path => /^\/api\/v1\/webhooks\/[A-Za-z0-9_-]+(\/[A-Za-z0-9_-]+)*\/?$/.test(path);
+
+export async function proxy(request, c, fetchFn = fetch, { webhook = false } = {}) {
   const url = new URL(request.url);
   const target = c.upstream + url.pathname + url.search;
   const headers = new Headers(request.headers);
   headers.delete('Cf-Access-Jwt-Assertion');
   headers.delete('Cf-Access-Authenticated-User-Email');
-  const cookie = stripAccessCookie(headers.get('Cookie'));
+  const cookie = webhook ? '' : stripAccessCookie(headers.get('Cookie'));
   if (cookie) headers.set('Cookie', cookie); else headers.delete('Cookie');
   headers.set('Authorization', 'Bearer ' + c.hfToken); // membuka Space peribadi
   headers.set('X-Forwarded-Host', url.host);
@@ -121,7 +126,7 @@ export async function proxy(request, c, fetchFn = fetch) {
   const up = new URL(c.upstream).host;
   const loc = out.get('Location');
   if (loc) { try { const l = new URL(loc, c.upstream); if (l.host === up) out.set('Location', `https://${url.host}${l.pathname}${l.search}${l.hash}`); } catch {} }
-  // Kuki Flowise mesti terikat pada agen.bijaklabur.my, bukan hf.space
+  // Kuki Activepieces mesti terikat pada agen.bijaklabur.my, bukan hf.space
   const cookies = typeof res.headers.getSetCookie === 'function' ? res.headers.getSetCookie() : [];
   if (cookies.length) {
     out.delete('Set-Cookie');
@@ -131,12 +136,23 @@ export async function proxy(request, c, fetchFn = fetch) {
   return new Response(res.body, { status: res.status, statusText: res.statusText, headers: out });
 }
 
+/* Space percuma tidur selepas 48 jam tanpa permintaan; jadual Activepieces berhenti semasa tidur.
+   Cron Cloudflare (wrangler.toml) mengetuk Space setiap 6 jam supaya ia kekal berjaga. */
+export async function ping(env, fetchFn = fetch) {
+  const c = config(env);
+  if (!c.upstream || !c.hfToken) return 0;
+  try { const r = await fetchFn(c.upstream + '/api/v1/health', { headers: { Authorization: 'Bearer ' + c.hfToken } }); return r.status; }
+  catch { return 0; }
+}
+
 export default {
+  async scheduled(event, env, ctx) { ctx.waitUntil(ping(env)); },
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname === '/robots.txt') return new Response('User-agent: *\nDisallow: /\n', { headers: { 'Content-Type': 'text/plain', ...SEC_HEADERS } });
     const c = config(env);
-    if (!c.ready) return page(503, 'Agen belum disediakan', 'Tetapan pelayan Flowise belum lengkap. Ikut panduan Flowise untuk menetapkan rahsia dalam GitHub.');
+    if (!c.ready) return page(503, 'Agen belum disediakan', 'Tetapan pelayan agen belum lengkap. Ikut panduan Activepieces untuk menetapkan rahsia dalam GitHub.');
+    if (isWebhook(url.pathname)) return proxy(request, c, fetch, { webhook: true });
     let email = null;
     try { email = await verifyAccess(readToken(request), c); } catch { email = null; }
     if (!email) return page(403, 'Akses ditolak', 'Halaman ini hanya untuk pemilik Bijak Labur.');

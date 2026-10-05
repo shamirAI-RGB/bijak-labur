@@ -1,8 +1,8 @@
-name: Pintu Flowise (agen.bijaklabur.my)
+name: Pintu AI Agent (agen.bijaklabur.my)
 
-# Uji dan pasang Worker yang melindungi Flowise peribadi pemilik.
-# Selepas menambah atau menukar rahsia FLOWISE_* / ACCESS_* dalam GitHub, jalankan semula aliran ini
-# (Actions > Pintu Flowise > Run workflow) supaya rahsia baharu dimuat naik ke Cloudflare.
+# Uji dan pasang Worker yang melindungi Activepieces peribadi pemilik.
+# Selepas menambah atau menukar rahsia AGEN_* / ACCESS_* dalam GitHub, jalankan semula aliran ini
+# (Actions > Pintu AI Agent > Run workflow) supaya rahsia baharu dimuat naik ke Cloudflare.
 on:
   push:
     branches: [main]
@@ -33,22 +33,22 @@ jobs:
         if: github.ref == 'refs/heads/main' && env.HAS_CF == 'true'
         run: npx --yes wrangler@3 deploy
       # Rahsia dimuat naik hanya jika ditetapkan. Tanpa kelima-limanya, Worker menolak semua permintaan.
-      - name: Rahsia Flowise dan Cloudflare Access
+      - name: Rahsia Space dan Cloudflare Access
         if: github.ref == 'refs/heads/main' && env.HAS_CF == 'true'
         env:
-          FLOWISE_SPACE_URL: ${{ secrets.FLOWISE_SPACE_URL }}
-          HF_TOKEN: ${{ secrets.FLOWISE_HF_TOKEN }}
+          SPACE_URL: ${{ secrets.AGEN_SPACE_URL }}
+          HF_TOKEN: ${{ secrets.AGEN_HF_TOKEN }}
           ACCESS_TEAM: ${{ secrets.ACCESS_TEAM }}
           ACCESS_AUD: ${{ secrets.ACCESS_AUD }}
           ALLOWED_EMAIL: ${{ secrets.ACCESS_EMAIL }}
         run: |
           missing=""
-          for n in FLOWISE_SPACE_URL HF_TOKEN ACCESS_TEAM ACCESS_AUD ALLOWED_EMAIL; do
+          for n in SPACE_URL HF_TOKEN ACCESS_TEAM ACCESS_AUD ALLOWED_EMAIL; do
             v="${!n}"
             if [ -n "$v" ]; then printf '%s' "$v" | npx --yes wrangler@3 secret put "$n"; else missing="$missing $n"; fi
           done
           if [ -n "$missing" ]; then
             echo "Rahsia belum ditetapkan:$missing. Pintu agen.bijaklabur.my akan menolak semua permintaan sehingga semuanya ditetapkan." >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "Pintu Flowise dipasang di https://agen.bijaklabur.my" >> "$GITHUB_STEP_SUMMARY"
+            echo "Pintu AI Agent dipasang di https://agen.bijaklabur.my" >> "$GITHUB_STEP_SUMMARY"
           fi

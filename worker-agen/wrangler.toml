@@ -1,10 +1,11 @@
-# Pintu peribadi Flowise (AI Agent pemilik) di agen.bijaklabur.my (Cloudflare Workers, pelan percuma)
-# Pelayan Flowise sebenar berjalan dalam Hugging Face Space peribadi. Worker ini:
+# Pintu peribadi Activepieces (AI Agent pemilik) di agen.bijaklabur.my (Cloudflare Workers, pelan percuma)
+# Pelayan Activepieces sebenar berjalan dalam Hugging Face Space peribadi. Worker ini:
 #  1. hanya membenarkan permintaan yang membawa token Cloudflare Access sah untuk e-mel pemilik;
 #  2. menghantar permintaan itu ke Space peribadi dengan token Hugging Face (disimpan sebagai rahsia).
 # Rahsia (ditetapkan oleh .github/workflows/agen.yml daripada GitHub Secrets, bukan dalam repo):
-#   FLOWISE_SPACE_URL, HF_TOKEN, ACCESS_TEAM, ACCESS_AUD, ALLOWED_EMAIL
+#   SPACE_URL, HF_TOKEN, ACCESS_TEAM, ACCESS_AUD, ALLOWED_EMAIL
 # Tanpa semua rahsia ini, Worker menolak setiap permintaan.
+# Pengecualian: /api/v1/webhooks/... (pencetus flow daripada perkhidmatan luar) tidak memerlukan Access.
 name = "bijak-labur-agen"
 main = "src/index.js"
 compatibility_date = "2026-09-01"
@@ -12,3 +13,7 @@ compatibility_date = "2026-09-01"
 workers_dev = false
 
 routes = [{ pattern = "agen.bijaklabur.my", custom_domain = true }]
+
+# Ketuk Space setiap 6 jam supaya ia tidak tidur (jadual Activepieces berhenti semasa Space tidur).
+[triggers]
+crons = ["17 */6 * * *"]
