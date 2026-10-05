@@ -257,6 +257,12 @@ assert.deepEqual(cetakPdf(CET, 143), { penerbit: 'Dar Ibn Hazm', edisi: 'Pertama
 assert.equal(cetakPdf(CET, 900).pdf_url, 'https://a/j2.pdf#page=13');
 assert.deepEqual(cetakPdf(CET, 400), { penerbit: 'Dar Ibn Hazm', edisi: 'Pertama, 1425H' });
 assert.equal(cetakPdf(null, 1), null);
+// Paparan ringan: gambar satu muka surat dan BookReader archive.org (indeks n = muka surat PDF + off), hanya bagi fail yang disahkan
+{
+  const P = { ...CET, paparan: [{ gambar: 'https://archive.org/download/x/page/n{n}_w800.jpg', lihat: 'https://archive.org/details/x/page/n{n}/mode/1up', off: -1 }, null] };
+  assert.deepEqual(cetakPdf(P, 143), { ...cetakPdf(CET, 143), gambar_url: 'https://archive.org/download/x/page/n146_w800.jpg', lihat_url: 'https://archive.org/details/x/page/n146/mode/1up' });
+  assert.deepEqual(cetakPdf(P, 900), cetakPdf(CET, 900));
+}
 // Peta OCR: padanan yang melanggar tertib dibuang, muka surat pertama diambil, jurang kecil yang konsisten diisi
 {
   const { bina } = await import('./scripts/peta.mjs');
