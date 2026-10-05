@@ -1,6 +1,6 @@
 name: Pintu AI Agent (agen.bijaklabur.my)
 
-# Uji dan pasang Worker agen.bijaklabur.my (pautan pemilik ke Activepieces Cloud).
+# Uji dan pasang Worker agen.bijaklabur.my (pautan pemilik ke Pejabat AI Agent).
 on:
   push:
     branches: [main]
