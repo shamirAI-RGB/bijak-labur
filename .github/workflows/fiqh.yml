@@ -43,6 +43,15 @@ jobs:
         continue-on-error: true
         run: node scripts/muat-rujukan.mjs
       - run: mkdir -p aset/rujukan
+      # Edisi cetakan kitab: padankan halaman Shamela dengan muka surat PDF bergambar (archive.org) melalui OCR,
+      # supaya Tanya AI boleh memberi muka surat PDF, penerbit dan edisi. Kitab tanpa padanan dilangkau.
+      - name: Pasang OCR (poppler, tesseract Arab)
+        continue-on-error: true
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils tesseract-ocr tesseract-ocr-ara > /dev/null
+      - name: Padankan PDF cetakan kitab
+        timeout-minutes: 30
+        continue-on-error: true
+        run: node scripts/padan-pdf.mjs
       # Semak kunci Gemini dan uji setiap model dengan permintaan Tanya AI sebenar (tanpa mendedahkan kunci)
       - name: Semak Gemini
         if: env.HAS_GEMINI == 'true'

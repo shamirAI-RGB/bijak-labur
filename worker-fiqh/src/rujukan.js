@@ -107,12 +107,28 @@ export async function search(env, query, limit = 6) {
   const kitab = ranked.filter(x => DOC[x.k] && DOC[x.k].jenis === 'kitab'), moden = ranked.filter(x => !(DOC[x.k] && DOC[x.k].jenis === 'kitab'));
   const nk = kitab.length ? Math.min(3, Math.ceil(limit / 2)) : 0;
   const top = [...(moden.length ? pick(moden, limit - Math.min(nk, kitab.length)) : []), ...(kitab.length ? pick(kitab, nk) : [])];
-  const texts = await Promise.all(top.map(x => page(env, x.k, x.n)));
-  return top.map((x, i) => ({ id: `${DOC[x.k] && DOC[x.k].jenis === 'kitab' ? 'kitab' : 'pdf'}:${x.k}:${x.n}`, k: x.k, n: x.n, skor: +x.skor.toFixed(2), teks: texts[i] || '' })).filter(x => x.teks);
+  const [texts, cetak] = await Promise.all([Promise.all(top.map(x => page(env, x.k, x.n))), nk ? assetJson(env, 'rujukan/cetakan.json') : null]);
+  return top.map((x, i) => {
+    const isK = DOC[x.k] && DOC[x.k].jenis === 'kitab', teks = texts[i] || '';
+    return { id: `${isK ? 'kitab' : 'pdf'}:${x.k}:${x.n}`, k: x.k, n: x.n, skor: +x.skor.toFixed(2), teks, ...(isK ? { cetak: cetakPdf(cetak && cetak[x.k], x.n) } : {}) };
+  }).filter(x => x.teks);
 }
 
 /** Pautan yang membuka PDF asal pada muka surat itu */
 export const pageUrl = (k, n) => DOC[k].jenis === 'kitab' ? D.shamela(DOC[k].id, n) : `${DOC[k].url}#page=${n}`;
+
+/*
+ * Edisi cetakan dan PDF bergambar bagi setiap kitab (rujukan/cetakan.json, dibina oleh scripts/padan-pdf.mjs):
+ *   { k: { penerbit, edisi, sumber, pdf: [{ url, offset, dari, hingga, padan }] } }
+ * Setiap fail PDF meliputi halaman Shamela dari..hingga; muka surat PDF = halaman Shamela + offset.
+ * offset dikira dengan OCR: muka surat PDF dibaca dan dipadankan dengan teks Shamela (padan = bilangan sampel yang sepadan).
+ */
+export function cetakPdf(c, n) {
+  if (!c) return null;
+  const info = { penerbit: c.penerbit || '', edisi: c.edisi || '' };
+  const f = (c.pdf || []).find(x => n >= x.dari && n <= x.hingga);
+  return f ? { ...info, pdf: n + f.offset, pdf_url: `${f.url}#page=${n + f.offset}` } : info;
+}
 
 /* Juz dan halaman cetakan yang tertera pada halaman Shamela, cth. "[الجزء: 1 ¦ الصفحة: 142]" */
 const DIGIT = s => String(s).replace(/[٠-٩]/g, d => d.charCodeAt(0) - 0x660);
