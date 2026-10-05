@@ -251,15 +251,21 @@ greply = () => gem({ ar: ['طهارة', 'مياه'] });
 hits = await search(kenv, expand('Air apa yang boleh digunakan untuk mengangkat hadas?') + ' ' + await kataKunci({ ...genv, ...kenv }, 'q'));
 assert.ok(hits.some(h => h.id === 'kitab:fathqarib:142'), JSON.stringify(hits.map(h => h.id)));
 
-// Edisi cetakan: halaman cetakan + offset jilid = muka surat PDF
+// Edisi cetakan: halaman cetakan + offset = muka surat PDF (halaman Shamela 143 bertanda halaman cetakan 181)
 const CET = { penerbit: 'Dar Ibn Hazm', edisi: 'Pertama, 1425H', pdf: [{ url: 'https://archive.org/download/x/x.pdf', offset: 4, dari: 1, hingga: 300, padan: 6 }] };
 assert.deepEqual(cetakPdf(CET, 143), { penerbit: 'Dar Ibn Hazm', edisi: 'Pertama, 1425H', pdf: 147, pdf_url: 'https://archive.org/download/x/x.pdf#page=147' });
 assert.deepEqual(cetakPdf(CET, 400), { penerbit: 'Dar Ibn Hazm', edisi: 'Pertama, 1425H' });
 assert.equal(cetakPdf(null, 1), null);
+// Kitab berjilid: halaman cetakan dan juz yang tertera pada halaman Shamela, bukan nombor halaman Shamela
+const CETJ = { penerbit: 'Dar al-Qalam', edisi: '', pdf: [{ url: 'https://a/j2.pdf', jilid: '2', offset: 3, dari: 1, hingga: 500, padan: 5 }] };
+assert.equal(cetakPdf(CETJ, 900, 'نص [الجزء: ٢ ¦ الصفحة: ١٠]').pdf, 13);
+assert.equal(cetakPdf(CETJ, 900, 'نص [الجزء: ١ ¦ الصفحة: ١٠]').pdf, undefined);
+assert.equal(cetakPdf(CETJ, 10).pdf, undefined);
+assert.equal(cetakPdf(CET, 1, 'نص [الجزء: ١ ¦ الصفحة: ١٠]').pdf, 14);
 kfiles.set('rujukan/cetakan.json', JSON.stringify({ fathqarib: CET }));
 greply = () => gem({ status: 'jawab', ringkasan: 'x', huraian: ['y'], sumber: [{ id: 'kitab:fathqarib:143', petikan: 'ولا يجوز بيع الذهب بالذهب إلا متماثلا نقدا', maksud: 'Tidak harus menjual emas dengan emas kecuali sama dan tunai.' }] });
 d = await (await call({ q: 'Hukum jual beli emas dengan emas!' }, 'https://bijaklabur.my', { ...genv, ...kenv })).json();
-assert.deepEqual([d.sumber[0].pdf, d.sumber[0].pdf_url, d.sumber[0].penerbit, d.sumber[0].disahkan], [147, 'https://archive.org/download/x/x.pdf#page=147', 'Dar Ibn Hazm', true]);
+assert.deepEqual([d.sumber[0].pdf, d.sumber[0].pdf_url, d.sumber[0].penerbit, d.sumber[0].disahkan], [185, 'https://archive.org/download/x/x.pdf#page=185', 'Dar Ibn Hazm', true]);
 assert.equal(d.nota_pdf, undefined);
 
 // Tanpa aset rujukan (muat turun gagal), Tanya AI tetap berjalan seperti biasa

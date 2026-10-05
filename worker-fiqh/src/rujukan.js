@@ -110,7 +110,7 @@ export async function search(env, query, limit = 6) {
   const [texts, cetak] = await Promise.all([Promise.all(top.map(x => page(env, x.k, x.n))), nk ? assetJson(env, 'rujukan/cetakan.json') : null]);
   return top.map((x, i) => {
     const isK = DOC[x.k] && DOC[x.k].jenis === 'kitab', teks = texts[i] || '';
-    return { id: `${isK ? 'kitab' : 'pdf'}:${x.k}:${x.n}`, k: x.k, n: x.n, skor: +x.skor.toFixed(2), teks, ...(isK ? { cetak: cetakPdf(cetak && cetak[x.k], x.n) } : {}) };
+    return { id: `${isK ? 'kitab' : 'pdf'}:${x.k}:${x.n}`, k: x.k, n: x.n, skor: +x.skor.toFixed(2), teks, ...(isK ? { cetak: cetakPdf(cetak && cetak[x.k], x.n, teks) } : {}) };
   }).filter(x => x.teks);
 }
 
@@ -119,15 +119,18 @@ export const pageUrl = (k, n) => DOC[k].jenis === 'kitab' ? D.shamela(DOC[k].id,
 
 /*
  * Edisi cetakan dan PDF bergambar bagi setiap kitab (rujukan/cetakan.json, dibina oleh scripts/padan-pdf.mjs):
- *   { k: { penerbit, edisi, sumber, pdf: [{ url, offset, dari, hingga, padan }] } }
- * Setiap fail PDF meliputi halaman Shamela dari..hingga; muka surat PDF = halaman Shamela + offset.
+ *   { k: { penerbit, edisi, sumber, pdf: [{ url, jilid, offset, dari, hingga, padan }] } }
+ * Halaman Shamela tidak selalu sama satu-satu dengan halaman cetakan, jadi pemetaan menggunakan juz dan nombor halaman
+ * cetakan yang tertera pada halaman Shamela ("[الجزء: 1 ¦ الصفحة: 142]"; jika tiada, nombor halaman Shamela).
+ * Fail PDF itu meliputi halaman cetakan dari..hingga bagi juz itu; muka surat PDF = halaman cetakan + offset.
  * offset dikira dengan OCR: muka surat PDF dibaca dan dipadankan dengan teks Shamela (padan = bilangan sampel yang sepadan).
  */
-export function cetakPdf(c, n) {
+export function cetakPdf(c, n, teks) {
   if (!c) return null;
-  const info = { penerbit: c.penerbit || '', edisi: c.edisi || '' };
-  const f = (c.pdf || []).find(x => n >= x.dari && n <= x.hingga);
-  return f ? { ...info, pdf: n + f.offset, pdf_url: `${f.url}#page=${n + f.offset}` } : info;
+  const info = { penerbit: c.penerbit || '', edisi: c.edisi || '' }, ct = cetakan(teks);
+  const h = +ct.halaman || +n, j = ct.halaman ? String(ct.jilid || '') : '';
+  const f = (c.pdf || []).find(x => (!x.jilid || String(x.jilid) === j) && h >= x.dari && h <= x.hingga);
+  return f ? { ...info, pdf: h + f.offset, pdf_url: `${f.url}#page=${h + f.offset}` } : info;
 }
 
 /* Juz dan halaman cetakan yang tertera pada halaman Shamela, cth. "[الجزء: 1 ¦ الصفحة: 142]" */
