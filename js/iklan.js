@@ -18,9 +18,11 @@
         <b data-edit="utama.iklan.kosong.tajuk">Iklankan di sini</b>
         <span class="muted small" data-edit="utama.iklan.kosong.teks">Capai pelajar dan pelabur muda di seluruh Malaysia. Hubungi kami untuk pakej.</span>
         <span class="ik-cta">${icon('chat')}WhatsApp kami</span></a>`;
-    const inner = `${ad.gambar ? `<img src="${esc(API + ad.gambar)}" alt="" loading="lazy" width="640" height="360">` : `<span class="ik-ph" aria-hidden="true">${esc(initials(ad.nama || ad.tajuk))}</span>`}
+    // Laluan daripada pelayan mesti relatif (bermula dengan "/"), supaya API + laluan tidak boleh menjadi hos lain
+    const rel = p => typeof p === 'string' && /^\/[^/\\@]/.test(p);
+    const inner = `${rel(ad.gambar) ? `<img src="${esc(API + ad.gambar)}" alt="" loading="lazy" width="640" height="360">` : `<span class="ik-ph" aria-hidden="true">${esc(initials(ad.nama || ad.tajuk))}</span>`}
         <span class="ik-body"><span class="ik-tag">Iklan</span><b>${esc(ad.tajuk)}</b>${ad.teks ? `<span class="ik-teks">${esc(ad.teks)}</span>` : ''}${ad.nama ? `<small class="muted">${esc(ad.nama)}</small>` : ''}</span>`;
-    return ad.url ? `<a class="ik-card" href="${esc(API + ad.url)}" target="_blank" rel="sponsored noopener" aria-label="Iklan: ${esc(ad.tajuk)}">${inner}</a>` : `<div class="ik-card">${inner}</div>`;
+    return rel(ad.url) ? `<a class="ik-card" href="${esc(API + ad.url)}" target="_blank" rel="sponsored noopener" aria-label="Iklan: ${esc(ad.tajuk)}">${inner}</a>` : `<div class="ik-card">${inner}</div>`;
   }
 
   function render() {

@@ -1,6 +1,6 @@
 // Ujian pelayan Tanya AI Fiqh tanpa rangkaian: node worker-fiqh/test.mjs
 import assert from 'node:assert/strict';
-import worker, { NOTA_PDF, kataKunci, verify, collectRetrieved, norm, normUrl, parseAnswer, MODEL, GEMINI_MODEL, GEMINI_FALLBACKS, DOMAINS } from './src/app.js';
+import worker, { readJson, NOTA_PDF, kataKunci, verify, collectRetrieved, norm, normUrl, parseAnswer, MODEL, GEMINI_MODEL, GEMINI_FALLBACKS, DOMAINS } from './src/app.js';
 import { BY_ID, CORPUS_TEXT } from './src/corpus.js';
 import { MODEN, KITAB, buildIndex, search, expand, pageUrl, tokens, cetakan, cetakPdf, assetTag } from './src/rujukan.js';
 import { clean, semakBody, systemFor } from './src/semak.js';
@@ -606,6 +606,15 @@ assert.equal(d.status, 'tidak_pasti');
   assert.equal(nz.reduce((t, z) => t + z.panjang, 0), 80); assert.ok(nz.every(z => Number.isFinite(z.panjang) && z.panjang >= 4));
   const c3 = cleanA({ ...ans, hujah: [{ bahagian: 'x', petikan: 'yam', jenis: 'struktur', isu: 'i', kesan: 'k', tahap: 'tinggi', cadangan: 'c' }, { bahagian: 'x', petikan: 'iterima dan disimpan dalam', jenis: 'struktur', isu: 'i', kesan: 'k', tahap: 'tinggi', cadangan: 'c' }], nc: [{ ...ans.nc[1], petikan: 'a' }] }, T);
   assert.deepEqual(c3.hujah.map(h => h.petikan), ['', '']); assert.equal(c3.nc[0].petikan, '');
+}
+// Had saiz badan sebenar: permintaan tanpa Content-Length (chunked) juga dihadkan
+{
+  const strim = n => new Request('https://f.example/x', { method: 'POST', duplex: 'half', body: new ReadableStream({ start(c) { for (let i = 0; i < n; i++) c.enqueue(new TextEncoder().encode('"' + 'x'.repeat(998) + '"'.slice(0, 1))); c.close(); } }) });
+  await assert.rejects(readJson(strim(20), 10_000));
+  assert.deepEqual(await readJson(new Request('https://f.example/x', { method: 'POST', body: JSON.stringify({ q: 'abc' }) }), 100), { q: 'abc' });
+  const r = await worker.fetch(new Request('https://f.example/coach', { method: 'POST', duplex: 'half', headers: { origin: 'https://bijaklabur.my', 'content-type': 'application/json' }, body: new ReadableStream({ start(c) { c.enqueue(new TextEncoder().encode('{"soalan":"' + 'x'.repeat(40_000) + '"}')); c.close(); } }) }), { GEMINI_API_KEY: 'k', ALLOWED_ORIGINS: 'https://bijaklabur.my' }, {});
+  assert.equal(r.status, 413);
+  assert.equal(r.headers.get('x-content-type-options'), 'nosniff');
 }
 function RUBRIK_SKOR(c) { return ['pengenalan', 'literatur', 'analisis', 'metodologi', 'kesimpulan'].map(k => c.rubrik[k].skor); }
 console.log('Semua ujian Tanya AI lulus');

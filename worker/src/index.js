@@ -23,7 +23,8 @@ export const PLANS = {
 };
 export const PERIODS = { m1: { days: 30, label: '30 Hari' }, y1: { days: 365, label: '1 Tahun' } };
 
-const json = (data, status, headers) => new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json', ...headers } });
+const SEC = { 'x-content-type-options': 'nosniff', 'referrer-policy': 'no-referrer' };
+const json = (data, status, headers) => new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json', ...SEC, ...headers } });
 
 function cors(req, env) {
   const origin = req.headers.get('origin') || '';
@@ -47,6 +48,8 @@ async function toyyib(env, path, fields) {
 async function checkout(req, env, url) {
   const who = await authed(req, env);
   if (who.error) return who.error;
+  if (env.CHECKOUT_LIMIT && !(await env.CHECKOUT_LIMIT.limit({ key: who.uid })).success)
+    return { status: 429, data: { error: 'Terlalu banyak permintaan. Cuba lagi sebentar.' } };
   const b = await req.json().catch(() => ({}));
   const plan = PLANS[b.plan], period = PERIODS[b.period];
   const name = String(b.name || '').replace(/[^\p{L}\p{N} .'@-]/gu, '').trim().slice(0, 60);
@@ -115,6 +118,8 @@ async function claim(req, env) {
   // Bil mesti dicipta oleh /checkout Bijak Labur, bukan bil ToyyibPay lain (termasuk bil akaun ToyyibPay orang lain)
   const rec = await callDO(env, `b:${code}`, { op: 'lihat' });
   if (rec.status !== 200) return rec;
+  // Hanya akaun yang mencipta bil boleh menuntutnya (kod bil boleh terdedah dalam pautan /return)
+  if (rec.data.by && rec.data.by !== who.uid) return { status: 403, data: { error: 'Bil ini dicipta oleh akaun lain. Log masuk dengan akaun yang membuat pembayaran.' } };
   const { plan, period, sen } = rec.data;
   const tx = await toyyib(env, 'getBillTransactions', { billCode: code });
   const list = Array.isArray(tx) ? tx : [];
@@ -176,7 +181,7 @@ async function tts(req, env, url, h) {
     hit = new Response(await r.arrayBuffer(), { headers: { 'content-type': 'audio/mpeg', 'cache-control': 'public, max-age=2592000' } });
     if (cache) await cache.put(key, hit.clone());
   }
-  const out = new Response(hit.body, { headers: { 'content-type': 'audio/mpeg', 'cache-control': 'public, max-age=2592000', ...h } });
+  const out = new Response(hit.body, { headers: { 'content-type': 'audio/mpeg', 'cache-control': 'public, max-age=2592000', ...SEC, ...h } });
   return out;
 }
 

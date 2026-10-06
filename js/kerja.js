@@ -18,7 +18,7 @@
   // Tapis IC, e-mel dan telefon dalam peranti sebelum dihantar (pelayan menapis sekali lagi)
   const redact = t => String(t || '').replace(/\b\d{6}-?\d{2}-?\d{4}\b/g, '[IC]').replace(/[\w.+-]+@[\w-]+\.[\w.-]+/g, '[E-mel]')
     .replace(/(?:\+?6?0)[\s-]?1\d[\s-]?\d{3,4}[\s-]?\d{4}\b/g, '[Telefon]').replace(/\b0\d{1,2}[\s-]?\d{3,4}[\s-]?\d{4}\b/g, '[Telefon]');
-  const ext = (href, t) => `<a href="${esc(href)}" target="_blank" rel="noopener">${esc(t)}</a>`;
+  const ext = (href, t) => /^https:\/\//i.test(href || '') ? `<a href="${esc(href)}" target="_blank" rel="noopener">${esc(t)}</a>` : esc(t);
 
   function hasilHTML() {
     const h = S.hasil, t = S.tugas;

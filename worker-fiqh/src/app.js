@@ -58,7 +58,31 @@ Cara bekerja: semak korpus dahulu. Jika perlu huraian kitab, gunakan web_search 
 Jawapan akhir: HANYA satu objek JSON (tiada teks lain, tiada markdown) dengan bentuk:
 {"status":"jawab"|"tidak_pasti"|"luar_skop","ringkasan":"1-2 ayat jawapan dalam Bahasa Melayu","huraian":["perenggan pendek", "..."],"khilaf":"perbezaan pendapat jika ada, atau kosong","nasihat":"cadangan rujukan lanjut jika perlu, atau kosong","sumber":[{"id":"id korpus, quran:S:A atau pdf:KOD:MUKASURAT, atau kosong","url":"URL halaman yang dibuka, atau kosong","jenis":"kitab"|"quran"|"hadis"|"fatwa"|"lain","tajuk":"nama kitab/dokumen","jilid":"juz jika tertera pada halaman, atau kosong","halaman":"nombor halaman cetakan jika tertera, atau kosong","petikan":"teks tepat dari sumber, atau kosong","maksud":"terjemahan atau maksud petikan dalam Bahasa Melayu, atau kosong","untuk":"kenyataan dalam huraian yang disokong sumber ini"}]}`;
 
-const json = (data, status, headers) => new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json', ...headers } });
+const json = (data, status, headers) => new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json', 'x-content-type-options': 'nosniff', 'referrer-policy': 'no-referrer', ...headers } });
+
+// Baca badan JSON dengan had saiz sebenar (Content-Length boleh tiada atau dipalsukan, cth. permintaan "chunked")
+class TooBig extends Error {}
+export async function readJson(req, max) {
+  if (+(req.headers.get('content-length') || 0) > max) throw new TooBig();
+  if (!req.body) return JSON.parse('');
+  const reader = req.body.getReader(), parts = [];
+  let n = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    n += value.byteLength;
+    if (n > max) { reader.cancel().catch(() => {}); throw new TooBig(); }
+    parts.push(value);
+  }
+  const buf = new Uint8Array(n);
+  let o = 0;
+  for (const p of parts) { buf.set(p, o); o += p.byteLength; }
+  return JSON.parse(new TextDecoder().decode(buf));
+}
+async function body(req, h, max, big = 'Permintaan terlalu besar.') {
+  try { return { body: await readJson(req, max) }; }
+  catch (e) { return { res: e instanceof TooBig ? json({ error: big }, 413, h) : json({ error: 'Permintaan tidak sah.' }, 400, h) }; }
+}
 
 function cors(req, env) {
   const origin = req.headers.get('origin') || '';
@@ -258,9 +282,9 @@ async function tanya(req, env, url, h) {
   if (!provider(env)) return json({ error: 'Tanya AI belum diaktifkan.' }, 503, h);
   // Hanya laman dan app Bijak Labur (elak orang lain menghabiskan kredit API)
   if (!h['access-control-allow-origin']) return json({ error: 'Tidak dibenarkan.' }, 403, h);
-  let body;
-  try { body = await req.json(); } catch { return json({ error: 'Permintaan tidak sah.' }, 400, h); }
-  const q = String(body && body.q || '').replace(/\s+/g, ' ').trim();
+  const got = await body(req, h, 16_000);
+  if (got.res) return got.res;
+  const q = String(got.body && got.body.q || '').replace(/\s+/g, ' ').trim();
   if (q.length < 5 || q.length > MAX_Q) return json({ error: `Soalan mesti antara 5 hingga ${MAX_Q} aksara.` }, 400, h);
 
   const cache = typeof caches !== 'undefined' ? caches.default : null;
@@ -292,10 +316,10 @@ async function tanya(req, env, url, h) {
 async function semakRoute(req, env, h) {
   if (!env.GEMINI_API_KEY) return json({ error: 'Ulasan pakar belum diaktifkan.' }, 503, h);
   if (!h['access-control-allow-origin']) return json({ error: 'Tidak dibenarkan.' }, 403, h);
-  let body;
-  try { body = await req.json(); } catch { return json({ error: 'Permintaan tidak sah.' }, 400, h); }
-  const text = String(body && body.text || '').replace(/\r\n/g, '\n').trim();
-  const lang = body && body.lang === 'en' ? 'en' : 'ms';
+  const got = await body(req, h, MAX_CHARS * 4 + 4096, `Teks terlalu panjang (had ${MAX_CHARS.toLocaleString('en')} aksara). Semak bahagian demi bahagian.`);
+  if (got.res) return got.res;
+  const text = String(got.body && got.body.text || '').replace(/\r\n/g, '\n').trim();
+  const lang = got.body && got.body.lang === 'en' ? 'en' : 'ms';
   if (text.length < MIN_CHARS) return json({ error: 'Teks terlalu pendek untuk ulasan pakar.' }, 400, h);
   if (text.length > MAX_CHARS) return json({ error: `Teks terlalu panjang (had ${MAX_CHARS.toLocaleString('en')} aksara). Semak bahagian demi bahagian.` }, 413, h);
   if (env.SEMAK_LIMIT) {
@@ -314,10 +338,10 @@ async function semakRoute(req, env, h) {
 async function kaloriRoute(req, env, h) {
   if (!env.GEMINI_API_KEY) return json({ error: 'Analisis kalori belum diaktifkan.' }, 503, h);
   if (!h['access-control-allow-origin']) return json({ error: 'Tidak dibenarkan.' }, 403, h);
-  if (+(req.headers.get('content-length') || 0) > 2_000_000) return json({ error: 'Gambar terlalu besar.' }, 413, h);
-  let body;
-  try { body = await req.json(); } catch { return json({ error: 'Permintaan tidak sah.' }, 400, h); }
-  const input = { image: body && body.image ? String(body.image) : '', mime: String(body && body.mime || 'image/jpeg'), text: String(body && body.text || '').trim() };
+  const got = await body(req, h, 2_000_000, 'Gambar terlalu besar.');
+  if (got.res) return got.res;
+  const b = got.body;
+  const input = { image: b && b.image ? String(b.image) : '', mime: String(b && b.mime || 'image/jpeg'), text: String(b && b.text || '').trim() };
   const bad = checkKalori(input);
   if (bad) return json({ error: bad }, 400, h);
   if (env.KALORI_LIMIT) {
@@ -336,9 +360,9 @@ async function kaloriRoute(req, env, h) {
 async function gambarRoute(req, env, h) {
   if (!env.AI) return json({ error: 'Studio gambar belum diaktifkan.' }, 503, h);
   if (!h['access-control-allow-origin']) return json({ error: 'Tidak dibenarkan.' }, 403, h);
-  let body;
-  try { body = await req.json(); } catch { return json({ error: 'Permintaan tidak sah.' }, 400, h); }
-  const input = checkGambar(body || {});
+  const got = await body(req, h, 16_000);
+  if (got.res) return got.res;
+  const input = checkGambar(got.body || {});
   if (input.error) return json({ error: input.error }, 400, h);
   if (env.GAMBAR_LIMIT) {
     const { success } = await env.GAMBAR_LIMIT.limit({ key: req.headers.get('cf-connecting-ip') || 'x' });
@@ -365,10 +389,9 @@ const AI_ROUTES = {
 async function aiRoute(req, env, h, r) {
   if (!env.GEMINI_API_KEY) return json({ error: `${r.nama} belum diaktifkan.` }, 503, h);
   if (!h['access-control-allow-origin']) return json({ error: 'Tidak dibenarkan.' }, 403, h);
-  if (+(req.headers.get('content-length') || 0) > r.maxBytes) return json({ error: 'Teks terlalu panjang.' }, 413, h);
-  let body;
-  try { body = await req.json(); } catch { return json({ error: 'Permintaan tidak sah.' }, 400, h); }
-  const input = r.check(body);
+  const got = await body(req, h, r.maxBytes, 'Teks terlalu panjang.');
+  if (got.res) return got.res;
+  const input = r.check(got.body);
   if (input.error) return json({ error: input.error }, input.status || 400, h);
   if (env[r.limit]) {
     const { success } = await env[r.limit].limit({ key: req.headers.get('cf-connecting-ip') || 'x' });

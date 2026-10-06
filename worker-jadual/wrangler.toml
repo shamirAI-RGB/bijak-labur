@@ -10,4 +10,18 @@ workers_dev = true
 routes = [{ pattern = "jadual.bijaklabur.my", custom_domain = true }]
 
 [vars]
-ALLOWED_ORIGINS = "https://bijaklabur.my,https://www.bijaklabur.my,https://shamirai-rgb.github.io,capacitor://localhost,https://localhost,http://localhost:8080"
+ALLOWED_ORIGINS = "https://bijaklabur.my,https://www.bijaklabur.my,https://shamirai-rgb.github.io,capacitor://localhost,https://localhost"
+
+# Permintaan yang tiada dalam cache (setiap satu membaca iCress): 60 seminit bagi setiap alamat IP
+[[unsafe.bindings]]
+name = "JADUAL_LIMIT"
+type = "ratelimit"
+namespace_id = "4001"
+simple = { limit = 60, period = 60 }
+
+# Carian jadual mengikut No. Pelajar: 20 seminit bagi setiap alamat IP
+[[unsafe.bindings]]
+name = "PELAJAR_LIMIT"
+type = "ratelimit"
+namespace_id = "4002"
+simple = { limit = 20, period = 60 }
