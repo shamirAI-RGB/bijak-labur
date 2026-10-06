@@ -33,8 +33,8 @@
   <meta property="og:image:alt" content="Bijak Labur: belajar melabur, harga pasaran dan waktu solat">
   <meta property="og:locale" content="ms_MY">
   <meta name="twitter:card" content="summary_large_image">
-  <link rel="preload" href="fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="fonts/Fraunces-Variable.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/SchibstedGrotesk-Variable.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/Newsreader-Variable.woff2" as="font" type="font/woff2" crossorigin>
   <script src="js/boot.js"></script>
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/langit.css">
@@ -106,6 +106,7 @@
   <link rel="stylesheet" href="css/alat-syariah.css">
   <link rel="stylesheet" href="css/akademi.css">
   <link rel="stylesheet" href="css/rupa.css">
+  <link rel="stylesheet" href="css/takwim.css">
 </head>
 <body>
   <a class="skip-link" href="#main">Langkau ke kandungan</a>
@@ -257,10 +258,33 @@
   <main id="main" tabindex="-1">
     <!-- UTAMA -->
     <section class="view" id="view-utama" aria-labelledby="greet">
-      <div class="page-head">
-        <p class="eyebrow" id="todayLine">&nbsp;</p>
-        <h1 id="greet">Assalamualaikum</h1>
-      </div>
+      <header class="tk-mast" aria-label="Takwim hari ini">
+        <div class="tk-mast-top"><span class="tk-kicker">Takwim Siswa</span><span class="tk-ed" id="tkEdisi">&nbsp;</span></div>
+        <div class="tk-mast-row">
+          <div class="tk-date" aria-hidden="true"><b class="tk-day" id="tkHari">&nbsp;</b><span class="tk-mon" id="tkBulan">&nbsp;</span></div>
+          <div class="page-head">
+            <p class="eyebrow" id="todayLine">&nbsp;</p>
+            <h1 id="greet">Assalamualaikum</h1>
+          </div>
+          <figure class="tk-letter">
+            <div class="tk-faces" aria-hidden="true"><img src="images/pengasas/yusshamir.webp" alt="" width="48" height="60" decoding="async"><img src="images/pengasas/wabil.webp" alt="" width="48" height="60" decoding="async"></div>
+            <blockquote><p>Kami bina laman ini sebab kami sendiri pernah keliru: mana saham yang halal, bila waktu solat di kampus, macam mana nak mula menyimpan. Semoga ia memudahkan urusan anda juga.</p></blockquote>
+            <figcaption>Yusshamir &amp; Wabil, pelajar IC220 UiTM · <button type="button" class="tk-link" data-tk-scroll="h-founders">baca surat penuh</button></figcaption>
+          </figure>
+        </div>
+      </header>
+
+      <nav class="tk-index" aria-labelledby="h-edisi">
+        <h2 id="h-edisi">Dalam edisi ini</h2>
+        <ol>
+          <li><a href="#solat"><span class="tk-n">01</span><span class="tk-t">Waktu solat</span><span class="tk-d" id="tkSolat">zon anda</span></a></li>
+          <li><a href="#belajar"><span class="tk-n">02</span><span class="tk-t">Belajar melabur</span><span class="tk-d">modul syariah</span></a></li>
+          <li><a href="#pasaran"><span class="tk-n">03</span><span class="tk-t">Pasaran hari ini</span><span class="tk-d">kripto dan saham</span></a></li>
+          <li><a href="#semak"><span class="tk-n">04</span><span class="tk-t">Semak kertas kerja</span><span class="tk-d">plagiat dan AI</span></a></li>
+          <li><a href="#jadual"><span class="tk-n">05</span><span class="tk-t">Jadual kelas</span><span class="tk-d">UiTM</span></a></li>
+          <li><a href="#komuniti"><span class="tk-n">06</span><span class="tk-t">Komuniti</span><span class="tk-d">rakan dan acara</span></a></li>
+        </ol>
+      </nav>
 
       <div class="home-grid">
         <div class="home-main">
@@ -922,6 +946,7 @@
   <script src="js/iklan.js" defer></script>
   <script src="js/halal.js" defer></script>
   <script src="js/pemilik.js" defer></script>
+  <script src="js/takwim.js" defer></script>
   <div class="azan-bar hidden" id="azanBar" role="status" aria-live="polite">
     <svg class="ic"><use href="#i-volume"/></svg><span id="azanBarText">Azan sedang berbunyi</span>
     <button type="button" class="btn sm" id="azanStop"><svg class="ic"><use href="#i-pause"/></svg>Hentikan</button>
