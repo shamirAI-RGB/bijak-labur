@@ -213,3 +213,5 @@ button.km-row { background: none; border: 0; border-bottom: 1px solid var(--bord
 /* Radio dan kotak semak: jangan ikut gaya input teks global */
 .km-opt input, .km-radio input, .km-check input { flex: none; width: 18px; height: 18px; min-height: 0; padding: 0; margin: 2px 0 0; accent-color: var(--brand); box-shadow: none; }
 @media (max-width: 560px) { .km-note { flex-wrap: wrap; } .km-note > div { flex-basis: calc(100% - 40px); } .km-note .btn { margin-left: 34px; } }
+.km-invite { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 12px auto 4px; padding: 10px 14px; max-width: 520px; border-radius: 12px; background: var(--brand-soft); color: var(--brand); font-weight: 600; font-size: .9rem; }
+.km-invite .ic { width: 18px; height: 18px; flex: none; }
