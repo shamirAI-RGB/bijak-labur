@@ -68,7 +68,7 @@
   function continueCard() {
     const lr = store.get('qLast', null);
     if (!lr) return '';
-    return `<a class="card shortcut" href="#ibadah/quran/${lr.s}/${lr.a}">${tileIcon('quran', 'sm')}<div class="sc-body"><div class="sc-title">Sambung bacaan</div><div class="sc-sub">${esc(lr.name || 'Surah ' + lr.s)}, ayat ${lr.a}</div></div>${icon('chev', 'ic chev')}</a>`;
+    return `<a class="card shortcut" href="#ibadah/quran/${lr.s}/${lr.a}">${tileIcon('quran', 'sm')}<div class="sc-body"><div class="sc-title">Sambung bacaan</div><div class="sc-sub">${esc(QuranSrc.nama(lr.s, lr.name))}, ayat ${lr.a}</div></div>${icon('chev', 'ic chev')}</a>`;
   }
 
   function show() {
@@ -88,11 +88,13 @@
   const P = () => $('#ibPanel');
 
   /* ---------- Al-Quran ---------- */
-  let qList = store.get('qList', null), qTab = 'surah';
+  // Senarai lama dalam storan masih berejaan Inggeris API; tukar kepada ejaan Malaysia
+  const withNama = L => L && L.map(x => ({ ...x, en: QuranSrc.nama(x.n, x.en), alt: x.alt || x.en + ' ' + QuranSrc.cari(x.n) }));
+  let qList = withNama(store.get('qList', null)), qTab = 'surah';
   const qCache = {};
   async function getList() {
     if (qList && qList.length === 114) return qList;
-    qList = await QuranSrc.list();
+    qList = withNama(await QuranSrc.list());
     store.set('qList', qList);
     return qList;
   }
@@ -108,7 +110,7 @@
     store.set('qBm', list.slice(0, 200));
     return i < 0;
   }
-  const surahName = n => { const s = qList && qList[n - 1]; return s ? s.en : 'Surah ' + n; };
+  const surahName = n => { const s = qList && qList[n - 1]; return s ? s.en : QuranSrc.nama(n); };
   const offline = msg => `<div class="card empty"><p>${msg}</p><button class="btn sm ghost" data-retry>Cuba lagi</button></div>`;
 
   async function panelQuran(args) {
@@ -141,7 +143,7 @@
       return;
     }
     if (!qList) return;
-    const rows = qList.filter(s => !q || String(s.n) === q || s.en.toLowerCase().replace(/[^a-z0-9]/g, '').includes(q) || s.tr.toLowerCase().replace(/[^a-z0-9]/g, '').includes(q));
+    const rows = qList.filter(s => !q || String(s.n) === q || s.en.toLowerCase().replace(/[^a-z0-9]/g, '').includes(q) || (s.alt || '').toLowerCase().replace(/[^a-z0-9]/g, '').includes(q) || s.tr.toLowerCase().replace(/[^a-z0-9]/g, '').includes(q));
     box.innerHTML = rows.map(s => `<div class="q-row">
       <a class="q-link" href="#ibadah/quran/${s.n}"><span class="q-num">${s.n}</span><span class="q-main"><b>${esc(s.en)}</b><small>${esc(s.t)} · ${s.c} ayat</small></span><span class="q-ar" lang="ar">${esc(s.ar.replace(/^سُورَةُ\s*/, ''))}</span></a>
       <button class="q-play" data-play="${s.n}" aria-label="Main bacaan ${esc(s.en)}">${icon(player.s === s.n && !player.audio.paused ? 'pause' : 'play')}</button></div>`).join('') || '<div class="pad muted">Tiada surah sepadan.</div>';
@@ -155,7 +157,7 @@
     catch { const box = $('#qReader'); if (box) box.innerHTML = offline('Surah ini belum disimpan dalam peranti. Sambung ke internet untuk memuatkannya.'); return; }
     // Pengguna mungkin sudah beralih ke halaman lain semasa surah dimuatkan
     if (!$('#qReader')) return;
-    const meta = qList ? qList[n - 1] : { n, en: 'Surah ' + n, ar: '', tr: '', c: s.ayahs.length, t: '' };
+    const meta = qList ? qList[n - 1] : { n, en: QuranSrc.nama(n), ar: '', tr: '', c: s.ayahs.length, t: '' };
     const read = store.get('qRead', []); if (!read.includes(n)) { read.push(n); store.set('qRead', read); }
     $('#qReader').innerHTML = `
       <div class="q-hero"><p class="q-ar-big" lang="ar">${esc(meta.ar)}</p><h2>${esc(meta.en)}</h2><p>${esc(meta.tr)} · ${esc(meta.t)} · ${meta.c} ayat</p>
