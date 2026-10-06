@@ -211,7 +211,7 @@
         <div class="jd-save-g">
           <button data-act="jpg"><span class="sc-ico">${icon('download')}</span><b>Gambar JPG</b><small>Simpan ke galeri</small></button>
           <button data-act="pdf"><span class="sc-ico">${icon('file')}</span><b>PDF</b><small>Untuk cetak atau hantar</small></button>
-          <button data-act="wall"><span class="sc-ico">${icon('phone')}</span><b>Skrin kunci</b><small>Wallpaper jadual, 4 reka bentuk</small></button>
+          <button data-act="wall"><span class="sc-ico">${icon('phone')}</span><b>Skrin kunci</b><small>Wallpaper jadual mingguan</small></button>
           <button data-act="home"><span class="sc-ico">${icon('home')}</span><b>Skrin utama</b><small>Ikon terus ke jadual</small></button>
           <button data-act="ics"><span class="sc-ico">${icon('calendar')}</span><b>Kalendar</b><small>Dengan peringatan kelas</small></button>
           <button data-act="print"><span class="sc-ico">${icon('printer')}</span><b>Cetak</b><small>Grid minggu</small></button>

@@ -18,12 +18,6 @@
 .kc-ctl { display: grid; gap: 14px; min-width: 0; align-content: start; }
 .kc-tabs { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; width: 100%; }
 .kc-panel { display: grid; gap: 14px; min-height: 150px; }
-.kc-tpls { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
-.kc-tpl { display: grid; gap: 3px; padding: 6px; border: 1.5px solid transparent; border-radius: 12px; background: none; color: var(--text); font: inherit; text-align: center; cursor: pointer; align-content: start; }
-.kc-tpl canvas { width: 100%; height: auto; border-radius: 10px; background: #222; display: block; }
-.kc-tpl.on { border-color: var(--ink-red, var(--brand)); background: var(--surface); }
-.kc-tpl b { font-size: .86rem; margin-top: 4px; }
-.kc-tpl small { font-size: .7rem; color: var(--muted); line-height: 1.25; }
 .kc-sws { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
 .kc-bg { aspect-ratio: 1.45; display: flex; align-items: flex-end; padding: 6px 8px; border: 0; border-radius: var(--radius); color: #fff; font: inherit; font-size: .74rem; font-weight: 700; text-shadow: 0 1px 4px rgba(0,0,0,.5); text-align: left; cursor: pointer; }
 .kc-bg.on { outline: 2.5px solid var(--ink-red, var(--brand)); outline-offset: 2px; }
