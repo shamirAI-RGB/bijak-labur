@@ -1,4 +1,4 @@
-/* Bijak Labur: data Fiqh. Setiap rujukan di sini telah disemak dengan sumber asal (3 Oktober 2026).
+/* Bijak Labur: data Fiqh. Setiap rujukan di sini telah disemak dengan sumber asal (3 Oktober 2026; kitab tambahan 6 Oktober 2026).
    Teks ayat dan hadis TIDAK disimpan di sini: ia dimuat terus daripada sumber semasa dibuka supaya tidak berlaku salah petik.
    Jangan tambah rujukan yang belum dibuka dan disemak sendiri. */
 const FiqhData = (() => {
@@ -7,7 +7,17 @@ const FiqhData = (() => {
     abisyuja: { name: 'Matan Abi Syuja\' (al-Ghayah wa al-Taqrib)', ar: 'متن أبي شجاع', by: 'Abu Syuja\' al-Asfahani (w. 593H)', id: 11370, lvl: 'Asas' },
     fathqarib: { name: 'Fath al-Qarib al-Mujib', ar: 'فتح القريب المجيب', by: 'Ibn Qasim al-Ghazzi (w. 918H)', id: 35120, lvl: 'Pertengahan' },
     minhaj: { name: 'Minhaj al-Talibin', ar: 'منهاج الطالبين', by: 'Imam al-Nawawi (w. 676H)', id: 12096, lvl: 'Lanjutan' },
-    manhaji: { name: 'Al-Fiqh al-Manhaji', ar: 'الفقه المنهجي', by: 'Dr. Mustafa al-Khin, Dr. Mustafa al-Bugha, Ali al-Syarbaji', id: 6369, lvl: 'Moden' }
+    manhaji: { name: 'Al-Fiqh al-Manhaji', ar: 'الفقه المنهجي', by: 'Dr. Mustafa al-Khin, Dr. Mustafa al-Bugha, Ali al-Syarbaji', id: 6369, lvl: 'Moden' },
+    // Tambahan 6 Oktober 2026: ID Shamela disemak dengan tajuk halaman kitab; muat-rujukan.mjs juga menolak ID yang tajuknya tidak sepadan
+    kifayah: { name: 'Kifayah al-Akhyar fi Hall Ghayah al-Ikhtisar', ar: 'كفاية الأخيار في حل غاية الاختصار', by: 'Taqiyuddin al-Hisni (w. 829H)', id: 6140, lvl: 'Pertengahan' },
+    asybah: { name: 'Al-Asybah wa al-Naza\'ir', ar: 'الأشباه والنظائر', by: 'Jalaluddin al-Suyuti (w. 911H)', id: 21719, lvl: 'Kaedah fiqh' },
+    bulugh: { name: 'Bulugh al-Maram min Adillah al-Ahkam', ar: 'بلوغ المرام من أدلة الأحكام', by: 'Ibn Hajar al-Asqalani (w. 852H)', id: 9111, lvl: 'Hadis hukum' },
+    bidayah: { name: 'Bidayah al-Mujtahid wa Nihayah al-Muqtasid', ar: 'بداية المجتهد ونهاية المقتصد', by: 'Ibn Rusyd al-Hafid (w. 595H)', id: 21739, lvl: 'Perbandingan', banding: true },
+    ianah: { name: 'I\'anah al-Talibin', ar: 'إعانة الطالبين على حل ألفاظ فتح المعين', by: 'Abu Bakr Syatta al-Dimyati (w. 1310H)', id: 963, lvl: 'Lanjutan' },
+    mughni: { name: 'Mughni al-Muhtaj', ar: 'مغني المحتاج إلى معرفة معاني ألفاظ المنهاج', by: 'Al-Khatib al-Syarbini (w. 977H)', id: 11444, lvl: 'Lanjutan' },
+    raudhah: { name: 'Raudhah al-Talibin wa Umdah al-Muftin', ar: 'روضة الطالبين وعمدة المفتين', by: 'Imam al-Nawawi (w. 676H)', id: 499, lvl: 'Lanjutan' },
+    majmu: { name: 'Al-Majmu\' Syarh al-Muhazzab', ar: 'المجموع شرح المهذب', by: 'Imam al-Nawawi (w. 676H)', id: 2186, lvl: 'Rujukan induk' },
+    zuhaili: { name: 'Al-Fiqh al-Islami wa Adillatuh', ar: 'الفقه الإسلامي وأدلته', by: 'Dr. Wahbah al-Zuhaili (w. 1436H)', id: 384, lvl: 'Perbandingan', banding: true }
   };
   const shamela = (id, p) => `https://shamela.ws/book/${id}${p ? '/' + p : ''}`;
 
