@@ -1,6 +1,7 @@
 /* Bijak Labur: Studio Skrin Kunci. Menjana wallpaper skrin kunci daripada jadual kelas UiTM.
-   Empat reka bentuk (Hari ini, Minggu, Jadual, Grid), pilihan hari (setiap hari ada gambar sendiri), latar (gradien,
-   warna atau foto sendiri), susun atur dan paparan (bilik, tarikh Hijri, waktu solat, masa kosong, kelas bertindih).
+   Satu reka bentuk: Minggu (seminggu sekali pandang, hari terpilih ditonjolkan). Pilihan hari (setiap hari ada gambar sendiri),
+   latar (gradien, warna atau foto sendiri), susun atur dan paparan (bilik, tarikh Hijri, waktu solat, warna kursus).
+   Reka bentuk lain (Hari ini, Jadual, Grid) dibuang buat masa ini dan boleh ditambah semula apabila app sudah ada.
    Semua dilukis dalam peranti (kanvas); tiada apa dihantar ke mana-mana pelayan. Foto tidak disimpan. */
 (function () {
   const FAM = '"Schibsted Grotesk", -apple-system, "SF Pro Text", "Segoe UI", Roboto, sans-serif';
@@ -16,16 +17,14 @@
     anggur: ['Anggur', ['#3b0f4a', '#7a1f6b', '#d04a6e']], karbon: ['Karbon', ['#101114', '#1c1e24', '#2b2f38']],
     pasir: ['Pasir', ['#2a2118', '#6b4a2c', '#d29a52']], fajar: ['Fajar', ['#0f3b46', '#1d7a76', '#e7b85c']]
   };
-  const TPLS = [['hari', 'Hari ini', 'Kelas pada hari itu'], ['minggu', 'Minggu', 'Seminggu sekali pandang'], ['jadual', 'Jadual', 'Semua kelas, dengan bilik'], ['grid', 'Grid', 'Seperti grid jadual']];
   const CFG0 = {
-    tpl: 'hari', bg: 'senja', color: '#3a2a5e', blur: 6, dim: 30, pos: 'atas', size: 'm', card: 'kaca', alpha: 55, radius: 22, dev: 'ip', jam: true,
-    show: { bilik: true, nama: true, kump: false, warna: true, hijri: true, solat: false, kosong: true, tindih: true, tanda: true }
+    bg: 'senja', color: '#3a2a5e', blur: 6, dim: 30, pos: 'atas', size: 'm', card: 'kaca', alpha: 55, radius: 22, dev: 'ip', jam: true,
+    show: { bilik: true, warna: true, hijri: true, solat: false, tanda: true }
   };
-  const SHOW = [['bilik', 'Bilik atau dewan'], ['nama', 'Nama kursus'], ['kump', 'Kumpulan'], ['warna', 'Warna ikut kursus'], ['hijri', 'Tarikh Hijri'],
-    ['solat', 'Waktu solat'], ['kosong', 'Masa kosong antara kelas'], ['tindih', 'Amaran kelas bertindih'], ['tanda', 'bijaklabur.my']];
+  const SHOW = [['bilik', 'Bilik atau dewan'], ['warna', 'Warna ikut kursus'], ['hijri', 'Tarikh Hijri'], ['solat', 'Waktu solat'], ['tanda', 'bijaklabur.my']];
 
   const load = () => { const s = store.get('kunci_cfg', {}) || {}; return { ...CFG0, ...s, show: { ...CFG0.show, ...(s.show || {}) } }; };
-  let cfg = load(), dayIdx = 0, tab = 'tpl', photo = null, dlg = null, raf = 0;
+  let cfg = load(), dayIdx = 0, tab = 'bg', photo = null, dlg = null, raf = 0;
 
   /* ---------- Tarikh ---------- */
   const utc = d => Date.UTC(d.y, d.m - 1, d.d);
@@ -35,7 +34,6 @@
     const p = Object.fromEntries(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kuala_Lumpur', year: 'numeric', month: 'numeric', day: 'numeric' }).formatToParts(new Date()).filter(x => x.type !== 'literal').map(x => [x.type, +x.value]));
     return { y: p.year, m: p.month, d: p.day };
   }
-  const t12 = m => `${Math.floor(m / 60) % 12 || 12}:${String(m % 60).padStart(2, '0')}`;
   const durTxt = m => { const h = Math.floor(m / 60), r = m % 60; return h && r ? `${h} j ${r} min` : h ? `${h} jam` : `${r} min`; };
 
   /* ---------- Waktu solat dan tarikh Hijri (daripada data yang sudah disimpan oleh halaman Waktu Solat) ---------- */
@@ -148,47 +146,9 @@
     }
     return y + 28 * k;
   }
-  const bar = (c, s) => c.cfg.show.tindih && c.D.J.clash.has(s) ? '#ff6b5e' : (cfg.show.warna ? c.th.pal[s.hue % 8] : c.th.muted);
+  const bar = (c, s) => cfg.show.warna ? c.th.pal[s.hue % 8] : c.th.muted;
 
-  /* ---- Templat 1: Hari ini ---- */
-  function tHari(c) {
-    const { x, X, Y, w, k, th, D } = c, sh = cfg.show, p = 14 * k, J = D.J;
-    let y = Y + p;
-    y = header(c, y, `${J.DAY3[D.wd].toUpperCase()} · ${D.date.d} ${MON[D.date.m - 1].toUpperCase()}`, D.i === 0 ? 'HARI INI' : D.i === 1 ? 'ESOK' : J.DAY[D.wd].toUpperCase());
-    if (!D.list.length) {
-      x.font = F(700, 18 * k); x.fillStyle = th.text; x.fillText('Tiada kelas', X + p, y + 16 * k);
-      x.font = F(500, 12 * k); x.fillStyle = th.muted; x.fillText('Hari bebas. Rehat, atau ulang kaji sedikit.', X + p, y + 36 * k);
-      return footer(c, y + 52 * k);
-    }
-    const tx = X + p + 70 * k, tw = X + w - p - tx;
-    let prevEnd = null;
-    for (const s of D.list) {
-      if (prevEnd != null && sh.kosong && s.s - prevEnd >= 60) {
-        x.font = F(500, 10.5 * k); x.fillStyle = th.muted; x.textAlign = 'left';
-        x.fillText(`Kosong ${t12(prevEnd)} - ${t12(s.s)} · ${durTxt(s.s - prevEnd)}`, tx, y + 9 * k);
-        x.strokeStyle = th.line; x.lineWidth = k; x.setLineDash([2 * k, 3 * k]); x.beginPath(); x.moveTo(X + p, y + 5 * k); x.lineTo(tx - 6 * k, y + 5 * k); x.stroke(); x.setLineDash([]);
-        y += 22 * k;
-      }
-      const rh = 38 * k;
-      const sfx = m => ' ' + (J.fmt(m).split(' ')[1] || '');
-      x.textAlign = 'left'; x.font = F(720, 13 * k); x.fillStyle = th.text; x.fillText(t12(s.s), X + p, y + 13 * k);
-      let tw0 = x.measureText(t12(s.s)).width; x.font = F(600, 7.5 * k); x.fillStyle = th.muted; x.fillText(sfx(s.s), X + p + tw0, y + 13 * k);
-      x.font = F(500, 10.5 * k); tw0 = x.measureText(t12(s.e)).width; x.fillText(t12(s.e), X + p, y + 27 * k);
-      x.font = F(600, 7 * k); x.fillText(sfx(s.e), X + p + tw0, y + 27 * k);
-      rr(x, bar(c, s), X + p + 58 * k, y + 1 * k, 3 * k, rh - 4 * k, 1.5 * k);
-      x.font = F(750, 14 * k); x.fillStyle = th.text; x.fillText(s.it.course, tx, y + 13 * k);
-      if (sh.nama && s.it.name) { const cw = x.measureText(s.it.course).width; x.font = F(500, 12.5 * k); x.fillStyle = th.muted; x.fillText(fit(x, ' · ' + J.nice(s.it.name), tw - cw), tx + cw, y + 13 * k); }
-      const bits = [sh.bilik && s.room, sh.kump && s.it.group].filter(Boolean);
-      const clash = sh.tindih && J.clash.has(s);
-      x.font = F(500, 11.5 * k); x.fillStyle = th.muted;
-      if (bits.length) x.fillText(fit(x, bits.join(' · '), tw - (clash ? 70 * k : 0)), tx, y + 29 * k);
-      if (clash) { x.font = F(700, 10.5 * k); x.fillStyle = '#ff6b5e'; x.textAlign = 'right'; x.fillText('Bertindih', X + w - p, y + 29 * k); x.textAlign = 'left'; }
-      y += rh + 6 * k; prevEnd = Math.max(prevEnd || 0, s.e);
-    }
-    return footer(c, y - 2 * k);
-  }
-
-  /* ---- Templat 2: Minggu ---- */
+  /* ---- Reka bentuk: Minggu (seminggu sekali pandang). Reka bentuk lain boleh ditambah kemudian. ---- */
   function tMinggu(c) {
     const { x, X, Y, w, k, th, D } = c, sh = cfg.show, p = 14 * k, J = D.J, chipPal = J.PAL.light;
     const mon = D.week[0].date, sun = D.week[6].date, total = D.week.reduce((a, d) => a + d.slots.length, 0);
@@ -228,67 +188,6 @@
     return footer(c, y - 6 * k);
   }
 
-  /* ---- Templat 3: Jadual (semua kelas seminggu, dengan bilik) ---- */
-  function tJadual(c) {
-    const { x, X, Y, w, k, th, D } = c, sh = cfg.show, p = 14 * k, J = D.J;
-    let y = Y + p;
-    y = header(c, y, 'JADUAL SAYA', `${D.week.reduce((a, d) => a + d.slots.length, 0)} KELAS`);
-    const groups = D.week.filter(d => d.slots.length), tcol = X + p + 36 * k, bcol = tcol + 50 * k;
-    if (!groups.length) { x.font = F(600, 13 * k); x.fillStyle = th.muted; x.fillText('Tiada kelas minggu ini.', X + p, y + 14 * k); return footer(c, y + 24 * k); }
-    groups.forEach((d, gi) => {
-      const sel = d.wd === D.wd;
-      d.slots.forEach((s, n) => {
-        if (n === 0) { x.textAlign = 'left'; x.font = F(750, 10 * k); ls(x, .5 * k); x.fillStyle = sel ? th.accent : th.muted; x.fillText(J.DAY3[d.wd].toUpperCase(), X + p, y + 12 * k); ls(x, 0); }
-        const tm = t12(s.s), sf = J.fmt(s.s).split(' ')[1] || '';
-        x.textAlign = 'left'; x.font = F(700, 11.5 * k); x.fillStyle = th.text; x.fillText(tm, tcol, y + 12 * k);
-        const tw = x.measureText(tm).width; x.font = F(600, 7.5 * k); x.fillStyle = th.muted; x.fillText(' ' + sf.toUpperCase(), tcol + tw, y + 12 * k);
-        rr(x, bar(c, s), bcol, y + 1 * k, 3 * k, 14 * k, 1.5 * k);
-        x.font = F(750, 11.5 * k); x.fillStyle = th.text; x.fillText(s.it.course, bcol + 9 * k, y + 12 * k);
-        const cw = x.measureText(s.it.course).width, room = [sh.bilik && s.room, sh.kump && s.it.group].filter(Boolean).join(' · ');
-        if (room) { x.font = F(500, 10 * k); x.fillStyle = th.muted; x.textAlign = 'right'; x.fillText(fit(x, room, X + w - p - (bcol + 9 * k + cw + 10 * k)), X + w - p, y + 12 * k); x.textAlign = 'left'; }
-        y += 20 * k;
-      });
-      if (gi < groups.length - 1) { x.strokeStyle = th.line; x.lineWidth = k; x.beginPath(); x.moveTo(X + p, y + 2 * k); x.lineTo(X + w - p, y + 2 * k); x.stroke(); y += 8 * k; }
-    });
-    return footer(c, y + 2 * k);
-  }
-
-  /* ---- Templat 4: Grid ---- */
-  function tGrid(c) {
-    const { x, X, Y, w, k, th, D } = c, sh = cfg.show, p = 14 * k, J = D.J, ds = J.days, all = J.slots;
-    let y = Y + p;
-    y = header(c, y, 'JADUAL SAYA', ds.length ? `${J.DAY3[ds[0]].toUpperCase()} – ${J.DAY3[ds[ds.length - 1]].toUpperCase()}` : '');
-    const lo = Math.min(8 * 60, ...all.map(s => Math.floor(s.s / 60) * 60)), hi = Math.max(17 * 60, ...all.map(s => Math.ceil(s.e / 60) * 60));
-    const hours = (hi - lo) / 60, gx = X + p, gw = w - 2 * p, tc = 20 * k, head = 16 * k, cw = (gw - tc) / ds.length, rh = 31 * k, gy = y;
-    const Yt = m => gy + head + (m - lo) / 60 * rh;
-    x.textBaseline = 'alphabetic';
-    ds.forEach((d, i) => {
-      if (d === D.wd) rr(x, th.sel, gx + tc + cw * i + 1 * k, gy - 2 * k, cw - 2 * k, head + hours * rh + 4 * k, 6 * k);
-      x.textAlign = 'center'; x.font = F(650, 8.5 * k); ls(x, .4 * k); x.fillStyle = d === D.wd ? th.text : th.muted; x.fillText(J.DAY3[d].toUpperCase(), gx + tc + cw * (i + .5), gy + 9 * k); ls(x, 0);
-    });
-    x.strokeStyle = th.line; x.lineWidth = k;
-    for (let m = lo; m <= hi; m += 60) {
-      x.setLineDash(m === lo ? [] : [2 * k, 3 * k]); x.beginPath(); x.moveTo(gx + tc, Yt(m)); x.lineTo(gx + gw, Yt(m)); x.stroke(); x.setLineDash([]);
-      if (m < hi) { x.textAlign = 'right'; x.font = F(500, 8.5 * k); x.fillStyle = th.muted; x.fillText(String(Math.floor(m / 60) % 12 || 12), gx + tc - 5 * k, Yt(m) + 9 * k); }
-    }
-    ds.forEach((d, i) => {
-      const ss = all.filter(s => s.d === d).sort((a, b) => a.s - b.s);
-      let lanes = [], end = -1, cl = []; const close = () => { cl.forEach(q => q.n = lanes.length); cl = []; lanes = []; };
-      for (const s of ss) { if (s.s >= end) close(); let l = lanes.findIndex(e => e <= s.s); if (l < 0) { l = lanes.length; lanes.push(0); } lanes[l] = s.e; s.lane = l; cl.push(s); end = Math.max(end, s.e); }
-      close();
-      for (const s of ss) {
-        const col = sh.warna ? J.PAL.light[s.hue % 8] : (th.light ? '#555a66' : '#6b6f80'), bw = (cw - 4 * k) / s.n, bx = gx + tc + cw * i + 2 * k + s.lane * bw, by = Yt(s.s) + 1 * k, bh = Yt(s.e) - Yt(s.s) - 2 * k;
-        rr(x, col, bx, by, bw - 1.5 * k, bh, 4 * k);
-        if (sh.tindih && J.clash.has(s)) { x.strokeStyle = '#ff6b5e'; x.lineWidth = 1.6 * k; rrPath(x, bx, by, bw - 1.5 * k, bh, 4 * k); x.stroke(); }
-        x.save(); rrPath(x, bx, by, bw - 1.5 * k, bh, 4 * k); x.clip(); x.textAlign = 'left';
-        x.font = F(750, 7.8 * k); x.fillStyle = '#fff'; x.fillText(fit(x, s.it.course, bw - 7 * k), bx + 3.5 * k, by + 10 * k);
-        if (sh.bilik && s.room && bh > 24 * k) { x.font = F(500, 6.6 * k); x.fillStyle = 'rgba(255,255,255,.85)'; x.fillText(fit(x, s.room, bw - 7 * k), bx + 3.5 * k, by + 19.5 * k); }
-        x.restore();
-      }
-    });
-    return footer(c, gy + head + hours * rh + 6 * k);
-  }
-  const TPL = { hari: tHari, minggu: tMinggu, jadual: tJadual, grid: tGrid };
 
   /* ---------- Pelukis utama ---------- */
   function overlay(x, W, H, D) {
@@ -314,7 +213,7 @@
     const cw = W - 32 * u, X = 16 * u, topMin = H * .275, bottomMax = H - 108 * u, base = { k: .9, m: 1, b: 1.1 }[cfg.size] || 1;
     let f = base, h;
     for (;;) {
-      h = TPL[cfg.tpl]({ x: scratch, X: 0, Y: 0, w: cw, k: u * f, th, D, cfg });
+      h = tMinggu({ x: scratch, X: 0, Y: 0, w: cw, k: u * f, th, D, cfg });
       if (h <= bottomMax - topMin || f < .55) break;
       f *= .94;
     }
@@ -322,7 +221,7 @@
     x.save();
     cardBg(x, W, H, X, Y, cw, h, cfg.radius * u);
     if (cfg.card === 'tiada') { x.shadowColor = 'rgba(0,0,0,.5)'; x.shadowBlur = 8 * u; x.shadowOffsetY = 1 * u; }
-    TPL[cfg.tpl]({ x, X, Y, w: cw, k: u * f, th, D, cfg });
+    tMinggu({ x, X, Y, w: cw, k: u * f, th, D, cfg });
     x.restore();
     if (opt.overlay) overlay(x, W, H, D);
     return canvas;
@@ -386,10 +285,7 @@
 
   function panel() {
     const P = q('#kcPanel');
-    if (tab === 'tpl') {
-      P.innerHTML = `<div class="kc-tpls">${TPLS.map(([id, n, s]) => `<button type="button" class="kc-tpl ${cfg.tpl === id ? 'on' : ''}" data-tpl="${id}"><canvas aria-hidden="true"></canvas><b>${n}</b><small>${s}</small></button>`).join('')}</div>`;
-      thumbs();
-    } else if (tab === 'bg') {
+    if (tab === 'bg') {
       P.innerHTML = `<div class="kc-sws">${Object.entries(BG).map(([id, [n, st]]) => `<button type="button" class="kc-bg ${cfg.bg === id ? 'on' : ''}" data-bg="${id}" aria-label="${n}" title="${n}" style="background:linear-gradient(160deg,${st.join(',')})"><span>${n}</span></button>`).join('')}</div>
         <div class="kc-row"><label class="kc-col ${cfg.bg === 'warna' ? 'on' : ''}"><span>Warna sendiri</span><input type="color" id="kcColor" value="${cfg.color}"></label>
           <label class="btn ghost sm kc-file ${cfg.bg === 'foto' ? 'on' : ''}">${icon('upload')}<span>${photo ? 'Tukar foto' : 'Gunakan foto anda'}</span><input type="file" accept="image/*" id="kcPhoto" class="sr-only"></label></div>
@@ -407,12 +303,6 @@
     }
     $$('.kc-tabs .seg', dlg).forEach(b => { const on = b.dataset.tab === tab; b.classList.toggle('active', on); b.setAttribute('aria-selected', on); });
   }
-  function thumbs() {
-    $$('.kc-tpl', dlg).forEach(b => {
-      const keep = cfg.tpl; cfg.tpl = b.dataset.tpl;
-      try { paint(q('canvas', b), 150, dayIdx); } finally { cfg.tpl = keep; }
-    });
-  }
   function days() {
     q('#kcDays').innerHTML = Array.from({ length: 7 }, (_, i) => `<button type="button" role="tab" class="kc-day ${i === dayIdx ? 'on' : ''}" aria-selected="${i === dayIdx}" data-day="${i}">${labelDay(i)}</button>`).join('');
     q('#kcDl').innerHTML = `${icon('download')}Muat turun ${labelDay(dayIdx).toLowerCase()}`;
@@ -426,7 +316,6 @@
       const c = q('#kcPrev'), dev = DEV[cfg.dev] || DEV.ip;
       c.style.aspectRatio = `${dev[0]} / ${dev[1]}`;
       paint(c, 640, dayIdx, { overlay: cfg.jam });
-      if (tab === 'tpl') thumbs();
     });
   }
 
@@ -445,7 +334,7 @@
           <div class="kc-days" id="kcDays" role="tablist" aria-label="Pilih hari"></div>
         </section>
         <section class="kc-ctl">
-          <div class="segmented kc-tabs" role="tablist">${[['tpl', 'Templat'], ['bg', 'Latar'], ['lay', 'Susun atur'], ['show', 'Papar']].map(([id, n]) => `<button type="button" role="tab" class="seg" data-tab="${id}">${n}</button>`).join('')}</div>
+          <div class="segmented kc-tabs" role="tablist">${[['bg', 'Latar'], ['lay', 'Susun atur'], ['show', 'Papar']].map(([id, n]) => `<button type="button" role="tab" class="seg" data-tab="${id}">${n}</button>`).join('')}</div>
           <div class="kc-scroll"><div class="kc-panel" id="kcPanel"></div>
             <p class="kc-note muted small">Wallpaper ialah gambar tetap. Simpan ketujuh-tujuh hari sekali gus dan tukar gambar hari itu setiap pagi, atau muat turun semula selepas jadual berubah. <button type="button" class="link-btn" data-reset>Tetap semula reka bentuk</button></p></div>
           <div class="kc-act"><button class="btn" type="button" id="kcDl"></button><button class="btn ghost" type="button" id="kcAll">${icon('layers')}Semua 7 hari</button></div>
@@ -459,7 +348,6 @@
       let b;
       if ((b = t.closest('[data-tab]'))) { tab = b.dataset.tab; panel(); }
       else if ((b = t.closest('[data-day]'))) { dayIdx = +b.dataset.day; days(); draw(); }
-      else if ((b = t.closest('[data-tpl]'))) { cfg.tpl = b.dataset.tpl; save(); $$('.kc-tpl', dlg).forEach(x => x.classList.toggle('on', x === b)); draw(); }
       else if ((b = t.closest('[data-bg]'))) { cfg.bg = b.dataset.bg; save(); panel(); draw(); }
       else if ((b = t.closest('[data-set]'))) { cfg[b.dataset.set] = b.dataset.v; save(); panel(); draw(); }
       else if (t.closest('[data-jam]')) { cfg.jam = !cfg.jam; save(); const j = q('[data-jam]'); j.classList.toggle('active', cfg.jam); j.setAttribute('aria-pressed', cfg.jam); draw(); }
