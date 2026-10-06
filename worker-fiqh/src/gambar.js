@@ -8,7 +8,8 @@
  * Jika Gemini tidak tersedia, penapis kata kunci tempatan digunakan dan penerangan asal dihantar terus.
  * Gambar tidak disimpan di pelayan.
  */
-import { geminiGenerate, geminiText } from './gemini.js';
+import { geminiGenerate, geminiText, aiSedia } from './gemini.js';
+import { gambarSandaran } from './penghala.js';
 
 export const FLUX = '@cf/black-forest-labs/flux-1-schnell';
 export const MAX_PROMPT = 400;
@@ -57,7 +58,7 @@ export const promptBody = (prompt, gaya) => JSON.stringify({
 export async function preparePrompt(env, prompt, gaya) {
   const style = GAYA[gaya] || GAYA.realistik;
   const fallback = { selamat: true, sebab: '', prompt_en: `${prompt}. ${style}`, ai: false };
-  if (!env.GEMINI_API_KEY) return fallback;
+  if (!aiSedia(env)) return fallback;
   try {
     const d = await geminiGenerate(env, promptBody(prompt, gaya));
     const c = d.candidates && d.candidates[0];
@@ -88,11 +89,18 @@ export async function gambar(env, { prompt, gaya, seed }) {
   const p = await preparePrompt(env, prompt, gaya);
   if (!p.selamat || blocked(p.prompt_en)) throw Object.assign(new Error(p.sebab || 'Permintaan ini tidak sesuai untuk Bijak Labur.'), { status: 422 });
   let out;
+  const sandaran = async () => {
+    const g = await gambarSandaran(env, p.prompt_en.slice(0, 2048));
+    return g && { image: g.image, mime: g.mime, prompt_en: p.prompt_en, seed, ai: !!p.ai, penghala: g.penyedia };
+  };
+  if (!env.AI) { const g = await sandaran(); if (g) return g; throw Object.assign(new Error('tiada penjana gambar'), { status: 502, kod: 'sandaran gagal' }); }
   // Skema FLUX di Workers AI tidak menerima "seed" (ralat 5006), jadi setiap jana menghasilkan variasi baharu
   try { out = await env.AI.run(FLUX, { prompt: p.prompt_en.slice(0, 2048), steps: 4 }); }
   catch (e) {
     const m = String(e && e.message || e);
     console.log('flux', m.slice(0, 300));
+    // Penyedia gambar sandaran (jika kuncinya ditetapkan) sebelum melaporkan ralat
+    if (!/nsfw|safety|flagged/i.test(m)) { const g = await sandaran(); if (g) return g; }
     // Kuota percuma harian Workers AI (neuron) habis, atau terlalu banyak permintaan
     if (/neuron|quota|limit|capacity|429|3036|3040/i.test(m)) throw Object.assign(new Error('kuota'), { status: 429 });
     if (/nsfw|safety|flagged/i.test(m)) throw Object.assign(new Error('Gambar ini tidak dapat dijana. Cuba penerangan lain.'), { status: 422 });

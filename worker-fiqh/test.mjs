@@ -6,7 +6,8 @@ import { MODEN, KITAB, buildIndex, search, expand, pageUrl, tokens, cetakan, cet
 import { clean, semakBody, systemFor } from './src/semak.js';
 import { clean as cleanK, kaloriBody, check as checkK } from './src/kalori.js';
 import { blocked, check as checkG, promptBody, GAYA, FLUX } from './src/gambar.js';
-import { geminiGenerate, toJsonSchema, ROUTER_MODEL } from './src/gemini.js';
+import { geminiGenerate, toJsonSchema, ROUTER_MODEL, aiSedia } from './src/gemini.js';
+import { PENYEDIA, combo, cooldownFor, keOpenAI, penghalaGenerate, gambarSandaran, resetPenghala } from './src/penghala.js';
 import { check as checkB, clean as cleanB, verifyQuotes, bukuBody, SCHEMAS as SB } from './src/buku.js';
 import { check as checkJ, clean as cleanJ, redact } from './src/kerja.js';
 import { check as checkM, clean as cleanM } from './src/manusia.js';
@@ -119,7 +120,7 @@ assert.equal((await call({ q: 'x'.repeat(501) })).status, 400);
 assert.equal((await call({ q: 'Hukum kripto?' }, 'https://jahat.example')).status, 403);
 assert.equal((await call({ q: 'Hukum kripto?' }, 'https://bijaklabur.my', { ALLOWED_ORIGINS: env.ALLOWED_ORIGINS })).status, 503);
 d = await (await worker.fetch(new Request(W + '/'), env)).json();
-assert.deepEqual(d, { ok: true, service: 'bijak-labur-fiqh', ai: true, penyedia: 'claude', gambar: false });
+assert.deepEqual(d, { ok: true, service: 'bijak-labur-fiqh', ai: true, penyedia: 'claude', gambar: false, sandaran: [], sandaran_gambar: [] });
 
 // Gemini (percuma) apabila hanya GEMINI_API_KEY ditetapkan: korpus dan ayat Al-Quran sahaja
 const genv = { GEMINI_API_KEY: 'g-test', ALLOWED_ORIGINS: env.ALLOWED_ORIGINS };
@@ -176,7 +177,7 @@ assert.equal((await call({ q: 'Hukum emas digital?' }, 'https://bijaklabur.my', 
 
 // Claude diutamakan jika kedua-dua kunci ada
 d = await (await worker.fetch(new Request(W + '/'), genv)).json();
-assert.deepEqual(d, { ok: true, service: 'bijak-labur-fiqh', ai: true, penyedia: 'gemini', gambar: false });
+assert.deepEqual(d, { ok: true, service: 'bijak-labur-fiqh', ai: true, penyedia: 'gemini', gambar: false, sandaran: [], sandaran_gambar: [] });
 d = await (await worker.fetch(new Request(W + '/'), { ...genv, ...env })).json();
 assert.equal(d.penyedia, 'claude');
 
@@ -618,3 +619,102 @@ assert.equal(d.status, 'tidak_pasti');
 }
 function RUBRIK_SKOR(c) { return ['pengenalan', 'literatur', 'analisis', 'metodologi', 'kesimpulan'].map(k => c.rubrik[k].skor); }
 console.log('Semua ujian Tanya AI lulus');
+
+// Penghala berbilang penyedia (9Router): combo, penyejukan, format OpenAI, gambar sandaran
+{
+  const realFetch = globalThis.fetch;
+  resetPenghala();
+  // Hanya penyedia berkunci aktif; AI_COMBO mengubah susunan
+  assert.deepEqual(combo({}).map(p => p.id), []);
+  assert.deepEqual(combo({ GROQ_API_KEY: 'a', MISTRAL_API_KEY: 'b' }).map(p => p.id), ['groq', 'mistral']);
+  assert.deepEqual(combo({ GROQ_API_KEY: 'a', MISTRAL_API_KEY: 'b', AI_COMBO: 'mistral' }).map(p => p.id), ['mistral', 'groq']);
+  // Penyedia tanpa model lalai perlu <ID>_MODEL
+  assert.deepEqual(combo({ CHUTES_API_KEY: 'c' }).map(p => p.id), []);
+  assert.deepEqual(combo({ CHUTES_API_KEY: 'c', CHUTES_MODEL: 'm' }).map(p => p.id), ['chutes']);
+  assert.ok(aiSedia({ GROQ_API_KEY: 'a' })); assert.ok(!aiSedia({}));
+  assert.equal(new Set(PENYEDIA.map(p => p.id)).size, PENYEDIA.length);
+  assert.ok(PENYEDIA.every(p => p.url.startsWith('https://') && /^[A-Z_]+$/.test(p.key)));
+  // Penyejukan: 429 undur eksponen, 401 lama, 400 tiada
+  assert.deepEqual(cooldownFor(429, '', 0), { fallback: true, ms: 2000, level: 1 });
+  assert.equal(cooldownFor(429, '', 3).ms, 16000);
+  assert.equal(cooldownFor(429, '', 15).ms, 300000);
+  assert.equal(cooldownFor(401).ms, 600000);
+  assert.equal(cooldownFor(400, 'bad').ms, 0);
+  assert.equal(cooldownFor(500).ms, 30000);
+  // Format OpenAI: sistem + JSON + skema; gambar hanya untuk model penglihatan
+  const body = { systemInstruction: { parts: [{ text: 'SYS' }] }, contents: [{ role: 'user', parts: [{ text: 'soalan' }] }],
+    generationConfig: { responseMimeType: 'application/json', responseSchema: { type: 'OBJECT', properties: { status: { type: 'STRING' } } }, maxOutputTokens: 20000, temperature: 0.2 } };
+  let o = keOpenAI(body);
+  assert.ok(o.messages[0].content.startsWith('SYS') && o.messages[0].content.includes('"type":"object"'));
+  assert.equal(o.messages[1].content, 'soalan'); assert.equal(o.max_tokens, 8192); assert.deepEqual(o.response_format, { type: 'json_object' });
+  const img = { contents: [{ parts: [{ inline_data: { mime_type: 'image/png', data: 'QQ==' } }, { text: 'x' }] }], generationConfig: {} };
+  assert.equal(keOpenAI(img), null);
+  assert.equal(keOpenAI(img, { vision: true }).messages[1].content[0].image_url.url, 'data:image/png;base64,QQ==');
+
+  // Gemini 429 -> Groq 429 (disejukkan) -> Mistral berjaya
+  const seen = [];
+  globalThis.fetch = async (url, init) => {
+    url = String(url);
+    if (url.includes('generativelanguage')) return new Response('{"error":"quota"}', { status: 429 });
+    const b = JSON.parse(init.body); seen.push([url.split('/')[2], b.model, init.headers.authorization]);
+    if (url.includes('groq')) return new Response('{"error":{"message":"Rate limit reached"}}', { status: 429 });
+    return new Response(JSON.stringify({ choices: [{ message: { content: 'Jawapan: {"status":"ok"} tamat' } }] }), { status: 200 });
+  };
+  const e2 = { GEMINI_API_KEY: 'g', GROQ_API_KEY: 'kg', MISTRAL_API_KEY: 'km' };
+  let d = await geminiGenerate(e2, JSON.stringify(body));
+  assert.equal(d.penghala, 'mistral'); assert.equal(d.candidates[0].content.parts[0].text, '{"status":"ok"}');
+  assert.deepEqual(seen, [['api.groq.com', 'llama-3.3-70b-versatile', 'Bearer kg'], ['api.mistral.ai', 'mistral-small-latest', 'Bearer km']]);
+  // Groq masih disejukkan: terus ke Mistral
+  seen.length = 0; d = await geminiGenerate(e2, JSON.stringify(body));
+  assert.deepEqual(seen.map(x => x[0]), ['api.mistral.ai']);
+  // Gambar: model penglihatan; Cerebras (tiada penglihatan) dilangkau
+  resetPenghala(); seen.length = 0;
+  d = await penghalaGenerate({ CEREBRAS_API_KEY: 'c', GROQ_API_KEY: 'g', AI_COMBO: 'cerebras,groq' }, JSON.stringify(img));
+  assert.equal(d, null);   // groq 429
+  assert.deepEqual(seen.map(x => x[1]), ['meta-llama/llama-4-maverick-17b-128e-instruct']);
+  // response_format tidak disokong: cuba sekali lagi tanpanya
+  resetPenghala(); seen.length = 0; let n = 0;
+  globalThis.fetch = async (url, init) => { const b = JSON.parse(init.body); n++; if (b.response_format) return new Response('response_format json_object not supported', { status: 400 });
+    return new Response(JSON.stringify({ choices: [{ message: { content: '{"a":1}' } }] })); };
+  d = await penghalaGenerate({ CEREBRAS_API_KEY: 'c' }, JSON.stringify(body));
+  assert.equal(n, 2); assert.equal(d.penghala, 'cerebras');
+  // Semua gagal -> Workers AI (binding) seperti dahulu
+  resetPenghala();
+  globalThis.fetch = async () => new Response('{}', { status: 503 });
+  d = await geminiGenerate({ GEMINI_API_KEY: 'g', GROQ_API_KEY: 'k', AI: { run: async () => ({ response: '{"status":"ok"}' }) } }, JSON.stringify(body));
+  assert.equal(d.penghala, 'workers-ai');
+  // Tanpa Gemini, hanya penyedia lain: masih berfungsi
+  resetPenghala();
+  globalThis.fetch = async () => new Response(JSON.stringify({ choices: [{ message: { content: '{"status":"ok"}' } }] }));
+  d = await geminiGenerate({ GROQ_API_KEY: 'k' }, JSON.stringify(body));
+  assert.equal(d.penghala, 'groq');
+  // Ralat rangkaian: disejukkan, cuba seterusnya
+  resetPenghala();
+  globalThis.fetch = async url => { if (String(url).includes('groq')) throw new Error('network'); return new Response(JSON.stringify({ choices: [{ message: { content: 'ok' } }] })); };
+  d = await penghalaGenerate({ GROQ_API_KEY: 'k', MISTRAL_API_KEY: 'm' }, JSON.stringify({ contents: [{ parts: [{ text: 'hai' }] }] }));
+  assert.equal(d.penghala, 'mistral'); assert.equal(d.candidates[0].content.parts[0].text, 'ok');
+
+  // Gambar sandaran: Together (b64) kemudian Hugging Face (bait)
+  resetPenghala();
+  globalThis.fetch = async (url, init) => { url = String(url);
+    if (url.includes('together')) { assert.equal(JSON.parse(init.body).model, 'black-forest-labs/FLUX.1-schnell-Free'); return new Response(JSON.stringify({ data: [{ b64_json: 'QUJD' }] })); }
+    return new Response(new Uint8Array(200).fill(0x89)); };
+  assert.deepEqual(await gambarSandaran({ TOGETHER_API_KEY: 't', HF_TOKEN: 'h' }, 'cat'), { image: 'QUJD', mime: 'image/jpeg', penyedia: 'together' });
+  resetPenghala();
+  globalThis.fetch = async url => String(url).includes('together') ? new Response('limit', { status: 429 }) : new Response(new Uint8Array(200).fill(0x89));
+  let g = await gambarSandaran({ TOGETHER_API_KEY: 't', HF_TOKEN: 'h' }, 'cat');
+  assert.equal(g.penyedia, 'huggingface'); assert.equal(g.mime, 'image/png');
+  assert.equal(await gambarSandaran({}, 'cat'), null);
+  // Studio Gambar: kuota Workers AI habis -> sandaran
+  resetPenghala();
+  globalThis.fetch = async url => String(url).includes('together') ? new Response(JSON.stringify({ data: [{ b64_json: 'QUJD' }] })) : new Response('{}', { status: 503 });
+  const r = await worker.fetch(new Request(W + '/gambar', { method: 'POST', headers: { origin: 'https://bijaklabur.my', 'content-type': 'application/json' }, body: JSON.stringify({ prompt: 'kucing comel' }) }),
+    { ALLOWED_ORIGINS: env.ALLOWED_ORIGINS, TOGETHER_API_KEY: 't', AI: { run: async () => { throw new Error('3036: Account limited to 10000 daily neurons'); } } });
+  d = await r.json(); assert.equal(r.status, 200, JSON.stringify(d)); assert.equal(d.image, 'QUJD'); assert.equal(d.penghala, 'together');
+  // Tanpa binding AI tetapi ada kunci gambar sandaran
+  const r2 = await worker.fetch(new Request(W + '/gambar', { method: 'POST', headers: { origin: 'https://bijaklabur.my', 'content-type': 'application/json' }, body: JSON.stringify({ prompt: 'kucing comel' }) }),
+    { ALLOWED_ORIGINS: env.ALLOWED_ORIGINS, TOGETHER_API_KEY: 't' });
+  assert.equal(r2.status, 200);
+  globalThis.fetch = realFetch; resetPenghala();
+  console.log('penghala 9Router OK');
+}

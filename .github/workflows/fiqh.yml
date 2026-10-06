@@ -101,6 +101,43 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           if [ -n "$GEMINI_API_KEY" ]; then printf '%s' "$GEMINI_API_KEY" | npx --yes wrangler@3 secret put GEMINI_API_KEY; fi
+      # Penghala AI (gaya 9Router): setiap kunci penyedia sandaran dimuat naik hanya jika ditetapkan dalam GitHub Secrets.
+      # AI_COMBO (susunan, cth. "groq,cerebras") juga pilihan. Model boleh ditukar melalui <ID>_MODEL dalam [vars] wrangler.toml.
+      - name: Rahsia penyedia AI sandaran
+        if: github.ref == 'refs/heads/main' && env.HAS_CF == 'true'
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
+          ZAI_API_KEY: ${{ secrets.ZAI_API_KEY }}
+          SAMBANOVA_API_KEY: ${{ secrets.SAMBANOVA_API_KEY }}
+          KILO_API_KEY: ${{ secrets.KILO_API_KEY }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          TOGETHER_API_KEY: ${{ secrets.TOGETHER_API_KEY }}
+          FIREWORKS_API_KEY: ${{ secrets.FIREWORKS_API_KEY }}
+          NEBIUS_API_KEY: ${{ secrets.NEBIUS_API_KEY }}
+          SILICONFLOW_API_KEY: ${{ secrets.SILICONFLOW_API_KEY }}
+          FEATHERLESS_API_KEY: ${{ secrets.FEATHERLESS_API_KEY }}
+          HYPERBOLIC_API_KEY: ${{ secrets.HYPERBOLIC_API_KEY }}
+          CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
+          COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
+          DASHSCOPE_API_KEY: ${{ secrets.DASHSCOPE_API_KEY }}
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+          HUNYUAN_API_KEY: ${{ secrets.HUNYUAN_API_KEY }}
+          QIANFAN_API_KEY: ${{ secrets.QIANFAN_API_KEY }}
+          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          AI_GATEWAY_API_KEY: ${{ secrets.AI_GATEWAY_API_KEY }}
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          AI_COMBO: ${{ secrets.AI_COMBO }}
+        run: |
+          for k in GROQ_API_KEY CEREBRAS_API_KEY OPENROUTER_API_KEY NVIDIA_API_KEY MISTRAL_API_KEY ZAI_API_KEY SAMBANOVA_API_KEY KILO_API_KEY HF_TOKEN DEEPSEEK_API_KEY TOGETHER_API_KEY FIREWORKS_API_KEY NEBIUS_API_KEY SILICONFLOW_API_KEY FEATHERLESS_API_KEY HYPERBOLIC_API_KEY CHUTES_API_KEY COHERE_API_KEY DASHSCOPE_API_KEY MINIMAX_API_KEY HUNYUAN_API_KEY QIANFAN_API_KEY XAI_API_KEY OPENAI_API_KEY AI_GATEWAY_API_KEY OPENCODE_API_KEY AI_COMBO; do
+            v="${!k}"
+            if [ -n "$v" ]; then printf '%s' "$v" | npx --yes wrangler@3 secret put "$k" >/dev/null && echo "$k dimuat naik"; fi
+          done
       # Uji pelayan sebenar (selepas dipasang di main; pada PR, uji versi yang sedang berjalan): Studio Gambar, Buku Nota, Kerjaya
       - name: Uji pelayan sebenar
         if: env.HAS_CF == 'true' && (github.ref != 'refs/heads/main' || steps.domain.outcome == 'success')
@@ -110,7 +147,7 @@ jobs:
           # Log pelayan (wrangler tail) semasa ujian, untuk melihat punca ralat sebenar
           (timeout 60 npx --yes wrangler@3 tail --format json > tail.log 2>/dev/null &) ; sleep 8
           F=https://fiqh.bijaklabur.my; O='origin: https://bijaklabur.my'; C='content-type: application/json'
-          curl -sS "$F/" | jq -c .
+          curl -sS "$F/" | jq -c .   # termasuk senarai penyedia sandaran yang aktif
           curl -sS -X POST "$F/gambar" -H "$O" -H "$C" -d '{"prompt":"kucing comel makan nasi lemak atas daun pisang","gaya":"catair","seed":7}' \
             | jq -r 'if .image then "gambar OK: \(.image | length) aksara base64, prompt: \(.prompt_en[0:120])" else "gambar GAGAL: \(.error) [kod: \(.kod // "-")]" end'
           curl -sS -X POST "$F/buku" -H "$O" -H "$C" -d '{"tugas":"kad","sumber":[{"tajuk":"Bab 1","teks":"Fotosintesis ialah proses tumbuhan hijau menghasilkan makanan menggunakan cahaya matahari, air dan karbon dioksida. Proses ini berlaku dalam kloroplas dan membebaskan oksigen."}]}' \
