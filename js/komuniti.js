@@ -91,8 +91,29 @@
           <div>${icon('chat')}<b>Sembang</b><span>Berbual dengan rakan dan pihak servis secara terus.</span></div>
         </div>
         ${off ? '<p class="muted">Log masuk akaun belum dibuka.</p>' : `<button class="btn" type="button" data-act="login">${icon('user')}Log masuk untuk mula</button>`}
+        ${jemputan() ? `<p class="km-invite">${icon('user')}Anda dijemput sebagai rakan. Log masuk dahulu, kemudian permintaan rakan akan dihantar.</p>` : ''}
         <p class="muted small">Percuma. Lokasi dimatikan sehingga anda menghidupkannya.</p>
       </div>`;
+  }
+
+  /* ---------- Pautan jemputan: #komuniti/kod/ABC234 ---------- */
+  const KOD_RE = /^[A-Z2-9]{6}$/;
+  const jemputan = () => { const k = store.get('km_jemput', ''); return KOD_RE.test(k) ? k : ''; };
+  function bacaJemputan() {
+    const [, a, b] = location.hash.slice(1).split('/');
+    const kod = String(b || '').toUpperCase();
+    if (a === 'kod' && KOD_RE.test(kod)) store.set('km_jemput', kod);
+    // Buang kod daripada alamat supaya tidak diproses semula apabila dimuat semula
+    if (a === 'kod') history.replaceState(null, '', location.pathname + location.search + '#komuniti');
+  }
+  async function prosesJemputan() {
+    const kod = jemputan();
+    if (!kod || !S.me) return;
+    store.set('km_jemput', '');
+    if (kod === S.me.kod) return;
+    if (!confirm(`Hantar permintaan rakan kepada pemilik kod ${kod}?`)) return;
+    try { const r = await api('tambah', { kod }); toast(r.status === 'rakan' ? `Kini anda berkawan dengan ${r.nama}.` : `Permintaan dihantar kepada ${r.nama}.`); S.tab = 'peta'; render(); }
+    catch (er) { toast(errMsg(er)); }
   }
 
   async function start() {
@@ -105,6 +126,7 @@
       S.me = d.profil; badge(d.belum);
       if (!S.acara.uni) S.acara.uni = S.me.uni;
       render();
+      prosesJemputan();
     } catch (e) { body(`<div class="card km-empty"><p>${esc(errMsg(e))}</p><button class="btn ghost" type="button" data-act="ulang">${icon('refresh')}Cuba lagi</button></div>`); }
   }
 
@@ -610,8 +632,9 @@
       else if (act === 'moderasi') moderasi();
       else if (act === 'salinkod') navigator.clipboard?.writeText(S.me.kod).then(() => toast('Kod disalin.'), () => toast(S.me.kod));
       else if (act === 'kongsikod') {
-        const text = `Tambah saya sebagai rakan di Komuniti Bijak Labur. Kod saya: ${S.me.kod}`;
-        if (navigator.share) navigator.share({ text, url: 'https://bijaklabur.my/#komuniti' }).catch(() => {}); else navigator.clipboard?.writeText(text).then(() => toast('Mesej jemputan disalin.'));
+        const url = `https://bijaklabur.my/#komuniti/kod/${S.me.kod}`;
+        const text = `Jom jadi rakan saya di Komuniti Bijak Labur. Tekan pautan ini, atau masukkan kod ${S.me.kod}.`;
+        if (navigator.share) navigator.share({ text, url }).catch(() => {}); else navigator.clipboard?.writeText(`${text} ${url}`).then(() => toast('Pautan jemputan disalin.'));
       }
       return;
     }
@@ -657,9 +680,10 @@
 
   function show() {
     shown = true;
+    bacaJemputan();
     const sub = (location.hash.split('/')[1] || '').toLowerCase();
     if (['peta', 'acara', 'servis'].includes(sub)) S.tab = sub;
-    if (!S.me || !$('#kmBody', root)) start().then(startPoll); else { render(); startPoll(); }
+    if (!S.me || !$('#kmBody', root)) start().then(startPoll); else { render(); startPoll(); prosesJemputan(); }
   }
   function hide() { shown = false; stopTimers(); }
 
