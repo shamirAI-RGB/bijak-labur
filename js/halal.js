@@ -44,16 +44,48 @@
   ];
   const ST = { y: 'Patuh', n: 'Tidak patuh', na: 'Tidak berkaitan' };
   const NCR_ST = { buka: 'Terbuka', tindakan: 'Dalam tindakan', tutup: 'Ditutup' };
+  // Senarai semak penuh mengikut skim pensijilan (MPPHM 2020 s. 4). Data dalam data/audit-halal/<skim>.json
+  const SKIM = [
+    ['ringkas', 'Ringkas (latihan asas, 27 item)'],
+    ['premis-makanan', 'Premis Makanan (270 item)'],
+    ['produk-makanan', 'Produk Makanan dan Minuman (695 item)'],
+    ['kosmetik', 'Kosmetik (231 item)'],
+    ['farmaseutikal', 'Farmaseutikal (217 item)'],
+    ['barang-gunaan', 'Barang Gunaan (214 item)'],
+    ['logistik', 'Perkhidmatan Logistik (210 item)'],
+    ['rumah-sembelihan', 'Rumah Sembelihan (234 item)'],
+    ['oem', 'Pengilangan Kontrak / OEM (228 item)'],
+    ['peranti-perubatan', 'Peranti Perubatan (212 item)']
+  ];
+  const data = {}, buka = {};
   let d = store.get('halalAudit', { syarikat: '', tarikh: '', jawab: {}, ncr: [] });
+  if (!d.skim) d.skim = 'ringkas';
+
+  // Kumpulan semasa dalam bentuk seragam: [kumpulan, nama, [[teks, rujukan]], lead]
+  function kumpulan() {
+    if (d.skim === 'ringkas') return SEMAK.map(([g, name, items]) => [g, name, items.map(t => [t, '']), '']);
+    const j = data[d.skim];
+    return j ? j.bahagian.map(b => [d.skim + ':' + b.kod, 'Bahagian ' + b.kod + ': ' + b.tajuk, b.item, b.lead]) : [];
+  }
+  function muat(k) {
+    if (k === 'ringkas' || data[k]) return render();
+    root.querySelector('#hlList') && (root.querySelector('#hlList').innerHTML = '<p class="muted small">Memuatkan senarai semak...</p>');
+    fetch('data/audit-halal/' + k + '.json').then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(j => { data[k] = j; render(); })
+      .catch(() => { const l = root.querySelector('#hlList'); if (l) l.innerHTML = '<p class="muted small">Senarai semak tidak dapat dimuatkan. Semak sambungan internet dan cuba lagi.</p>'; });
+  }
 
   function render() {
-    const all = SEMAK.flatMap(([g, , items]) => items.map((_, i) => `${g}${i}`));
+    const G = kumpulan(), j = d.skim === 'ringkas' ? null : data[d.skim];
+    const all = G.flatMap(([g, , items]) => items.map((_, i) => `${g}${i}`));
     const ans = all.map(k => d.jawab[k]).filter(Boolean), app = ans.filter(a => a !== 'na'), yes = app.filter(a => a === 'y').length;
     const score = app.length ? Math.round(yes / app.length * 100) : 0, open = d.ncr.filter(n => n.st !== 'tutup');
+    if (!buka[d.skim]) { const g = G.find(([g, , items]) => items.some((_, i) => !d.jawab[g + i])); buka[d.skim] = new Set(g ? [g[0]] : []); }
     root.innerHTML = `
       <div class="page-head"><p class="eyebrow">Pengurusan Industri Halal</p><h1 id="h-halal">Audit Halal</h1>
         <p class="lead">Senarai semak audit dalaman dan log ketakakuran (NCR) untuk latihan amali. Semua data disimpan dalam peranti ini sahaja.</p></div>
       <div class="card ah-meta">
+        <div class="field"><label for="hlSkim">Skim pensijilan</label><select id="hlSkim">${SKIM.map(([k, n]) => `<option value="${k}" ${d.skim === k ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></div>
         <div class="form-grid"><div class="field"><label for="hlCo">Nama syarikat atau premis</label><input id="hlCo" maxlength="80" value="${esc(d.syarikat)}" placeholder="cth. Kilang Roti Contoh Sdn Bhd"></div>
         <div class="field"><label for="hlDate">Tarikh audit</label><input id="hlDate" type="date" value="${esc(d.tarikh)}"></div></div>
         <div class="stat-row four">
@@ -62,17 +94,21 @@
           <div class="stat"><div class="v num">${open.filter(n => n.kat === 'major').length}</div><div class="k">NCR major terbuka</div></div>
           <div class="stat"><div class="v num">${open.length}</div><div class="k">Jumlah NCR terbuka</div></div>
         </div>
-        <div class="actions"><button class="btn sm ghost" id="hlPrint">${icon('file')}Cetak atau simpan PDF</button><button class="btn sm ghost danger" id="hlReset">Mula audit baharu</button></div>
+        <div class="actions"><button class="btn sm ghost" id="hlPrint">${icon('file')}Cetak atau simpan PDF</button>${j ? `<a class="btn sm ghost" href="data/audit-halal/senarai-semak-${d.skim}.xlsx" download>Muat turun Excel</a><a class="btn sm ghost" href="data/audit-halal/senarai-semak-${d.skim}.pdf" target="_blank" rel="noopener">PDF kosong</a>` : ''}<button class="btn sm ghost danger" id="hlReset">Mula audit baharu</button></div>
       </div>
+      ${j ? `<p class="small">${esc(j.intro)}</p><p class="small muted">Rujukan bertanda * bermaksud hanya tajuk klausa disahkan daripada pratonton rasmi Jabatan Standard Malaysia; isinya diringkaskan.${d.skim === 'produk-makanan' ? ' "(saranan)" bermaksud klausa cadangan ("should"), bukan kewajipan ("shall").' : ''}</p>` : ''}
 
       <div class="block-head"><h2>Senarai semak</h2></div>
-      ${SEMAK.map(([g, name, items]) => {
+      <div id="hlList">${d.skim !== 'ringkas' && !j ? '<p class="muted small">Memuatkan senarai semak...</p>' : G.map(([g, name, items, lead]) => {
         const done = items.filter((_, i) => d.jawab[g + i]).length;
-        return `<details class="card ah-grp" ${done < items.length ? 'open' : ''}><summary><b>${esc(name)}</b><span class="muted small">${done}/${items.length}</span></summary>
-          ${items.map((t, i) => { const k = g + i, a = d.jawab[k]; return `<div class="ah-item ${a ? 'ah-' + a : ''}"><p>${esc(t)}</p>
-            <div class="segmented small" role="group" aria-label="Status">${Object.entries(ST).map(([s, n]) => `<button type="button" class="seg ${a === s ? 'active' : ''}" data-hl="${k}" data-st="${s}" aria-pressed="${a === s}">${n}</button>`).join('')}</div></div>`; }).join('')}
+        return `<details class="card ah-grp" data-grp="${esc(g)}" ${buka[d.skim].has(g) ? 'open' : ''}><summary><b>${esc(name)}</b><span class="muted small">${done}/${items.length}</span></summary>
+          ${lead ? `<p class="small muted ah-lead">${esc(lead)}</p>` : ''}
+          ${items.map(([t, ref], i) => { const k = g + i, a = d.jawab[k], no = j ? g.split(':')[1] + (i + 1) + '. ' : ''; return `<div class="ah-item ${a ? 'ah-' + a : ''}"><p>${esc(no + t)}${ref ? `<span class="ah-ref">${esc(ref)}</span>` : ''}</p>
+            <div class="segmented small" role="group" aria-label="Status">${Object.entries(ST).map(([s, n]) => `<button type="button" class="seg ${a === s ? 'active' : ''}" data-hl="${esc(k)}" data-st="${s}" aria-pressed="${a === s}">${n}</button>`).join('')}</div></div>`; }).join('')}
         </details>`;
-      }).join('')}
+      }).join('')}</div>
+      ${j ? `<details class="card ah-grp"><summary><b>Rujukan yang digunakan</b><span class="muted small">${j.rujukan.length}</span></summary>
+        <div class="list">${j.rujukan.map(r => `<div class="ah-rj"><p class="small"><b>${esc(r.ringkas)}</b>: ${r.url && /^https?:\/\//.test(r.url) ? `<a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.penuh)}</a>` : esc(r.penuh)}</p><p class="small muted">${esc(r.status)}</p></div>`).join('')}</div></details>` : ''}
 
       <div class="block-head"><h2>Log ketakakuran (NCR)</h2><button type="button" class="link-btn" id="hlAddNcr">Tambah NCR</button></div>
       <form class="card ah-ncr-form hidden" id="hlNcrForm" autocomplete="off">
@@ -100,7 +136,7 @@
         <figure class="card rajah"><figcaption>Proses pensijilan halal Malaysia</figcaption><img src="images/rajah/pensijilan-halal.svg" alt="Rajah aliran pensijilan halal: sediakan dokumen, mohon melalui MYeHALAL, bayar fi, semakan dokumen, audit premis, Panel Pengesahan Halal, sijil dikeluarkan, kemudian pemantauan dan pembaharuan" loading="lazy" decoding="async"></figure>
         <figure class="card rajah"><figcaption>Kitaran tindakan NCR</figcaption><img src="images/rajah/aliran-ncr.svg" alt="Rajah kitaran NCR: penemuan audit, rekod NCR, analisis punca, tindakan pembetulan, semak keberkesanan, tutup NCR dan tindakan pencegahan" loading="lazy" decoding="async"></figure>
       </div>
-      <p class="source">Senarai semak disusun berdasarkan MS 1500:2019 (Makanan halal: keperluan umum) dan Manual Prosedur Pensijilan Halal Malaysia (Domestik) 2020 untuk tujuan pembelajaran. Ia bukan pengganti audit rasmi JAKIM atau JAIN. Rujuk <a href="https://myehalal.halal.gov.my" target="_blank" rel="noopener">MYeHALAL</a> untuk keperluan terkini.</p>`;
+      <p class="source">Senarai semak ringkas disusun berdasarkan MS 1500:2019 dan Manual Prosedur Pensijilan Halal Malaysia (Domestik) 2020. Senarai semak penuh setiap skim merujuk MPPHM 2020, MHMS 2020, standard MS bagi skim itu dan undang-undang berkaitan, dengan rujukan bagi setiap item. Semuanya untuk tujuan pembelajaran. Ia bukan pengganti audit rasmi JAKIM atau JAIN. Rujuk <a href="https://myehalal.halal.gov.my" target="_blank" rel="noopener">MYeHALAL</a> untuk keperluan terkini.</p>`;
   }
   const save = () => store.set('halalAudit', d);
 
@@ -117,7 +153,7 @@
     if ((b = t.closest('[data-hl]'))) {
       const k = b.dataset.hl, s = b.dataset.st;
       d.jawab[k] = d.jawab[k] === s ? undefined : s; save();
-      const item = SEMAK.find(([g]) => k.startsWith(g)), text = item[2][+k.slice(item[0].length)];
+      const grp = kumpulan().find(([g]) => k.startsWith(g) && /^\d+$/.test(k.slice(g.length))), text = grp ? grp[2][+k.slice(grp[0].length)][0] : '';
       render();
       if (d.jawab[k] === 'n' && !d.ncr.some(n => n.item === k)) { ncrForm(text + ': '); $('#hlNcrForm').dataset.item = k; }
       return;
@@ -126,7 +162,7 @@
     if (t.closest('#ncCancel')) return $('#hlNcrForm').classList.add('hidden');
     if ((b = t.closest('[data-ncr-del]'))) { if (!confirm('Padam NCR ini?')) return; d.ncr.splice(+b.dataset.ncrDel, 1); save(); return render(); }
     if (t.closest('#hlPrint')) return window.print();
-    if (t.closest('#hlReset')) { if (!confirm('Padam senarai semak dan NCR audit ini?')) return; d = { syarikat: '', tarikh: '', jawab: {}, ncr: [] }; save(); return render(); }
+    if (t.closest('#hlReset')) { if (!confirm('Padam senarai semak dan NCR audit ini?')) return; d = { syarikat: '', tarikh: '', jawab: {}, ncr: [], skim: d.skim }; delete buka[d.skim]; save(); return render(); }
   });
   root.addEventListener('submit', e => {
     if (e.target.id !== 'hlNcrForm') return;
@@ -139,9 +175,14 @@
     if (e.target.id === 'hlCo') { d.syarikat = e.target.value; save(); }
     if (e.target.id === 'hlDate') { d.tarikh = e.target.value; save(); }
   });
+  root.addEventListener('toggle', e => {
+    const g = e.target.dataset && e.target.dataset.grp;
+    if (g && buka[d.skim]) e.target.open ? buka[d.skim].add(g) : buka[d.skim].delete(g);
+  }, true);
   root.addEventListener('change', e => {
+    if (e.target.id === 'hlSkim') { d.skim = e.target.value; save(); return muat(d.skim); }
     if (e.target.id === 'hlDate') { d.tarikh = e.target.value; save(); }
     if (e.target.dataset.ncrSt != null) { d.ncr[+e.target.dataset.ncrSt].st = e.target.value; save(); render(); }
   });
-  render();
+  muat(d.skim);
 })();
