@@ -1,0 +1,77 @@
+/* Bijak Labur: Studio Skrin Kunci (wallpaper jadual kelas) */
+.kc-dlg { width: min(1040px, calc(100% - 24px)); max-height: calc(100dvh - 24px); padding: 0; overflow: auto; background: var(--bg); border: 1px solid var(--rule, var(--border)); }
+.kc-top { position: sticky; top: 0; z-index: 4; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; background: var(--bg); border-bottom: 1px solid var(--border); }
+.kc-top h2 { margin: 0; font-size: 1.2rem; }
+.kc-main { display: grid; gap: 14px; padding: 14px; }
+@media (min-width: 880px) {
+  .kc-main { grid-template-columns: minmax(300px, 400px) minmax(0, 1fr); align-items: start; gap: 28px; padding: 20px 22px 22px; }
+  .kc-stage { position: sticky; top: 70px; }
+}
+.kc-phone { display: grid; place-items: center; }
+#kcPrev { display: block; height: min(52dvh, 560px); width: auto; max-width: 100%; border-radius: 34px; background: #1b1b24; box-shadow: 0 0 0 5px #0c0c10, 0 0 0 6px rgba(255,255,255,.18), 0 22px 44px -18px rgba(0,0,0,.55); }
+@media (min-width: 880px) { #kcPrev { height: min(66dvh, 640px); } }
+.kc-sub { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 14px 0 8px; font-size: .85rem; color: var(--muted); }
+.kc-days { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 6px; scrollbar-width: none; scroll-snap-type: x proximity; }
+.kc-days::-webkit-scrollbar { display: none; }
+.kc-day { flex: none; scroll-snap-align: start; padding: 8px 15px; border: 1px solid var(--border); border-radius: 99px; background: var(--surface); color: var(--text); font: inherit; font-weight: 650; font-size: .88rem; cursor: pointer; }
+.kc-day.on { background: var(--text); color: var(--bg); border-color: var(--text); }
+.kc-ctl { display: grid; gap: 14px; min-width: 0; align-content: start; }
+.kc-tabs { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; width: 100%; }
+.kc-panel { display: grid; gap: 14px; min-height: 150px; }
+.kc-tpls { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.kc-tpl { display: grid; gap: 3px; padding: 6px; border: 1.5px solid transparent; border-radius: 12px; background: none; color: var(--text); font: inherit; text-align: center; cursor: pointer; align-content: start; }
+.kc-tpl canvas { width: 100%; height: auto; border-radius: 10px; background: #222; display: block; }
+.kc-tpl.on { border-color: var(--ink-red, var(--brand)); background: var(--surface); }
+.kc-tpl b { font-size: .86rem; margin-top: 4px; }
+.kc-tpl small { font-size: .7rem; color: var(--muted); line-height: 1.25; }
+.kc-sws { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.kc-bg { aspect-ratio: 1.45; display: flex; align-items: flex-end; padding: 6px 8px; border: 0; border-radius: var(--radius); color: #fff; font: inherit; font-size: .74rem; font-weight: 700; text-shadow: 0 1px 4px rgba(0,0,0,.5); text-align: left; cursor: pointer; }
+.kc-bg.on { outline: 2.5px solid var(--ink-red, var(--brand)); outline-offset: 2px; }
+.kc-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.kc-col { display: inline-flex; align-items: center; gap: 10px; padding: 6px 12px 6px 6px; border: 1px solid var(--border); border-radius: var(--radius); font-size: .88rem; font-weight: 600; background: var(--surface); }
+.kc-col.on, .kc-file.on { border-color: var(--ink-red, var(--brand)); }
+.kc-col input { width: 34px; height: 34px; padding: 0; border: 0; background: none; cursor: pointer; }
+.kc-file { cursor: pointer; }
+.kc-grp { display: grid; gap: 6px; }
+.kc-grp > span, .kc-sel > span { font-size: .8rem; font-weight: 700; color: var(--muted); }
+.kc-seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; width: 100%; }
+.kc-rng { display: grid; gap: 4px; }
+.kc-rng span { display: flex; justify-content: space-between; font-size: .84rem; font-weight: 600; }
+.kc-rng input { width: 100%; accent-color: var(--ink-red, var(--brand)); }
+.kc-sel { display: grid; gap: 6px; }
+.kc-sel select { width: 100%; font: inherit; }
+.kc-sws2 { display: grid; }
+.kc-sw { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border); font-weight: 550; }
+.kc-sw input { appearance: none; -webkit-appearance: none; flex: none; width: 46px; height: 28px; border-radius: 99px; background: var(--border); position: relative; cursor: pointer; transition: background .15s; }
+.kc-sw input::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: transform .15s; }
+.kc-sw input:checked { background: var(--up); }
+.kc-sw input:checked::after { transform: translateX(18px); }
+.kc-sw input:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.kc-scroll { display: block; min-width: 0; }
+.kc-note { margin: 14px 0 0; }
+.kc-act { display: grid; grid-template-columns: 1.3fr 1fr; gap: 8px; padding: 4px 0 0; }
+.kc-act .btn { justify-content: center; min-height: 48px; }
+.kc-help { width: min(440px, calc(100% - 24px)); }
+.kc-help h2 { margin: 0 34px 10px 0; }
+.kc-help h3 { margin: 14px 0 4px; font-size: .95rem; }
+.kc-help ol { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+.kc-main > *, .kc-ctl > * { min-width: 0; }
+.kc-tabs .seg { padding: 8px 4px; white-space: nowrap; text-align: center; }
+.kc-jam { padding: 3px 12px; font-size: .8rem; }
+/* Telefon dan tablet: pratonton kekal di atas, kawalan digulung di bawah, butang muat turun sentiasa kelihatan */
+@media (max-width: 879px) {
+  .kc-dlg[open] { display: flex; flex-direction: column; overflow: hidden; height: calc(100dvh - 24px); }
+  .kc-top { position: static; flex: none; }
+  .kc-main { display: flex; flex-direction: column; flex: 1; min-height: 0; gap: 6px; padding: 10px 14px 0; }
+  .kc-stage { flex: none; }
+  #kcPrev { height: min(31dvh, 320px); }
+  .kc-sub { margin: 10px 0 4px; }
+  .kc-ctl { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px; padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
+  .kc-tabs { flex: none; }
+  .kc-scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; align-content: start; }
+  .kc-panel { min-height: 0; }
+  .kc-note { margin-bottom: 6px; }
+  .kc-act { flex: none; }
+}
+@media (max-width: 560px) { .kc-dlg, .kc-dlg[open] { width: 100%; max-width: 100%; height: 100dvh; max-height: 100dvh; margin: 0; border: 0; } }
+@media (prefers-reduced-motion: reduce) { .kc-sw input, .kc-sw input::after { transition: none; } }
