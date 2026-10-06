@@ -190,7 +190,8 @@ const PDF = {
   bnmsr: ['Credit card based on ujrah. The SAC resolved that a credit card structured on ujrah is permissible.', 'Late payment charges ta`widh and gharamah may be imposed on defaulting customers.']
 };
 const files = buildIndex(PDF);
-assert.ok(files.has('rujukan/p/jakim/2.txt') && files.has('rujukan/meta.json') && files.has('rujukan/i/0.json'));
+assert.ok(files.has('rujukan/p/jakim/0.json') && files.has('rujukan/meta.json') && files.has('rujukan/i/0.json'));
+assert.deepEqual(JSON.parse(files.get('rujukan/p/jakim/0.json')).length, 3);
 const renv = { RUJUKAN: { fetch: async req => { const p = new URL(req.url).pathname.slice(1); return files.has(p) ? new Response(files.get(p)) : new Response('', { status: 404 }); } } };
 let hits = await search(renv, expand('Apakah hukum melabur kripto?'));
 assert.equal(hits[0].id, 'pdf:jakim:2');
@@ -233,7 +234,7 @@ greply = () => gem({ status: 'jawab', ringkasan: 'Mesti sama timbangan dan tunai
   { id: 'kitab:fathqarib:143', petikan: 'ولا يجوز بيع الذهب بالذهب إلا متماثلا نقدا', maksud: 'Tidak harus menjual emas dengan emas kecuali sama dan tunai.' }
 ] });
 d = await (await call({ q: 'Hukum jual beli emas dengan emas' }, 'https://bijaklabur.my', { ...genv, ...kenv })).json();
-assert.ok(gsent.contents[0].parts.some(p => p.text.includes('[kitab:fathqarib:143] (kitab) Fath al-Qarib') && p.text.includes('Halaman Shamela 143')));
+assert.ok(gsent.contents[0].parts.some(p => p.text.includes('[kitab:fathqarib:143] (kitab, mazhab Syafie) Fath al-Qarib') && p.text.includes('Halaman Shamela 143')));
 assert.deepEqual([d.sumber[0].jenis, d.sumber[0].url, d.sumber[0].shamela, d.sumber[0].jilid, d.sumber[0].halaman, d.sumber[0].disahkan],
   ['kitab', 'https://shamela.ws/book/35120/143', '143', '1', '181', true]);
 
@@ -717,4 +718,29 @@ console.log('Semua ujian Tanya AI lulus');
   assert.equal(r2.status, 200);
   globalThis.fetch = realFetch; resetPenghala();
   console.log('penghala 9Router OK');
+}
+
+// Rujukan berskala besar: muka surat dikumpul 50 sehalaman fail, berat BM25 dalam indeks, kitab pelbagai didahulukan
+{
+  const { buildIndex: bi, search: cari, page: hal, PAGES } = await import('./src/rujukan.js');
+  assert.equal(PAGES, 50);
+  const ids = KITAB.map(b => b.id);
+  assert.equal(new Set(ids).size, ids.length);
+  for (const k of ['kifayah', 'asybah', 'bulugh', 'bidayah', 'ianah', 'mughni', 'raudhah', 'majmu', 'zuhaili']) assert.ok(KITAB.some(b => b.k === k), k);
+  const banyak = Array.from({ length: 120 }, (_, i) => i === 0 ? 'باب الربا في البيع' : `صفحة ${i + 1} ` + 'كلام '.repeat(20));
+  banyak[99] = 'باب الربا والصرف في الذهب';
+  const f2 = bi({ zuhaili: banyak, mughni: ['باب الربا في الذهب والفضة'], kifayah: ['فصل في الربا والذهب'] });
+  assert.ok(f2.has('rujukan/p/zuhaili/0.json') && f2.has('rujukan/p/zuhaili/1.json') && f2.has('rujukan/p/zuhaili/2.json') && !f2.has('rujukan/p/zuhaili/3.json'));
+  assert.ok(![...f2.keys()].some(p => p.endsWith('.txt')));
+  const m = JSON.parse(f2.get('rujukan/meta.json'));
+  assert.equal(m.N, 122); assert.equal(m.dl, undefined);
+  const e2 = { RUJUKAN: { fetch: async req => { const p = new URL(req.url).pathname.slice(1); return f2.has(p) ? new Response(f2.get(p)) : new Response('', { status: 404 }); } } };
+  assert.equal(await hal(e2, 'zuhaili', 100), 'باب الربا والصرف في الذهب');
+  assert.equal(await hal(e2, 'zuhaili', 51), 'صفحة 51 ' + 'كلام '.repeat(20));
+  assert.equal(await hal(e2, 'zuhaili', 500), null);
+  const h2 = await cari(e2, 'الربا الذهب', 8);
+  // Tiga kitab berbeza didahulukan sebelum halaman kedua Zuhaili
+  assert.deepEqual(new Set(h2.slice(0, 3).map(h => h.k)), new Set(['zuhaili', 'mughni', 'kifayah']), JSON.stringify(h2.map(h => h.id)));
+  assert.ok(h2.find(h => h.id === 'kitab:zuhaili:100').teks.includes('الصرف'));
+  console.log('rujukan berskala besar OK');
 }

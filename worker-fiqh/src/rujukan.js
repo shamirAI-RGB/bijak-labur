@@ -4,9 +4,11 @@
  * jadi pautan https://shamela.ws/book/ID/N membuka muka surat yang sama.
  *
  * Teks dan indeks dibina semasa pemasangan (scripts/muat-rujukan.mjs) ke dalam folder aset worker:
- *   rujukan/meta.json          { docs: { k: bilangan muka surat }, avgdl, dl: { "k:n": panjang } }
- *   rujukan/i/<baldi>.json     { istilah: [[k, n, kekerapan], ...] }
- *   rujukan/p/<k>/<n>.txt      teks muka surat n (PDF: n bermula dari 1, sama seperti #page=n; kitab: halaman Shamela)
+ *   rujukan/meta.json          { docs: { k: bilangan muka surat }, N: jumlah muka surat, avgdl }
+ *   rujukan/i/<baldi>.json     { istilah: [[k, n, berat], ...] }  berat = bahagian BM25 bagi kekerapan dan panjang muka surat
+ *   rujukan/p/<k>/<c>.json     teks muka surat c*PAGES+1 .. (c+1)*PAGES (PDF: n bermula dari 1, sama seperti #page=n;
+ *                              kitab: halaman Shamela). Muka surat dikumpul supaya puluhan ribu halaman kitab kekal di bawah
+ *                              had bilangan fail aset Cloudflare.
  * Aset ini tidak dihidangkan terus kepada umum (run_worker_first); pelayan hanya memetik muka surat yang relevan.
  */
 import '../../js/fiqh-data.js';
@@ -15,7 +17,9 @@ const D = globalThis.FiqhData;
 export const MODEN = D.MODEN;
 export const KITAB = Object.entries(D.KITAB).map(([k, b]) => ({ ...b, k, jenis: 'kitab', url: D.shamela(b.id) }));
 export const DOC = Object.fromEntries([...MODEN.map(d => [d.k, { ...d, jenis: 'dokumen' }]), ...KITAB.map(d => [d.k, d])]);
-export const BUCKETS = 64;
+export const BUCKETS = 512;
+export const PAGES = 50;
+export const chunkPath = (k, n) => `rujukan/p/${k}/${Math.floor((n - 1) / PAGES)}.json`;
 const K1 = 1.2, B = 0.75;
 
 const STOP = new Set(('dan yang untuk dengan dalam ini itu atau pada oleh dari daripada kepada ialah adalah tidak boleh akan juga bagi telah serta jika maka secara tersebut sebagai iaitu lebih kerana hendaklah ' +
@@ -41,20 +45,27 @@ export function bucket(t) {
 
 /** docs = { k: [teks muka surat 1, teks muka surat 2, ...] } -> Map(laluan aset -> kandungan) */
 export function buildIndex(docs) {
-  const files = new Map(), post = Array.from({ length: BUCKETS }, () => ({})), dl = {}, meta = { docs: {}, avgdl: 0, dl };
-  let total = 0, count = 0;
+  const files = new Map(), post = Array.from({ length: BUCKETS }, () => ({})), meta = { docs: {}, N: 0, avgdl: 0 };
+  const all = [];
+  let total = 0;
   for (const [k, pages] of Object.entries(docs)) {
     meta.docs[k] = pages.length;
+    for (let c = 0; c * PAGES < pages.length; c++) files.set(`rujukan/p/${k}/${c}.json`, JSON.stringify(pages.slice(c * PAGES, (c + 1) * PAGES).map(t => String(t || ''))));
     pages.forEach((text, i) => {
-      const n = i + 1, toks = tokens(text);
-      files.set(`rujukan/p/${k}/${n}.txt`, String(text || ''));
-      dl[`${k}:${n}`] = toks.length; total += toks.length; count++;
+      const toks = tokens(text);
+      if (!toks.length) return;
+      total += toks.length; meta.N++;
       const tf = new Map();
       for (const t of toks) tf.set(t, (tf.get(t) || 0) + 1);
-      for (const [t, f] of tf) (post[bucket(t)][t] ||= []).push([k, n, f]);
+      all.push([k, i + 1, toks.length, tf]);
     });
   }
-  meta.avgdl = count ? total / count : 0;
+  meta.avgdl = meta.N ? total / meta.N : 0;
+  // Berat BM25 (tanpa idf) dikira semasa bina, supaya pelayan tidak perlu memuat panjang setiap muka surat
+  for (const [k, n, len, tf] of all) {
+    const norm = K1 * (1 - B + B * len / meta.avgdl);
+    for (const [t, f] of tf) (post[bucket(t)][t] ||= []).push([k, n, +(f * (K1 + 1) / (f + norm)).toFixed(3)]);
+  }
   files.set('rujukan/meta.json', JSON.stringify(meta));
   post.forEach((p, b) => files.set(`rujukan/i/${b}.json`, JSON.stringify(p)));
   return files;
@@ -81,18 +92,19 @@ export async function assetTag(env, path = 'rujukan/cetakan.json') {
 /** Teks satu muka surat, atau null */
 export async function page(env, k, n) {
   if (!env.RUJUKAN || !DOC[k] || !(n >= 1)) return null;
-  const r = await asset(env, `rujukan/p/${k}/${n}.txt`);
-  return r ? r.text() : null;
+  const list = await assetJson(env, chunkPath(k, n));
+  const t = list && list[(n - 1) % PAGES];
+  return typeof t === 'string' ? t : null;
 }
 
 /** Cari muka surat paling relevan (BM25). Memulangkan [{ id, k, n, skor, teks }] */
 export async function search(env, query, limit = 6) {
   if (!env.RUJUKAN) return [];
   const meta = await assetJson(env, 'rujukan/meta.json');
-  if (!meta || !meta.avgdl) return [];
+  if (!meta || !meta.N) return [];
   const terms = [...new Set(tokens(query))].slice(0, 24);
   if (!terms.length) return [];
-  const N = Object.keys(meta.dl).length, byBucket = new Map();
+  const N = meta.N, byBucket = new Map();
   for (const t of terms) { const b = bucket(t); if (!byBucket.has(b)) byBucket.set(b, []); byBucket.get(b).push(t); }
   const idx = await Promise.all([...byBucket.keys()].map(b => assetJson(env, `rujukan/i/${b}.json`)));
   const score = new Map();
@@ -102,9 +114,8 @@ export async function search(env, query, limit = 6) {
       const list = p[t];
       if (!list) continue;
       const idf = Math.log(1 + (N - list.length + 0.5) / (list.length + 0.5));
-      for (const [k, n, f] of list) {
-        const id = `${k}:${n}`, len = meta.dl[id] || meta.avgdl;
-        const s = idf * (f * (K1 + 1)) / (f + K1 * (1 - B + B * len / meta.avgdl));
+      for (const [k, n, w] of list) {
+        const id = `${k}:${n}`, s = idf * w;
         const cur = score.get(id) || { k, n, skor: 0, padan: 0 };
         cur.skor += s; cur.padan++;
         score.set(id, cur);
@@ -117,9 +128,18 @@ export async function search(env, query, limit = 6) {
   // Kitab Arab dan dokumen moden disaring berasingan (skor teks Melayu lebih tinggi daripada teks Arab), supaya kedua-duanya diberi kepada model
   const pick = (list, n) => list.filter(x => x.skor >= list[0].skor * 0.4).slice(0, n);
   const kitab = ranked.filter(x => DOC[x.k] && DOC[x.k].jenis === 'kitab'), moden = ranked.filter(x => !(DOC[x.k] && DOC[x.k].jenis === 'kitab'));
-  const nk = kitab.length ? Math.min(3, Math.ceil(limit / 2)) : 0;
-  const top = [...(moden.length ? pick(moden, limit - Math.min(nk, kitab.length)) : []), ...(kitab.length ? pick(kitab, nk) : [])];
-  const [texts, cetak] = await Promise.all([Promise.all(top.map(x => page(env, x.k, x.n))), nk ? assetJson(env, 'rujukan/cetakan.json') : null]);
+  // Kitab: utamakan kitab yang berbeza (cth. matan Syafie, syarah dan fiqh perbandingan) sebelum halaman kedua kitab yang sama
+  const pelbagai = (list, n) => {
+    const ok = list.filter(x => x.skor >= list[0].skor * 0.4), dulu = [], kemudian = [], ada = new Set();
+    for (const x of ok) (ada.has(x.k) ? kemudian : (ada.add(x.k), dulu)).push(x);
+    return [...dulu, ...kemudian].slice(0, n);
+  };
+  const nk = kitab.length ? Math.min(4, Math.ceil(limit / 2)) : 0;
+  const top = [...(moden.length ? pick(moden, limit - Math.min(nk, kitab.length)) : []), ...(kitab.length ? pelbagai(kitab, nk) : [])];
+  const chunks = new Map(top.map(x => [chunkPath(x.k, x.n), null]));
+  await Promise.all([...chunks.keys()].map(async p => chunks.set(p, await assetJson(env, p))));
+  const texts = top.map(x => { const l = chunks.get(chunkPath(x.k, x.n)); const t = l && l[(x.n - 1) % PAGES]; return typeof t === 'string' ? t : null; });
+  const cetak = nk ? await assetJson(env, 'rujukan/cetakan.json') : null;
   return top.map((x, i) => {
     const isK = DOC[x.k] && DOC[x.k].jenis === 'kitab', teks = texts[i] || '';
     return { id: `${isK ? 'kitab' : 'pdf'}:${x.k}:${x.n}`, k: x.k, n: x.n, skor: +x.skor.toFixed(2), teks, ...(isK ? { cetak: cetakPdf(cetak && cetak[x.k], x.n) } : {}) };
@@ -195,6 +215,6 @@ export const PDF_MAX = 3500;
 export const pagesText = hits => hits.map(h => {
   const d = DOC[h.k];
   return d.jenis === 'kitab'
-    ? `[${h.id}] (kitab) ${d.name} (${d.ar}), ${d.by}. Halaman Shamela ${h.n}.\n${h.teks.slice(0, PDF_MAX)}`
+    ? `[${h.id}] (kitab${d.banding ? ', perbandingan mazhab' : ', mazhab Syafie'}) ${d.name} (${d.ar}), ${d.by}. Halaman Shamela ${h.n}.\n${h.teks.slice(0, PDF_MAX)}`
     : `[${h.id}] (dokumen) ${d.name}, ${d.by}. Muka surat PDF ${h.n}.\n${h.teks.slice(0, PDF_MAX)}`;
 }).join('\n\n');

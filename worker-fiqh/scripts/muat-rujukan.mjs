@@ -9,12 +9,12 @@ import { mkdir, writeFile, readFile, rm, appendFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
-import { MODEN, KITAB, buildIndex, search, expand } from '../src/rujukan.js';
+import { MODEN, KITAB, buildIndex, search, expand, normText } from '../src/rujukan.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..'), OUT = join(ROOT, 'aset'), CACHE = join(ROOT, '.cache', 'shamela');
 const UA = 'Mozilla/5.0 (BijakLabur rujukan; +https://bijaklabur.my)';
 // Had masa muat turun Shamela bagi satu larian; baki halaman diambil pada larian seterusnya (cache)
-const DEADLINE = Date.now() + (+process.env.RUJUKAN_MINIT || 18) * 60000;
+const DEADLINE = Date.now() + (+process.env.RUJUKAN_MINIT || 24) * 60000;
 const summary = s => process.env.GITHUB_STEP_SUMMARY ? appendFile(process.env.GITHUB_STEP_SUMMARY, s + '\n') : null;
 
 async function download(url) {
@@ -91,9 +91,14 @@ async function shamelaBook(b) {
       if (!first || first.status !== 200) throw new Error(`halaman utama: ${first ? first.status + ' ' + (first.error || '') : '404'}`);
       first.html = first.html.replace(/class="[^"]*\bnass\b/g, 'class="x');
     }
+    // Pastikan ID Shamela ialah kitab yang dimaksudkan: tajuk halaman mesti mengandungi tajuk Arab kitab (dua kata pertama)
+    const tajuk = htmlText((first.html.match(/<title>([\s\S]*?)<\/title>/i) || [])[1] || '');
+    const kunci = normText(b.ar).split(' ').slice(0, 2).join(' ');
+    console.log(`  tajuk Shamela: ${tajuk}`);
+    if (!normText(tajuk).includes(kunci)) throw new Error(`tajuk tidak sepadan (dijumpai: ${tajuk.slice(0, 120)})`);
     // Butang halaman terakhir dalam navigasi
     const nums = [...first.html.matchAll(new RegExp(`/book/${b.id}/(\\d+)`, 'g'))].map(m => +m[1]);
-    const last = Math.min(Math.max(1, ...nums), 6000);
+    const last = Math.min(Math.max(1, ...nums), 10000);
     pages = new Array(last).fill('');
     pages[0] = shamelaText(first.html);
     console.log(`  halaman terakhir dijangka: ${last}; contoh halaman 1: ${pages[0].slice(0, 160).replace(/\n/g, ' ')}`);

@@ -49,7 +49,6 @@
   /* ---------- Utama ---------- */
   function home(head) {
     const counts = Object.fromEntries(D.BAB.map(b => [b.k, D.MASALAH.filter(m => m.bab === b.k).length]));
-    const kitabSeen = new Set();
     el.innerHTML = head + `
       <p class="lead">Setiap jawapan dipautkan terus kepada sumbernya. Teks ayat dan hadis dimuat daripada pangkalan data asal semasa anda membukanya, bukan ditulis semula oleh AI. Rujukan yang tidak dapat disahkan tidak dimasukkan.</p>
       ${chainVisual()}
@@ -67,7 +66,7 @@
         <div id="fqAyat"></div>
         <div class="fq-out" id="fqOut">${outLinks('')}</div></div>
       <h2 class="grid-title">Perpustakaan kitab muktabar</h2>
-      <div class="list">${D.BAB[0].kitab.concat(D.BAB[4].kitab).filter(([k]) => !kitabSeen.has(k) && kitabSeen.add(k)).map(([k]) => { const b = D.KITAB[k]; return `<a class="fq-kitab" href="${D.shamela(b.id)}" target="_blank" rel="noopener"><span class="fq-kitab-ar" lang="ar" dir="rtl">${b.ar}</span><span class="q-main"><b>${esc(b.name)}</b><small>${esc(b.by)}</small></span><span class="fq-lvl-tag">${b.lvl}</span>${icon('link')}</a>`; }).join('')}</div>
+      <div class="list">${Object.keys(D.KITAB).map(k => { const b = D.KITAB[k]; return `<a class="fq-kitab" href="${D.shamela(b.id)}" target="_blank" rel="noopener"><span class="fq-kitab-ar" lang="ar" dir="rtl">${b.ar}</span><span class="q-main"><b>${esc(b.name)}</b><small>${esc(b.by)}</small></span><span class="fq-lvl-tag">${b.lvl}</span>${icon('link')}</a>`; }).join('')}</div>
       <h2 class="grid-title">Rujukan rasmi moden</h2>
       <p class="muted small">Himpunan keputusan rasmi untuk isu semasa seperti kewangan Islam, pelaburan, perubatan dan teknologi. Tanya AI mencari dalam teks dokumen ini dan memaut terus ke muka surat PDF yang dipetik.</p>
       <div class="list">${D.MODEN.map(m => `<a class="fq-kitab" href="${esc(m.url)}" target="_blank" rel="noopener"><span class="fq-kitab-ar fq-pdf">PDF</span><span class="q-main"><b>${esc(m.name)}</b><small>${esc(m.by)}, ${m.tahun} · ${esc(m.skop)}</small></span><span class="fq-lvl-tag">${m.bahasa === 'ms' ? 'BM' : 'EN'}</span>${icon('link')}</a>`).join('')}</div>
@@ -189,7 +188,7 @@
       <div class="fq-crumb"><a href="#ibadah/fiqh">Fiqh</a>${icon('chev')}<span>Tanya AI</span></div>
       <div class="fq-hero" style="--c:#c9853a"><span lang="ar" dir="rtl">اسأل</span><div><h2>Tanya AI berasaskan rujukan</h2><p>Setiap jawapan mesti bersandarkan sumber yang boleh anda buka sendiri.</p></div></div>
       <ol class="fq-flow fq-ai-rules">
-        <li><span class="num">1</span>AI hanya boleh memetik kitab muktabar (Shamela), Al-Quran, hadis, fatwa rasmi Malaysia dan ${D.MODEN.length} dokumen keputusan rasmi moden untuk isu semasa.</li>
+        <li><span class="num">1</span>AI hanya boleh memetik ${Object.keys(D.KITAB).length} kitab muktabar (Shamela; mazhab Syafie dan perbandingan mazhab), Al-Quran, hadis, fatwa rasmi Malaysia dan ${D.MODEN.length} dokumen keputusan rasmi moden untuk isu semasa.</li>
         <li><span class="num">2</span>Setiap petikan disemak dengan teks halaman sumber. Petikan yang tidak sepadan dibuang.</li>
         <li><span class="num">3</span>Jika tiada sumber yang sah, AI menjawab "tidak pasti" dan meminta anda merujuk mufti.</li>
       </ol>
