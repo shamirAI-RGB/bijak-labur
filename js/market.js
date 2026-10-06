@@ -302,11 +302,12 @@
   /* Halaman utama: suis Kripto / Saham. Harga saham daripada pelayan nota (Yahoo Finance, cache 60 saat) */
   const STOCK_API = 'https://nota.bijaklabur.my/saham';
   const HOME_STOCKS = STOCKS.slice(0, 5).map(([tv, n]) => ({ tv, n, s: tv.split(':')[1], ex: tv.split(':')[0] }));
+  const STOCK_LOGOS = ['AAPL', 'NVDA', 'TSLA', 'MSFT', 'GOOGL'];   // icons/saham/*.svg
   const STOCK_COLORS = { AAPL: '#555', NVDA: '#76b900', TSLA: '#cc0000', MSFT: '#00a4ef', GOOGL: '#4285f4' };
   const stockData = store.get('homeStockQuotes', {});
   let stockTimer = null, stockOk = false;
   $('#homeStocks').innerHTML = HOME_STOCKS.map(({ tv, n, s, ex }) => `<div class="qrow" role="button" tabindex="0" data-tv="${esc(tv)}" id="hs-${esc(s)}">
-      <span class="coin tk" style="--c:${STOCK_COLORS[s] || 'var(--brand)'}">${esc(s.slice(0, 4))}</span>
+      ${STOCK_LOGOS.includes(s) ? `<span class="coin logo"><img src="icons/saham/${s.toLowerCase()}.svg" alt="" width="34" height="34" loading="lazy" decoding="async"></span>` : `<span class="coin tk" style="--c:${STOCK_COLORS[s] || 'var(--brand)'}">${esc(s.slice(0, 4))}</span>`}
       <span style="min-width:0"><div class="q-sym">${esc(s)} <span class="sy sy-belum">${esc(ex)}</span></div><div class="q-name">${esc(n)}</div></span>
       <svg class="spark" viewBox="0 0 64 28" preserveAspectRatio="none" aria-hidden="true"></svg>
       <span class="q-right"><div class="q-price"><span class="skeleton"></span></div><div class="q-chg">&nbsp;</div></span>
