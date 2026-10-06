@@ -1,3 +1,5 @@
+import { toJsonSchema, potongJson, penghalaGenerate, combo } from './penghala.js';
+
 // Panggilan Gemini (peringkat percuma) dengan model sandaran, dikongsi oleh Tanya AI dan Semak Kertas.
 // Diagnosis: Flash penuh kerap memulangkan 503 "high demand"; Flash-Lite menjawab dalam ~2 saat.
 export const GEMINI_MODEL = 'gemini-flash-lite-latest';
@@ -6,22 +8,13 @@ export const GEMINI_FALLBACKS = ['gemini-3.5-flash-lite', 'gemini-flash-latest',
 const RETRY_NEXT = new Set([404, 429, 500, 503, 504]);
 export const geminiModels = env => [...new Set([env.GEMINI_MODEL || GEMINI_MODEL, ...GEMINI_FALLBACKS])];
 
-// Penghala berbilang penyedia (gaya OmniRoute): jika semua model Gemini gagal kerana kuota atau sibuk,
-// permintaan teks dialihkan ke model terbuka di Cloudflare Workers AI (peringkat percuma, binding AI).
+// Penghala berbilang penyedia (gaya 9Router, lihat penghala.js): jika semua model Gemini gagal kerana kuota atau sibuk,
+// permintaan dialihkan ke penyedia berkunci yang aktif, kemudian ke model terbuka di Cloudflare Workers AI (binding AI).
 export const ROUTER_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
+export { toJsonSchema };
 
-// Skema Gemini (type: 'OBJECT') -> JSON Schema biasa (type: 'object')
-export function toJsonSchema(s) {
-  if (!s || typeof s !== 'object') return s;
-  const o = {};
-  for (const [k, v] of Object.entries(s)) {
-    if (k === 'type') o.type = String(v).toLowerCase();
-    else if (k === 'properties') o.properties = Object.fromEntries(Object.entries(v).map(([n, x]) => [n, toJsonSchema(x)]));
-    else if (k === 'items') o.items = toJsonSchema(v);
-    else if (['required', 'enum', 'description'].includes(k)) o[k] = v;
-  }
-  return o;
-}
+/** Ada sekurang-kurangnya satu penyedia teks berkunci (Gemini atau penyedia lain) */
+export const aiSedia = env => !!(env.GEMINI_API_KEY || combo(env).length);
 
 /** Tukar permintaan Gemini kepada Workers AI dan pulangkan jawapan dalam bentuk Gemini. null jika tidak sesuai (cth. ada gambar). */
 export async function routerGenerate(env, body) {
@@ -42,7 +35,7 @@ export async function routerGenerate(env, body) {
   let text = out && out.response;
   if (text && typeof text === 'object') text = JSON.stringify(text);
   text = String(text || '');
-  if (json) { const a = text.indexOf('{'), z = text.lastIndexOf('}'); if (a >= 0 && z > a) text = text.slice(a, z + 1); }
+  if (json) text = potongJson(text);
   if (!text) return null;
   console.log('penghala: Workers AI', env.ROUTER_MODEL || ROUTER_MODEL);
   return { candidates: [{ content: { parts: [{ text }] }, finishReason: 'STOP' }], penghala: 'workers-ai' };
@@ -58,6 +51,8 @@ export async function geminiGenerate(env, body, routerBody = body) {
     // Kuota habis, sibuk atau tiada kunci: cuba penyedia sandaran. Ralat lain (cth. 400) dikekalkan.
     if (![429, 529, 500, 503, 504, 404].includes(err.status)) throw err;
     let d = null;
+    try { d = await penghalaGenerate(env, body); } catch (e) { console.log('penghala gagal', String(e && e.message || e).slice(0, 200)); }
+    if (d) return d;
     try { d = await routerGenerate(env, routerBody); } catch (e) { console.log('penghala gagal', String(e && e.message || e).slice(0, 200)); }
     if (d) return d;
     throw err;

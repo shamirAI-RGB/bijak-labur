@@ -16,7 +16,8 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { BY_ID, CORPUS_TEXT } from './corpus.js';
 import { DOC, search, expand, pagesText, pageUrl, cetakan, assetTag } from './rujukan.js';
-import { GEMINI_MODEL, GEMINI_FALLBACKS, geminiModels, geminiGenerate, geminiText } from './gemini.js';
+import { GEMINI_MODEL, GEMINI_FALLBACKS, geminiModels, geminiGenerate, geminiText, aiSedia } from './gemini.js';
+import { senaraiAktif, combo, PENYEDIA_GAMBAR } from './penghala.js';
 import { semak, MIN_CHARS, MAX_CHARS } from './semak.js';
 import { kalori, check as checkKalori } from './kalori.js';
 import { gambar, check as checkGambar } from './gambar.js';
@@ -205,7 +206,7 @@ export const SYSTEM_KORPUS = SYSTEM + `
 Mod korpus: alat web_search dan web_fetch TIDAK tersedia. Gunakan hanya sumber 2a (id korpus), 2b (quran:SURAH:AYAT) dan 2d (pdf:KOD:MUKASURAT atau kitab:KOD:HALAMAN yang diberi), dan biarkan "url" kosong. Jika korpus tidak menjawab soalan, pulangkan status "tidak_pasti".`;
 
 /* ---------- Model ---------- */
-const provider = env => env.ANTHROPIC_API_KEY ? 'claude' : env.GEMINI_API_KEY ? 'gemini' : '';
+const provider = env => env.ANTHROPIC_API_KEY ? 'claude' : aiSedia(env) ? 'gemini' : '';
 const NO_ANSWER = { status: 'luar_skop', ringkasan: 'Soalan ini tidak dapat dijawab.', huraian: [], khilaf: '', nasihat: '', sumber: [] };
 
 const DOCS_HEAD = 'Dokumen rujukan rasmi moden dan teks kitab (teks muka surat yang paling berkaitan dengan soalan, hasil carian automatik):\n\n';
@@ -266,7 +267,7 @@ Untuk soalan pengguna, berikan istilah carian sahaja (bukan jawapan): nama bab k
 seperti yang lazim dalam Minhaj al-Talibin, Fath al-Qarib dan al-Fiqh al-Manhaji, serta istilah Inggeris dan Melayu yang setara.
 JSON: {"ar":["..."],"en":["..."],"ms":["..."]}, paling banyak 8 istilah setiap bahasa.`;
 export async function kataKunci(env, q) {
-  if (!env.RUJUKAN || !(env.GEMINI_API_KEY || env.AI)) return '';
+  if (!env.RUJUKAN || !(aiSedia(env) || env.AI)) return '';
   try {
     const d = await geminiGenerate(env, JSON.stringify({
       systemInstruction: { parts: [{ text: KATA_KUNCI }] },
@@ -314,7 +315,7 @@ async function tanya(req, env, url, h) {
 
 /* Semak Kertas: ulasan pakar dan pembetulan bahasa (Gemini) */
 async function semakRoute(req, env, h) {
-  if (!env.GEMINI_API_KEY) return json({ error: 'Ulasan pakar belum diaktifkan.' }, 503, h);
+  if (!aiSedia(env)) return json({ error: 'Ulasan pakar belum diaktifkan.' }, 503, h);
   if (!h['access-control-allow-origin']) return json({ error: 'Tidak dibenarkan.' }, 403, h);
   const got = await body(req, h, MAX_CHARS * 4 + 4096, `Teks terlalu panjang (had ${MAX_CHARS.toLocaleString('en')} aksara). Semak bahagian demi bahagian.`);
   if (got.res) return got.res;
@@ -336,7 +337,7 @@ async function semakRoute(req, env, h) {
 
 /* Sihat: anggaran kalori daripada gambar atau penerangan makanan (Gemini) */
 async function kaloriRoute(req, env, h) {
-  if (!env.GEMINI_API_KEY) return json({ error: 'Analisis kalori belum diaktifkan.' }, 503, h);
+  if (!aiSedia(env)) return json({ error: 'Analisis kalori belum diaktifkan.' }, 503, h);
   if (!h['access-control-allow-origin']) return json({ error: 'Tidak dibenarkan.' }, 403, h);
   const got = await body(req, h, 2_000_000, 'Gambar terlalu besar.');
   if (got.res) return got.res;
@@ -358,7 +359,7 @@ async function kaloriRoute(req, env, h) {
 
 /* Studio Gambar AI: FLUX di Cloudflare Workers AI, prompt disediakan dan disemak oleh Gemini */
 async function gambarRoute(req, env, h) {
-  if (!env.AI) return json({ error: 'Studio gambar belum diaktifkan.' }, 503, h);
+  if (!env.AI && !combo(env, PENYEDIA_GAMBAR).length) return json({ error: 'Studio gambar belum diaktifkan.' }, 503, h);
   if (!h['access-control-allow-origin']) return json({ error: 'Tidak dibenarkan.' }, 403, h);
   const got = await body(req, h, 16_000);
   if (got.res) return got.res;
@@ -387,7 +388,7 @@ const AI_ROUTES = {
 };
 
 async function aiRoute(req, env, h, r) {
-  if (!env.GEMINI_API_KEY) return json({ error: `${r.nama} belum diaktifkan.` }, 503, h);
+  if (!aiSedia(env)) return json({ error: `${r.nama} belum diaktifkan.` }, 503, h);
   if (!h['access-control-allow-origin']) return json({ error: 'Tidak dibenarkan.' }, 403, h);
   const got = await body(req, h, r.maxBytes, 'Teks terlalu panjang.');
   if (got.res) return got.res;
@@ -415,7 +416,7 @@ export default {
       if (req.method === 'POST' && url.pathname === '/kalori') return await kaloriRoute(req, env, h);
       if (req.method === 'POST' && url.pathname === '/gambar') return await gambarRoute(req, env, h);
       if (req.method === 'POST' && AI_ROUTES[url.pathname]) return await aiRoute(req, env, h, AI_ROUTES[url.pathname]);
-      if (url.pathname === '/') return json({ ok: true, service: 'bijak-labur-fiqh', ai: !!provider(env), penyedia: provider(env), gambar: !!env.AI }, 200, h);
+      if (url.pathname === '/') return json({ ok: true, service: 'bijak-labur-fiqh', ai: !!provider(env), penyedia: provider(env), gambar: !!(env.AI || combo(env, PENYEDIA_GAMBAR).length), sandaran: senaraiAktif(env), sandaran_gambar: combo(env, PENYEDIA_GAMBAR).map(p => p.id) }, 200, h);
       return json({ error: 'Tidak dijumpai' }, 404, h);
     } catch (e) {
       console.log('ralat', e && e.stack || e);
