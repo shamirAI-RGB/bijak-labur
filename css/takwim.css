@@ -1,0 +1,178 @@
+/* Bijak Labur: Takwim Siswa.
+   Lapisan rupa terakhir (selepas rupa.css). Laman dibaca seperti takwim dan majalah pelajar:
+   kertas krim dan dakwat gelap, garisan halus dan bucu tajam, tajuk serif Newsreader,
+   teks antara muka Schibsted Grotesk, nombor bab, dan merah takwim untuk hari Jumaat. */
+@font-face { font-family: "Newsreader"; src: url("../fonts/Newsreader-Variable.woff2") format("woff2"); font-weight: 200 800; font-style: normal; font-display: swap; }
+@font-face { font-family: "Newsreader"; src: url("../fonts/Newsreader-Italic.woff2") format("woff2"); font-weight: 200 800; font-style: italic; font-display: swap; }
+@font-face { font-family: "Schibsted Grotesk"; src: url("../fonts/SchibstedGrotesk-Variable.woff2") format("woff2"); font-weight: 400 900; font-style: normal; font-display: swap; }
+
+:root {
+  --font: "Schibsted Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  --display: "Newsreader", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --bg: #f3efe4; --surface: #fbf8f1; --surface-2: #ebe5d6; --text: #1d1b16; --muted: #5e5a50; --faint: #6b665b;
+  --border: #d9d1bf; --rule: #1d1b16; --brand: #0d5a47; --brand-soft: #e1e8dc; --gold: #9a6b16;
+  --ink-red: #b3261e;
+  --radius: 3px;
+  --shadow: none;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15140f; --surface: #1c1b15; --surface-2: #26241c; --text: #ece6d8; --muted: #aaa392; --faint: #9a9382;
+    --border: #3a372c; --rule: #ece6d8; --brand: #6cc7a8; --brand-soft: #1f2d26; --gold: #d6a957; --ink-red: #f07a6c;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15140f; --surface: #1c1b15; --surface-2: #26241c; --text: #ece6d8; --muted: #aaa392; --faint: #9a9382;
+  --border: #3a372c; --rule: #ece6d8; --brand: #6cc7a8; --brand-soft: #1f2d26; --gold: #d6a957; --ink-red: #f07a6c;
+}
+
+body { font-feature-settings: "ss01" 1; text-rendering: optimizeLegibility; }
+::selection { background: color-mix(in srgb, var(--ink-red) 22%, transparent); }
+a { text-underline-offset: 3px; text-decoration-thickness: 1px; }
+
+/* ---------- Tipografi ---------- */
+h1, h2, .founders-head h2, .plan-price .num, .pc-name, .logo {
+  font-family: var(--display); font-variation-settings: normal; font-optical-sizing: auto;
+}
+h1 { font-weight: 500; letter-spacing: -0.02em; line-height: 1.02; font-size: clamp(2.3rem, 7.4vw, 3.6rem); }
+h2 { font-weight: 560; letter-spacing: -0.01em; }
+.block-head h2, .card > h2 { font-size: 1.32rem; }
+.lead { font-family: var(--display); font-size: 1.14rem; line-height: 1.5; color: var(--muted); }
+.page-head .lead { font-style: italic; }
+.eyebrow { font-family: var(--font); font-size: 0.7rem; letter-spacing: 0.16em; font-weight: 700; color: var(--muted); }
+.eyebrow::before { width: 14px; height: 2px; background: var(--ink-red); }
+.num, .pc-count, time { font-variant-numeric: tabular-nums; }
+
+/* ---------- Bar atas: seperti kepala akhbar ---------- */
+.topbar { background: var(--bg); backdrop-filter: none; -webkit-backdrop-filter: none; border-bottom: 1px solid var(--border); }
+.topbar.scrolled { border-bottom-color: var(--rule); }
+.logo { font-weight: 650; font-size: 1.22rem; letter-spacing: -0.02em; }
+.logo img { border-radius: 2px; }
+.desk-nav a { border-radius: 0; font-weight: 550; color: var(--muted); }
+@media (min-width: 1240px) { .desk-nav a { padding: 8px 9px; } }
+@media (min-width: 900px) and (max-width: 1099px) { .desk-nav a, .nav-more > summary { padding: 8px 4px; font-size: 0.8rem; } .logo { font-size: 1.05rem; } }
+.desk-nav a:hover { background: none; color: var(--text); text-decoration: underline; }
+.desk-nav a.active { background: none; color: var(--text); box-shadow: inset 0 -2px 0 var(--ink-red); }
+.nav-more > summary { border-radius: 0; }
+.nav-pop { border-radius: 2px; box-shadow: 4px 4px 0 color-mix(in srgb, var(--rule) 12%, transparent); border: 1px solid var(--rule); }
+.icon-btn { border-radius: 2px; background: transparent; border-color: var(--border); }
+.icon-btn:hover { border-color: var(--rule); }
+
+/* ---------- Bar bawah (telefon) ---------- */
+.tabbar { background: var(--bg); backdrop-filter: none; -webkit-backdrop-filter: none; border-top: 1.5px solid var(--rule); }
+.tabbar a { color: var(--faint); font-weight: 600; letter-spacing: 0.01em; position: relative; }
+.tabbar a.active { color: var(--text); }
+.tabbar a.active::before { content: ""; position: absolute; top: -1.5px; left: 22%; right: 22%; height: 3px; background: var(--ink-red); }
+.tabbar a.active .ic, .tabbar a .ic { background: none !important; }
+
+/* ---------- Permukaan: garisan, bukan kotak bulat berbayang ---------- */
+.card, .list, dialog, .km-dialog, .nt-dialog { border-radius: var(--radius); box-shadow: none; }
+.card { background: var(--surface); border-color: var(--border); }
+a.card:hover, .card.shortcut:hover { border-color: var(--rule); }
+dialog { border: 1px solid var(--rule); box-shadow: 8px 8px 0 color-mix(in srgb, var(--rule) 14%, transparent); }
+dialog::backdrop { background: rgba(29, 27, 22, 0.5); }
+.note { border-top-style: dashed; }
+
+/* Butang: segi empat, dakwat penuh atau garis */
+.btn, .btn.sm { border-radius: 2px; box-shadow: none !important; letter-spacing: 0; }
+.btn:not(.ghost) { background: var(--text); color: var(--bg); }
+.btn:not(.ghost):hover { filter: none; background: var(--brand); color: #fff; }
+.btn.ghost { background: transparent; border-color: var(--rule); }
+input, select, textarea { border-radius: 2px !important; }
+.segmented { border-radius: 2px; padding: 0; gap: 0; background: transparent; border: 1px solid var(--rule); }
+.seg { border-radius: 0; }
+.seg + .seg { border-left: 1px solid var(--border); }
+.seg.active { background: var(--text); color: var(--bg); box-shadow: none; }
+.chip { border-radius: 2px; }
+.chip.active { background: var(--text); color: var(--bg); }
+
+/* Jubin ikon pastel diganti ikon garis dalam bingkai nipis */
+.sc-ico, .app-ic { border-radius: 2px !important; background: transparent !important; box-shadow: none !important; border: 1px solid var(--border); color: var(--text) !important; }
+.sc-ico.gold { color: var(--gold) !important; }
+
+/* ---------- Bucu tajam untuk semua komponen (dijana daripada senarai pemilih ber-radius >= 10px) ---------- */
+.akd-sy, .annotated, .app-ic, .app-ic.sm, .app-ic.xs, .asma, .audit-col, .ayah, .azan-bar, .bk-ai, .bk-card,
+.bk-me, .bk-opt, .bk-pod li, .btn, .cal-d, .cal-hero, .city-dlg, .city-list button, .cmp, .day-strip button,
+.doa, .drop, .ev-date, .founder, .fq-ai-ico, .fq-ai-khilaf, .fq-ai-src blockquote, .fq-lvl, .fq-node,
+.fq-out-link, .fq-seg:first-child, .fq-seg:last-child, .fq-src, .gal, .ia-cabang > li, .ia-fig, .ib-back,
+.ib-grid, .icon-btn, .ik-card, .jd-blk, .jd-clash, .jd-demo, .jd-it-c, .jd-lg, .jd-next, .jd-pick,
+.jd-save-g button, .jk-map, .jk-stat, .kebab-menu, .kj-letter, .km-account, .km-code, .km-date, .km-fchip,
+.km-feat > div, .km-invite, .km-item, .km-mapcard, .km-opt, .km-photo, .km-pick, .km-scard, .km-search,
+.km-tab, .km-tabs, .lev-sim, .lv, .nav-pop, .nt-drop, .nt-msg, .nt-prev, .nt-qr img, .nt-qr-box, .pay-amt,
+.pm-img, .pr-bell, .pr-ico,
+.prayer-card, .prayer-card.sky, .prayer-card.sky .pc-row, .prayer-rows, .prayer-rows li, .q-hero, .q-link,
+.q-mini, .quiz-opt, .rajah img, .ref-preview, .say-hd, .say-lang, .sc-ico, .segmented, .sg-form fieldset,
+.sg-test, .sg-verdict, .sh-health, .sh-macro > div, .sh-pend img, .solat-hero, .solat-panel, .st-out img,
+.st-stage, .st-thumb, .stat, .sugg, .tip, .tk-out, .toast, .tool-card .sc-ico { border-radius: var(--radius); }
+
+/* ---------- Kepala takwim (halaman utama) ---------- */
+.tk-mast { border-top: 3px double var(--rule); border-bottom: 1px solid var(--rule); margin: 14px 0 0; padding: 8px 0 18px; }
+.tk-mast-top { display: flex; justify-content: space-between; gap: 12px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.tk-kicker { color: var(--ink-red); }
+.tk-mast-row { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 18px; align-items: end; padding-top: 14px; }
+.tk-mast .page-head { margin: 0; }
+.tk-mast .page-head .eyebrow::before { display: none; }
+.tk-date { display: grid; justify-items: center; align-content: end; min-width: 76px; padding: 4px 10px 8px; border-right: 1px solid var(--rule); line-height: 1; }
+.tk-day { font-family: var(--display); font-size: clamp(3.4rem, 15vw, 5.2rem); font-weight: 400; letter-spacing: -0.04em; color: var(--text); }
+.tk-date.jumaat .tk-day { color: var(--ink-red); }
+.tk-mon { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-top: 6px; text-align: center; max-width: 92px; }
+.tk-letter { grid-column: 1 / -1; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 14px; margin: 16px 0 0; padding: 14px 0 0; border-top: 1px dashed var(--border); }
+.tk-faces { display: flex; grid-row: span 2; }
+.tk-faces img { width: 42px; height: 52px; object-fit: cover; border: 1px solid var(--rule); filter: grayscale(.25) contrast(1.05); background: var(--surface-2); }
+.tk-faces img + img { margin-left: -10px; }
+.tk-letter blockquote { margin: 0; font-family: var(--display); font-style: italic; font-size: 1.04rem; line-height: 1.45; color: var(--text); }
+.tk-letter blockquote p { margin: 0; }
+.tk-letter blockquote p::before { content: "\201C"; color: var(--ink-red); margin-right: 1px; }
+.tk-letter blockquote p::after { content: "\201D"; color: var(--ink-red); }
+.tk-letter figcaption { font-size: 0.8rem; color: var(--muted); }
+.tk-link { border: 0; background: none; padding: 0; font: inherit; color: var(--text); text-decoration: underline; text-decoration-color: var(--ink-red); text-underline-offset: 3px; cursor: pointer; }
+@media (min-width: 900px) {
+  .tk-mast-row { grid-template-columns: auto minmax(0, 1fr) minmax(0, 0.95fr); }
+  .tk-letter { grid-column: auto; margin: 0; padding: 0 0 4px 22px; border-top: 0; border-left: 1px solid var(--border); align-self: end; }
+}
+
+/* Indeks "Dalam edisi ini" */
+.tk-index { margin: 0 0 22px; padding: 12px 0 0; }
+.tk-index h2 { font-family: var(--font); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); margin: 0 0 4px; }
+.tk-index ol { list-style: none; margin: 0; padding: 0; display: grid; }
+@media (min-width: 720px) { .tk-index ol { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 28px; } }
+@media (min-width: 1100px) { .tk-index ol { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.tk-index a { display: flex; align-items: baseline; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); color: var(--text); text-decoration: none; }
+.tk-index a:hover .tk-t { text-decoration: underline; text-decoration-color: var(--ink-red); }
+.tk-n { font-family: var(--display); font-size: 0.95rem; color: var(--ink-red); font-variant-numeric: tabular-nums; min-width: 1.6em; }
+.tk-t { font-family: var(--display); font-size: 1.12rem; font-weight: 500; white-space: nowrap; }
+/* Keterangan di kanan, dipisahkan garis titik seperti senarai kandungan */
+.tk-d { flex: 1; min-width: 0; display: flex; gap: 8px; align-items: baseline; justify-content: flex-end; font-size: 0.82rem; color: var(--muted); white-space: nowrap; }
+.tk-d::before { content: ""; flex: 1; min-width: 12px; border-bottom: 1.5px dotted var(--border); transform: translateY(-3px); }
+
+/* ---------- Halaman utama: kad solat dan pintasan ---------- */
+.prayer-card, .prayer-card.sky, .solat-hero { border-radius: 2px; box-shadow: none; }
+.prayer-card.sky .pc-row { border-radius: 0; }
+.quick-row a { font-weight: 600; }
+.quick-row .app-ic { border-radius: 50% !important; }
+.shortcut-row { gap: 0; border-top: 1px solid var(--rule); }
+.shortcut-row .card.shortcut { border: 0; border-bottom: 1px solid var(--border); border-radius: 0; margin: 0; background: transparent; padding: 14px 4px; }
+.shortcut-row .card.shortcut:hover { background: var(--surface); }
+.shortcut-row .sc-title { font-family: var(--display); font-size: 1.12rem; font-weight: 560; }
+.shortcut-row .chev { color: var(--ink-red); }
+
+/* Pengasas: potret bercetak, surat dalam serif */
+.founders { border-top: 3px double var(--rule); padding-top: 18px; scroll-margin-top: 70px; }
+.founder img { border-radius: 0 !important; filter: grayscale(.2) contrast(1.04); border: 1px solid var(--rule); }
+.founder figcaption b { font-family: var(--display); font-size: 1.05rem; font-weight: 560; }
+.founders-why { border-radius: 0; border: 0; border-left: 3px solid var(--ink-red); background: transparent; }
+.founders-why p { font-family: var(--display); font-size: 1.08rem; line-height: 1.6; }
+.founders-why h3 { font-family: var(--display); font-style: italic; font-weight: 500; font-size: 1.3rem; }
+
+/* ---------- Kaki laman: kolofon ---------- */
+.site-footer { border-top: 3px double var(--rule); font-size: 0.82rem; }
+.site-footer p:first-child { font-family: var(--display); font-style: italic; font-size: 0.95rem; color: var(--muted); }
+
+/* ---------- Kepala halaman lain: label merah + garisan ---------- */
+.view:not(#view-utama) > .page-head { border-bottom: 1px solid var(--rule); padding-bottom: 16px; }
+.doc img { border-radius: var(--radius) !important; }
+/* Pengasas di skrin lebar: lajur tetap; potret ikut tinggi surat tanpa melebar (aspect-ratio + stretch menyebabkan potret menindih surat) */
+@media (min-width: 900px) {
+  .founders-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.6fr); }
+  .founder { aspect-ratio: auto; min-height: 340px; min-width: 0; }
+}

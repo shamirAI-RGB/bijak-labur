@@ -225,7 +225,7 @@
       try { await say(q.text, q.lang); }
       catch (e) {
         if (t !== token) return;
-        // Dibatalkan oleh pembaca lain (cth. butang Dengar di Pustaka)
+        // Dibatalkan oleh pembaca lain
         if (/interrupt|cancel/i.test(String(e))) { if (String(e) === 'interrupted-hd') { pause(); return; } stop(); return; }
       }
       if (t !== token) return;
@@ -378,7 +378,7 @@
   }
   $$('[data-say-settings]').forEach(b => b.addEventListener('click', openDlg));
 
-  // Untuk ciri lain (cth. butang Dengar di Pustaka): bacakan teks tertentu
+  // Untuk ciri lain: bacakan teks tertentu
   function read(text, lang) {
     queue = pieces(tidy(text), BASE[lang] || lang || 'ms-MY').map(p => ({ ...p, el: null }));
     if (!queue.length) return;

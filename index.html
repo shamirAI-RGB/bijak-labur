@@ -33,16 +33,15 @@
   <meta property="og:image:alt" content="Bijak Labur: belajar melabur, harga pasaran dan waktu solat">
   <meta property="og:locale" content="ms_MY">
   <meta name="twitter:card" content="summary_large_image">
-  <link rel="preload" href="fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="fonts/Fraunces-Variable.woff2" as="font" type="font/woff2" crossorigin>
   <script src="js/bingkai.js"></script>
+  <link rel="preload" href="fonts/SchibstedGrotesk-Variable.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/Newsreader-Variable.woff2" as="font" type="font/woff2" crossorigin>
   <script src="js/boot.js"></script>
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/langit.css">
   <link rel="stylesheet" href="css/ibadah.css">
   <link rel="stylesheet" href="css/belajar-visual.css">
   <link rel="stylesheet" href="css/fiqh.css">
-  <link rel="stylesheet" href="css/pustaka.css">
   <link rel="stylesheet" href="css/suara.css">
   <link rel="stylesheet" href="css/jadual.css">
   <script type="application/ld+json">
@@ -107,6 +106,8 @@
   <link rel="stylesheet" href="css/alat-syariah.css">
   <link rel="stylesheet" href="css/akademi.css">
   <link rel="stylesheet" href="css/rupa.css">
+  <link rel="stylesheet" href="css/takwim.css">
+  <link rel="stylesheet" href="css/skrin-kunci.css">
 </head>
 <body>
   <a class="skip-link" href="#main">Langkau ke kandungan</a>
@@ -194,7 +195,6 @@
       <nav class="desk-nav" aria-label="Navigasi utama">
         <a href="#utama" data-nav="utama">Utama</a>
         <a href="#belajar" data-nav="belajar">Belajar</a>
-        <a href="#pustaka" data-nav="pustaka">Pustaka</a>
         <a href="#pasaran" data-nav="pasaran">Pasaran</a>
         <a href="#solat" data-nav="solat">Waktu Solat</a>
         <a href="#ibadah" data-nav="ibadah">Ibadah</a>
@@ -258,10 +258,33 @@
   <main id="main" tabindex="-1">
     <!-- UTAMA -->
     <section class="view" id="view-utama" aria-labelledby="greet">
-      <div class="page-head">
-        <p class="eyebrow" id="todayLine">&nbsp;</p>
-        <h1 id="greet">Assalamualaikum</h1>
-      </div>
+      <header class="tk-mast" aria-label="Takwim hari ini">
+        <div class="tk-mast-top"><span class="tk-kicker">Takwim Siswa</span><span class="tk-ed" id="tkEdisi">&nbsp;</span></div>
+        <div class="tk-mast-row">
+          <div class="tk-date" aria-hidden="true"><b class="tk-day" id="tkHari">&nbsp;</b><span class="tk-mon" id="tkBulan">&nbsp;</span></div>
+          <div class="page-head">
+            <p class="eyebrow" id="todayLine">&nbsp;</p>
+            <h1 id="greet">Assalamualaikum</h1>
+          </div>
+          <figure class="tk-letter">
+            <div class="tk-faces" aria-hidden="true"><img src="images/pengasas/yusshamir.webp" alt="" width="48" height="60" decoding="async"><img src="images/pengasas/wabil.webp" alt="" width="48" height="60" decoding="async"></div>
+            <blockquote><p>Kami bina laman ini sebab kami sendiri pernah keliru: mana saham yang halal, bila waktu solat di Malaysia dan luar negara, macam mana nak mula menyimpan. Jadi kami fikir, apa kata kalau anak UiTM sendiri yang buat? Semoga ia memudahkan urusan anda juga.</p></blockquote>
+            <figcaption>Yusshamir &amp; Wabil, pelajar IC220 UiTM · <button type="button" class="tk-link" data-tk-scroll="h-founders">baca surat penuh</button></figcaption>
+          </figure>
+        </div>
+      </header>
+
+      <nav class="tk-index" aria-labelledby="h-edisi">
+        <h2 id="h-edisi">Dalam edisi ini</h2>
+        <ol>
+          <li><a href="#solat"><span class="tk-n">01</span><span class="tk-t">Waktu solat</span><span class="tk-d" id="tkSolat">zon anda</span></a></li>
+          <li><a href="#belajar"><span class="tk-n">02</span><span class="tk-t">Belajar melabur</span><span class="tk-d">modul syariah</span></a></li>
+          <li><a href="#pasaran"><span class="tk-n">03</span><span class="tk-t">Pasaran hari ini</span><span class="tk-d">kripto dan saham</span></a></li>
+          <li><a href="#semak"><span class="tk-n">04</span><span class="tk-t">Semak kertas kerja</span><span class="tk-d">plagiat dan AI</span></a></li>
+          <li><a href="#jadual"><span class="tk-n">05</span><span class="tk-t">Jadual kelas</span><span class="tk-d">UiTM</span></a></li>
+          <li><a href="#komuniti"><span class="tk-n">06</span><span class="tk-t">Komuniti</span><span class="tk-d">rakan dan acara</span></a></li>
+        </ol>
+      </nav>
 
       <div class="home-grid">
         <div class="home-main">
@@ -289,11 +312,6 @@
             <a class="card shortcut" href="#belajar">
               <span class="ring-wrap"><svg class="ring" viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="18" class="ring-bg"/><circle cx="22" cy="22" r="18" class="ring-fg" id="homeRing" stroke-dasharray="113.1" stroke-dashoffset="113.1"/></svg><span class="ring-txt num" id="homePct">0%</span></span>
               <div class="sc-body"><div class="sc-title">Sambung belajar</div><div class="sc-sub" id="homeLesson">Mula dengan modul pertama</div></div>
-              <svg class="ic chev"><use href="#i-chev"/></svg>
-            </a>
-            <a class="card shortcut" href="#pustaka">
-              <span class="sc-ico"><svg class="ic"><use href="#i-book"/></svg></span>
-              <div class="sc-body"><div class="sc-title">Pustaka Kanak-kanak</div><div class="sc-sub">Ebook 20 subjek termasuk Bijak Wang, umur 4 hingga 12. BM, English, 中文, தமிழ்</div></div>
               <svg class="ic chev"><use href="#i-chev"/></svg>
             </a>
             <a class="card shortcut" href="#sihat">
@@ -594,9 +612,6 @@
       <div class="card flush"><div class="tbl-wrap"><table id="monthTable" class="month"></table></div></div>
       <p class="source">Data waktu solat rasmi Malaysia. Disimpan dalam peranti untuk kegunaan luar talian. Arah kiblat dikira daripada koordinat Kaabah (21.4225° U, 39.8262° T).</p>
     </section>
-
-    <!-- PUSTAKA KANAK-KANAK -->
-    <section class="view" id="view-pustaka" aria-labelledby="h-pustaka"></section>
 
     <!-- IBADAH -->
     <section class="view" id="view-ibadah" aria-label="Ibadah">
@@ -905,12 +920,11 @@
   <script src="js/semak-audit.js" defer></script>
   <script src="js/akaun.js" defer></script>
   <script src="js/premium.js" defer></script>
-  <script src="js/pustaka-data.js" defer></script>
-  <script src="js/pustaka.js" defer></script>
   <script src="js/pro.js" defer></script>
   <script src="js/pro-invest.js" defer></script>
   <script src="js/pro-study.js" defer></script>
   <script src="js/jadual.js" defer></script>
+  <script src="js/skrin-kunci.js" defer></script>
   <script src="js/menu.js" defer></script>
   <script src="js/nota.js" defer></script>
   <script src="js/sihat.js" defer></script>
@@ -923,6 +937,7 @@
   <script src="js/iklan.js" defer></script>
   <script src="js/halal.js" defer></script>
   <script src="js/pemilik.js" defer></script>
+  <script src="js/takwim.js" defer></script>
   <div class="azan-bar hidden" id="azanBar" role="status" aria-live="polite">
     <svg class="ic"><use href="#i-volume"/></svg><span id="azanBarText">Azan sedang berbunyi</span>
     <button type="button" class="btn sm" id="azanStop"><svg class="ic"><use href="#i-pause"/></svg>Hentikan</button>

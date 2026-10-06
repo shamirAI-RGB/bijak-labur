@@ -78,11 +78,18 @@
   const kept = (k, f) => async () => { const c = load(k); if (c && c.length) return c; const v = await f(); save(k, v); return v; };
   const once = (k, f) => memo[k] || (memo[k] = f().catch(e => { delete memo[k]; throw e; }));
 
+  /* Ejaan rumi nama surah yang lazim di Malaysia (JAKIM), menggantikan ejaan Inggeris
+     daripada API (cth. Al-Faatiha jadi Al-Fatihah, Al-Muminoon jadi Al-Mu'minun) */
+  const NAMA = "Al-Fatihah|Al-Baqarah|Ali 'Imran|An-Nisa'|Al-Ma'idah|Al-An'am|Al-A'raf|Al-Anfal|At-Taubah|Yunus|Hud|Yusuf|Ar-Ra'd|Ibrahim|Al-Hijr|An-Nahl|Al-Isra'|Al-Kahf|Maryam|Taha|Al-Anbiya'|Al-Hajj|Al-Mu'minun|An-Nur|Al-Furqan|Asy-Syu'ara'|An-Naml|Al-Qasas|Al-'Ankabut|Ar-Rum|Luqman|As-Sajdah|Al-Ahzab|Saba'|Fatir|Yasin|As-Saffat|Sad|Az-Zumar|Ghafir|Fussilat|Asy-Syura|Az-Zukhruf|Ad-Dukhan|Al-Jathiyah|Al-Ahqaf|Muhammad|Al-Fath|Al-Hujurat|Qaf|Az-Zariyat|At-Tur|An-Najm|Al-Qamar|Ar-Rahman|Al-Waqi'ah|Al-Hadid|Al-Mujadalah|Al-Hasyr|Al-Mumtahanah|As-Saff|Al-Jumu'ah|Al-Munafiqun|At-Taghabun|At-Talaq|At-Tahrim|Al-Mulk|Al-Qalam|Al-Haqqah|Al-Ma'arij|Nuh|Al-Jin|Al-Muzzammil|Al-Muddaththir|Al-Qiyamah|Al-Insan|Al-Mursalat|An-Naba'|An-Nazi'at|'Abasa|At-Takwir|Al-Infitar|Al-Mutaffifin|Al-Insyiqaq|Al-Buruj|At-Tariq|Al-A'la|Al-Ghasyiyah|Al-Fajr|Al-Balad|Asy-Syams|Al-Lail|Ad-Duha|Asy-Syarh|At-Tin|Al-'Alaq|Al-Qadr|Al-Bayyinah|Az-Zalzalah|Al-'Adiyat|Al-Qari'ah|At-Takathur|Al-'Asr|Al-Humazah|Al-Fil|Quraisy|Al-Ma'un|Al-Kauthar|Al-Kafirun|An-Nasr|Al-Masad|Al-Ikhlas|Al-Falaq|An-Nas".split('|');
+  const nama = (n, alt) => NAMA[n - 1] || alt || 'Surah ' + n;
+  // Ejaan lain yang biasa ditaip dalam carian
+  const CARI = { 9: 'Taubat', 18: 'Kahfi', 23: 'Mukminun', 63: 'Munafikun', 106: 'Quraish' };
+
   /* Senarai 114 surah */
   const list = () => once('list', kept('list', () => first(
     async () => (await aq('/surah')).map(s => ({ n: s.number, ar: s.name, en: s.englishName, tr: s.englishNameTranslation, c: s.numberOfAyahs, t: s.revelationType === 'Meccan' ? 'Makkiyah' : 'Madaniyah' })),
     async () => (await get(`${QC}/chapters?language=ms`)).chapters.map(s => ({ n: s.id, ar: 'سُورَةُ ' + s.name_arabic, en: s.name_simple, tr: s.translated_name ? s.translated_name.name : '', c: s.verses_count, t: s.revelation_place === 'makkah' ? 'Makkiyah' : 'Madaniyah' }))
-  )));
+  ))).then(L => L.map(x => ({ ...x, en: nama(x.n, x.en), alt: x.alt || x.en + ' ' + (CARI[x.n] || '') })));
 
   /* Satu surah: [{ k: no. ayat, g: no. global, ar, ms }] */
   async function qcVerses(path) {
@@ -109,12 +116,12 @@
     async () => {
       const [ar, ms] = await aq(`/ayah/${ref}/editions/quran-uthmani,ms.basmeih`);
       const d = dropBasmalah(ar.surah.number, { k: ar.numberInSurah, ar: strip(ar.text), ms: ms.text });
-      return { ar: tidy(d.ar), ms: d.ms, surah: ar.surah.englishName, s: ar.surah.number, a: ar.numberInSurah };
+      return { ar: tidy(d.ar), ms: d.ms, surah: nama(ar.surah.number, ar.surah.englishName), s: ar.surah.number, a: ar.numberInSurah };
     },
     async () => {
       const v = (await get(`${QC}/verses/by_key/${ref}?translations=${QC_MS}&fields=text_uthmani`)).verse;
-      const [s, a] = v.verse_key.split(':').map(Number), L = await list().catch(() => null);
-      return { ar: tidy(v.text_uthmani), ms: cleanTr(v.translations && v.translations[0] && v.translations[0].text), surah: L ? L[s - 1].en : 'Surah ' + s, s, a };
+      const [s, a] = v.verse_key.split(':').map(Number);
+      return { ar: tidy(v.text_uthmani), ms: cleanTr(v.translations && v.translations[0] && v.translations[0].text), surah: nama(s), s, a };
     }
   ));
 
@@ -122,16 +129,16 @@
   const search = w => once('q' + w.toLowerCase(), async () => {
     try {
       return await first(
-        async () => (await aq(`/search/${encodeURIComponent(w)}/all/ms.basmeih`)).matches.map(m => ({ s: m.surah.number, a: m.numberInSurah, surah: m.surah.englishName, text: m.text })),
+        async () => (await aq(`/search/${encodeURIComponent(w)}/all/ms.basmeih`)).matches.map(m => ({ s: m.surah.number, a: m.numberInSurah, surah: nama(m.surah.number, m.surah.englishName), text: m.text })),
         async () => {
-          const out = [], L = await list().catch(() => null);
+          const out = [];
           for (let page = 1; page <= 4; page++) {
             const j = (await get(`${QC}/search?q=${encodeURIComponent(w)}&language=ms&size=50&page=${page}`)).search;
             for (const r of j.results || []) {
               const tr = (r.translations || []).find(x => x.resource_id === QC_MS);
               if (!tr) continue;
               const [s, a] = r.verse_key.split(':').map(Number);
-              out.push({ s, a, surah: L ? L[s - 1].en : 'Surah ' + s, text: cleanTr(tr.text) });
+              out.push({ s, a, surah: nama(s), text: cleanTr(tr.text) });
             }
             if (!j.total_pages || page >= j.total_pages) break;
           }
@@ -140,5 +147,5 @@
     } catch (e) { if (e instanceof NotFound) return []; throw e; }
   });
 
-  window.QuranSrc = { list, surah, ayah, search, BASMALAH, dropBasmalah, tidy, web: (s, a) => `https://quran.com/${s}${a ? '/' + a : ''}` };
+  window.QuranSrc = { list, nama, cari: n => CARI[n] || '', surah, ayah, search, BASMALAH, dropBasmalah, tidy, web: (s, a) => `https://quran.com/${s}${a ? '/' + a : ''}` };
 })();

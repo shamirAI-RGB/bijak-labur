@@ -12,3 +12,4 @@ worker-fiqh/.cache/
 *.pem
 *.p8
 *.p12
+graphify-out/
