@@ -6,3 +6,4 @@ www/
 worker-fiqh/aset/
 .wrangler/
 worker-fiqh/.cache/
+graphify-out/

@@ -17,6 +17,11 @@ Laman bijaklabur.my (GitHub Pages, cawangan `main`) dan app Android/iOS (Capacit
 - `pejabat-agen.html`: Pejabat AI Agent (8 watak animasi yang memaparkan kerja sebenar daripada API GitHub awam: PR, commit, Actions, issue `pantau`), hanya untuk pemilik (kunci pemilik disemak melalui `nota.bijaklabur.my/admin/check`). Sumber React dalam `pejabat-agen/App.jsx`; bina dengan `node scripts/bina-pejabat-agen.mjs` (arahan pemasangan dalam fail itu). Jangan sunting `js/pejabat-agen.js` atau `css/pejabat-agen.css` secara terus.
 - Mod Pemilik (`js/pemilik.js`): pemilik menyunting teks secara langsung. Kunci teks dijana daripada struktur (`<view>.judul`, `<view>.lead`, `<view>.kad.<href>.tajuk`, `<view>.<id h->`, `<view>.h2.<n>`, `<view>.nota.<n>`); jangan ubah susunan elemen ini tanpa sebab kerana teks yang disimpan pemilik bergantung padanya. Elemen ber-id (kecuali `h-...`) dan elemen yang mengandungi elemen lain tidak boleh disunting.
 
+## Skill projek (`.claude/skills/`)
+- `ui-ux-pro-max` (dan `design`, `design-system`, `ui-styling`, `brand`, `banner-design`, `slides`): panduan reka bentuk UI/UX. Untuk cadangan gaya, warna dan fon: `python3 .claude/skills/ui-ux-pro-max/scripts/search.py "<pertanyaan>" --design-system`. Peraturan CSP dan "tiada AI slop" di atas tetap diutamakan.
+- `graphify`: memetakan kod repo ini kepada graf pengetahuan (`/graphify .`). Ia memasang pakej PyPI `graphifyy` dan menulis ke `graphify-out/` (diabaikan oleh git).
+- Kedua-duanya kod pihak ketiga (MIT dan Apache-2.0, lesen dalam setiap folder). Jangan jalankan skrip yang memerlukan kunci API luar tanpa arahan pemilik.
+
 ## Peraturan wajib
 - **Keselamatan:**
   - CSP ketat dalam `<meta>`: tiada skrip atau gaya sebaris, tiada `onclick=`. API baharu perlu ditambah ke `connect-src`.
