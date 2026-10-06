@@ -86,6 +86,12 @@ function sanitizeMeta(b, base = {}) {
 }
 const pub = n => ({ id: n.id, title: n.title, code: n.code, desc: n.desc, price: n.price, pages: n.pages, size: n.size, ext: n.ext, preview: n.preview ? `/notes/${n.id}/preview?v=${n.v}` : '', created: n.created });
 
+const ip = req => req.headers.get('cf-connecting-ip') || 'x';
+async function limited(lim, key) {
+  if (!lim) return false;
+  try { return !(await lim.limit({ key })).success; } catch { return false; }
+}
+
 function cors(req, env) {
   const origin = req.headers.get('Origin') || '';
   const allowed = (env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
@@ -213,6 +219,7 @@ async function handle(req, env, h) {
 
   if (p === '/' && M === 'GET') return json({ ok: true, service: 'bijak-labur-nota', kv: !!env.NOTA }, 200, h);
   if (p === '/saham' && M === 'GET') {
+    if (await limited(env.SAHAM_LIMIT, ip(req))) throw new HttpError(429, 'Terlalu banyak permintaan. Cuba lagi sebentar.');
     const syms = stockSyms(url.searchParams.get('s'));
     if (!syms.length) throw new HttpError(400, 'Simbol saham diperlukan.');
     const quotes = (await Promise.all(syms.map(quote))).filter(Boolean);
@@ -246,7 +253,8 @@ async function handle(req, env, h) {
     const ad = (await getAds(env))[+m[1] - 1];
     if (!live(ad) || !ad.url) throw new HttpError(404, 'Iklan ini tidak lagi aktif.');
     const k = `klik:${m[1]}:${month()}`;
-    try { await env.NOTA.put(k, String((+(await env.NOTA.get(k)) || 0) + 1), { expirationTtl: 400 * 86400 }); } catch {}
+    // Satu IP dikira sekali seminit bagi setiap ruang: elak kiraan palsu dan kuota tulis KV dihabiskan
+    if (!(await limited(env.KLIK_LIMIT, ip(req) + ':' + m[1]))) try { await env.NOTA.put(k, String((+(await env.NOTA.get(k)) || 0) + 1), { expirationTtl: 400 * 86400 }); } catch {}
     return new Response(null, { status: 302, headers: { Location: ad.url, 'Cache-Control': 'no-store', 'Referrer-Policy': 'origin' } });
   }
   if (p === '/kandungan' && M === 'GET')

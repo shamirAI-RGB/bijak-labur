@@ -135,6 +135,14 @@ r = await call('/iklan/2/klik', { redirect: 'manual' }); assert.equal(r.status, 
 await call('/iklan/2/klik', { redirect: 'manual' });
 j = await (await call('/admin/iklan', {}, KEY2)).json(); assert.equal(j.slots[1].klik.bulanIni, 2); assert.equal(j.slots[1].nama, 'Pak Ali Sdn Bhd');
 assert.equal((await call('/iklan/3/klik', { redirect: 'manual' })).status, 404);
+// Klik berulang dari IP yang sama dalam seminit: tetap dilencongkan, tetapi tidak dikira (kuota tulis KV terlindung)
+{
+  const seen = new Set();
+  env.KLIK_LIMIT = { limit: async ({ key }) => ({ success: !seen.has(key) && !!seen.add(key) }) };
+  for (let i = 0; i < 3; i++) { r = await call('/iklan/2/klik', { redirect: 'manual', headers: { 'cf-connecting-ip': '1.2.3.4' } }); assert.equal(r.status, 302); }
+  j = await (await call('/admin/iklan', {}, KEY2)).json(); assert.equal(j.slots[1].klik.bulanIni, 3);
+  delete env.KLIK_LIMIT;
+}
 // Nyahaktif (kotak tidak ditanda tidak dihantar oleh borang) dan buang gambar
 fd = new FormData(); fd.set('tajuk', 'Kedai Kopi Pak Ali'); fd.set('buangGambar', '1');
 r = await call('/admin/iklan/2', { method: 'PUT', body: fd }, KEY2); assert.equal((await r.json()).live, false);

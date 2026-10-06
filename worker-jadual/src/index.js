@@ -21,6 +21,7 @@
  */
 
 export const BASE = 'https://simsweb4.uitm.edu.my/estudent/class_timetable/';
+const HOST = new URL(BASE).hostname;
 export const STUDENT_URL = 'https://cdn.uitm.link/jadual/baru/';
 const UA = 'Mozilla/5.0 (compatible; BijakLabur/1.0; +https://bijaklabur.my)';
 const TTL = { session: 3600, campuses: 21600, faculties: 21600, courses: 3600, groups: 1200, timetable: 1200 };
@@ -213,6 +214,7 @@ export function client(fetchImpl = fetch) {
   async function get(path, opts = {}) {
     let url = new URL(path, BASE).toString(), method = opts.method || 'GET', body = opts.body;
     for (let hop = 0; hop < 6; hop++) {
+      if (new URL(url).hostname !== HOST) throw new IcressError('Pautan iCress ke hos luar');
       const headers = { 'user-agent': UA, referer: opts.referer || BASE + 'index.cfm', ...(opts.headers || {}) };
       if (jar.size) headers.cookie = [...jar].map(([k, v]) => `${k}=${v}`).join('; ');
       const r = await fetchImpl(url, { method, headers, body, redirect: 'manual', signal: AbortSignal.timeout(15000) });
@@ -222,6 +224,8 @@ export function client(fetchImpl = fetch) {
         const loc = r.headers.get('location');
         if (!loc) throw new IcressError('iCress redirect tanpa lokasi');
         url = new URL(loc, url).toString();
+        // Kuki sesi iCress hanya dihantar ke pelayan iCress sendiri
+        if (new URL(url).hostname !== HOST) throw new IcressError('iCress melencong ke hos luar');
         if (r.status !== 307 && r.status !== 308) { method = 'GET'; body = undefined; }
         continue;
       }
@@ -280,8 +284,21 @@ function cors(req, env) {
   return { 'access-control-allow-origin': origin, 'access-control-allow-methods': 'GET, OPTIONS', 'access-control-max-age': '86400', vary: 'origin' };
 }
 const json = (data, status, headers, ttl = 0) => new Response(JSON.stringify(data), {
-  status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': ttl ? `public, max-age=${ttl}` : 'no-store', ...headers }
+  status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': ttl ? `public, max-age=${ttl}` : 'no-store', 'x-content-type-options': 'nosniff', 'referrer-policy': 'no-referrer', ...headers }
 });
+// Parameter yang diketahui sahaja menjadi kunci cache (parameter rawak tidak boleh memintas cache)
+const PARAMS = ['campus', 'faculty', 'course', 'pick', 'id'];
+function cacheKey(url) {
+  const q = new URLSearchParams();
+  for (const k of PARAMS) { const v = (url.searchParams.get(k) || '').trim().toUpperCase(); if (v) q.set(k, v); }
+  const s = q.toString();
+  return new Request(url.origin + url.pathname + (s ? '?' + s : ''));
+}
+async function limited(env, name, req) {
+  const lim = env[name];
+  if (!lim) return false;
+  try { return !(await lim.limit({ key: req.headers.get('cf-connecting-ip') || 'x' })).success; } catch { return false; }
+}
 function param(url, name, re, required = true) {
   const v = (url.searchParams.get(name) || '').trim().toUpperCase();
   if (!v) { if (required) throw new BadRequest(`Parameter ${name} diperlukan`); return ''; }
@@ -345,11 +362,18 @@ export default {
 
     // Simpan jawapan dalam cache Cloudflare supaya pelayan UiTM tidak dibebankan
     const cache = deps.cache ?? (typeof caches !== 'undefined' ? caches.default : null);
-    const key = new Request(url.origin + url.pathname + url.search);
+    // Jadual pelajar mengikut No. Pelajar: hanya dari laman/app Bijak Labur, dengan had ketat (elak pengumpulan beramai-ramai)
+    if (url.pathname === '/pelajar') {
+      if (!h['access-control-allow-origin']) return json({ error: 'Tidak dibenarkan.' }, 403, h);
+      if (await limited(env, 'PELAJAR_LIMIT', req)) return json({ error: 'Terlalu banyak carian. Cuba lagi sebentar.' }, 429, h);
+    }
+    const key = cacheKey(url);
     if (cache) {
       const hit = await cache.match(key);
       if (hit) { const r = new Response(hit.body, hit); for (const [k, v] of Object.entries(h)) r.headers.set(k, v); return r; }
     }
+    // Had permintaan yang tidak ada dalam cache supaya pelayan UiTM tidak dibanjiri melalui pelayan ini
+    if (url.pathname !== '/pelajar' && await limited(env, 'JADUAL_LIMIT', req)) return json({ error: 'Terlalu banyak permintaan. Cuba lagi sebentar.' }, 429, h);
     try {
       const [data, ttl, status = 200] = await handle(url, client(deps.fetch));
       if (cache && ttl && status === 200) {

@@ -490,7 +490,7 @@
       return `<details class="src">
         <summary><span class="src-rank">${s.rank}</span><span class="src-main"><span class="src-name">${esc(s.name)}</span><span class="muted small">${esc(s.kind)} · ${ex} petikan sama${pa ? ` · ${pa} parafrasa hampir sama` : ''}</span></span><span class="src-pct num">${s.pct}%</span></summary>
         <div class="src-bar"><div style="width:${Math.max(2, s.pct)}%"></div></div>
-        ${s.url ? `<a class="small" href="${esc(s.url)}" target="_blank" rel="noopener">Buka sumber</a>` : ''}
+        ${/^https?:\/\//i.test(s.url || '') ? `<a class="small" href="${esc(s.url)}" target="_blank" rel="noopener">Buka sumber</a>` : ''}
         <div class="cmp-list">${s.matches.slice(0, 25).map(m => `<div class="cmp">
           <div><div class="cmp-k">Kertas anda${m.type === 'parafrasa' ? ` · parafrasa ${m.sim}% sama` : ` · ${m.dl} perkataan sama`}</div><p>${m.type === 'parafrasa' ? snippet(t, m.ds, m.de, m.shared, 0) : `<mark>${esc(t.slice(m.ds, m.de))}</mark>`}</p></div>
           <div><div class="cmp-k">Sumber</div><p>${snippet(m.src, m.ss, m.se, m.type === 'parafrasa' ? m.shared : null)}</p></div>

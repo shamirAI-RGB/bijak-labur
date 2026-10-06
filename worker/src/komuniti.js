@@ -460,6 +460,7 @@ export async function handleKomuniti(req, env, path, authed) {
   if (req.method !== 'POST') return { status: 405, data: { error: 'Kaedah tidak dibenarkan.' } };
   const op = path.slice('/komuniti/'.length);
   if (!OP_NAMES.includes(op)) return { status: 404, data: { error: 'Tidak dijumpai' } };
+  if (+(req.headers.get('content-length') || 0) > 700000) return { status: 413, data: { error: 'Permintaan terlalu besar.' } };
   const raw = await req.text();
   if (raw.length > 700000) return { status: 413, data: { error: 'Permintaan terlalu besar.' } };
   let data; try { data = raw ? JSON.parse(raw) : {}; } catch { return { status: 400, data: { error: 'JSON tidak sah.' } }; }
