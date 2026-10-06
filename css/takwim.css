@@ -171,3 +171,8 @@ input, select, textarea { border-radius: 2px !important; }
 /* ---------- Kepala halaman lain: label merah + garisan ---------- */
 .view:not(#view-utama) > .page-head { border-bottom: 1px solid var(--rule); padding-bottom: 16px; }
 .doc img { border-radius: var(--radius) !important; }
+/* Pengasas di skrin lebar: lajur tetap; potret ikut tinggi surat tanpa melebar (aspect-ratio + stretch menyebabkan potret menindih surat) */
+@media (min-width: 900px) {
+  .founders-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.6fr); }
+  .founder { aspect-ratio: auto; min-height: 340px; min-width: 0; }
+}
