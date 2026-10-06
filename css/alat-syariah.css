@@ -84,3 +84,8 @@
   .ah-grp { break-inside: avoid; }
   .ah-grp:not([open]) > *:not(summary) { display: block; }
 }
+.ah-ref { display: block; margin-top: 2px; font-size: .74rem; color: var(--muted); }
+.ah-lead { margin: 0 0 6px; }
+.ah-rj { padding: 8px 0; border-top: 1px solid var(--border); }
+.ah-rj p { margin: 2px 0; overflow-wrap: anywhere; }
+.ah-meta > .field { margin-bottom: 10px; }
