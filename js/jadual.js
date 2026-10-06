@@ -211,7 +211,7 @@
         <div class="jd-save-g">
           <button data-act="jpg"><span class="sc-ico">${icon('download')}</span><b>Gambar JPG</b><small>Simpan ke galeri</small></button>
           <button data-act="pdf"><span class="sc-ico">${icon('file')}</span><b>PDF</b><small>Untuk cetak atau hantar</small></button>
-          <button data-act="wall"><span class="sc-ico">${icon('phone')}</span><b>Wallpaper</b><small>Skrin utama dan skrin kunci</small></button>
+          <button data-act="wall"><span class="sc-ico">${icon('phone')}</span><b>Skrin kunci</b><small>Wallpaper jadual, 4 reka bentuk</small></button>
           <button data-act="home"><span class="sc-ico">${icon('home')}</span><b>Skrin utama</b><small>Ikon terus ke jadual</small></button>
           <button data-act="ics"><span class="sc-ico">${icon('calendar')}</span><b>Kalendar</b><small>Dengan peringatan kelas</small></button>
           <button data-act="print"><span class="sc-ico">${icon('printer')}</span><b>Cetak</b><small>Grid minggu</small></button>
@@ -297,7 +297,8 @@
     }
     else if (a === 'ics') ics();
     else if (a === 'print') printTable();
-    else if (a === 'jpg' || a === 'pdf' || a === 'wall') exportImage(a, b);
+    else if (a === 'jpg' || a === 'pdf') exportImage(a, b);
+    else if (a === 'wall') { if (window.SkrinKunci) SkrinKunci.open(); }
     else if (a === 'home') addHome();
   }
 
@@ -518,36 +519,24 @@
     });
   }
 
-  function drawExport(kind) {
-    const wall = kind === 'wall', W = wall ? 1170 : 2480, H = wall ? 2532 : 1754;
+  function drawExport() {
+    const W = 2480, H = 1754;
     const c = document.createElement('canvas'); c.width = W; c.height = H;
-    const x = c.getContext('2d'), dark = wall;
-    if (wall) {
-      const g = x.createLinearGradient(0, 0, W, H); g.addColorStop(0, '#0f3d33'); g.addColorStop(1, '#06120e');
-      x.fillStyle = g; x.fillRect(0, 0, W, H);
-      x.fillStyle = 'rgba(255,255,255,.04)'; x.beginPath(); x.arc(W * .9, H * .12, 420, 0, 7); x.fill();
-      // Ruang atas dibiarkan kosong untuk jam skrin kunci
-      x.textAlign = 'left'; x.textBaseline = 'alphabetic'; x.fillStyle = '#f3efe2';
-      x.font = FONT(750, 64); x.fillText('Jadual kelas', 70, 760);
-      x.font = FONT(500, 32); x.fillStyle = 'rgba(243,239,226,.7)'; x.fillText(fitText(x, `${S.campusName || 'UiTM'}${S.label ? ' · ' + S.label : ''}`, W - 140), 70, 812);
-      drawGrid(x, 40, 860, W - 80, H - 860 - 250, true, 1.55);
-      x.font = FONT(600, 26); x.fillStyle = 'rgba(243,239,226,.55)'; x.textAlign = 'center'; x.fillText('bijaklabur.my', W / 2, H - 150);
-    } else {
-      x.fillStyle = '#f6f5f1'; x.fillRect(0, 0, W, H);
-      x.textAlign = 'left'; x.textBaseline = 'alphabetic'; x.fillStyle = '#14201b';
-      x.font = FONT(750, 64); x.fillText('Jadual kelas', 110, 150);
-      x.font = FONT(500, 30); x.fillStyle = '#646d68'; x.fillText(`${S.campusName || 'UiTM'}${S.label ? ' · ' + S.label : ''}`, 110, 200);
-      x.textAlign = 'right'; x.font = FONT(600, 26); x.fillStyle = '#0b5d4b'; x.fillText('bijaklabur.my', W - 110, 150);
-      const legH = 70 * Math.ceil(S.items.length / 3);
-      drawGrid(x, 90, 250, W - 180, H - 250 - legH - 110, false, 1.7);
-      S.items.forEach((it, i) => {
-        const col = i % 3, row = Math.floor(i / 3), lx = 110 + col * ((W - 220) / 3), ly = H - legH - 50 + row * 70;
-        x.fillStyle = PAL.light[i % HUES]; x.beginPath(); x.arc(lx + 10, ly + 22, 10, 0, 7); x.fill();
-        x.textAlign = 'left'; x.font = FONT(750, 28); x.fillText(it.course, lx + 34, ly + 32);
-        const cw = x.measureText(it.course).width;
-        x.font = FONT(500, 24); x.fillStyle = '#646d68'; x.fillText(fitText(x, `${it.group} · ${nice(it.name || '')}`, (W - 220) / 3 - cw - 60), lx + 46 + cw, ly + 32);
-      });
-    }
+    const x = c.getContext('2d');
+    x.fillStyle = '#f6f5f1'; x.fillRect(0, 0, W, H);
+    x.textAlign = 'left'; x.textBaseline = 'alphabetic'; x.fillStyle = '#14201b';
+    x.font = FONT(750, 64); x.fillText('Jadual kelas', 110, 150);
+    x.font = FONT(500, 30); x.fillStyle = '#646d68'; x.fillText(`${S.campusName || 'UiTM'}${S.label ? ' · ' + S.label : ''}`, 110, 200);
+    x.textAlign = 'right'; x.font = FONT(600, 26); x.fillStyle = '#0b5d4b'; x.fillText('bijaklabur.my', W - 110, 150);
+    const legH = 70 * Math.ceil(S.items.length / 3);
+    drawGrid(x, 90, 250, W - 180, H - 250 - legH - 110, false, 1.7);
+    S.items.forEach((it, i) => {
+      const col = i % 3, row = Math.floor(i / 3), lx = 110 + col * ((W - 220) / 3), ly = H - legH - 50 + row * 70;
+      x.fillStyle = PAL.light[i % HUES]; x.beginPath(); x.arc(lx + 10, ly + 22, 10, 0, 7); x.fill();
+      x.textAlign = 'left'; x.font = FONT(750, 28); x.fillText(it.course, lx + 34, ly + 32);
+      const cw = x.measureText(it.course).width;
+      x.font = FONT(500, 24); x.fillStyle = '#646d68'; x.fillText(fitText(x, `${it.group} · ${nice(it.name || '')}`, (W - 220) / 3 - cw - 60), lx + 46 + cw, ly + 32);
+    });
     return c;
   }
 
@@ -585,10 +574,9 @@
     btn.disabled = true;
     try {
       if (document.fonts && document.fonts.ready) await document.fonts.ready;
-      const c = drawExport(kind);
+      const c = drawExport();
       const jpg = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.92));
       if (kind === 'pdf') await saveBlob(jpegToPdf(new Uint8Array(await jpg.arrayBuffer()), c.width, c.height), 'jadual-kelas-uitm.pdf', 'PDF dimuat turun.');
-      else if (kind === 'wall') await saveBlob(jpg, 'wallpaper-jadual-kelas.jpg', 'Wallpaper dimuat turun. Buka Galeri atau Foto, kemudian pilih Tetapkan sebagai wallpaper.');
       else await saveBlob(jpg, 'jadual-kelas-uitm.jpg', 'Gambar jadual dimuat turun.');
     } catch (e) { toast('Gagal menyimpan: ' + e.message, 4000); }
     btn.disabled = false;
@@ -621,5 +609,9 @@
     } else homeCard();
   });
   homeCard();
-  window.Jadual = { parsePaste, render };
+  // Data jadual untuk Studio Skrin Kunci (js/skrin-kunci.js)
+  window.Jadual = {
+    parsePaste, render,
+    kunci: () => ({ S, slots: slotsAll(), days: days(), clash: clashes(), nice, fmt, fmtShort, DAY, DAY3, PAL, saveBlob })
+  };
 })();
