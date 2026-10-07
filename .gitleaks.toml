@@ -1,0 +1,20 @@
+# Konfigurasi Gitleaks (imbasan rahsia dalam kod, .github/workflows/keselamatan.yml).
+# Peraturan lalai digunakan; hanya positif palsu yang telah disemak dikecualikan di bawah.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Positif palsu yang disemak"
+regexTarget = "line"
+paths = [
+  # Fail ujian menggunakan kunci rekaan
+  '''(^|/)test\.mjs$''',
+  # Salinan binaan laman untuk app (sama dengan js/ dan css/ di akar)
+  '''^(www|android/app/src/main/assets/public|ios/App/App/public)/''',
+]
+regexes = [
+  # Kunci API web Firebase memang awam (dihadkan oleh peraturan Firebase dan domain yang dibenarkan, bukan rahsia)
+  '''AIzaSyDRwErMFQqREFjBqeztSLdUqCUJbgmlqGw''',
+  # Cincang SHA-256 kunci pemilik (bukan kunci itu sendiri)
+  '''OWNER_KEY_HASH = "[0-9a-f]{64}"''',
+]

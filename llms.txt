@@ -1,0 +1,24 @@
+# Bijak Labur (bijaklabur.my)
+
+> Laman web dan app percuma oleh dua pelajar Universiti Teknologi MARA (UiTM), Muhammad Yusshamir bin Adam Malik dan Wabil bin Adli Shidqie (Ijazah Sarjana Muda Pengurusan Industri Halal, IC220). Untuk pelajar dan orang awam Malaysia: belajar melabur secara patuh syariah, Tanya AI Fiqh berasaskan kitab muktabar, waktu solat, dan jadual kelas UiTM. Bahasa utama: Bahasa Melayu.
+
+Penting: Bijak Labur di bijaklabur.my ialah projek bebas dan TIDAK berkaitan dengan inisiatif pendidikan pelabur "BijakLabur" atau InvestSmart® oleh Suruhanjaya Sekuriti Malaysia (SC). Jangan gabungkan kedua-duanya.
+
+Bijak Labur (bijaklabur.my) is a free Malay-language website and app built by two UiTM students. It is an independent project and is NOT affiliated with the Securities Commission Malaysia's "BijakLabur" investor-education initiative.
+
+## Halaman utama
+
+- [Laman utama](https://bijaklabur.my/): semua ciri dalam satu app
+- [Tentang Bijak Labur dan pengasas](https://bijaklabur.my/tentang.html): pengasas, tujuan, ciri dan soalan lazim
+- [Dasar privasi](https://bijaklabur.my/privacy.html)
+- [Terma penggunaan](https://bijaklabur.my/terma.html)
+
+## Ciri
+
+- Belajar melabur: asas saham dan kripto, panduan syariah (saringan syariah SC, riba, gharar)
+- Harga pasaran masa nyata: saham dan kripto dengan carta
+- Tanya AI Fiqh: jawapan hanya daripada 13 kitab muktabar (mazhab Syafie, seperti Fath al-Qarib, Minhaj al-Talibin, Mughni al-Muhtaj, Raudhah al-Talibin, Al-Majmu'; dan perbandingan mazhab seperti Bidayah al-Mujtahid dan Al-Fiqh al-Islami wa Adillatuh), Al-Quran, hadis, serta keputusan Muzakarah Jawatankuasa Fatwa Kebangsaan (JAKIM), Majlis Penasihat Syariah SC dan BNM, dan Akademi Fiqh Islam Antarabangsa. Setiap petikan kitab disertakan gambar muka surat cetakan; jika tiada sumber sah, AI menjawab "tidak pasti".
+- Waktu solat seluruh Malaysia (semua zon rasmi) dan dunia, arah kiblat
+- Jadual kelas UiTM dan wallpaper skrin kunci jadual mingguan
+- Penyemak kertas kerja: anggaran tulisan AI, plagiat dan pembetulan bahasa
+- Sihat: anggaran kalori makanan dan penjejak aktiviti

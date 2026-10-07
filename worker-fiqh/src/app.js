@@ -15,7 +15,7 @@
  */
 import Anthropic from '@anthropic-ai/sdk';
 import { BY_ID, CORPUS_TEXT } from './corpus.js';
-import { DOC, search, expand, pagesText, pageUrl, cetakan, assetTag, gambarAset } from './rujukan.js';
+import { DOC, KITAB, search, expand, pagesText, pageUrl, cetakan, cetakPdf, muatCetakan, assetTag, gambarAset } from './rujukan.js';
 import { GEMINI_MODEL, GEMINI_FALLBACKS, geminiModels, geminiGenerate, geminiText, aiSedia } from './gemini.js';
 import { senaraiAktif, combo, PENYEDIA_GAMBAR } from './penghala.js';
 import { semak, MIN_CHARS, MAX_CHARS } from './semak.js';
@@ -136,8 +136,14 @@ export const TEKS_HALAMAN = 4000;
 export const NOTA_PDF = 'Sesetengah kitab di atas belum mempunyai gambar muka surat cetakan yang disahkan. Teks muka surat Shamela yang dipetik dipaparkan sebagai ganti.';
 const quoteIn = (q, text) => { const nq = norm(q); return nq.length >= 12 && norm(text).includes(nq); };
 
-/* Sahkan setiap sumber. Hanya yang lulus dipulangkan kepada pengguna. */
-export function verify(ans, pages, docs = []) {
+/*
+ * Sahkan setiap sumber. Hanya yang lulus dipulangkan kepada pengguna.
+ * cetak = rujukan/cetakan.json: jika diberi, setiap sumber kitab MESTI mempunyai gambar muka surat cetakan yang disahkan
+ * (archive.org, dipadankan dengan OCR). Kitab tanpa gambar dibuang, supaya pengguna sentiasa boleh melihat muka surat
+ * cetakan sebenar bagi setiap petikan kitab, bukan sekadar teks laman web.
+ */
+const KITAB_SHAMELA = new Map(KITAB.map(b => [String(b.id), b.k]));
+export function verify(ans, pages, docs = [], cetak = null) {
   const sumber = [], seen = new Set(), pdf = new Map(docs.map(d => [d.id, d]));
   for (const s of (Array.isArray(ans.sumber) ? ans.sumber : []).slice(0, 12)) {
     if (!s || typeof s !== 'object') continue;
@@ -173,6 +179,12 @@ export function verify(ans, pages, docs = []) {
         const sh = u.match(/^https:\/\/shamela\.ws\/book\/(\d+)\/(\d+)/);
         if (sh) Object.assign(out, { jenis: 'kitab', shamela: sh[2] });
       }
+    }
+    if (out && cetak && out.jenis === 'kitab') {
+      // Kitab: kenal pasti kitab dan halaman Shamela, kemudian lampirkan gambar muka surat cetakannya (atau buang)
+      const sh = String(out.url || '').match(/^https:\/\/shamela\.ws\/book\/(\d+)\/(\d+)/), k = sh && KITAB_SHAMELA.get(sh[1]);
+      const info = k ? cetakPdf(cetak[k], +sh[2]) : null;
+      if (info && info.gambar_url) { Object.assign(out, info); delete out.teks_halaman; } else out = null;
     }
     if (!out) continue;
     // Setiap petikan Arab wajib disertai terjemahan Bahasa Melayu; tanpanya petikan tidak dipaparkan
@@ -230,7 +242,7 @@ export async function askGemini(env, question, docs = []) {
   const text = (c && c.content && c.content.parts || []).filter(p => !p.thought).map(p => p.text || '').join('');
   const ans = parseAnswer(text);
   // Tiada halaman web dibuka, jadi hanya id korpus dan ayat Al-Quran boleh lulus semakan
-  return verify(ans || { status: 'tidak_pasti' }, new Map(), docs);
+  return verify(ans || { status: 'tidak_pasti' }, new Map(), docs, await muatCetakan(env));
 }
 
 export async function ask(env, question, client, docs = []) {
@@ -260,7 +272,7 @@ export async function ask(env, question, client, docs = []) {
   const text = res.content.filter(b => b.type === 'text').map(b => b.text).join('');
   const ans = parseAnswer(text);
   if (!ans) return verify({ status: 'tidak_pasti' }, new Map());
-  return verify(ans, collectRetrieved(blocks), docs);
+  return verify(ans, collectRetrieved(blocks), docs, await muatCetakan(env));
 }
 
 /* Istilah carian untuk soalan dari mana-mana bab fiqh: istilah Arab yang digunakan dalam kitab Syafie, serta istilah Inggeris dan Melayu

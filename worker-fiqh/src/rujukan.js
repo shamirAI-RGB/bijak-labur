@@ -127,7 +127,12 @@ export async function search(env, query, limit = 6) {
   const ranked = [...score.values()].map(x => ({ ...x, skor: x.skor * (1 + 0.3 * (x.padan - 1)) })).sort((a, b) => b.skor - a.skor);
   // Kitab Arab dan dokumen moden disaring berasingan (skor teks Melayu lebih tinggi daripada teks Arab), supaya kedua-duanya diberi kepada model
   const pick = (list, n) => list.filter(x => x.skor >= list[0].skor * 0.4).slice(0, n);
-  const kitab = ranked.filter(x => DOC[x.k] && DOC[x.k].jenis === 'kitab'), moden = ranked.filter(x => !(DOC[x.k] && DOC[x.k].jenis === 'kitab'));
+  const moden = ranked.filter(x => !(DOC[x.k] && DOC[x.k].jenis === 'kitab'));
+  let kitab = ranked.filter(x => DOC[x.k] && DOC[x.k].jenis === 'kitab');
+  // Hanya halaman kitab yang mempunyai gambar muka surat cetakan yang disahkan (OCR) diberi kepada model, supaya setiap
+  // petikan kitab boleh dipaparkan bersama gambar muka surat cetakannya. Tanpa rujukan/cetakan.json, semua halaman dibenarkan.
+  const cetak = kitab.length ? await muatCetakan(env) : null;
+  if (cetak) kitab = kitab.filter(x => adaGambar(cetak, x.k, x.n));
   // Kitab: utamakan kitab yang berbeza (cth. matan Syafie, syarah dan fiqh perbandingan) sebelum halaman kedua kitab yang sama
   const pelbagai = (list, n) => {
     const ok = list.filter(x => x.skor >= list[0].skor * 0.4), dulu = [], kemudian = [], ada = new Set();
@@ -140,7 +145,7 @@ export async function search(env, query, limit = 6) {
   await Promise.all([...chunks.keys()].map(async p => chunks.set(p, await assetJson(env, p))));
   const texts = top.map(x => { const l = chunks.get(chunkPath(x.k, x.n)); const t = l && l[(x.n - 1) % PAGES]; return typeof t === 'string' ? t : null; });
   const adaModen = top.some(x => !(DOC[x.k] && DOC[x.k].jenis === 'kitab'));
-  const [cetak, gambar] = await Promise.all([nk ? assetJson(env, 'rujukan/cetakan.json') : null, adaModen ? assetJson(env, 'rujukan/gambar.json') : null]);
+  const gambar = adaModen ? await assetJson(env, 'rujukan/gambar.json') : null;
   return top.map((x, i) => {
     const isK = DOC[x.k] && DOC[x.k].jenis === 'kitab', teks = texts[i] || '';
     // Dokumen moden: gambar satu muka surat (rujukan/g/<k>/<n>.jpg) jika telah dijana semasa pemasangan
@@ -153,20 +158,29 @@ export async function search(env, query, limit = 6) {
 export const gambarPath = (k, n) => `/halaman/${k}/${n}.jpg`;
 export const gambarAset = (k, n) => `rujukan/g/${k}/${n}.jpg`;
 
+/** rujukan/cetakan.json (peta halaman Shamela -> muka surat cetakan), atau null jika tiada */
+export const muatCetakan = env => env.RUJUKAN ? assetJson(env, 'rujukan/cetakan.json').catch(() => null) : Promise.resolve(null);
+/** Halaman kitab ini mempunyai gambar muka surat cetakan yang disahkan */
+export const adaGambar = (cetak, k, n) => !!(cetak && cetakPdf(cetak[k], n)?.gambar_url);
+
 /** Pautan yang membuka PDF asal pada muka surat itu */
 export const pageUrl = (k, n) => DOC[k].jenis === 'kitab' ? D.shamela(DOC[k].id, n) : `${DOC[k].url}#page=${n}`;
 
 /*
  * Edisi cetakan dan PDF bergambar bagi setiap kitab (rujukan/cetakan.json, dibina oleh scripts/padan-pdf.mjs):
  *   { k: { penerbit, edisi, sumber, fail: [url PDF], peta: { halamanShamela: [indeksFail, mukaSuratPdf] },
- *          paparan: [{ gambar, lihat, off } atau null bagi setiap fail] } }
+ *          paparan: [{ gambar, lihat, off } atau null bagi setiap fail],
+ *          info: [{ penerbit, edisi, sumber } bagi setiap fail] (hanya jika kitab menggunakan lebih daripada satu naskhah) } }
  * Peta dibina dengan OCR: setiap muka surat PDF dibaca dan dipadankan dengan teks halaman Shamela. Halaman yang tiada
  * dalam peta belum disahkan pada PDF. paparan: templat URL gambar satu muka surat dan halaman BookReader archive.org
  * ({n} = muka surat PDF + off), yang jauh lebih ringan daripada PDF penuh.
  */
 export function cetakPdf(c, n) {
   if (!c) return null;
-  const info = { penerbit: c.penerbit || '', edisi: c.edisi || '' }, m = c.peta && c.peta[n], url = m && (c.fail || [])[m[0]];
+  const m = c.peta && c.peta[n], url = m && (c.fail || [])[m[0]];
+  // Naskhah tambahan (jilid atau edisi lain) membawa penerbit dan edisinya sendiri dalam c.info[indeks fail]
+  const fi = m && c.info && c.info[m[0]];
+  const info = { penerbit: (fi || c).penerbit || '', edisi: (fi || c).edisi || '' };
   if (!url) return info;
   const v = (c.paparan || [])[m[0]], leaf = v && String(m[1] + (v.off || 0));
   const papar = v && v.gambar ? { gambar_url: v.gambar.replace('{n}', leaf), lihat_url: v.lihat.replace('{n}', leaf) } : {};

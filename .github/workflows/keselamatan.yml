@@ -1,0 +1,85 @@
+# Keselamatan dan prestasi Bijak Labur:
+#   Gitleaks   : imbas setiap push dan PR (dan seluruh sejarah, mingguan) untuk kunci API atau kata laluan yang tertulis dalam kod
+#   Lighthouse : ukur prestasi, aksesibiliti, amalan terbaik dan SEO laman pada setiap PR yang mengubah laman
+#   OWASP ZAP  : imbasan keselamatan pasif (tidak menyerang) terhadap bijaklabur.my seminggu sekali; dapatan dicatat dalam issue
+name: Keselamatan
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: '23 20 * * 0'   # Isnin 4:23 pagi waktu Malaysia
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rahsia:
+    name: Gitleaks (rahsia dalam kod)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
+      - name: Pasang Gitleaks
+        run: |
+          V=8.21.2
+          curl -sSfL -o gl.tgz "https://github.com/gitleaks/gitleaks/releases/download/v${V}/gitleaks_${V}_linux_x64.tar.gz"
+          curl -sSfL -o sums.txt "https://github.com/gitleaks/gitleaks/releases/download/v${V}/gitleaks_${V}_checksums.txt"
+          grep " gitleaks_${V}_linux_x64.tar.gz$" sums.txt | sed 's/gitleaks_.*$/gl.tgz/' | sha256sum -c -
+          tar -xzf gl.tgz gitleaks && rm gl.tgz sums.txt
+      - name: Imbas
+        run: |
+          # PR: hanya commit dalam PR. Push/jadual: seluruh sejarah. Positif palsu yang disemak ada dalam .gitleaks.toml.
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            ./gitleaks detect --source . --config .gitleaks.toml --redact --no-banner --log-opts="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
+          else
+            ./gitleaks detect --source . --config .gitleaks.toml --redact --no-banner
+          fi
+
+  lighthouse:
+    name: Lighthouse (prestasi, aksesibiliti, SEO)
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+      - name: Lighthouse CI
+        run: npx --yes @lhci/cli@0.14.0 autorun --config=lighthouserc.json
+      - name: Ringkasan
+        if: always()
+        run: |
+          node -e "
+            const fs = require('fs'), dir = '.lighthouseci';
+            const f = fs.existsSync(dir) ? fs.readdirSync(dir).filter(x => /^lhr-.*\.json$/.test(x)) : [];
+            if (!f.length) { console.log('Tiada laporan Lighthouse.'); process.exit(0); }
+            const r = JSON.parse(fs.readFileSync(dir + '/' + f[0]));
+            const s = Object.values(r.categories).map(c => '| ' + c.title + ' | ' + Math.round(c.score * 100) + ' |').join('\n');
+            const m = ['first-contentful-paint', 'largest-contentful-paint', 'total-blocking-time', 'cumulative-layout-shift'].map(k => '| ' + r.audits[k].title + ' | ' + r.audits[k].displayValue + ' |').join('\n');
+            console.log('### Lighthouse (telefon)\n\n| Kategori | Skor |\n|---|---|\n' + s + '\n\n| Metrik | Nilai |\n|---|---|\n' + m);
+          " >> "$GITHUB_STEP_SUMMARY"
+
+  zap:
+    name: OWASP ZAP (imbasan pasif bijaklabur.my)
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - name: Imbasan asas ZAP
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: https://bijaklabur.my/
+          rules_file_name: .zap/rules.tsv
+          issue_title: 'Laporan imbasan keselamatan ZAP'
+          fail_action: false
+          allow_issue_writing: true

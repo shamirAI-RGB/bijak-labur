@@ -10,7 +10,7 @@ Laman bijaklabur.my (GitHub Pages, cawangan `main`) dan app Android/iOS (Capacit
 - `sw.js`: service worker. **Naikkan `CACHE` (cth. v44 ke v45) dan tambah fail baharu ke senarai cache setiap kali js/css/html berubah.**
 - Pelayan Cloudflare Workers, dipasang oleh GitHub Actions apabila `main` berubah:
   - `worker/`: Premium, akaun (Firebase + Durable Object), Suara HD (Azure)
-  - `worker-fiqh/`: Tanya AI, `/semak`, `/kalori`, `/gambar` (FLUX), `/buku` (Buku Nota AI), `/kerja` (Kerjaya AI), `/manusia` (gaya AI). Gemini percuma, dengan penghala sandaran gaya 9Router (`src/penghala.js`: Groq, Cerebras, OpenRouter dan lain-lain, aktif hanya jika kuncinya ada dalam GitHub Secrets) dan akhirnya Workers AI apabila kuota Gemini habis. Studio Gambar beralih ke Together/Hugging Face jika kuota FLUX Workers AI habis. Sumber Tanya AI memaparkan satu muka surat sahaja: gambar cetakan kitab (archive.org), gambar muka surat dokumen rasmi (`/halaman/<k>/<n>.jpg`, dijana oleh `scripts/gambar-pdf.mjs`), atau teks halaman itu jika tiada gambar
+  - `worker-fiqh/`: Tanya AI, `/semak`, `/kalori`, `/gambar` (FLUX), `/buku` (Buku Nota AI), `/kerja` (Kerjaya AI), `/manusia` (gaya AI). Gemini percuma, dengan penghala sandaran gaya 9Router (`src/penghala.js`: Groq, Cerebras, OpenRouter dan lain-lain, aktif hanya jika kuncinya ada dalam GitHub Secrets) dan akhirnya Workers AI apabila kuota Gemini habis. Studio Gambar beralih ke Together/Hugging Face jika kuota FLUX Workers AI habis. Sumber Tanya AI memaparkan satu muka surat sahaja: gambar cetakan kitab (archive.org, dipadankan dengan OCR oleh `scripts/padan-pdf.mjs`, boleh berbilang naskhah/jilid) atau gambar muka surat dokumen rasmi (`/halaman/<k>/<n>.jpg`, `scripts/gambar-pdf.mjs`). Halaman kitab tanpa gambar cetakan yang disahkan tidak diberi kepada AI dan tidak boleh dipetik
   - `worker-jadual/`: jadual UiTM
   - `worker-nota/`: kedai nota, 4 ruang iklan halaman utama (`/iklan`) dan teks laman yang diubah oleh pemilik (`/kandungan`)
   - `worker-agen/`: agen.bijaklabur.my melencong ke `pejabat-agen.html` (Pejabat AI Agent pemilik)
@@ -44,7 +44,7 @@ npx -y http-server . -p 8099 -s -c-1   # kemudian buka setiap #view dengan Playw
 ```
 - Chromium untuk Playwright: `/opt/pw-browsers/chromium-*/chrome-linux/chrome`.
 - Sandbox awan menyekat bijaklabur.my dan pelayan workers. Keadaan sebenar boleh dilihat dalam:
-  - log GitHub Actions: `Pemantau` (setiap jam) dan langkah "Semak Gemini" dalam `fiqh.yml`;
+  - log GitHub Actions: `Pemantau` (setiap jam, `scripts/pantau.mjs`: kesihatan, uptime 30 hari, prestasi, keselamatan seperti penolakan origin asing/CSP/fail sulit, dan penggunaan Workers melalui Cloudflare GraphQL) dan langkah "Semak Gemini" dalam `fiqh.yml`;
   - issue berlabel `pantau`.
 
 ## AI Agent harian

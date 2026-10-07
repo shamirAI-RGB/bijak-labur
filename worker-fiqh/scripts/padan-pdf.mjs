@@ -67,9 +67,14 @@ async function get(url, json) {
 }
 
 async function carian(b) {
-  const q = encodeURIComponent(`title:(${b.ar}) AND mediatype:texts`);
-  const r = await get(`https://archive.org/advancedsearch.php?q=${q}&fl[]=identifier&rows=8&output=json`, true);
-  return (r?.response?.docs || []).map(d => d.identifier);
+  // Tajuk penuh dahulu, kemudian dua kata pertama tajuk (item berjilid sering bertajuk "المجموع شرح المهذب ج3" dan seumpamanya)
+  const pendek = b.ar.split(/\s+/).slice(0, 2).join(' ');
+  const ids = [];
+  for (const t of [`title:(${b.ar})`, `title:("${pendek}")`]) {
+    const r = await get(`https://archive.org/advancedsearch.php?q=${encodeURIComponent(`${t} AND mediatype:texts`)}&fl[]=identifier&rows=25&output=json`, true);
+    ids.push(...(r?.response?.docs || []).map(d => d.identifier));
+  }
+  return [...new Set(ids)];
 }
 
 /* Fail PDF dalam item: utamakan fail asal (bukan terbitan archive.org) */
@@ -225,76 +230,124 @@ const simpan = async () => { await mkdir(CACHE, { recursive: true }); await writ
 await mkdir(TMP, { recursive: true });
 await summary('### PDF cetakan kitab (padanan OCR)\n\n| Kitab | Penerbit | Edisi | PDF | Halaman Shamela dipetakan |\n|---|---|---|---|---|');
 
+/*
+ * Satu calon item archive.org: setiap fail PDF disemak dengan sampel; fail yang diterima dibaca sepenuhnya (bersambung
+ * merentasi larian). rec ialah rekod naskhah dalam cache ({ item, fail, buku, judul, penerbit }); rec kosong = calon baharu.
+ */
+async function cubaItem(c, rec, id, halaman, seen) {
+  console.log(`  calon ${id}`);
+  const { meta, files, servers, buku } = await failPdf(id);
+  console.log(`    "${meta.title || ''}" | ${files.length} PDF`);
+  if (rec.item === id && rec.penerbit === undefined) rec.penerbit = String(meta.publisher || '');
+  const diterima = rec.item === id ? rec.fail : [];
+  for (const f of files) {
+    if (!masa()) break;
+    if (f.md5 && seen.has(f.md5)) continue;
+    seen.add(f.md5);
+    const nama = f.name.split('/').map(encodeURIComponent).join('/'), url = `https://archive.org/download/${id}/${nama}`, file = join(TMP, 'x.pdf');
+    const lama = diterima.find(x => x.url === url);
+    if (lama && lama.siap) continue;
+    if (!lama && c.ditolak?.includes(url)) continue;
+    try {
+      console.log(`   ${f.name} (${(f.size / 1e6).toFixed(1)} MB)`);
+      await muatTurun([url, ...servers.map(s => `${s}/${nama}`)], file);
+      const np = +((await run('pdfinfo', [file])).stdout.match(/Pages:\s+(\d+)/) || [])[1] || 0;
+      if (!lama && !(np > 1 && await semakSampel(file, np, halaman))) {
+        if (!masa()) { console.log('    had masa: sampel belum lengkap'); continue; }
+        console.log('    ditolak: bukan teks kitab yang sama');
+        (c.ditolak ||= []).push(url);
+        continue;
+      }
+      const x = lama || { url, np, siap: false };
+      if (!lama) diterima.push(x);
+      const ocr = cache.ocr[url] ||= {};
+      x.siap = await bacaPenuh(file, np, halaman, ocr);
+      console.log(`    ${Object.keys(ocr).length}/${np} muka surat dibaca${x.siap ? '' : ' (bersambung pada larian seterusnya)'}`);
+    } catch (e) { console.log(`    gagal: ${e.message}`); }
+    finally {
+      await rm(file, { force: true });
+      if (diterima.length && !rec.item) Object.assign(rec, { item: id, fail: diterima, judul: String(meta.title || ''), penerbit: String(meta.publisher || '') });
+      await simpan();
+    }
+  }
+  if (rec.item === id) rec.buku = buku;
+}
+
+/* Semua naskhah yang diterima bagi satu kitab: naskhah utama (c) dan naskhah tambahan (cth. jilid lain, edisi lain) */
+const naskhah = c => [c.item ? c : null, ...(c.tambahan || [])].filter(r => r && r.item);
+/* Peta gabungan: setiap naskhah dipetakan berasingan (tertib menaik dalam naskhah itu), naskhah terdahulu diutamakan */
+function petaGabung(c, N) {
+  const peta = {};
+  let off = 0;
+  for (const r of naskhah(c)) {
+    const p = bina(r.fail.map(x => cache.ocr[x.url] || {}), N);
+    for (const [n, [f, m]] of Object.entries(p)) if (!peta[n]) peta[n] = [off + f, m];
+    off += r.fail.length;
+  }
+  return peta;
+}
+// Teruskan mencari naskhah tambahan sehingga liputan ini dicapai (kitab berjilid-jilid sering dimuat naik satu jilid satu item)
+const LIPUTAN = 0.85, MAX_NASKHAH = 10, HAD_CARI = (+process.env.PADAN_CARI_MINIT || 3) * 60000;
+
 // Kitab yang sudah diketahui mempunyai PDF sepadan didahulukan supaya had masa tidak dihabiskan pada calon yang ditolak
 const TERTIB = ['fathqarib', 'manhaji', 'abisyuja', 'minhaj'];
-for (const b of [...KITAB].sort((x, y) => (TERTIB.indexOf(x.k) + 1 || 99) - (TERTIB.indexOf(y.k) + 1 || 99))) {
+// Selepas kitab yang diketahui, kitab dengan liputan paling rendah didahulukan supaya setiap larian membantu yang paling memerlukan
+const lip = k => cache.kitab[k]?.liputan ?? 0;
+for (const b of [...KITAB].sort((x, y) => ((TERTIB.indexOf(x.k) + 1 || 99) - (TERTIB.indexOf(y.k) + 1 || 99)) || lip(x.k) - lip(y.k))) {
   console.log(`\n=== ${b.k} (Shamela ${b.id})`);
   const c = cache.kitab[b.k] ||= { cuba: {} };
+  c.cuba ||= {};
   let halaman;
   try { halaman = JSON.parse(await readFile(join(CACHE, 'shamela', `${b.id}.json`), 'utf8')).pages.map(setOf); }
   catch { console.log('  tiada teks Shamela dalam cache; langkau'); continue; }
   const N = halaman.length, seen = new Set();
-  // Item yang telah diterima: sambung bacaan penuh. Jika belum ada, periksa calon satu demi satu.
-  const calon = c.item ? [c.item] : [...new Set([...(CALON[b.k] || []), ...await carian(b)])];
-  for (const id of calon) {
-    if (!masa()) break;
-    if (!c.item && id in c.cuba) continue;
-    console.log(`  calon ${id}`);
-    const { meta, files, servers, buku } = await failPdf(id);
-    console.log(`    "${meta.title || ''}" | ${files.length} PDF`);
-    if (c.item === id && c.penerbit === undefined) c.penerbit = String(meta.publisher || '');
-    const diterima = c.item === id ? c.fail : [];
-    for (const f of files) {
-      if (!masa()) break;
-      if (f.md5 && seen.has(f.md5)) continue;
-      seen.add(f.md5);
-      const nama = f.name.split('/').map(encodeURIComponent).join('/'), url = `https://archive.org/download/${id}/${nama}`, file = join(TMP, 'x.pdf');
-      const lama = diterima.find(x => x.url === url);
-      if (lama && lama.siap) continue;
-      if (!lama && c.item === id && c.ditolak?.includes(url)) continue;
-      try {
-        console.log(`   ${f.name} (${(f.size / 1e6).toFixed(1)} MB)`);
-        await muatTurun([url, ...servers.map(s => `${s}/${nama}`)], file);
-        const np = +((await run('pdfinfo', [file])).stdout.match(/Pages:\s+(\d+)/) || [])[1] || 0;
-        if (!lama && !(np > 1 && await semakSampel(file, np, halaman))) {
-          if (!masa()) { console.log('    had masa: sampel belum lengkap'); continue; }
-          console.log('    ditolak: bukan teks kitab yang sama');
-          (c.ditolak ||= []).push(url);
-          continue;
-        }
-        const x = lama || { url, np, siap: false };
-        if (!lama) diterima.push(x);
-        const ocr = cache.ocr[url] ||= {};
-        x.siap = await bacaPenuh(file, np, halaman, ocr);
-        console.log(`    ${Object.keys(ocr).length}/${np} muka surat dibaca${x.siap ? '' : ' (bersambung pada larian seterusnya)'}`);
-      } catch (e) { console.log(`    gagal: ${e.message}`); }
-      finally {
-        await rm(file, { force: true });
-        if (diterima.length && !c.item) Object.assign(c, { item: id, fail: diterima, judul: String(meta.title || ''), penerbit: String(meta.publisher || '') });
-        await simpan();
+  // 1. Sambung bacaan penuh naskhah yang telah diterima
+  for (const r of naskhah(c)) { if (!masa()) break; await cubaItem(c, r, r.item, halaman, seen); }
+  // 2. Tiada naskhah, atau liputan masih rendah: periksa calon baharu satu demi satu
+  const liputan = () => Object.keys(petaGabung(c, N)).length / N;
+  // Had masa mencari calon baharu bagi setiap kitab, supaya kitab yang mempunyai banyak calon ditolak (cth. Bulugh al-Maram,
+  // yang dipetik dalam banyak syarah) tidak menghabiskan masa larian; calon yang telah dicuba diingati (c.cuba)
+  const hadKitab = Date.now() + HAD_CARI;
+  if (masa() && (!naskhah(c).length || liputan() < LIPUTAN)) {
+    const ada = new Set(naskhah(c).map(r => r.item));
+    const calon = [...new Set([...(CALON[b.k] || []), ...await carian(b)])].filter(id => !ada.has(id) && !(id in c.cuba));
+    console.log(`  liputan ${Math.round(liputan() * 100)}%; ${calon.length} calon baharu`);
+    for (const id of calon) {
+      if (!masa() || Date.now() > hadKitab || naskhah(c).length >= MAX_NASKHAH) break;
+      const utama = !c.item, rec = utama ? c : {};
+      if (!utama) (c.tambahan ||= []).push(rec);
+      const sebelum = liputan();
+      await cubaItem(c, rec, id, halaman, seen);
+      if (!rec.item) {
+        if (!utama) c.tambahan = c.tambahan.filter(r => r !== rec);
+        if (masa()) c.cuba[id] = 0;
+        continue;
       }
+      // Naskhah tambahan yang tidak menambah liputan (cth. salinan edisi yang sama) dibuang supaya tidak diproses lagi
+      if (!utama && rec.fail.every(x => x.siap) && liputan() <= sebelum) { c.tambahan = c.tambahan.filter(r => r !== rec); c.cuba[id] = 0; console.log('    tiada halaman baharu; dibuang'); }
+      if (liputan() >= LIPUTAN) break;
     }
-    if (c.item === id) c.buku = buku;
-    if (c.item) break;
-    if (masa()) c.cuba[id] = 0;
   }
-  if (c.item) {
-    c.peta = bina(c.fail.map(x => cache.ocr[x.url] || {}), N);
-    await paparan(c, halaman);
-    await simpan();
-  }
-  const pct = Math.round(Object.keys(c.peta || {}).length / N * 100);
-  console.log(`  hasil: ${c.item || 'tiada PDF sepadan'}; ${pct}% halaman Shamela dipetakan`);
+  c.peta = petaGabung(c, N);
+  c.liputan = Object.keys(c.peta).length / N;
+  for (const r of naskhah(c)) await paparan(r, halaman);
+  await simpan();
+  const items = naskhah(c).map(r => r.item);
+  const pct = Math.round(Object.keys(c.peta).length / N * 100);
+  console.log(`  hasil: ${items.join(', ') || 'tiada PDF sepadan'}; ${pct}% halaman Shamela dipetakan`);
   const e = EDISI[c.item] || {};
-  await summary(`| ${b.name} | ${e.penerbit || '-'} | ${e.edisi || c.judul || '-'} | ${c.item ? 'https://archive.org/details/' + c.item : 'tiada padanan'} | ${pct}% |`);
+  await summary(`| ${b.name} | ${e.penerbit || '-'} | ${e.edisi || c.judul || '-'} | ${items.length ? items.map(i => 'https://archive.org/details/' + i).join('<br>') : 'tiada padanan'} | ${pct}% |`);
 }
 
 await simpan();
 await mkdir(OUT, { recursive: true });
 const out = Object.fromEntries(Object.entries(cache.kitab).filter(([, c]) => c.item).map(([k, c]) => {
-  const e = EDISI[c.item] || { penerbit: c.penerbit || '', edisi: c.judul || '' };
-  const papar = c.fail.map(x => x.paparan?.gambar ? { lihat: x.paparan.lihat, gambar: x.paparan.gambar, off: x.paparan.off } : null);
-  return [k, { penerbit: e.penerbit, edisi: e.edisi, sumber: `https://archive.org/details/${c.item}`, fail: c.fail.map(x => x.url), peta: c.peta || {}, ...(papar.some(Boolean) ? { paparan: papar } : {}) }];
+  const ed = r => EDISI[r.item] || { penerbit: r.penerbit || '', edisi: r.judul || '' };
+  const rs = naskhah(c), e = ed(c), fail = rs.flatMap(r => r.fail);
+  const papar = fail.map(x => x.paparan?.gambar ? { lihat: x.paparan.lihat, gambar: x.paparan.gambar, off: x.paparan.off } : null);
+  // Penerbit dan edisi bagi setiap fail (naskhah tambahan mungkin edisi lain)
+  const info = rs.length > 1 ? rs.flatMap(r => r.fail.map(() => ({ ...ed(r), sumber: `https://archive.org/details/${r.item}` }))) : null;
+  return [k, { penerbit: e.penerbit, edisi: e.edisi, sumber: `https://archive.org/details/${c.item}`, fail: fail.map(x => x.url), peta: c.peta || {}, ...(papar.some(Boolean) ? { paparan: papar } : {}), ...(info ? { info } : {}) }];
 }));
 await writeFile(join(OUT, 'cetakan.json'), JSON.stringify(out));
 for (const [k, c] of Object.entries(out)) console.log(`${k}: ${Object.keys(c.peta).length} halaman dipetakan; contoh ${JSON.stringify(Object.entries(c.peta).slice(0, 10))}`);
