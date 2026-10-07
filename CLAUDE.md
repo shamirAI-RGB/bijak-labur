@@ -44,7 +44,7 @@ npx -y http-server . -p 8099 -s -c-1   # kemudian buka setiap #view dengan Playw
 ```
 - Chromium untuk Playwright: `/opt/pw-browsers/chromium-*/chrome-linux/chrome`.
 - Sandbox awan menyekat bijaklabur.my dan pelayan workers. Keadaan sebenar boleh dilihat dalam:
-  - log GitHub Actions: `Pemantau` (setiap jam) dan langkah "Semak Gemini" dalam `fiqh.yml`;
+  - log GitHub Actions: `Pemantau` (setiap jam, `scripts/pantau.mjs`: kesihatan, uptime 30 hari, prestasi, keselamatan seperti penolakan origin asing/CSP/fail sulit, dan penggunaan Workers melalui Cloudflare GraphQL) dan langkah "Semak Gemini" dalam `fiqh.yml`;
   - issue berlabel `pantau`.
 
 ## AI Agent harian
