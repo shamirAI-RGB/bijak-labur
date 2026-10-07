@@ -38,11 +38,18 @@
 .km-fchip span { display: grid; line-height: 1.2; }
 .km-fchip b { font-size: .85rem; }
 .km-fchip small { font-size: .7rem; color: var(--muted); white-space: nowrap; }
-.km-pin-wrap { background: none; border: 0; }
-.km-pin { --c: #0E7C66; display: grid; place-items: center; width: 42px; height: 42px; margin: 0 auto; border-radius: 50% 50% 50% 4px; transform: rotate(-45deg); background: var(--c); border: 3px solid #fff; box-shadow: 0 6px 14px rgba(0,0,0,.3); }
+.km-pin-wrap { width: 46px; height: 51px; cursor: pointer; }
+.km-pin-wrap:focus-visible { outline: none; }
+.km-pin-wrap:focus-visible .km-pin { outline: 3px solid var(--brand, #0f5a46); outline-offset: 3px; }
+/* Bayang di tanah di bawah hujung pin */
+.km-pin-wrap::after { content: ""; position: absolute; left: 50%; bottom: -4px; width: 18px; height: 6px; margin-left: -9px; border-radius: 50%; background: radial-gradient(rgba(0,0,0,.35), transparent 70%); z-index: -1; }
+.km-pin { --c: #0E7C66; display: grid; place-items: center; width: 42px; height: 42px; margin: 0 auto; border-radius: 50% 50% 50% 4px; transform: rotate(-45deg); background: var(--c); border: 3px solid #fff; box-shadow: 0 6px 14px rgba(0,0,0,.3); animation: km-pin-jatuh .45s cubic-bezier(.3, 1.5, .6, 1) backwards; }
 .km-pin span { transform: rotate(45deg); color: #fff; font-weight: 700; font-size: .8rem; }
 .km-pin.me { box-shadow: 0 0 0 6px color-mix(in srgb, var(--c) 30%, transparent), 0 6px 14px rgba(0,0,0,.3); }
-.km-pin-name { display: block; width: max-content; max-width: 90px; margin: 6px auto 0; padding: 1px 7px; border-radius: 99px; background: #fff; color: #14201b; font-size: .68rem; font-weight: 700; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 2px 6px rgba(0,0,0,.2); transform: translateX(-22px); }
+.km-pin-wrap:hover .km-pin { transform: rotate(-45deg) scale(1.06); }
+.km-pin-name { position: absolute; top: calc(100% + 5px); left: 50%; transform: translateX(-50%); width: max-content; max-width: 90px; padding: 1px 7px; border-radius: 99px; background: #fff; color: #14201b; font-size: .68rem; font-weight: 700; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 2px 6px rgba(0,0,0,.2); }
+@keyframes km-pin-jatuh { from { transform: translateY(-18px) rotate(-45deg); opacity: 0; } to { transform: rotate(-45deg); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .km-pin { animation: none; } }
 
 .km-note { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
 .km-note > .ic { width: 22px; height: 22px; color: var(--muted); flex: none; }

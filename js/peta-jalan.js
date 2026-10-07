@@ -213,31 +213,14 @@
   // Mod 3D: condong, rupa bumi berbukit (Terrain Tiles) dan bangunan 3D. Glob apabila zum jauh.
   function terapkan3D(gerak) {
     if (!map || !map.getStyle()) return;
-    try { map.setProjection({ type: 'globe' }); } catch (e) { /* versi lama */ }
-    const ada = id => !!map.getLayer(id);
-    if (ada('building-3d')) map.setLayoutProperty('building-3d', 'visibility', mod3d ? 'visible' : 'none');
-    for (const id of ['building', 'building_bayang']) if (ada(id)) map.setLayoutProperty(id, 'visibility', mod3d ? 'none' : 'visible');
-    try { map.setTerrain(mod3d && map.getSource('dem') ? { source: 'dem', exaggeration: 1.5 } : null); } catch (e) { /* rupa bumi tidak disokong */ }
+    PG.terap3D(map, mod3d);
     $('pj3d').setAttribute('aria-pressed', String(mod3d));
     $('pj3d').textContent = mod3d ? '2D' : '3D';
     $('pj3d').setAttribute('aria-label', mod3d ? 'Paparan 2D' : 'Paparan 3D');
     if (gerak && !navi) map.easeTo({ pitch: mod3d ? 60 : 0, bearing: mod3d ? map.getBearing() : 0, zoom: mod3d ? Math.max(map.getZoom(), Z(16)) : map.getZoom(), duration: reduceMotion ? 0 : 1200 });
   }
-  let gagalVektor = false;
-  function muatGaya(k) {
-    let siap = false;
-    map.setStyle(gagalVektor ? PG.rasterGaya(GAYA[k]) : PG.gayaUrl(GAYA[k]), { diff: false });
-    map.once('idle', () => { siap = true; });
-    const r = e => {
-      // Jubin vektor gagal sebelum peta siap (cth. disekat): guna jubin raster supaya peta tetap kelihatan
-      if (siap || gagalVektor || (e.sourceId && e.sourceId !== 'openmaptiles')) return;
-      const er = (e && e.error) || {};
-      if (!(er.name === 'AJAXError' || 'status' in er || /fetch|network|load/i.test(er.message || ''))) return;
-      gagalVektor = true; map.off('error', r); muatGaya(lapisanSemasa);
-    };
-    map.on('error', r);
-    setTimeout(() => map.off('error', r), 20000);
-  }
+  // Gaya vektor dengan sandaran raster (js/peta-gaya.js)
+  const muatGaya = k => PG.muatGaya(map, GAYA[k]);
   function pasangPeta() {
     if (map) return;
     lapisanSemasa = baca('peta.lapisan', 'jalan');

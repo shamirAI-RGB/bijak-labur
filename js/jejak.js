@@ -1,5 +1,5 @@
 /* Bijak Labur: Jejak Aktiviti. Penjejak GPS masa nyata untuk jalan, lari dan berbasikal: peta laluan langsung
-   (Leaflet + OpenStreetMap), jarak, masa bergerak, rentak/kelajuan, langkah, kalori, pendakian, catatan setiap km
+   (peta 3D MapLibre, data OpenStreetMap), jarak, masa bergerak, rentak/kelajuan, langkah, kalori, pendakian, catatan setiap km
    dengan pengumuman suara, jeda/sambung, sejarah, dan eksport GPX. Semua data disimpan dalam peranti ini sahaja.
    Dalam pelayar, penjejakan hanya berjalan semasa halaman dibuka dan skrin hidup (kunci skrin diminta).
    Dalam app (Android/iOS), pemalam @capgo/background-geolocation meneruskan GPS walaupun skrin dikunci
@@ -58,41 +58,112 @@
   }
   const steps = () => T.jenis === 'basikal' ? 0 : ped.motion && T.steps > 0 ? T.steps : Math.round(T.dist / (profil().tinggi * JENIS[T.jenis].stride / 100));
 
-  /* ---------- Peta ---------- */
-  let map = null, line = null, dot = null, ring = null, startDot = null, histLayer = null, gaya = null;
-  // Peta vektor bergaya Bijak Labur (js/peta-gaya.js), ikut tema terang/gelap laman; raster OSM jika gagal
-  async function pasangGaya(m) {
-    try {
-      await loadScript('js/peta-gaya.js');
-      const g = await PetaGaya.pasang(m, { tema: 'auto' });
-      if (map === m) gaya = g; else g.buang();
-    } catch { if (map === m) L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' }).addTo(m); }
+  /* ---------- Peta (js/peta-gaya.js: MapLibre 3D, jubin vektor OpenFreeMap) ---------- */
+  let peta = null, memuatPeta = false, terbangId = 0;
+  const fc = f => ({ type: 'FeatureCollection', features: f });
+  const garis = c => ({ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: c } });
+  const titik = (p, jenis, label) => ({ type: 'Feature', properties: { jenis, label: label || '' }, geometry: { type: 'Point', coordinates: [p[1], p[0]] } });
+  // Laluan langsung: dipecah pada titik lompatan (p[3]) supaya tiada garis lurus merentasi jurang
+  const segmen = pts => { const out = [[]]; for (const p of pts) { if (p[3] && out[out.length - 1].length) out.push([]); out[out.length - 1].push([p[1], p[0]]); } return out.filter(x => x.length > 1); };
+  const arahKe = (a, b) => { const r = x => x * Math.PI / 180, y = Math.sin(r(b[1] - a[1])) * Math.cos(r(b[0])), x = Math.cos(r(a[0])) * Math.sin(r(b[0])) - Math.sin(r(a[0])) * Math.cos(r(b[0])) * Math.cos(r(b[1] - a[1])); return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360; };
+  // Jarak kumulatif setiap titik (meter)
+  const kumul = pts => { const k = [0]; for (let i = 1; i < pts.length; i++) k.push(k[i - 1] + (pts[i][3] ? 0 : hav(pts[i - 1], pts[i]))); return k; };
+  // Titik pada jarak d sepanjang laluan
+  const padaJarak = (pts, k, d) => {
+    let i = 1; while (i < pts.length - 1 && k[i] < d) i++;
+    const a = pts[i - 1], b = pts[i], f = k[i] > k[i - 1] ? Math.min(1, Math.max(0, (d - k[i - 1]) / (k[i] - k[i - 1]))) : 1;
+    return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, i];
+  };
+  const tandaKm = pts => { if (pts.length < 2) return []; const k = kumul(pts), out = []; for (let n = 1; n * 1000 <= k[k.length - 1]; n++) out.push(titik(padaJarak(pts, k, n * 1000), 'km', String(n))); return out; };
+  function dataPeta() {
+    const h = viewing, live = T.pts;
+    return {
+      'jk-langsung': fc(segmen(live).map(garis)),
+      'jk-sejarah': fc(h && h.pts.length > 1 ? [garis(h.pts.map(p => [p[1], p[0]]))] : []),
+      'jk-titik': fc([...(live.length ? [titik(live[0], 'mula')] : []), ...(h && h.pts.length ? [titik(h.pts[0], 'mula'), titik(h.pts[h.pts.length - 1], 'akhir')] : [])]),
+      'jk-km': fc(h ? tandaKm(h.pts) : [])
+    };
+  }
+  function segar() {
+    if (!peta) return;
+    const d = dataPeta();
+    for (const id in d) { const src = peta.map.getSource(id); if (src) src.setData(d[id]); }
+  }
+  // Lapisan laluan dipasang semula setiap kali gaya peta bertukar, di bawah label peta
+  function pasangLapisan(m, tema, w) {
+    const d = dataPeta(), label = PetaGaya.labelPertama(m);
+    for (const id in d) if (!m.getSource(id)) m.addSource(id, { type: 'geojson', data: d[id], lineMetrics: id === 'jk-sejarah' });
+    if (!m.getSource('jk-main')) m.addSource('jk-main', { type: 'geojson', data: fc([]), lineMetrics: false });
+    const lebar = k => ['interpolate', ['exponential', 1.5], ['zoom'], 10, 3 * k, 14, 5 * k, 17, 9 * k, 20, 18 * k];
+    const lt = { 'line-join': 'round', 'line-cap': 'round' };
+    const tambah = (l, atas) => { if (!m.getLayer(l.id)) m.addLayer(l, atas ? undefined : label); };
+    tambah({ id: 'jk-sejarah-tepi', type: 'line', source: 'jk-sejarah', layout: lt, paint: { 'line-color': w.tepi, 'line-width': lebar(1.7), 'line-opacity': 0.5 } });
+    // Laluan sejarah berwarna mengikut kemajuan: hijau di permulaan, merah di penamat
+    tambah({ id: 'jk-sejarah', type: 'line', source: 'jk-sejarah', layout: lt, paint: { 'line-width': lebar(1), 'line-gradient': ['interpolate', ['linear'], ['line-progress'], 0, w.hijau, 0.5, '#e8b23a', 1, w.merah] } });
+    tambah({ id: 'jk-main', type: 'line', source: 'jk-main', filter: ['==', ['geometry-type'], 'LineString'], layout: lt, paint: { 'line-color': '#ffffff', 'line-width': lebar(0.45), 'line-opacity': 0.9 } });
+    tambah({ id: 'jk-langsung-tepi', type: 'line', source: 'jk-langsung', layout: lt, paint: { 'line-color': w.tepi, 'line-width': lebar(1.7), 'line-opacity': 0.55 } });
+    tambah({ id: 'jk-langsung', type: 'line', source: 'jk-langsung', layout: lt, paint: { 'line-color': w.aksen, 'line-width': lebar(1) } });
+    tambah({ id: 'jk-titik', type: 'circle', source: 'jk-titik', paint: { 'circle-radius': 7, 'circle-color': ['match', ['get', 'jenis'], 'akhir', w.merah, w.hijau], 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 2.5, 'circle-pitch-alignment': 'map' } });
+    tambah({ id: 'jk-km', type: 'circle', source: 'jk-km', minzoom: 11, paint: { 'circle-radius': 9, 'circle-color': w.halo, 'circle-stroke-color': w.teks, 'circle-stroke-width': 1.5, 'circle-pitch-alignment': 'viewport' } }, true);
+    if (PetaGaya.adaGlyph(m)) tambah({ id: 'jk-km-teks', type: 'symbol', source: 'jk-km', minzoom: 11, layout: { 'text-field': ['get', 'label'], 'text-font': ['Noto Sans Bold'], 'text-size': 11, 'text-allow-overlap': true, 'text-ignore-placement': true }, paint: { 'text-color': w.teks } }, true);
+    tambah({ id: 'jk-main-titik', type: 'circle', source: 'jk-main', filter: ['==', ['geometry-type'], 'Point'], paint: { 'circle-radius': 8, 'circle-color': w.aksen, 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 3, 'circle-pitch-alignment': 'viewport' } }, true);
   }
   async function ensureMap() {
-    if (map) { map.invalidateSize(); return; }
-    if (!document.querySelector('link[href="css/leaflet.css"]')) document.head.appendChild(Object.assign(document.createElement('link'), { rel: 'stylesheet', href: 'css/leaflet.css' }));
-    try { await loadScript('js/vendor/leaflet.js'); } catch { $('#jkMap', root).innerHTML = '<p class="muted jk-nomap">Peta tidak dapat dimuatkan. Penjejakan tetap berfungsi.</p>'; return; }
-    const el = $('#jkMap', root); if (!el || map) return;
+    if (peta) { peta.resize(); return; }
+    const el = $('#jkMap', root); if (!el || memuatPeta) return;
+    memuatPeta = true;
     const last = T.pts.length ? T.pts[T.pts.length - 1] : here;
-    map = L.map(el, { zoomControl: true, attributionControl: true }).setView(last ? [last[0], last[1]] : PUSAT, 16);
-    map.attributionControl.setPrefix(false);
-    pasangGaya(map);
-    const brand = getComputedStyle(document.documentElement).getPropertyValue('--brand').trim() || '#0f5a46';
-    line = L.polyline(T.pts.map(p => [p[0], p[1]]), { color: brand, weight: 6, opacity: .95, className: 'pg-laluan' }).addTo(map);
-    histLayer = L.layerGroup().addTo(map);
-    map.on('dragstart', () => { if (follow) { follow = false; paintCtl(); } });
-    if (T.pts.length) startDot = L.circleMarker(T.pts[0], { radius: 6, color: '#fff', weight: 2, fillColor: '#0f8a5f', fillOpacity: 1 }).addTo(map);
-    setTimeout(() => map && map.invalidateSize(), 150);
-    paintHere();
+    let p = null;
+    try {
+      await loadScript('js/peta-gaya.js');
+      p = await PetaGaya.cipta(el, { kunci: 'jejak', pusat: last ? [last[0], last[1]] : PUSAT, zum: 16, lapisan: pasangLapisan });
+    } catch { p = null; } finally { memuatPeta = false; }
+    // Bekas peta diganti semasa memuat (halaman dilukis semula): cipta semula pada bekas baharu
+    if (!el.isConnected) { if (p) p.buang(); return ensureMap(); }
+    if (!p) { el.innerHTML = '<p class="muted jk-nomap">Peta tidak dapat dimuatkan. Penjejakan tetap berfungsi.</p>'; return; }
+    peta = p;
+    const m = peta.map;
+    m.on('dragstart', () => { if (follow) { follow = false; paintCtl(); } });
+    for (const ev of ['mousedown', 'touchstart', 'wheel']) m.on(ev, () => { if (terbangId) henti(); });
+    setTimeout(() => peta && peta.resize(), 150);
+    paintHere(); paintCtl();
+    if (viewing) lihat(viewing);
   }
   function paintHere() {
-    if (!map || !here) return;
-    if (!dot) {
-      ring = L.circle(here, { radius: acc || 20, className: 'pg-ketepatan', weight: 1, interactive: false }).addTo(map);
-      dot = L.marker(here, { icon: L.divIcon({ className: 'pg-saya-wrap', html: '<span class="pg-saya"></span>', iconSize: [22, 22], iconAnchor: [11, 11] }), interactive: false, keyboard: false, zIndexOffset: 1000 }).addTo(map);
-    }
-    dot.setLatLng(here); ring.setLatLng(here).setRadius(Math.min(acc || 20, 200));
-    if (follow && !viewing) map.panTo(here, { animate: true });
+    if (!peta || !here) return;
+    peta.lokasi(here, acc > 0 ? acc : 20);
+    if (follow && !viewing && !terbangId) peta.map.easeTo({ center: [here[1], here[0]], duration: 600 });
+  }
+
+  /* Main semula laluan dalam 3D: kamera terbang di sepanjang laluan, condong dan berpusing mengikut arah */
+  function henti() {
+    if (!terbangId) return;
+    terbangId = 0;
+    const src = peta && peta.map.getSource('jk-main'); if (src) src.setData(fc([]));
+    paintHist();
+  }
+  function terbang(rec) {
+    if (!peta || rec.pts.length < 2) return;
+    const m = peta.map, pts = rec.pts, k = kumul(pts), jumlah = k[k.length - 1];
+    if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) { peta.muat(pts, 36, 17); return; }
+    if (!peta.mod3d) peta.set3D(true, false);
+    const id = terbangId = Date.now(), tempoh = Math.min(32000, Math.max(10000, jumlah * 5));
+    let t0 = 0, arah = arahKe(pts[0], padaJarak(pts, k, Math.min(jumlah, 150)));
+    m.jumpTo({ center: [pts[0][1], pts[0][0]], zoom: peta.Z(16.5), pitch: 62, bearing: arah });
+    paintHist();
+    const langkah = now => {
+      if (id !== terbangId || !peta) return;
+      if (!t0) t0 = now;
+      const f = Math.min(1, (now - t0) / tempoh), d = f * jumlah;
+      const p = padaJarak(pts, k, d), depan = padaJarak(pts, k, Math.min(jumlah, d + 150));
+      if (hav(p, depan) > 5) { const sasar = arahKe(p, depan), beza = ((sasar - arah + 540) % 360) - 180; arah = (arah + beza * 0.05 + 360) % 360; }
+      const lalu = pts.slice(0, p[2]).map(q => [q[1], q[0]]); lalu.push([p[1], p[0]]);
+      const src = m.getSource('jk-main'); if (src) src.setData(fc([garis(lalu), titik(p, 'main')]));
+      m.jumpTo({ center: [p[1], p[0]], bearing: arah });
+      if (f < 1) requestAnimationFrame(langkah);
+      else { terbangId = 0; setTimeout(() => { if (!terbangId) { const s2 = m.getSource('jk-main'); if (s2) s2.setData(fc([])); peta.muat(pts, 36, 17, true); paintHist(); } }, 600); }
+    };
+    requestAnimationFrame(langkah);
   }
 
   /* ---------- GPS ---------- */
@@ -141,13 +212,13 @@
       if (d < Math.max(3, acc / 2)) return paintCtl();
       if (v > J.vmax) {
         // Terlalu laju untuk aktiviti ini (kenderaan atau lompatan GPS): jangan kira jarak
-        if (++T.skips >= 5) { T.skips = 0; c[3] = 1; T.pts.push(c); line && line.addLatLng([c[0], c[1]]); }
+        if (++T.skips >= 5) { T.skips = 0; c[3] = 1; T.pts.push(c); segar(); }
         return paintCtl();
       }
       T.skips = 0;
       T.dist += d;
       T.kcal += met(T.jenis, v * 3.6) * profil().berat * (dt / 3600);
-    } else if (map && !startDot) startDot = L.circleMarker([c[0], c[1]], { radius: 6, color: '#fff', weight: 2, fillColor: '#0f8a5f', fillOpacity: 1 }).addTo(map);
+    }
     // Pendakian: ketinggian dilicinkan, hanya kenaikan > 2 m dikira
     const alt = p.coords.altitude;
     if (alt != null && p.coords.altitudeAccuracy != null && p.coords.altitudeAccuracy < 25) {
@@ -157,7 +228,7 @@
     }
     T.pts.push(c);
     if (T.pts.length % 10 === 0) persist();
-    if (line) line.addLatLng([c[0], c[1]]);
+    segar();
     while (T.dist >= (T.splits.length + 1) * 1000) {
       const ms = moving();
       T.splits.push(ms - T.lastSplit); T.lastSplit = ms;
@@ -180,9 +251,7 @@
     if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') { try { await DeviceMotionEvent.requestPermission(); } catch {} }
     T = blank(T.jenis); Object.assign(T, { on: true, start: Date.now() });
     Object.assign(ped, { base: 9.8, s: 0, above: false, last: 0, t0: performance.now(), tPrev: 0, motion: false });
-    viewing = null; if (histLayer) histLayer.clearLayers();
-    if (line) line.setLatLngs([]);
-    if (startDot) { startDot.remove(); startDot = null; }
+    viewing = null; henti(); segar();
     follow = true; await track(); await keepAwake(); persist(); paintAll();
     if (suara && window.speechSynthesis) { const u = new SpeechSynthesisUtterance('Aktiviti bermula.'); u.lang = 'ms-MY'; speechSynthesis.speak(u); }
   }
@@ -219,7 +288,7 @@
   function buang(kept) {
     stopWatch(); stopBg(); if (lock) { lock.release().catch(() => {}); lock = null; }
     const jenis = T.jenis; T = blank(jenis); persist();
-    if (!kept && line) line.setLatLngs([]);
+    segar();
     paintAll(); if (viewing) lihat(viewing);
   }
   async function keepAwake() { try { if ('wakeLock' in navigator && !lock) { lock = await navigator.wakeLock.request('screen'); lock.addEventListener('release', () => { lock = null; }); } } catch {} }
@@ -236,16 +305,8 @@
   /* ---------- Sejarah ---------- */
   function lihat(rec) {
     viewing = rec;
-    if (map) {
-      histLayer.clearLayers(); if (line && !T.on) line.setLatLngs([]);
-      const ll = rec.pts.map(p => [p[0], p[1]]);
-      if (ll.length) {
-        L.polyline(ll, { color: '#c8402f', weight: 6, opacity: .9, className: 'pg-laluan' }).addTo(histLayer);
-        L.circleMarker(ll[0], { radius: 6, color: '#fff', weight: 2, fillColor: '#0f8a5f', fillOpacity: 1 }).addTo(histLayer);
-        L.circleMarker(ll[ll.length - 1], { radius: 6, color: '#fff', weight: 2, fillColor: '#c8402f', fillOpacity: 1 }).addTo(histLayer);
-        map.fitBounds(L.latLngBounds(ll), { padding: [24, 24] });
-      }
-    }
+    henti();
+    if (peta) { segar(); peta.muat(rec.pts, 36, 17, true); }
     paintHist();
   }
   function gpx(rec) {
@@ -286,7 +347,7 @@
            <button class="btn${T.paused ? ' ghost' : ''}" type="button" data-act="tamat">${icon('check')}Tamat dan simpan</button>`}</div>
       <div class="jk-opts">
         <label class="bk-on"><input type="checkbox" id="jkSuara" ${suara ? 'checked' : ''}><span class="small">Umumkan setiap kilometer (suara)</span></label>
-        ${map ? `<button class="link-btn" type="button" data-act="ikut">${icon('compass')}${follow ? 'Mengikut lokasi anda' : 'Ikut lokasi saya'}</button>` : ''}
+        ${peta ? `<button class="link-btn" type="button" data-act="ikut">${icon('compass')}${follow ? 'Mengikut lokasi anda' : 'Ikut lokasi saya'}</button>` : ''}
       </div>
       ${T.splits.length ? `<h3>Setiap kilometer</h3><ol class="jk-splits">${T.splits.map((s, i) => `<li><span>Km ${i + 1}</span><b class="num">${bike ? kmh(s, 1000) + ' km/j' : dur(s)}</b></li>`).join('')}</ol>` : ''}`;
   }
@@ -296,7 +357,7 @@
       return `<div class="row-between"><h2>${JENIS[r.jenis].nama} · ${new Date(r.start).toLocaleDateString('ms-MY', { weekday: 'short', day: 'numeric', month: 'short' })}</h2><button class="link-btn" type="button" data-act="tutup">${icon('x')}Tutup</button></div>
         <div class="jk-stats">${stat(km(r.dist), 'km')}${stat(dur(r.ms), 'masa')}${bike ? stat(kmh(r.ms, r.dist), 'purata km/j') : stat(pace(r.ms, r.dist), 'rentak /km')}${r.steps ? stat(r.steps.toLocaleString('ms-MY'), 'langkah') : ''}${stat(r.kcal, 'kcal')}${stat(r.ascent, 'm naik')}</div>
         ${r.splits.length ? `<ol class="jk-splits">${r.splits.map((s, i) => `<li><span>Km ${i + 1}</span><b class="num">${bike ? kmh(s, 1000) + ' km/j' : dur(s)}</b></li>`).join('')}</ol>` : ''}
-        <div class="row-gap"><button class="btn ghost" type="button" data-act="gpx">${icon('download')}Eksport GPX</button><button class="link-btn" type="button" data-act="padam">${icon('trash')}Padam</button></div>
+        <div class="row-gap">${peta && r.pts.length > 1 ? `<button class="btn" type="button" data-act="terbang">${icon('play')}${terbangId ? 'Main semula…' : 'Main semula 3D'}</button>` : ''}<button class="btn ghost" type="button" data-act="gpx">${icon('download')}Eksport GPX</button><button class="link-btn" type="button" data-act="padam">${icon('trash')}Padam</button></div>
         <p class="muted small">Fail GPX boleh diimport ke Strava, Garmin Connect atau Google Earth.</p>`;
     }
     const sum = sejarah.filter(r => Date.now() - r.start < 7 * 864e5).reduce((t, r) => t + r.dist, 0);
@@ -317,8 +378,9 @@
         <div class="card" id="jkHist"></div>
       </div>
       <p class="note">${icon('alert')}<span>${BG ? 'Dalam app ini, penjejakan diteruskan walaupun skrin dikunci atau anda membuka app lain (notifikasi "Jejak Aktiviti" dipaparkan). Tekan Tamat apabila selesai untuk menjimatkan bateri.' : 'Dalam pelayar, pastikan skrin kekal hidup semasa menjejak: pelayar menghentikan GPS apabila skrin dikunci atau halaman ditutup. Untuk menjejak dengan skrin dikunci, gunakan app Bijak Labur (Android/iOS).'} Lokasi dan laluan anda disimpan dalam peranti ini sahaja dan tidak dihantar ke pelayan Bijak Labur. Peta dimuatkan daripada OpenFreeMap (data OpenStreetMap). Utamakan keselamatan: perhatikan jalan raya, bukan skrin.</span></p>`;
-    if (gaya) gaya.buang();
-    map = null; line = dot = ring = startDot = histLayer = gaya = null;
+    terbangId = 0;
+    if (peta) peta.buang();
+    peta = null;
     paintAll();
   }
 
@@ -333,12 +395,13 @@
     if (act === 'jeda') jeda();
     if (act === 'sambung') sambung();
     if (act === 'tamat') tamat();
-    if (act === 'ikut') { follow = true; viewing = null; if (histLayer) histLayer.clearLayers(); if (here && map) map.setView(here, Math.max(map.getZoom(), 16)); paintAll(); }
-    if (act === 'tutup') { viewing = null; if (histLayer) histLayer.clearLayers(); if (line && !T.on) line.setLatLngs([]); follow = true; paintHere(); paintHist(); }
+    if (act === 'ikut') { follow = true; viewing = null; henti(); segar(); if (here && peta) peta.pandang(here, Math.max(peta.map.getZoom() + 1, 16), true); paintAll(); }
+    if (act === 'tutup') { viewing = null; henti(); segar(); follow = true; paintHere(); paintHist(); }
+    if (act === 'terbang' && viewing) { if (terbangId) henti(); else { terbang(viewing); $('#jkMap', root).scrollIntoView({ behavior: 'smooth', block: 'center' }); } }
     if (act === 'gpx' && viewing) gpx(viewing);
     if (act === 'padam' && viewing && confirm('Padam aktiviti ini?')) {
       sejarah = sejarah.filter(r => r !== viewing); store.set('jejak_sejarah', sejarah);
-      viewing = null; if (histLayer) histLayer.clearLayers(); paintHist();
+      viewing = null; henti(); segar(); paintHist();
     }
   });
   root.addEventListener('change', e => { if (e.target.id === 'jkSuara') { suara = e.target.checked; store.set('jejak_suara', suara); } });

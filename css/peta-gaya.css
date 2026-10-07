@@ -1,32 +1,56 @@
 /* Bijak Labur: rupa peta bersama (js/peta-gaya.js). Dimuat oleh modul itu sendiri. */
-.pg-peta { --pg-saya: #1d7fd6; --pg-saya-halo: rgba(29, 127, 214, .18); --pg-kawal: #ffffff; --pg-kawal-teks: #26302b; --pg-kawal-garis: rgba(38, 48, 43, .14); }
-.pg-peta[data-pg-tema="gelap"], .pg-peta[data-pg-tema="satelit"] { --pg-saya: #5cb4ff; --pg-saya-halo: rgba(92, 180, 255, .2); --pg-kawal: #18211d; --pg-kawal-teks: #e3e9e5; --pg-kawal-garis: rgba(255, 255, 255, .12); }
+.pg-peta { --pg-saya: #1d7fd6; --pg-saya-halo: rgba(29, 127, 214, .18); --pg-kaca: rgba(255, 255, 255, .94); --pg-kaca-2: #f1efe9; --pg-teks: #1d2722; --pg-lembut: #66716b; --pg-garis: rgba(29, 39, 34, .12); --pg-aksen: #0f7a5c; --pg-aksen-lembut: rgba(15, 122, 92, .14); --pg-bayang: 0 1px 2px rgba(0, 0, 0, .08), 0 6px 18px rgba(0, 0, 0, .14); font-family: inherit; }
+.pg-peta[data-pg-tema="gelap"], .pg-peta[data-pg-tema="satelit"] { --pg-saya: #5cb4ff; --pg-saya-halo: rgba(92, 180, 255, .2); --pg-kaca: rgba(20, 28, 24, .92); --pg-kaca-2: #1d2622; --pg-teks: #e6ece8; --pg-lembut: #9ba7a1; --pg-garis: rgba(255, 255, 255, .1); --pg-aksen: #52c3a1; --pg-aksen-lembut: rgba(82, 195, 161, .16); --pg-bayang: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 22px rgba(0, 0, 0, .45); }
 .pg-peta[data-pg-tema="terang"] { background: #f2f0e9; }
 .pg-peta[data-pg-tema="gelap"] { background: #101714; }
 .pg-peta[data-pg-tema="satelit"] { background: #0b100e; }
+.pg-peta .maplibregl-canvas { outline: none; }
+.pg-peta.pg-penuh { border-radius: 0 !important; }
+.pg-tiada { display: grid; place-items: center; height: 100%; margin: 0; padding: 24px; text-align: center; color: var(--muted, #66716b); }
 
-/* Kanvas MapLibre di bawah Leaflet */
-.leaflet-gl-layer { position: absolute; pointer-events: none; }
-.leaflet-gl-layer canvas { outline: none; }
+/* Kawalan: lajur kaca di kanan, di tengah-tengah tinggi peta */
+.pg-kawal { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); z-index: 4; display: grid; gap: 8px; justify-items: center; }
+.pg-btn { width: 40px; height: 40px; display: grid; place-items: center; padding: 0; background: var(--pg-kaca); border: 1px solid var(--pg-garis); border-radius: 50%; color: var(--pg-teks); font: inherit; cursor: pointer; box-shadow: var(--pg-bayang); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); transition: background .15s, color .15s, transform .1s; }
+.pg-btn:hover { background: var(--pg-kaca-2); }
+.pg-btn:active { transform: scale(.95); }
+.pg-btn:focus-visible { outline: 2px solid var(--pg-aksen); outline-offset: 2px; }
+.pg-btn[hidden] { display: none; }
+.pg-btn--teks { font-size: 13px; font-weight: 700; letter-spacing: .02em; }
+.pg-btn[data-pg="3d"][aria-pressed="true"], .pg-btn[data-pg="penuh"][aria-pressed="true"] { background: var(--pg-teks); border-color: transparent; color: var(--pg-kaca-2); }
+.pg-zum { display: grid; border-radius: 20px; background: var(--pg-kaca); border: 1px solid var(--pg-garis); box-shadow: var(--pg-bayang); overflow: hidden; -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+.pg-zum .pg-btn { border: 0; border-radius: 0; box-shadow: none; background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; }
+.pg-zum .pg-btn + .pg-btn { border-top: 1px solid var(--pg-garis); }
+.pg-utara { perspective: 80px; }
+.pg-jarum { position: relative; width: 10px; height: 26px; transition: transform .1s linear; }
+.pg-jarum::before, .pg-jarum::after { content: ""; position: absolute; left: 0; width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; }
+.pg-jarum::before { top: 0; border-bottom: 13px solid #d64533; }
+.pg-jarum::after { bottom: 0; border-top: 13px solid var(--pg-lembut); }
 
-/* Sandaran raster dalam tema gelap */
-.pg-raster-gelap { filter: invert(1) hue-rotate(180deg) brightness(.92) contrast(.88) saturate(.55); }
+/* Menu lapisan */
+.pg-menu { position: absolute; right: 60px; top: 50%; transform: translateY(-50%); z-index: 5; display: grid; grid-template-columns: repeat(2, auto); gap: 10px 12px; padding: 12px; background: var(--pg-kaca); border: 1px solid var(--pg-garis); border-radius: 16px; box-shadow: var(--pg-bayang); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+.pg-menu[hidden] { display: none; }
+.pg-menu button { display: grid; justify-items: center; gap: 5px; padding: 0; background: transparent; border: 0; color: var(--pg-teks); font: inherit; font-size: 12px; cursor: pointer; }
+.pg-menu button[aria-pressed="true"] { color: var(--pg-aksen); font-weight: 600; }
+.pg-menu button:focus-visible { outline: 2px solid var(--pg-aksen); outline-offset: 2px; border-radius: 10px; }
+.pg-sw { display: block; width: 52px; height: 52px; border-radius: 12px; border: 2px solid var(--pg-garis); }
+.pg-menu button[aria-pressed="true"] .pg-sw { border-color: var(--pg-aksen); box-shadow: 0 0 0 2px var(--pg-aksen-lembut); }
+.pg-sw--terang { background: linear-gradient(32deg, transparent 44%, #f3c879 44% 52%, transparent 52%), linear-gradient(90deg, transparent 30%, #fff 30% 37%, transparent 37%), linear-gradient(0deg, transparent 58%, #fff 58% 64%, transparent 64%), radial-gradient(circle at 78% 24%, #a9d0d8 0 12px, transparent 13px), #ebe7dd; }
+.pg-sw--gelap { background: linear-gradient(32deg, transparent 44%, #6e5a2e 44% 52%, transparent 52%), linear-gradient(90deg, transparent 30%, #313c36 30% 37%, transparent 37%), linear-gradient(0deg, transparent 58%, #313c36 58% 64%, transparent 64%), radial-gradient(circle at 78% 24%, #0c2830 0 12px, transparent 13px), #141d19; }
+.pg-sw--satelit { background: linear-gradient(32deg, transparent 46%, rgba(243, 200, 121, .8) 46% 50%, transparent 50%), radial-gradient(circle at 25% 30%, #3f5a2e 0 13px, transparent 14px), radial-gradient(circle at 75% 70%, #2f4a3a 0 15px, transparent 16px), radial-gradient(circle at 80% 22%, #1d3b47 0 9px, transparent 10px), #4a5a3d; }
+.pg-sw--auto { background: linear-gradient(135deg, transparent 49.5%, #141d19 50%), linear-gradient(32deg, transparent 44%, #e0b866 44% 52%, transparent 52%), linear-gradient(90deg, transparent 30%, #fff 30% 37%, transparent 37%), #ebe7dd; }
 
-/* Kawalan Leaflet */
-.pg-peta .leaflet-bar { border: 1px solid var(--pg-kawal-garis); border-radius: 12px; overflow: hidden; box-shadow: 0 2px 10px rgba(0, 0, 0, .12); background-clip: padding-box; }
-.pg-peta .leaflet-bar a { width: 38px; height: 38px; line-height: 38px; background: var(--pg-kawal); color: var(--pg-kawal-teks); border-bottom-color: var(--pg-kawal-garis); font-weight: 500; }
-.pg-peta .leaflet-bar a:hover, .pg-peta .leaflet-bar a:focus-visible { background: color-mix(in srgb, var(--pg-kawal) 88%, var(--pg-kawal-teks)); }
-.pg-peta .leaflet-control-attribution { background: color-mix(in srgb, var(--pg-kawal) 78%, transparent); color: color-mix(in srgb, var(--pg-kawal-teks) 70%, transparent); border-radius: 8px 0 0 0; padding: 1px 6px; font-size: 10px; }
-.pg-peta .leaflet-control-attribution a { color: inherit; text-decoration: underline; text-decoration-color: color-mix(in srgb, currentColor 40%, transparent); }
+/* Atribusi (wajib untuk OpenStreetMap): sentiasa di atas tindanan halaman */
+.pg-peta .maplibregl-ctrl-bottom-right, .pg-peta .maplibregl-ctrl-bottom-left { z-index: 6; }
+.pg-peta .maplibregl-ctrl-attrib { background: var(--pg-kaca); color: var(--pg-lembut); font-size: 10px; }
+.pg-peta .maplibregl-ctrl-attrib a { color: inherit; }
+.pg-peta .maplibregl-ctrl-attrib.maplibregl-compact { border-radius: 12px; margin: 0 8px 8px 0; }
+.pg-peta .maplibregl-ctrl-attrib-button { background-color: var(--pg-kaca); }
 
 /* Lokasi saya: titik biru dengan denyut perlahan */
-.pg-saya-wrap { background: none; border: 0; }
+.pg-saya-wrap { width: 22px; height: 22px; pointer-events: none; }
 .pg-saya { position: absolute; inset: 3px; border-radius: 50%; background: var(--pg-saya); border: 3px solid #fff; box-shadow: 0 1px 6px rgba(0, 0, 0, .35); }
 .pg-saya::before { content: ""; position: absolute; inset: -9px; border-radius: 50%; background: var(--pg-saya-halo); animation: pg-denyut 2.4s ease-out infinite; }
 @keyframes pg-denyut { 0% { transform: scale(.5); opacity: 1; } 100% { transform: scale(1.6); opacity: 0; } }
-.pg-ketepatan { stroke: var(--pg-saya); stroke-opacity: .35; fill: var(--pg-saya); fill-opacity: .09; }
 
-/* Garis laluan: tepi gelap halus supaya jelas pada semua gaya peta */
-.pg-laluan { filter: drop-shadow(0 0 1px rgba(0, 0, 0, .5)) drop-shadow(0 1px 2px rgba(0, 0, 0, .25)); stroke-linecap: round; stroke-linejoin: round; }
-
+@media (max-width: 520px) { .pg-btn { width: 38px; height: 38px; } .pg-kawal { right: 8px; gap: 6px; } .pg-menu { right: 54px; } }
 @media (prefers-reduced-motion: reduce) { .pg-saya::before { animation: none; opacity: .6; } }
