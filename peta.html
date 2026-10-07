@@ -2,7 +2,7 @@
 <html lang="ms">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://tile.openstreetmap.org https://server.arcgisonline.com https://tiles.openfreemap.org; font-src 'self'; connect-src 'self' https://tiles.openfreemap.org https://server.arcgisonline.com https://nominatim.openstreetmap.org https://routing.openstreetmap.de https://router.project-osrm.org https://api.open-meteo.com https://api.aladhan.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://tile.openstreetmap.org https://server.arcgisonline.com https://tiles.openfreemap.org; font-src 'self'; connect-src 'self' https://tiles.openfreemap.org https://s3.amazonaws.com https://server.arcgisonline.com https://tile.openstreetmap.org https://nominatim.openstreetmap.org https://routing.openstreetmap.de https://router.project-osrm.org https://api.open-meteo.com https://api.aladhan.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Peta Dunia 3D dan Navigasi GPS · Bijak Labur</title>
@@ -18,7 +18,8 @@
   <meta property="og:locale" content="ms_MY">
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icons/icon-180.png">
-  <link rel="stylesheet" href="css/leaflet.css">
+  <link rel="stylesheet" href="css/maplibre-gl.css">
+  <link rel="stylesheet" href="css/peta-gaya.css">
   <link rel="stylesheet" href="css/peta.css">
   <script src="js/bingkai.js"></script>
 </head>
@@ -70,7 +71,7 @@
 
   <noscript><p class="peta-msg">Peta ini memerlukan JavaScript.</p></noscript>
   <script src="js/vendor/globe.gl.min.js" defer></script>
-  <script src="js/vendor/leaflet.js" defer></script>
+  <script src="js/vendor/maplibre-gl.js" defer></script>
   <script src="js/peta.js" defer></script>
   <script src="js/peta-gaya.js" defer></script>
   <script src="js/peta-jalan.js" defer></script>

@@ -80,6 +80,7 @@
         // Gaya atau jubin vektor gagal dimuat sebelum peta pertama siap: tukar ke raster supaya peta tetap kelihatan.
         // Ralat lain (cth. ikon tiada dalam sprite) diabaikan.
         if (siap || lapisan !== lp) return;
+        if (e && e.sourceId && e.sourceId !== 'openmaptiles') return; // cth. jubin ketinggian gagal: peta tetap boleh dipakai
         const r = (e && e.error) || {};
         if (!(r.name === 'AJAXError' || 'status' in r || /fetch|network|load/i.test(r.message || ''))) return;
         if (e.tile && ++gagalJubin < 3) return;
@@ -117,5 +118,15 @@
     };
   }
 
-  window.PetaGaya = { pasang };
+  // Gaya raster dalam bentuk gaya MapLibre (sandaran Peta Jalan 3D apabila jubin vektor gagal)
+  const rasterGaya = t => {
+    const [url, o] = RASTER[t] || RASTER.terang;
+    const gelap = t === 'gelap';
+    return { version: 8, sources: { r: { type: 'raster', tiles: [url.replace('{s}', 'a')], tileSize: 256, maxzoom: 19, attribution: o.attribution } },
+      layers: [{ id: 'latar', type: 'background', paint: { 'background-color': gelap ? '#101714' : '#f2f0e9' } },
+        { id: 'r', type: 'raster', source: 'r', paint: gelap ? { 'raster-brightness-min': 0.92, 'raster-brightness-max': 0.08, 'raster-hue-rotate': 180, 'raster-saturation': -0.5, 'raster-contrast': -0.1 } : {} }] };
+  };
+  const muatMaplibre = async () => { await muatSkrip('js/vendor/maplibre-gl.js'); return window.maplibregl; };
+
+  window.PetaGaya = { pasang, gayaUrl, rasterGaya, adaWebGL, muatMaplibre };
 })();
