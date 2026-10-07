@@ -20,14 +20,34 @@
   const OSRM_SANDARAN = 'https://router.project-osrm.org';
   const CUACA = 'https://api.open-meteo.com/v1/forecast';
   const SOLAT = 'https://api.aladhan.com/v1/timings';
-  const TILES = {
-    jalan: { url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', opt: { maxZoom: 19, attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' } },
-    satelit: { url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', opt: { maxZoom: 19, attribution: 'Imej © Esri, Maxar, Earthstar Geographics' } },
-    gelap: { url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', opt: { maxZoom: 19, subdomains: 'abcd', attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> © <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>' } }
-  };
+  // Lapisan peta: gaya vektor sendiri melalui js/peta-gaya.js (OpenFreeMap), raster jika WebGL atau jubin vektor gagal
+  const GAYA = { jalan: 'terang', gelap: 'gelap', satelit: 'satelit' };
   const PUSAT = [3.139, 101.687]; // Kuala Lumpur
   const PROFIL = { car: 'Kereta', bike: 'Basikal', foot: 'Jalan kaki' };
   const CHIPS = [['Masjid', 'masjid'], ['Makan', 'restoran'], ['Minyak', 'stesen minyak'], ['ATM', 'atm'], ['Hospital', 'hospital'], ['Farmasi', 'farmasi'], ['Pasar raya', 'pasar raya'], ['Surau', 'surau']];
+
+  /* ---------- Ikon (SVG garis, 24x24) ---------- */
+  const IKON = {
+    glob: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
+    cari: '<circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/>',
+    tutup: '<path d="M6 6l12 12M18 6 6 18"/>',
+    lapisan: '<path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 13 9 5 9-5"/>',
+    kompas: '<circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5 5-2Z"/>',
+    lokasi: '<circle cx="12" cy="12" r="3.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="7.5"/>',
+    tambah: '<path d="M12 5v14M5 12h14"/>',
+    tolak: '<path d="M5 12h14"/>',
+    arah: '<path d="M12 2.5 21.5 12 12 21.5 2.5 12 12 2.5Z"/><path d="M9 13v-2.5h5M12 8l2.5 2.5L12 13"/>',
+    simpan: '<path d="M7 3.5h10v17l-5-3.5-5 3.5v-17Z"/>',
+    disimpan: '<path d="M7 3.5h10v17l-5-3.5-5 3.5v-17Z" fill="currentColor"/>',
+    kongsi: '<path d="M12 15V3.5M7.5 8 12 3.5 16.5 8"/><path d="M5 12v7.5h14V12"/>',
+    main: '<path d="M8 5.5v13l10.5-6.5L8 5.5Z" fill="currentColor"/>',
+    suara: '<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4v-5Z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/>',
+    senyap: '<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4v-5Z"/><path d="m16 9.5 5 5M21 9.5l-5 5"/>',
+    kereta: '<path d="M5 16.5V12l1.8-4.6A1.5 1.5 0 0 1 8.2 6.5h7.6a1.5 1.5 0 0 1 1.4.9L19 12v4.5"/><path d="M3.5 16.5h17M5 12h14"/><circle cx="8" cy="16.5" r="1.8"/><circle cx="16" cy="16.5" r="1.8"/>',
+    basikal: '<circle cx="6" cy="16" r="3.5"/><circle cx="18" cy="16" r="3.5"/><path d="m6 16 4-7h5l3 7M10 9 8.5 6.5H7M15 9l-3 7"/>',
+    kaki: '<circle cx="13" cy="4.5" r="1.8"/><path d="m9 21 2.5-6.5L14 17v4M11.5 14.5 12.5 9l3.5 3 2.5.5M12.5 9 9.5 10.5 8 13.5"/>'
+  };
+  const ik = n => `<svg class="pj-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IKON[n]}</svg>`;
 
   /* ---------- Pembantu ---------- */
   const haversine = (a, b) => {
@@ -89,7 +109,7 @@
 
   /* ---------- Keadaan ---------- */
   let map = null;
-  let lapisan = {};
+  let gaya = null;
   let lapisanSemasa = 'jalan';
   let me = null; // { lat, lng, acc, heading, speed }
   let meMarker = null, meBulatan = null;
@@ -111,26 +131,26 @@
   root.innerHTML = `
     <div id="jalan-map" aria-label="Peta jalan"></div>
     <div class="pj-top">
-      <button type="button" class="pj-ikon" id="pjGlob" title="Kembali ke glob 3D" aria-label="Kembali ke glob 3D">◉</button>
+      <button type="button" class="pj-ikon" id="pjGlob" title="Kembali ke glob 3D" aria-label="Kembali ke glob 3D">${ik('glob')}</button>
       <div class="pj-search">
-        <input type="search" id="pjCari" placeholder="Cari tempat, alamat atau koordinat" autocomplete="off" aria-label="Cari tempat" enterkeyhint="search">
-        <button type="button" class="pj-ikon pj-ikon--dalam" id="pjClear" aria-label="Kosongkan" hidden>✕</button>
-        <button type="button" class="pj-ikon pj-ikon--dalam" id="pjGo" aria-label="Cari">⌕</button>
+        <input type="search" id="pjCari" placeholder="Cari tempat atau alamat" autocomplete="off" aria-label="Cari tempat" enterkeyhint="search">
+        <button type="button" class="pj-ikon pj-ikon--dalam" id="pjClear" aria-label="Kosongkan" hidden>${ik('tutup')}</button>
+        <button type="button" class="pj-ikon pj-ikon--dalam" id="pjGo" aria-label="Cari">${ik('cari')}</button>
       </div>
       <div class="pj-hasil" id="pjHasil" hidden></div>
     </div>
     <div class="pj-chips" id="pjChips">${CHIPS.map(([t, q]) => `<button type="button" class="pj-chip" data-q="${esc(q)}">${esc(t)}</button>`).join('')}</div>
     <div class="pj-fab">
-      <button type="button" class="pj-ikon" id="pjLapisan" title="Tukar lapisan peta" aria-label="Tukar lapisan peta">▤</button>
-      <button type="button" class="pj-ikon" id="pjKompas" title="Kompas" aria-label="Kompas" aria-pressed="false">➤</button>
-      <button type="button" class="pj-ikon pj-ikon--gps" id="pjLokasi" title="Lokasi saya" aria-label="Lokasi saya" aria-pressed="false">◎</button>
-      <button type="button" class="pj-ikon" id="pjZoomIn" aria-label="Zum masuk">+</button>
-      <button type="button" class="pj-ikon" id="pjZoomOut" aria-label="Zum keluar">−</button>
+      <button type="button" class="pj-ikon" id="pjLapisan" title="Tukar lapisan peta" aria-label="Tukar lapisan peta">${ik('lapisan')}</button>
+      <button type="button" class="pj-ikon" id="pjKompas" title="Kompas" aria-label="Kompas" aria-pressed="false">${ik('kompas')}</button>
+      <button type="button" class="pj-ikon pj-ikon--gps" id="pjLokasi" title="Lokasi saya" aria-label="Lokasi saya" aria-pressed="false">${ik('lokasi')}</button>
+      <button type="button" class="pj-ikon" id="pjZoomIn" aria-label="Zum masuk">${ik('tambah')}</button>
+      <button type="button" class="pj-ikon" id="pjZoomOut" aria-label="Zum keluar">${ik('tolak')}</button>
     </div>
     <div class="pj-lapisan" id="pjLapisanMenu" hidden>
-      <button type="button" data-lapisan="jalan">Jalan</button>
-      <button type="button" data-lapisan="satelit">Satelit</button>
-      <button type="button" data-lapisan="gelap">Gelap</button>
+      <button type="button" data-lapisan="jalan" aria-pressed="false"><i class="pj-sw pj-sw--jalan" aria-hidden="true"></i>Jalan</button>
+      <button type="button" data-lapisan="gelap" aria-pressed="false"><i class="pj-sw pj-sw--gelap" aria-hidden="true"></i>Malam</button>
+      <button type="button" data-lapisan="satelit" aria-pressed="false"><i class="pj-sw pj-sw--satelit" aria-hidden="true"></i>Satelit</button>
     </div>
     <div class="pj-sheet" id="pjSheet" hidden></div>
     <div class="pj-navi" id="pjNavi" hidden></div>
@@ -149,10 +169,10 @@
     if (map) return;
     map = L.map('jalan-map', { zoomControl: false, attributionControl: true, worldCopyJump: true }).setView(PUSAT, 12);
     map.attributionControl.setPrefix('<a href="https://leafletjs.com" target="_blank" rel="noopener">Leaflet</a>');
-    for (const k in TILES) lapisan[k] = L.tileLayer(TILES[k].url, TILES[k].opt);
     lapisanSemasa = baca('peta.lapisan', 'jalan');
-    if (!lapisan[lapisanSemasa]) lapisanSemasa = 'jalan';
-    lapisan[lapisanSemasa].addTo(map);
+    if (!GAYA[lapisanSemasa]) lapisanSemasa = 'jalan';
+    if (window.PetaGaya) window.PetaGaya.pasang(map, { tema: GAYA[lapisanSemasa] }).then(g => { gaya = g; g.set(GAYA[lapisanSemasa]); });
+    else L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' }).addTo(map);
     hasilMarkers.addTo(map);
     laluanLayer.addTo(map);
     map.on('dragstart', () => { if (ikutSaya) setIkut(false); });
@@ -162,14 +182,16 @@
     $$('[data-lapisan]').forEach(b => b.addEventListener('click', () => tukarLapisan(b.dataset.lapisan)));
   }
   function tukarLapisan(k) {
-    if (!lapisan[k] || k === lapisanSemasa) { $('pjLapisanMenu').hidden = true; return; }
-    map.removeLayer(lapisan[lapisanSemasa]);
+    if (!GAYA[k] || k === lapisanSemasa) { $('pjLapisanMenu').hidden = true; return; }
     lapisanSemasa = k;
-    lapisan[k].addTo(map);
+    if (gaya) gaya.set(GAYA[k]);
     simpan('peta.lapisan', k);
     root.dataset.lapisan = k;
+    tandaLapisan();
     $('pjLapisanMenu').hidden = true;
   }
+
+  const tandaLapisan = () => $$('[data-lapisan]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lapisan === lapisanSemasa)));
 
   /* ---------- Mod: glob <-> jalan ---------- */
   function buka(opsyen) {
@@ -178,6 +200,7 @@
     root.hidden = false; // bekas mesti kelihatan sebelum Leaflet mengukur saiznya
     pasangPeta();
     root.dataset.lapisan = lapisanSemasa;
+    tandaLapisan();
     map.invalidateSize();
     setTimeout(() => map.invalidateSize(), 50);
     lukisSaya();
@@ -217,8 +240,8 @@
     if (!map || !me) return;
     const deg = me.heading != null ? me.heading : headingPeranti;
     if (!meMarker) {
-      meMarker = L.marker([me.lat, me.lng], { icon: L.divIcon({ className: 'pj-me-wrap', html: '<div class="pj-me"><div class="pj-me-arah"></div></div>', iconSize: [24, 24], iconAnchor: [12, 12] }), zIndexOffset: 1000, interactive: false }).addTo(map);
-      meBulatan = L.circle([me.lat, me.lng], { radius: me.acc || 0, color: '#39ff14', weight: 1, opacity: 0.5, fillColor: '#39ff14', fillOpacity: 0.08, interactive: false }).addTo(map);
+      meMarker = L.marker([me.lat, me.lng], { icon: L.divIcon({ className: 'pj-me-wrap', html: '<div class="pj-me"><div class="pj-me-arah"></div><span class="pg-saya"></span></div>', iconSize: [24, 24], iconAnchor: [12, 12] }), zIndexOffset: 1000, interactive: false }).addTo(map);
+      meBulatan = L.circle([me.lat, me.lng], { radius: me.acc || 0, className: 'pg-ketepatan', weight: 1, interactive: false }).addTo(map);
     } else {
       meMarker.setLatLng([me.lat, me.lng]);
       meBulatan.setLatLng([me.lat, me.lng]).setRadius(me.acc || 0);
@@ -302,7 +325,7 @@
     if (pilihPertama && senarai.length === 1) { pilihTempat(senarai[0]); return; }
     hasilMarkers.clearLayers();
     senarai.forEach((t, i) => {
-      L.circleMarker([t.lat, t.lng], { radius: 7, color: '#ff00ff', weight: 2, fillColor: '#ff00ff', fillOpacity: 0.5 }).on('click', () => pilihTempat(t)).addTo(hasilMarkers);
+      L.circleMarker([t.lat, t.lng], { radius: 7, weight: 2.5, className: 'pj-hasil-titik' }).on('click', () => pilihTempat(t)).addTo(hasilMarkers);
       t.i = i;
     });
     hasilEl.innerHTML = senarai.map((t, i) => `<button type="button" class="pj-item" data-i="${i}"><b>${esc(t.name)}</b><span>${esc(t.alamat)}</span>${me ? `<em>${fmtM(haversine(me, t))}</em>` : ''}</button>`).join('');
@@ -361,18 +384,20 @@
   }
 
   /* ---------- Kad tempat ---------- */
+  const labelSuara = () => suara ? `${ik('suara')}Suara` : `${ik('senyap')}Senyap`;
+  const labelSimpan = t => disimpanKah(t) ? `${ik('disimpan')}Disimpan` : `${ik('simpan')}Simpan`;
   function paparTempat() {
     if (!tempat) return;
     const t = tempat;
     sheet.dataset.mod = 'tempat';
     sheet.innerHTML = `
       <div class="pj-grip"></div>
-      <div class="pj-sheet-head"><div><h2>${esc(t.name)}</h2><p>${esc(t.alamat || '')}</p>${me ? `<p class="pj-jarak" id="pjJarak">${fmtM(haversine(me, t))} dari anda</p>` : ''}</div><button type="button" class="pj-ikon pj-ikon--kecil" id="pjTutup" aria-label="Tutup">✕</button></div>
+      <div class="pj-sheet-head"><div><h2>${esc(t.name)}</h2><p>${esc(t.alamat || '')}</p>${me ? `<p class="pj-jarak" id="pjJarak">${fmtM(haversine(me, t))} dari anda</p>` : ''}</div><button type="button" class="pj-ikon pj-ikon--kecil" id="pjTutup" aria-label="Tutup">${ik('tutup')}</button></div>
       <div class="pj-aksi">
-        <button type="button" class="pj-btn pj-btn--utama" id="pjArah">➜ Arah ke sini</button>
-        <button type="button" class="pj-btn" id="pjSimpan">${disimpanKah(t) ? '★ Disimpan' : '☆ Simpan'}</button>
-        <button type="button" class="pj-btn" id="pjKongsi">⇪ Kongsi</button>
-        <button type="button" class="pj-btn" id="pjGlobLihat">◉ Glob</button>
+        <button type="button" class="pj-btn pj-btn--utama" id="pjArah">${ik('arah')}Arah ke sini</button>
+        <button type="button" class="pj-btn" id="pjSimpan">${labelSimpan(t)}</button>
+        <button type="button" class="pj-btn" id="pjKongsi">${ik('kongsi')}Kongsi</button>
+        <button type="button" class="pj-btn" id="pjGlobLihat">${ik('glob')}Glob</button>
       </div>
       <div class="pj-info" id="pjInfo"><div class="pj-info-item"><span>Koordinat</span><b>${t.lat.toFixed(5)}, ${t.lng.toFixed(5)}</b></div></div>`;
     sheet.hidden = false;
@@ -383,7 +408,7 @@
       if (disimpanKah(t)) { s = s.filter(x => !(Math.abs(x.lat - t.lat) < 1e-5 && Math.abs(x.lng - t.lng) < 1e-5)); toast('Dibuang daripada tempat disimpan.'); }
       else { s.unshift({ name: t.name, alamat: t.alamat, lat: t.lat, lng: t.lng }); toast('Tempat disimpan.'); }
       simpan('peta.simpan', s.slice(0, 50));
-      $('pjSimpan').textContent = disimpanKah(t) ? '★ Disimpan' : '☆ Simpan';
+      $('pjSimpan').innerHTML = labelSimpan(t);
     });
     $('pjKongsi').addEventListener('click', async () => {
       const url = `${location.origin}${location.pathname}#tempat=${t.lat.toFixed(5)},${t.lng.toFixed(5)},${encodeURIComponent(t.name)}`;
@@ -475,7 +500,7 @@
       if (glob) { glob.startGps(); }
       toast('Menunggu lokasi anda... Benarkan GPS, atau klik kanan peta untuk titik mula.', 5000);
       sheet.dataset.mod = 'arah';
-      sheet.innerHTML = `<div class="pj-grip"></div><div class="pj-sheet-head"><div><h2>Arah ke ${esc(ke.name)}</h2><p>Menunggu isyarat GPS untuk titik mula...</p></div><button type="button" class="pj-ikon pj-ikon--kecil" id="pjTutup" aria-label="Tutup">✕</button></div>
+      sheet.innerHTML = `<div class="pj-grip"></div><div class="pj-sheet-head"><div><h2>Arah ke ${esc(ke.name)}</h2><p>Menunggu isyarat GPS untuk titik mula...</p></div><button type="button" class="pj-ikon pj-ikon--kecil" id="pjTutup" aria-label="Tutup">${ik('tutup')}</button></div>
         <div class="pj-aksi"><button type="button" class="pj-btn" id="pjDariPeta">Pilih titik mula di peta</button></div>`;
       sheet.hidden = false;
       $('pjTutup').addEventListener('click', tutupSheet);
@@ -485,7 +510,7 @@
       return;
     }
     sheet.dataset.mod = 'arah';
-    sheet.innerHTML = `<div class="pj-grip"></div><div class="pj-sheet-head"><div><h2>Arah ke ${esc(ke.name)}</h2><p>Mengira laluan ${PROFIL[profil].toLowerCase()}...</p></div><button type="button" class="pj-ikon pj-ikon--kecil" id="pjTutup" aria-label="Tutup">✕</button></div>`;
+    sheet.innerHTML = `<div class="pj-grip"></div><div class="pj-sheet-head"><div><h2>Arah ke ${esc(ke.name)}</h2><p>Mengira laluan ${PROFIL[profil].toLowerCase()}...</p></div><button type="button" class="pj-ikon pj-ikon--kecil" id="pjTutup" aria-label="Tutup">${ik('tutup')}</button></div>`;
     sheet.hidden = false;
     $('pjTutup').addEventListener('click', () => { tutupSheet(); kosongkanLaluan(); });
     let routes;
@@ -499,7 +524,7 @@
     alternatif = routes.map(r => olahLaluan(r, profil, dari, ke));
     pilihLaluan(0);
   }
-  const pilihanProfil = () => Object.keys(PROFIL).map(k => `<button type="button" class="pj-btn pj-btn--profil${k === profil ? ' aktif' : ''}" data-profil="${k}">${k === 'car' ? '🚗' : k === 'bike' ? '🚲' : '🚶'} ${PROFIL[k]}</button>`).join('');
+  const pilihanProfil = () => Object.keys(PROFIL).map(k => `<button type="button" class="pj-btn pj-btn--profil${k === profil ? ' aktif' : ''}" data-profil="${k}">${ik(k === 'car' ? 'kereta' : k === 'bike' ? 'basikal' : 'kaki')}${PROFIL[k]}</button>`).join('');
   const ikatProfil = (ke, dari) => $$('[data-profil]', sheet).forEach(b => b.addEventListener('click', () => { profil = b.dataset.profil; simpan('peta.profil', profil); mulaArah(ke, dari === me ? null : dari); }));
   function kosongkanLaluan() {
     laluan = null; alternatif = [];
@@ -512,14 +537,19 @@
     laluanLayer.clearLayers();
     alternatif.forEach((r, j) => {
       if (j === i) return;
-      L.polyline(r.coords.map(c => [c.lat, c.lng]), { color: '#8aa', weight: 5, opacity: 0.6, dashArray: '6 8' }).on('click', () => pilihLaluan(j)).addTo(laluanLayer);
+      L.polyline(r.coords.map(c => [c.lat, c.lng]), { weight: 6, className: 'pj-laluan-alt' }).on('click', () => pilihLaluan(j)).addTo(laluanLayer);
     });
-    L.polyline(laluan.coords.map(c => [c.lat, c.lng]), { color: '#001a33', weight: 9, opacity: 0.8 }).addTo(laluanLayer);
-    L.polyline(laluan.coords.map(c => [c.lat, c.lng]), { color: '#00ffff', weight: 5, opacity: 0.95 }).addTo(laluanLayer);
-    L.circleMarker([laluan.dari.lat, laluan.dari.lng], { radius: 6, color: '#fff', weight: 2, fillColor: '#39ff14', fillOpacity: 1 }).addTo(laluanLayer);
+    lukisLaluan();
+    L.circleMarker([laluan.dari.lat, laluan.dari.lng], { radius: 6, weight: 3, className: 'pj-titik-mula' }).addTo(laluanLayer);
     if (!navi) map.fitBounds(L.latLngBounds(laluan.coords.map(c => [c.lat, c.lng])).pad(0.15), narrow() ? { paddingBottomRight: [0, 280] } : { paddingTopLeft: [430, 0] });
     if (glob) glob.setRoute(laluan.coords);
     paparArah(i);
+  }
+  // Laluan utama: tepi gelap dan garis berwarna (warna ikut lapisan peta dalam css/peta.css)
+  function lukisLaluan() {
+    const ll = laluan.coords.map(c => [c.lat, c.lng]);
+    L.polyline(ll, { weight: 10, className: 'pj-laluan-tepi', interactive: false }).addTo(laluanLayer);
+    L.polyline(ll, { weight: 6, className: 'pj-laluan-garis', interactive: false }).addTo(laluanLayer);
   }
   function paparArah(i) {
     const r = laluan, ke = r.ke;
@@ -527,17 +557,17 @@
     sheet.dataset.mod = 'arah';
     sheet.innerHTML = `
       <div class="pj-grip"></div>
-      <div class="pj-sheet-head"><div><h2>${fmtMasa(r.duration)} <small>(${fmtM(r.distance)})</small></h2><p>Ke ${esc(ke.name)} · tiba sekitar ${fmtJam(tiba)}${r.profil !== 'car' ? '' : ' tanpa kesesakan'}</p></div><button type="button" class="pj-ikon pj-ikon--kecil" id="pjTutup" aria-label="Tutup">✕</button></div>
+      <div class="pj-sheet-head"><div><h2>${fmtMasa(r.duration)} <small>(${fmtM(r.distance)})</small></h2><p>Ke ${esc(ke.name)} · tiba sekitar ${fmtJam(tiba)}${r.profil !== 'car' ? '' : ' tanpa kesesakan'}</p></div><button type="button" class="pj-ikon pj-ikon--kecil" id="pjTutup" aria-label="Tutup">${ik('tutup')}</button></div>
       <div class="pj-aksi">${pilihanProfil()}</div>
       ${alternatif.length > 1 ? `<div class="pj-alt">${alternatif.map((a, j) => `<button type="button" class="pj-btn pj-btn--kecil${j === i ? ' aktif' : ''}" data-alt="${j}">Laluan ${j + 1}: ${fmtMasa(a.duration)}, ${fmtM(a.distance)}</button>`).join('')}</div>` : ''}
-      <div class="pj-aksi"><button type="button" class="pj-btn pj-btn--utama pj-btn--besar" id="pjMulaNavi">▶ Mula navigasi</button><button type="button" class="pj-btn" id="pjSuara" aria-pressed="${suara}">${suara ? '🔊 Suara' : '🔇 Senyap'}</button></div>
+      <div class="pj-aksi"><button type="button" class="pj-btn pj-btn--utama pj-btn--besar" id="pjMulaNavi">${ik('main')}Mula navigasi</button><button type="button" class="pj-btn" id="pjSuara" aria-pressed="${suara}">${labelSuara()}</button></div>
       <ol class="pj-langkah">${r.steps.map(s => `<li><span class="pj-ikon-langkah">${esc(s.ikon)}</span><div><b>${esc(s.teks)}</b>${s.jarak > 0 ? `<span>${fmtM(s.jarak)}</span>` : ''}</div></li>`).join('')}</ol>`;
     sheet.hidden = false;
     $('pjTutup').addEventListener('click', () => { tutupSheet(); kosongkanLaluan(); });
     ikatProfil(ke, r.dari);
     $$('[data-alt]', sheet).forEach(b => b.addEventListener('click', () => pilihLaluan(+b.dataset.alt)));
     $('pjMulaNavi').addEventListener('click', mulaNavi);
-    $('pjSuara').addEventListener('click', () => { suara = !suara; simpan('peta.suara', suara); $('pjSuara').textContent = suara ? '🔊 Suara' : '🔇 Senyap'; $('pjSuara').setAttribute('aria-pressed', String(suara)); if (suara) cakap('Suara navigasi dihidupkan.'); });
+    $('pjSuara').addEventListener('click', () => { suara = !suara; simpan('peta.suara', suara); $('pjSuara').innerHTML = labelSuara(); $('pjSuara').setAttribute('aria-pressed', String(suara)); if (suara) cakap('Suara navigasi dihidupkan.'); });
   }
 
   /* ---------- Navigasi langsung ---------- */
@@ -610,8 +640,7 @@
       alternatif = routes.map(r => olahLaluan(r, laluan.profil, { lat: me.lat, lng: me.lng }, laluan.ke));
       laluan = alternatif[0];
       laluanLayer.clearLayers();
-      L.polyline(laluan.coords.map(c => [c.lat, c.lng]), { color: '#001a33', weight: 9, opacity: 0.8 }).addTo(laluanLayer);
-      L.polyline(laluan.coords.map(c => [c.lat, c.lng]), { color: '#00ffff', weight: 5, opacity: 0.95 }).addTo(laluanLayer);
+      lukisLaluan();
       if (glob) glob.setRoute(laluan.coords);
       navi.langkah = 0; navi.diumum = new Set(); navi.sesat = 0;
       kemasNavi();
@@ -640,7 +669,7 @@
       <div class="pj-navi-atas">
         <div class="pj-navi-ikon">${esc(papar.ikon)}</div>
         <div class="pj-navi-teks"><b>${esc(papar.teks)}</b><span>dalam ${fmtM(keSeterusnya)}</span></div>
-        <button type="button" class="pj-ikon pj-ikon--kecil" id="pjNaviSuara" aria-label="Suara" aria-pressed="${suara}">${suara ? '🔊' : '🔇'}</button>
+        <button type="button" class="pj-ikon pj-ikon--kecil" id="pjNaviSuara" aria-label="Suara" aria-pressed="${suara}">${ik(suara ? 'suara' : 'senyap')}</button>
       </div>
       ${laluan.steps[k + 2] ? `<div class="pj-navi-lepas">Kemudian ${esc(laluan.steps[k + 2].ikon)} ${esc(laluan.steps[k + 2].teks)}</div>` : ''}
       <div class="pj-navi-bawah">
