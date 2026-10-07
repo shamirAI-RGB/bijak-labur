@@ -139,12 +139,19 @@ export async function search(env, query, limit = 6) {
   const chunks = new Map(top.map(x => [chunkPath(x.k, x.n), null]));
   await Promise.all([...chunks.keys()].map(async p => chunks.set(p, await assetJson(env, p))));
   const texts = top.map(x => { const l = chunks.get(chunkPath(x.k, x.n)); const t = l && l[(x.n - 1) % PAGES]; return typeof t === 'string' ? t : null; });
-  const cetak = nk ? await assetJson(env, 'rujukan/cetakan.json') : null;
+  const adaModen = top.some(x => !(DOC[x.k] && DOC[x.k].jenis === 'kitab'));
+  const [cetak, gambar] = await Promise.all([nk ? assetJson(env, 'rujukan/cetakan.json') : null, adaModen ? assetJson(env, 'rujukan/gambar.json') : null]);
   return top.map((x, i) => {
     const isK = DOC[x.k] && DOC[x.k].jenis === 'kitab', teks = texts[i] || '';
-    return { id: `${isK ? 'kitab' : 'pdf'}:${x.k}:${x.n}`, k: x.k, n: x.n, skor: +x.skor.toFixed(2), teks, ...(isK ? { cetak: cetakPdf(cetak && cetak[x.k], x.n) } : {}) };
+    // Dokumen moden: gambar satu muka surat (rujukan/g/<k>/<n>.jpg) jika telah dijana semasa pemasangan
+    const g = !isK && gambar && x.n <= (gambar[x.k] || 0);
+    return { id: `${isK ? 'kitab' : 'pdf'}:${x.k}:${x.n}`, k: x.k, n: x.n, skor: +x.skor.toFixed(2), teks, ...(isK ? { cetak: cetakPdf(cetak && cetak[x.k], x.n) } : g ? { gambar: gambarPath(x.k, x.n) } : {}) };
   }).filter(x => x.teks);
 }
+
+/** Laluan pelayan bagi gambar satu muka surat dokumen moden (lihat /halaman dalam app.js) */
+export const gambarPath = (k, n) => `/halaman/${k}/${n}.jpg`;
+export const gambarAset = (k, n) => `rujukan/g/${k}/${n}.jpg`;
 
 /** Pautan yang membuka PDF asal pada muka surat itu */
 export const pageUrl = (k, n) => DOC[k].jenis === 'kitab' ? D.shamela(DOC[k].id, n) : `${DOC[k].url}#page=${n}`;

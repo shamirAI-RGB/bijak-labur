@@ -15,7 +15,7 @@
  */
 import Anthropic from '@anthropic-ai/sdk';
 import { BY_ID, CORPUS_TEXT } from './corpus.js';
-import { DOC, search, expand, pagesText, pageUrl, cetakan, assetTag } from './rujukan.js';
+import { DOC, search, expand, pagesText, pageUrl, cetakan, assetTag, gambarAset } from './rujukan.js';
 import { GEMINI_MODEL, GEMINI_FALLBACKS, geminiModels, geminiGenerate, geminiText, aiSedia } from './gemini.js';
 import { senaraiAktif, combo, PENYEDIA_GAMBAR } from './penghala.js';
 import { semak, MIN_CHARS, MAX_CHARS } from './semak.js';
@@ -132,7 +132,8 @@ export function parseAnswer(text) {
 
 const str = (v, n) => String(v == null ? '' : v).replace(/\s+/g, ' ').trim().slice(0, n);
 const AR = /[\u0600-\u06FF]/;
-export const NOTA_PDF = 'Jawapan ini berdasarkan teks web dan saya tidak dapat mengesahkan halaman PDF asalnya pada masa ini.';
+export const TEKS_HALAMAN = 4000;
+export const NOTA_PDF = 'Sesetengah kitab di atas belum mempunyai gambar muka surat cetakan yang disahkan. Teks muka surat Shamela yang dipetik dipaparkan sebagai ganti.';
 const quoteIn = (q, text) => { const nq = norm(q); return nq.length >= 12 && norm(text).includes(nq); };
 
 /* Sahkan setiap sumber. Hanya yang lulus dipulangkan kepada pengguna. */
@@ -146,9 +147,11 @@ export function verify(ans, pages, docs = []) {
     if (pdf.has(id)) {
       // Muka surat PDF yang benar-benar diberi kepada model dalam jawapan ini; petikan disemak dengan teks muka surat itu
       const d = pdf.get(id), ok = !!(petikan && quoteIn(petikan, d.teks)), doc = DOC[d.k];
+      // Teks muka surat itu sahaja dipulangkan (bukan dokumen penuh), supaya app boleh memaparkannya jika tiada gambar muka surat
+      const halaman = str(d.teks, TEKS_HALAMAN);
       out = doc.jenis === 'kitab'
-        ? { ...base, id, jenis: 'kitab', tajuk: doc.name, ar: doc.ar, oleh: doc.by, url: pageUrl(d.k, d.n), shamela: String(d.n), ...cetakan(d.teks), ...(d.cetak || {}), petikan: ok ? petikan : '', disahkan: ok }
-        : { ...base, id, jenis: 'dokumen', tajuk: doc.name, oleh: `${doc.by}, ${doc.tahun}`, url: pageUrl(d.k, d.n), pdf: d.n, petikan: ok ? petikan : '', disahkan: ok };
+        ? { ...base, id, jenis: 'kitab', tajuk: doc.name, ar: doc.ar, oleh: doc.by, url: pageUrl(d.k, d.n), shamela: String(d.n), ...cetakan(d.teks), ...(d.cetak || {}), teks_halaman: halaman, petikan: ok ? petikan : '', disahkan: ok }
+        : { ...base, id, jenis: 'dokumen', tajuk: doc.name, oleh: `${doc.by}, ${doc.tahun}`, url: pageUrl(d.k, d.n), pdf: d.n, ...(d.gambar ? { gambar: d.gambar } : { teks_halaman: halaman }), petikan: ok ? petikan : '', disahkan: ok };
     } else if (q) {
       const su = +q[1], ay = +q[2];
       if (su >= 1 && su <= 114 && ay >= 1 && ay <= AYAT[su - 1]) out = { ...base, jenis: 'quran', ref: `${su}:${ay}`, tajuk: `Al-Quran ${su}:${ay}`, url: `https://quran.com/${su}/${ay}`, petikan: '', maksud: '' };
@@ -290,7 +293,7 @@ async function tanya(req, env, url, h) {
 
   const cache = typeof caches !== 'undefined' ? caches.default : null;
   // Kunci cache mengandungi cap peta PDF kitab, supaya jawapan yang disimpan sebelum pemasangan baharu tidak dipaparkan lagi
-  const key = new Request(`${url.origin}/tanya-cache-3?q=${encodeURIComponent(norm(q))}&r=${await assetTag(env)}`);
+  const key = new Request(`${url.origin}/tanya-cache-4?q=${encodeURIComponent(norm(q))}&r=${await assetTag(env)}`);
   const hit = cache && await cache.match(key);
   if (hit) return json(await hit.json(), 200, h);
 
@@ -406,6 +409,17 @@ async function aiRoute(req, env, h, r) {
   }
 }
 
+/* Gambar satu muka surat dokumen rasmi moden (dijana semasa pemasangan oleh scripts/gambar-pdf.mjs), supaya pengguna
+   melihat muka surat yang dipetik sahaja tanpa memuat turun PDF penuh */
+async function halaman(env, url) {
+  const m = url.pathname.match(/^\/halaman\/([a-z]{2,12})\/(\d{1,4})\.jpg$/);
+  const tiada = () => new Response('Tidak dijumpai', { status: 404 });
+  if (!m || !DOC[m[1]] || DOC[m[1]].jenis === 'kitab' || !env.RUJUKAN) return tiada();
+  const r = await env.RUJUKAN.fetch(new Request(`https://aset/${gambarAset(m[1], +m[2])}`));
+  if (!r.ok) return tiada();
+  return new Response(r.body, { headers: { 'content-type': 'image/jpeg', 'cache-control': 'public, max-age=604800', 'cross-origin-resource-policy': 'cross-origin', 'x-content-type-options': 'nosniff' } });
+}
+
 export default {
   async fetch(req, env) {
     const url = new URL(req.url), h = cors(req, env);
@@ -416,6 +430,7 @@ export default {
       if (req.method === 'POST' && url.pathname === '/kalori') return await kaloriRoute(req, env, h);
       if (req.method === 'POST' && url.pathname === '/gambar') return await gambarRoute(req, env, h);
       if (req.method === 'POST' && AI_ROUTES[url.pathname]) return await aiRoute(req, env, h, AI_ROUTES[url.pathname]);
+      if (req.method === 'GET' && url.pathname.startsWith('/halaman/')) return await halaman(env, url);
       if (url.pathname === '/') return json({ ok: true, service: 'bijak-labur-fiqh', ai: !!provider(env), penyedia: provider(env), gambar: !!(env.AI || combo(env, PENYEDIA_GAMBAR).length), sandaran: senaraiAktif(env), sandaran_gambar: combo(env, PENYEDIA_GAMBAR).map(p => p.id) }, 200, h);
       return json({ error: 'Tidak dijumpai' }, 404, h);
     } catch (e) {
