@@ -9,6 +9,11 @@ on:
   pull_request:
     paths: ['worker-fiqh/**', 'js/fiqh-data.js', '.github/workflows/fiqh.yml']
   workflow_dispatch:
+  # Seminggu sekali: teks kitab dalam actions/cache dipadam jika tidak digunakan 7 hari. Larian mingguan
+  # mengekalkannya (dan memasang semula pelayan dengan indeks yang sama), supaya pemasangan seterusnya tidak
+  # bermula semula dengan kitab yang separuh dimuat turun.
+  schedule:
+    - cron: '17 19 * * 0'
 
 # Token GitHub hanya boleh membaca repo (prinsip keistimewaan minimum)
 permissions:
