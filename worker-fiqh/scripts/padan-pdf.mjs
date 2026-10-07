@@ -287,11 +287,13 @@ function petaGabung(c, N) {
   return peta;
 }
 // Teruskan mencari naskhah tambahan sehingga liputan ini dicapai (kitab berjilid-jilid sering dimuat naik satu jilid satu item)
-const LIPUTAN = 0.85, MAX_NASKHAH = 10;
+const LIPUTAN = 0.85, MAX_NASKHAH = 10, HAD_CARI = (+process.env.PADAN_CARI_MINIT || 3) * 60000;
 
 // Kitab yang sudah diketahui mempunyai PDF sepadan didahulukan supaya had masa tidak dihabiskan pada calon yang ditolak
 const TERTIB = ['fathqarib', 'manhaji', 'abisyuja', 'minhaj'];
-for (const b of [...KITAB].sort((x, y) => (TERTIB.indexOf(x.k) + 1 || 99) - (TERTIB.indexOf(y.k) + 1 || 99))) {
+// Selepas kitab yang diketahui, kitab dengan liputan paling rendah didahulukan supaya setiap larian membantu yang paling memerlukan
+const lip = k => cache.kitab[k]?.liputan ?? 0;
+for (const b of [...KITAB].sort((x, y) => ((TERTIB.indexOf(x.k) + 1 || 99) - (TERTIB.indexOf(y.k) + 1 || 99)) || lip(x.k) - lip(y.k))) {
   console.log(`\n=== ${b.k} (Shamela ${b.id})`);
   const c = cache.kitab[b.k] ||= { cuba: {} };
   c.cuba ||= {};
@@ -303,11 +305,15 @@ for (const b of [...KITAB].sort((x, y) => (TERTIB.indexOf(x.k) + 1 || 99) - (TER
   for (const r of naskhah(c)) { if (!masa()) break; await cubaItem(c, r, r.item, halaman, seen); }
   // 2. Tiada naskhah, atau liputan masih rendah: periksa calon baharu satu demi satu
   const liputan = () => Object.keys(petaGabung(c, N)).length / N;
+  // Had masa mencari calon baharu bagi setiap kitab, supaya kitab yang mempunyai banyak calon ditolak (cth. Bulugh al-Maram,
+  // yang dipetik dalam banyak syarah) tidak menghabiskan masa larian; calon yang telah dicuba diingati (c.cuba)
+  const hadKitab = Date.now() + HAD_CARI;
   if (masa() && (!naskhah(c).length || liputan() < LIPUTAN)) {
     const ada = new Set(naskhah(c).map(r => r.item));
     const calon = [...new Set([...(CALON[b.k] || []), ...await carian(b)])].filter(id => !ada.has(id) && !(id in c.cuba));
+    console.log(`  liputan ${Math.round(liputan() * 100)}%; ${calon.length} calon baharu`);
     for (const id of calon) {
-      if (!masa() || naskhah(c).length >= MAX_NASKHAH) break;
+      if (!masa() || Date.now() > hadKitab || naskhah(c).length >= MAX_NASKHAH) break;
       const utama = !c.item, rec = utama ? c : {};
       if (!utama) (c.tambahan ||= []).push(rec);
       const sebelum = liputan();
@@ -323,6 +329,7 @@ for (const b of [...KITAB].sort((x, y) => (TERTIB.indexOf(x.k) + 1 || 99) - (TER
     }
   }
   c.peta = petaGabung(c, N);
+  c.liputan = Object.keys(c.peta).length / N;
   for (const r of naskhah(c)) await paparan(r, halaman);
   await simpan();
   const items = naskhah(c).map(r => r.item);
