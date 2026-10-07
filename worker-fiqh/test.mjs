@@ -275,12 +275,14 @@ assert.equal(cetakPdf(null, 1), null);
   // Halaman pertama yang jauh terpisah (mukadimah pentahqiq memetik teks kitab) dibuang
   assert.deepEqual(bina([{ 15: [1, .4], 65: [2, .5], 67: [3, .5], 69: [4, .5] }], 406), { 2: [0, 65], 3: [0, 67], 4: [0, 69] });
 }
-// Dengan peta cetakan: kitab tanpa gambar muka surat cetakan yang disahkan tidak diberi kepada model dan tidak dipaparkan
+// Dengan peta cetakan tetapi tanpa gambar muka surat yang disahkan: halaman tetap diberi kepada model, dan sumber
+// dipaparkan dengan teks halaman Shamela serta nota bahawa gambar cetakannya belum tersedia
 kfiles.set('rujukan/cetakan.json', JSON.stringify({ fathqarib: CET }));
 greply = () => gem({ status: 'jawab', ringkasan: 'x', huraian: ['y'], sumber: [{ id: 'kitab:fathqarib:143', petikan: 'ولا يجوز بيع الذهب بالذهب إلا متماثلا نقدا', maksud: 'Tidak harus menjual emas dengan emas kecuali sama dan tunai.' }] });
 d = await (await call({ q: 'Hukum jual beli emas dengan emas!' }, 'https://bijaklabur.my', { ...genv, ...kenv })).json();
-assert.ok(!gsent.contents[0].parts.some(p => p.text.includes('[kitab:fathqarib:143]')));
-assert.equal(d.sumber.length, 0); assert.equal(d.status, 'tidak_pasti');
+assert.ok(gsent.contents[0].parts.some(p => p.text.includes('[kitab:fathqarib:143]')));
+assert.equal(d.status, 'jawab'); assert.ok(d.sumber[0].disahkan); assert.equal(d.sumber[0].gambar_url, undefined);
+assert.ok(d.sumber[0].teks_halaman.includes('بيع الذهب بالذهب')); assert.equal(d.sumber[0].pdf, 147); assert.equal(d.nota_pdf, NOTA_PDF);
 // Dengan gambar muka surat yang disahkan: halaman diberi, sumber membawa gambar cetakan (bukan teks laman web)
 const CETG = { ...CET, paparan: [{ gambar: 'https://archive.org/download/x/page/n{n}_w800.jpg', lihat: 'https://archive.org/details/x/page/n{n}/mode/1up', off: -1 }, null] };
 kfiles.set('rujukan/cetakan.json', JSON.stringify({ fathqarib: CETG }));
@@ -288,9 +290,9 @@ d = await (await call({ q: 'Hukum jual beli emas dengan emas!!' }, 'https://bija
 assert.deepEqual([d.sumber[0].pdf, d.sumber[0].pdf_url, d.sumber[0].penerbit, d.sumber[0].disahkan, d.sumber[0].gambar_url], [147, 'https://archive.org/download/x/x.pdf#page=147', 'Dar Ibn Hazm', true, 'https://archive.org/download/x/page/n146_w800.jpg']);
 assert.equal(d.sumber[0].teks_halaman, undefined);
 assert.equal(d.nota_pdf, undefined);
-// Id korpus kitab (bab terpilih) juga mesti mempunyai gambar: halaman 143 lulus, halaman 900 (fail tanpa gambar) dibuang
+// Id korpus kitab (bab terpilih) tanpa gambar bagi halamannya tetap dipaparkan, dengan nota
 v = verify({ status: 'jawab', ringkasan: 'r', huraian: ['h'], sumber: [{ id: 'kitab:fathqarib:142' }, { id: 'kitab:fathqarib:143' }] }, new Map(), [], { fathqarib: CETG });
-assert.deepEqual(v.sumber.map(x => x.shamela), []);
+assert.ok(v.sumber.length && v.sumber.every(x => !x.gambar_url)); assert.equal(v.nota_pdf, NOTA_PDF);
 v = verify({ status: 'jawab', ringkasan: 'r', huraian: ['h'], sumber: [{ id: 'kitab:fathqarib:142' }] }, new Map(), [], { fathqarib: { ...CETG, peta: { 142: [0, 146] } } });
 assert.deepEqual(v.sumber.map(x => [x.shamela, x.gambar_url]), [['142', 'https://archive.org/download/x/page/n145_w800.jpg']]);
 
@@ -303,7 +305,7 @@ assert.deepEqual(v.sumber.map(x => [x.shamela, x.gambar_url]), [['142', 'https:/
   await call({ q: 'Hukum jual beli emas dengan emas!' }, 'https://bijaklabur.my', bertanda('peta2'));
   delete globalThis.caches;
   assert.equal(puts.length, 2, 'jawapan disimpan dalam cache');
-  assert.ok(puts[0].includes('/tanya-cache-4?') && puts[0].endsWith('&r=peta1') && puts[1].endsWith('&r=peta2'), puts.join(' '));
+  assert.ok(puts[0].includes('/tanya-cache-5?') && puts[0].endsWith('&r=peta1') && puts[1].endsWith('&r=peta2'), puts.join(' '));
   assert.equal(await assetTag(genv), '');
   assert.equal(await assetTag(kenv), '');
 }

@@ -129,10 +129,10 @@ export async function search(env, query, limit = 6) {
   const pick = (list, n) => list.filter(x => x.skor >= list[0].skor * 0.4).slice(0, n);
   const moden = ranked.filter(x => !(DOC[x.k] && DOC[x.k].jenis === 'kitab'));
   let kitab = ranked.filter(x => DOC[x.k] && DOC[x.k].jenis === 'kitab');
-  // Hanya halaman kitab yang mempunyai gambar muka surat cetakan yang disahkan (OCR) diberi kepada model, supaya setiap
-  // petikan kitab boleh dipaparkan bersama gambar muka surat cetakannya. Tanpa rujukan/cetakan.json, semua halaman dibenarkan.
+  // Halaman kitab yang mempunyai gambar muka surat cetakan yang disahkan (OCR) diutamakan sedikit; halaman lain tetap diberi
+  // dan dipaparkan dengan teks halaman Shamela, dengan nota bahawa gambar cetakannya belum tersedia
   const cetak = kitab.length ? await muatCetakan(env) : null;
-  if (cetak) kitab = kitab.filter(x => adaGambar(cetak, x.k, x.n));
+  if (cetak) kitab = kitab.map(x => adaGambar(cetak, x.k, x.n) ? { ...x, skor: x.skor * 1.15 } : x).sort((a, b) => b.skor - a.skor);
   // Kitab: utamakan kitab yang berbeza (cth. matan Syafie, syarah dan fiqh perbandingan) sebelum halaman kedua kitab yang sama
   const pelbagai = (list, n) => {
     const ok = list.filter(x => x.skor >= list[0].skor * 0.4), dulu = [], kemudian = [], ada = new Set();

@@ -133,14 +133,13 @@ export function parseAnswer(text) {
 const str = (v, n) => String(v == null ? '' : v).replace(/\s+/g, ' ').trim().slice(0, n);
 const AR = /[\u0600-\u06FF]/;
 export const TEKS_HALAMAN = 4000;
-export const NOTA_PDF = 'Sesetengah kitab di atas belum mempunyai gambar muka surat cetakan yang disahkan. Teks muka surat Shamela yang dipetik dipaparkan sebagai ganti.';
+export const NOTA_PDF = 'Sesetengah halaman kitab di atas belum mempunyai gambar muka surat cetakan yang disahkan. Teks digital halaman itu daripada Shamela dipaparkan sebagai ganti.';
 const quoteIn = (q, text) => { const nq = norm(q); return nq.length >= 12 && norm(text).includes(nq); };
 
 /*
  * Sahkan setiap sumber. Hanya yang lulus dipulangkan kepada pengguna.
- * cetak = rujukan/cetakan.json: jika diberi, setiap sumber kitab MESTI mempunyai gambar muka surat cetakan yang disahkan
- * (archive.org, dipadankan dengan OCR). Kitab tanpa gambar dibuang, supaya pengguna sentiasa boleh melihat muka surat
- * cetakan sebenar bagi setiap petikan kitab, bukan sekadar teks laman web.
+ * cetak = rujukan/cetakan.json: jika diberi, sumber kitab dilampirkan gambar muka surat cetakan yang disahkan (archive.org,
+ * dipadankan dengan OCR). Jika halaman itu belum mempunyai gambar, teks halaman Shamela dipaparkan sebagai ganti (nota_pdf).
  */
 const KITAB_SHAMELA = new Map(KITAB.map(b => [String(b.id), b.k]));
 export function verify(ans, pages, docs = [], cetak = null) {
@@ -181,10 +180,13 @@ export function verify(ans, pages, docs = [], cetak = null) {
       }
     }
     if (out && cetak && out.jenis === 'kitab') {
-      // Kitab: kenal pasti kitab dan halaman Shamela, kemudian lampirkan gambar muka surat cetakannya (atau buang)
+      // Kitab: kenal pasti kitab dan halaman Shamela, kemudian lampirkan gambar muka surat cetakannya jika ada;
+      // jika tiada, teks halaman Shamela itu dipaparkan supaya pengguna masih boleh menyemak petikan
       const sh = String(out.url || '').match(/^https:\/\/shamela\.ws\/book\/(\d+)\/(\d+)/), k = sh && KITAB_SHAMELA.get(sh[1]);
       const info = k ? cetakPdf(cetak[k], +sh[2]) : null;
-      if (info && info.gambar_url) { Object.assign(out, info); delete out.teks_halaman; } else out = null;
+      if (info) Object.assign(out, info);
+      if (info && info.gambar_url) delete out.teks_halaman;
+      else if (!out.teks_halaman && pages.has(normUrl(out.url))) out.teks_halaman = str(pages.get(normUrl(out.url)), TEKS_HALAMAN);
     }
     if (!out) continue;
     // Setiap petikan Arab wajib disertai terjemahan Bahasa Melayu; tanpanya petikan tidak dipaparkan
@@ -204,8 +206,8 @@ export function verify(ans, pages, docs = [], cetak = null) {
     nasihat: str(ans.nasihat, 600),
     sumber
   };
-  // Kitab yang dirujuk tanpa muka surat PDF cetakan yang dipadankan: nyatakan dengan jelas
-  if (sumber.some(x => x.jenis === 'kitab' && !x.pdf)) res.nota_pdf = NOTA_PDF;
+  // Kitab yang dirujuk tanpa gambar muka surat cetakan yang disahkan: nyatakan dengan jelas
+  if (sumber.some(x => x.jenis === 'kitab' && !x.gambar_url)) res.nota_pdf = NOTA_PDF;
   if (status !== 'jawab') {
     // Tanpa sumber yang sah, jangan paparkan huraian hukum daripada model
     res.huraian = []; res.khilaf = '';
@@ -305,7 +307,7 @@ async function tanya(req, env, url, h) {
 
   const cache = typeof caches !== 'undefined' ? caches.default : null;
   // Kunci cache mengandungi cap peta PDF kitab, supaya jawapan yang disimpan sebelum pemasangan baharu tidak dipaparkan lagi
-  const key = new Request(`${url.origin}/tanya-cache-4?q=${encodeURIComponent(norm(q))}&r=${await assetTag(env)}`);
+  const key = new Request(`${url.origin}/tanya-cache-5?q=${encodeURIComponent(norm(q))}&r=${await assetTag(env)}`);
   const hit = cache && await cache.match(key);
   if (hit) return json(await hit.json(), 200, h);
 
