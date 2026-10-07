@@ -22,5 +22,3 @@
 .jk-hist { list-style: none; margin: 8px 0 0; padding: 0; display: grid; }
 .jk-hist button { width: 100%; display: grid; grid-template-columns: auto 1fr auto auto; gap: 4px 12px; align-items: center; text-align: left; padding: 10px 2px; border: 0; border-bottom: 1px solid var(--border); background: none; color: var(--text); font: inherit; cursor: pointer; }
 .jk-hist .ic { width: 16px; height: 16px; color: var(--muted); }
-.leaflet-container { font: inherit; }
-.leaflet-control-attribution { font-size: 10px; }
