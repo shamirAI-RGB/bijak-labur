@@ -59,7 +59,15 @@
   const steps = () => T.jenis === 'basikal' ? 0 : ped.motion && T.steps > 0 ? T.steps : Math.round(T.dist / (profil().tinggi * JENIS[T.jenis].stride / 100));
 
   /* ---------- Peta ---------- */
-  let map = null, line = null, dot = null, ring = null, startDot = null, histLayer = null;
+  let map = null, line = null, dot = null, ring = null, startDot = null, histLayer = null, gaya = null;
+  // Peta vektor bergaya Bijak Labur (js/peta-gaya.js), ikut tema terang/gelap laman; raster OSM jika gagal
+  async function pasangGaya(m) {
+    try {
+      await loadScript('js/peta-gaya.js');
+      const g = await PetaGaya.pasang(m, { tema: 'auto' });
+      if (map === m) gaya = g; else g.buang();
+    } catch { if (map === m) L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' }).addTo(m); }
+  }
   async function ensureMap() {
     if (map) { map.invalidateSize(); return; }
     if (!document.querySelector('link[href="css/leaflet.css"]')) document.head.appendChild(Object.assign(document.createElement('link'), { rel: 'stylesheet', href: 'css/leaflet.css' }));
@@ -68,9 +76,9 @@
     const last = T.pts.length ? T.pts[T.pts.length - 1] : here;
     map = L.map(el, { zoomControl: true, attributionControl: true }).setView(last ? [last[0], last[1]] : PUSAT, 16);
     map.attributionControl.setPrefix(false);
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' }).addTo(map);
+    pasangGaya(map);
     const brand = getComputedStyle(document.documentElement).getPropertyValue('--brand').trim() || '#0f5a46';
-    line = L.polyline(T.pts.map(p => [p[0], p[1]]), { color: brand, weight: 5, opacity: .9 }).addTo(map);
+    line = L.polyline(T.pts.map(p => [p[0], p[1]]), { color: brand, weight: 6, opacity: .95, className: 'pg-laluan' }).addTo(map);
     histLayer = L.layerGroup().addTo(map);
     map.on('dragstart', () => { if (follow) { follow = false; paintCtl(); } });
     if (T.pts.length) startDot = L.circleMarker(T.pts[0], { radius: 6, color: '#fff', weight: 2, fillColor: '#0f8a5f', fillOpacity: 1 }).addTo(map);
@@ -80,8 +88,8 @@
   function paintHere() {
     if (!map || !here) return;
     if (!dot) {
-      ring = L.circle(here, { radius: acc || 20, color: '#1a8fbf', weight: 1, fillOpacity: .12 }).addTo(map);
-      dot = L.circleMarker(here, { radius: 7, color: '#fff', weight: 3, fillColor: '#1a8fbf', fillOpacity: 1 }).addTo(map);
+      ring = L.circle(here, { radius: acc || 20, className: 'pg-ketepatan', weight: 1, interactive: false }).addTo(map);
+      dot = L.marker(here, { icon: L.divIcon({ className: 'pg-saya-wrap', html: '<span class="pg-saya"></span>', iconSize: [22, 22], iconAnchor: [11, 11] }), interactive: false, keyboard: false, zIndexOffset: 1000 }).addTo(map);
     }
     dot.setLatLng(here); ring.setLatLng(here).setRadius(Math.min(acc || 20, 200));
     if (follow && !viewing) map.panTo(here, { animate: true });
@@ -232,7 +240,7 @@
       histLayer.clearLayers(); if (line && !T.on) line.setLatLngs([]);
       const ll = rec.pts.map(p => [p[0], p[1]]);
       if (ll.length) {
-        L.polyline(ll, { color: '#c8402f', weight: 5, opacity: .85 }).addTo(histLayer);
+        L.polyline(ll, { color: '#c8402f', weight: 6, opacity: .9, className: 'pg-laluan' }).addTo(histLayer);
         L.circleMarker(ll[0], { radius: 6, color: '#fff', weight: 2, fillColor: '#0f8a5f', fillOpacity: 1 }).addTo(histLayer);
         L.circleMarker(ll[ll.length - 1], { radius: 6, color: '#fff', weight: 2, fillColor: '#c8402f', fillOpacity: 1 }).addTo(histLayer);
         map.fitBounds(L.latLngBounds(ll), { padding: [24, 24] });
@@ -308,8 +316,9 @@
         <div class="card jk-ctl" id="jkCtl"></div>
         <div class="card" id="jkHist"></div>
       </div>
-      <p class="note">${icon('alert')}<span>${BG ? 'Dalam app ini, penjejakan diteruskan walaupun skrin dikunci atau anda membuka app lain (notifikasi "Jejak Aktiviti" dipaparkan). Tekan Tamat apabila selesai untuk menjimatkan bateri.' : 'Dalam pelayar, pastikan skrin kekal hidup semasa menjejak: pelayar menghentikan GPS apabila skrin dikunci atau halaman ditutup. Untuk menjejak dengan skrin dikunci, gunakan app Bijak Labur (Android/iOS).'} Lokasi dan laluan anda disimpan dalam peranti ini sahaja dan tidak dihantar ke pelayan Bijak Labur. Jubin peta dimuatkan daripada OpenStreetMap. Utamakan keselamatan: perhatikan jalan raya, bukan skrin.</span></p>`;
-    map = null; line = dot = ring = startDot = histLayer = null;
+      <p class="note">${icon('alert')}<span>${BG ? 'Dalam app ini, penjejakan diteruskan walaupun skrin dikunci atau anda membuka app lain (notifikasi "Jejak Aktiviti" dipaparkan). Tekan Tamat apabila selesai untuk menjimatkan bateri.' : 'Dalam pelayar, pastikan skrin kekal hidup semasa menjejak: pelayar menghentikan GPS apabila skrin dikunci atau halaman ditutup. Untuk menjejak dengan skrin dikunci, gunakan app Bijak Labur (Android/iOS).'} Lokasi dan laluan anda disimpan dalam peranti ini sahaja dan tidak dihantar ke pelayan Bijak Labur. Peta dimuatkan daripada OpenFreeMap (data OpenStreetMap). Utamakan keselamatan: perhatikan jalan raya, bukan skrin.</span></p>`;
+    if (gaya) gaya.buang();
+    map = null; line = dot = ring = startDot = histLayer = gaya = null;
     paintAll();
   }
 

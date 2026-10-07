@@ -20,7 +20,7 @@
 
   let S = { tab: store.get('km_tab', 'peta'), me: null, belum: 0, peta: null, list: null, busy: false, err: '',
     acara: { jenis: 'semua', uni: '' }, servis: { mod: 'layari', jenis: 'tawar', kategori: '', q: '' } };
-  let shown = false, pollT = null, geoT = null, lastSent = null, map = null, layer = null, meDot = null, fitted = false;
+  let shown = false, pollT = null, geoT = null, lastSent = null, map = null, layer = null, meDot = null, fitted = false, gaya = null;
 
   /* ---------- Pembantu ---------- */
   const inisial = s => String(s || '?').trim().split(/\s+/).slice(0, 2).map(w => [...w][0] || '').join('').toUpperCase() || '?';
@@ -198,18 +198,27 @@
     const el = $('#kmMap', root);
     if (!el) return;
     if (map && map.getContainer() === el) { map.invalidateSize(); return; }
-    if (map) { map.remove(); map = null; layer = null; meDot = null; fitted = false; }
+    if (map) { if (gaya) gaya.buang(); map.remove(); map = null; layer = null; meDot = null; fitted = false; gaya = null; }
     if (!document.querySelector('link[href="css/leaflet.css"]')) document.head.appendChild(Object.assign(document.createElement('link'), { rel: 'stylesheet', href: 'css/leaflet.css' }));
     try { await loadScript('js/vendor/leaflet.js'); } catch { el.innerHTML = '<p class="muted km-nomap">Peta tidak dapat dimuatkan.</p>'; return; }
     if (!el.isConnected || map) return;
     const sendiri = S.peta && S.peta.saya;
     map = L.map(el, { zoomControl: false, attributionControl: true }).setView(sendiri ? [sendiri.lat, sendiri.lng] : PUSAT, sendiri ? 14 : 16);
     map.attributionControl.setPrefix(false);
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' }).addTo(map);
+    pasangGaya(map);
     L.control.zoom({ position: 'bottomright' }).addTo(map);
     layer = L.layerGroup().addTo(map);
     setTimeout(() => map && map.invalidateSize(), 150);
     paintMarkers();
+  }
+
+  // Peta vektor bergaya Bijak Labur (js/peta-gaya.js), ikut tema terang/gelap laman; raster OSM jika gagal
+  async function pasangGaya(m) {
+    try {
+      await loadScript('js/peta-gaya.js');
+      const g = await PetaGaya.pasang(m, { tema: 'auto' });
+      if (map === m) gaya = g; else g.buang();
+    } catch { if (map === m) L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' }).addTo(m); }
   }
 
   function pin(p, me) {
