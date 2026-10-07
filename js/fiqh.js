@@ -24,7 +24,7 @@
     const kitab = s.jenis === 'kitab';
     const img = kitab && /^https:\/\/(iiif\.)?archive\.org\//.test(s.gambar_url || '') ? s.gambar_url
       : gambarDok(s);
-    const label = kitab ? (img ? `Muka surat ${esc(s.pdf)} dalam cetakan` : `Teks halaman Shamela ${esc(s.shamela)}`) : `Muka surat ${esc(s.pdf)}`;
+    const label = kitab ? (img ? `Muka surat ${esc(s.pdf)} dalam cetakan` : `Teks digital Shamela, halaman ${esc(s.shamela)} (gambar cetakan belum tersedia)`) : `Muka surat ${esc(s.pdf)}`;
     const teks = s.teks_halaman ? `<div class="fq-page-teks${isAr(s.teks_halaman) ? ' ar' : ''}"${isAr(s.teks_halaman) ? ' lang="ar" dir="rtl"' : ''}>${esc(s.teks_halaman)}</div>` : '';
     if (!img && !teks) return s.pdf_url ? `<p class="small">${ext(s.pdf_url, `Buka PDF cetakan, muka surat ${esc(s.pdf)}`)}</p>` : '';
     const links = [kitab && img && ext(s.lihat_url, 'Buka di archive.org'), ext(s.pdf_url || (!kitab && s.url), 'PDF penuh')].filter(Boolean).join('');
@@ -202,7 +202,7 @@
       <div class="fq-hero" style="--c:#c9853a"><span lang="ar" dir="rtl">اسأل</span><div><h2>Tanya AI berasaskan rujukan</h2><p>Setiap jawapan mesti bersandarkan sumber yang boleh anda buka sendiri.</p></div></div>
       <ol class="fq-flow fq-ai-rules">
         <li><span class="num">1</span>AI hanya boleh memetik ${Object.keys(D.KITAB).length} kitab muktabar (Shamela; mazhab Syafie dan perbandingan mazhab), Al-Quran, hadis, fatwa rasmi Malaysia dan ${D.MODEN.length} dokumen keputusan rasmi moden untuk isu semasa.</li>
-        <li><span class="num">2</span>Setiap petikan disemak dengan teks halaman sumber. Petikan yang tidak sepadan dibuang, dan setiap petikan kitab dipaparkan bersama gambar muka surat cetakannya.</li>
+        <li><span class="num">2</span>Setiap petikan disemak dengan teks halaman sumber. Petikan yang tidak sepadan dibuang. Petikan kitab dipaparkan bersama gambar muka surat cetakannya, atau teks digital halaman itu daripada Shamela jika gambarnya belum tersedia.</li>
         <li><span class="num">3</span>Jika tiada sumber yang sah, AI menjawab "tidak pasti" dan meminta anda merujuk mufti.</li>
       </ol>
       <div class="card">
