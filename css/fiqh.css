@@ -132,8 +132,10 @@
 .fq-cetak { margin: 6px 0; }
 .fq-cetak summary { cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-size: .85rem; font-weight: 600; color: var(--brand); }
 .fq-cetak summary .ic { width: 14px; height: 14px; }
-.fq-cetak img { display: block; width: 100%; max-width: 560px; height: auto; aspect-ratio: auto 2 / 3; margin: 8px 0 4px; border: 1px solid var(--border); border-radius: 8px; background: #fff; }
+.fq-cetak img, .fq-page-img { display: block; width: 100%; max-width: 560px; height: auto; aspect-ratio: auto 2 / 3; margin: 8px 0 4px; border: 1px solid var(--border); border-radius: 8px; background: #fff; }
 .fq-cetak .fq-links { display: flex; flex-wrap: wrap; gap: 12px; }
+.fq-page-teks { max-height: 280px; overflow: auto; margin: 8px 0 4px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); font-size: .86rem; line-height: 1.7; white-space: pre-line; }
+.fq-page-teks.ar { font-size: 1.05rem; line-height: 2; text-align: right; }
 .fq-grade .ic { width: 12px; height: 12px; vertical-align: -2px; margin-right: 3px; }
 /* Rujukan rasmi moden (PDF) */
 .fq-kitab-ar.fq-pdf { font-family: inherit; font-size: .68rem; font-weight: 700; letter-spacing: .04em; color: #0f8b8d; background: color-mix(in srgb, #0f8b8d 12%, transparent); border-radius: 6px; padding: 3px 7px; line-height: 1.2; text-align: center; }

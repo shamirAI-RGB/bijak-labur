@@ -57,6 +57,11 @@ jobs:
       - name: Pasang OCR (poppler, tesseract Arab)
         continue-on-error: true
         run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils tesseract-ocr tesseract-ocr-ara > /dev/null
+      # Gambar satu muka surat bagi setiap dokumen rasmi moden, supaya Tanya AI memaparkan muka surat yang dipetik sahaja
+      - name: Gambar muka surat dokumen moden
+        timeout-minutes: 15
+        continue-on-error: true
+        run: node scripts/gambar-pdf.mjs
       - name: Padankan PDF cetakan kitab
         timeout-minutes: 30
         continue-on-error: true

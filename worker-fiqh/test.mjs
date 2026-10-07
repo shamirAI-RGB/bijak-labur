@@ -290,7 +290,7 @@ assert.equal(d.nota_pdf, undefined);
   await call({ q: 'Hukum jual beli emas dengan emas!' }, 'https://bijaklabur.my', bertanda('peta2'));
   delete globalThis.caches;
   assert.equal(puts.length, 2, 'jawapan disimpan dalam cache');
-  assert.ok(puts[0].includes('/tanya-cache-3?') && puts[0].endsWith('&r=peta1') && puts[1].endsWith('&r=peta2'), puts.join(' '));
+  assert.ok(puts[0].includes('/tanya-cache-4?') && puts[0].endsWith('&r=peta1') && puts[1].endsWith('&r=peta2'), puts.join(' '));
   assert.equal(await assetTag(genv), '');
   assert.equal(await assetTag(kenv), '');
 }
@@ -743,4 +743,30 @@ console.log('Semua ujian Tanya AI lulus');
   assert.deepEqual(new Set(h2.slice(0, 3).map(h => h.k)), new Set(['zuhaili', 'mughni', 'kifayah']), JSON.stringify(h2.map(h => h.id)));
   assert.ok(h2.find(h => h.id === 'kitab:zuhaili:100').teks.includes('الصرف'));
   console.log('rujukan berskala besar OK');
+}
+
+// Muka surat tunggal: gambar dokumen moden (/halaman) dan teks muka surat dalam sumber jawapan
+{
+  const { buildIndex: bi, search: cari } = await import('./src/rujukan.js');
+  const f = bi({ jakim: ['Kandungan', 'Hukum Melabur Dalam Mata Wang Kripto. Muzakarah memutuskan bahawa urus niaga mata wang kripto adalah tidak dibenarkan.'], mughni: ['باب الربا في الذهب والفضة'] });
+  f.set('rujukan/gambar.json', JSON.stringify({ jakim: 2 }));
+  f.set('rujukan/g/jakim/2.jpg', 'JPEGDATA');
+  const e = { ALLOWED_ORIGINS: 'https://bijaklabur.my', RUJUKAN: { fetch: async req => { const p = new URL(req.url).pathname.slice(1); return f.has(p) ? new Response(f.get(p)) : new Response('', { status: 404 }); } } };
+  const hits = await cari(e, 'Apakah hukum melabur kripto? الربا الذهب', 8);
+  const pj = hits.find(h => h.id === 'pdf:jakim:2'), pk = hits.find(h => h.id === 'kitab:mughni:1');
+  assert.equal(pj.gambar, '/halaman/jakim/2.jpg'); assert.equal(pk.gambar, undefined);
+  // Laluan gambar: hanya dokumen moden yang wujud
+  const get = p => worker.fetch(new Request(W + p), e);
+  let r = await get('/halaman/jakim/2.jpg');
+  assert.equal(r.status, 200); assert.equal(r.headers.get('content-type'), 'image/jpeg'); assert.equal(await r.text(), 'JPEGDATA');
+  for (const p of ['/halaman/jakim/3.jpg', '/halaman/mughni/1.jpg', '/halaman/tiada/1.jpg', '/halaman/jakim/../meta.json', '/halaman/jakim/1.png']) assert.equal((await get(p)).status, 404, p);
+  // verify: dokumen bergambar tidak membawa teks penuh; kitab membawa teks halaman itu sahaja
+  const ans = { status: 'jawab', ringkasan: 'R', huraian: ['h'], sumber: [{ id: 'pdf:jakim:2', petikan: 'urus niaga mata wang kripto adalah tidak dibenarkan' }, { id: 'kitab:mughni:1', petikan: 'باب الربا في الذهب', maksud: 'Bab riba pada emas' }] };
+  const v = verify(ans, new Map(), hits);
+  const sj = v.sumber.find(s => s.jenis === 'dokumen'), sk = v.sumber.find(s => s.jenis === 'kitab');
+  assert.equal(sj.gambar, '/halaman/jakim/2.jpg'); assert.equal(sj.teks_halaman, undefined); assert.ok(sj.disahkan);
+  assert.equal(sk.teks_halaman, 'باب الربا في الذهب والفضة'); assert.ok(sk.disahkan);
+  const tanpa = verify(ans, new Map(), hits.map(h => ({ ...h, gambar: undefined })));
+  assert.ok(tanpa.sumber.find(s => s.jenis === 'dokumen').teks_halaman.includes('mata wang kripto'));
+  console.log('muka surat tunggal OK');
 }
