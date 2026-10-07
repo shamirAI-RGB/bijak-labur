@@ -275,11 +275,24 @@ assert.equal(cetakPdf(null, 1), null);
   // Halaman pertama yang jauh terpisah (mukadimah pentahqiq memetik teks kitab) dibuang
   assert.deepEqual(bina([{ 15: [1, .4], 65: [2, .5], 67: [3, .5], 69: [4, .5] }], 406), { 2: [0, 65], 3: [0, 67], 4: [0, 69] });
 }
+// Dengan peta cetakan: kitab tanpa gambar muka surat cetakan yang disahkan tidak diberi kepada model dan tidak dipaparkan
 kfiles.set('rujukan/cetakan.json', JSON.stringify({ fathqarib: CET }));
 greply = () => gem({ status: 'jawab', ringkasan: 'x', huraian: ['y'], sumber: [{ id: 'kitab:fathqarib:143', petikan: 'ولا يجوز بيع الذهب بالذهب إلا متماثلا نقدا', maksud: 'Tidak harus menjual emas dengan emas kecuali sama dan tunai.' }] });
 d = await (await call({ q: 'Hukum jual beli emas dengan emas!' }, 'https://bijaklabur.my', { ...genv, ...kenv })).json();
-assert.deepEqual([d.sumber[0].pdf, d.sumber[0].pdf_url, d.sumber[0].penerbit, d.sumber[0].disahkan], [147, 'https://archive.org/download/x/x.pdf#page=147', 'Dar Ibn Hazm', true]);
+assert.ok(!gsent.contents[0].parts.some(p => p.text.includes('[kitab:fathqarib:143]')));
+assert.equal(d.sumber.length, 0); assert.equal(d.status, 'tidak_pasti');
+// Dengan gambar muka surat yang disahkan: halaman diberi, sumber membawa gambar cetakan (bukan teks laman web)
+const CETG = { ...CET, paparan: [{ gambar: 'https://archive.org/download/x/page/n{n}_w800.jpg', lihat: 'https://archive.org/details/x/page/n{n}/mode/1up', off: -1 }, null] };
+kfiles.set('rujukan/cetakan.json', JSON.stringify({ fathqarib: CETG }));
+d = await (await call({ q: 'Hukum jual beli emas dengan emas!!' }, 'https://bijaklabur.my', { ...genv, ...kenv })).json();
+assert.deepEqual([d.sumber[0].pdf, d.sumber[0].pdf_url, d.sumber[0].penerbit, d.sumber[0].disahkan, d.sumber[0].gambar_url], [147, 'https://archive.org/download/x/x.pdf#page=147', 'Dar Ibn Hazm', true, 'https://archive.org/download/x/page/n146_w800.jpg']);
+assert.equal(d.sumber[0].teks_halaman, undefined);
 assert.equal(d.nota_pdf, undefined);
+// Id korpus kitab (bab terpilih) juga mesti mempunyai gambar: halaman 143 lulus, halaman 900 (fail tanpa gambar) dibuang
+v = verify({ status: 'jawab', ringkasan: 'r', huraian: ['h'], sumber: [{ id: 'kitab:fathqarib:142' }, { id: 'kitab:fathqarib:143' }] }, new Map(), [], { fathqarib: CETG });
+assert.deepEqual(v.sumber.map(x => x.shamela), []);
+v = verify({ status: 'jawab', ringkasan: 'r', huraian: ['h'], sumber: [{ id: 'kitab:fathqarib:142' }] }, new Map(), [], { fathqarib: { ...CETG, peta: { 142: [0, 146] } } });
+assert.deepEqual(v.sumber.map(x => [x.shamela, x.gambar_url]), [['142', 'https://archive.org/download/x/page/n145_w800.jpg']]);
 
 // Cache jawapan: kunci mengandungi cap (ETag) peta PDF kitab, jadi pemasangan baharu dengan peta berbeza tidak memaparkan jawapan lama
 {
@@ -769,4 +782,15 @@ console.log('Semua ujian Tanya AI lulus');
   const tanpa = verify(ans, new Map(), hits.map(h => ({ ...h, gambar: undefined })));
   assert.ok(tanpa.sumber.find(s => s.jenis === 'dokumen').teks_halaman.includes('mata wang kripto'));
   console.log('muka surat tunggal OK');
+}
+
+// Naskhah berbilang (jilid lain): penerbit dan edisi ikut fail yang memuatkan halaman itu
+{
+  const C = { penerbit: 'A', edisi: '1', fail: ['https://archive.org/download/j1/j1.pdf', 'https://archive.org/download/j2/j2.pdf'], peta: { 5: [0, 9], 700: [1, 3] },
+    paparan: [{ gambar: 'https://archive.org/download/j1/page/n{n}_w800.jpg', lihat: 'https://archive.org/details/j1/page/n{n}/mode/1up', off: -1 }, { gambar: 'https://archive.org/download/j2/page/n{n}_w800.jpg', lihat: 'https://archive.org/details/j2/page/n{n}/mode/1up', off: 0 }],
+    info: [{ penerbit: 'A', edisi: '1', sumber: 'x' }, { penerbit: 'B', edisi: '2', sumber: 'y' }] };
+  assert.deepEqual([cetakPdf(C, 5).penerbit, cetakPdf(C, 5).gambar_url], ['A', 'https://archive.org/download/j1/page/n8_w800.jpg']);
+  assert.deepEqual([cetakPdf(C, 700).penerbit, cetakPdf(C, 700).edisi, cetakPdf(C, 700).gambar_url], ['B', '2', 'https://archive.org/download/j2/page/n3_w800.jpg']);
+  assert.deepEqual(cetakPdf(C, 6), { penerbit: 'A', edisi: '1' });
+  console.log('naskhah berbilang OK');
 }

@@ -202,7 +202,7 @@
       <div class="fq-hero" style="--c:#c9853a"><span lang="ar" dir="rtl">اسأل</span><div><h2>Tanya AI berasaskan rujukan</h2><p>Setiap jawapan mesti bersandarkan sumber yang boleh anda buka sendiri.</p></div></div>
       <ol class="fq-flow fq-ai-rules">
         <li><span class="num">1</span>AI hanya boleh memetik ${Object.keys(D.KITAB).length} kitab muktabar (Shamela; mazhab Syafie dan perbandingan mazhab), Al-Quran, hadis, fatwa rasmi Malaysia dan ${D.MODEN.length} dokumen keputusan rasmi moden untuk isu semasa.</li>
-        <li><span class="num">2</span>Setiap petikan disemak dengan teks halaman sumber. Petikan yang tidak sepadan dibuang.</li>
+        <li><span class="num">2</span>Setiap petikan disemak dengan teks halaman sumber. Petikan yang tidak sepadan dibuang, dan setiap petikan kitab dipaparkan bersama gambar muka surat cetakannya.</li>
         <li><span class="num">3</span>Jika tiada sumber yang sah, AI menjawab "tidak pasti" dan meminta anda merujuk mufti.</li>
       </ol>
       <div class="card">
