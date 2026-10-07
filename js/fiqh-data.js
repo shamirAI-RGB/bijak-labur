@@ -224,9 +224,8 @@ const FiqhData = (() => {
       skop: 'Saham, sukuk, unit amanah, derivatif, aset digital dan pasaran modal Islam', url: 'https://www.sc.com.my/api/documentms/download.ashx?id=7c96654e-e943-4123-9a4a-9be4ac1da3e3' },
     { k: 'bnmsr', name: 'Shariah Resolutions in Islamic Finance (Second Edition)', by: 'Majlis Penasihat Syariah, Bank Negara Malaysia', tahun: 2010, bahasa: 'en',
       skop: 'Perbankan Islam, takaful, pembiayaan, deposit dan instrumen pasaran wang', url: 'https://financialmarkets.bnm.gov.my/uploads/files/Shariah_Resolutions_BNM_2nd_Edition.pdf' },
-    { k: 'iifa', name: 'Resolutions and Recommendations of the Council of the Islamic Fiqh Academy 1985-2000', by: 'Akademi Fiqh Islam Antarabangsa (OIC), terbitan IsDB', tahun: 2000, bahasa: 'en',
-      skop: 'Isu antarabangsa: mata wang, saham, insurans, perubatan, pemindahan organ dan keluarga', url: 'https://archive.org/download/resolutions-and-recommendations-of-the-council-of-the-islamic-fiqh-academy/resolutions-and-recommendations-of-the-council-of-the-islamic-fiqh-academy.pdf',
-      asal: 'https://isdbinstitute.org/product/resolutions-and-recommendations-of-the-council-of-the-islamic-fiqh-academy-1985-2000/' }
+    { k: 'iifa', name: 'Resolutions of the International Islamic Fiqh Academy (sesi 1-25, 1985-2023)', by: 'Akademi Fiqh Islam Antarabangsa (IIFA), Pertubuhan Kerjasama Islam (OIC)', tahun: 2024, bahasa: 'en',
+      skop: 'Isu antarabangsa: mata wang, saham, insurans, perubatan, pemindahan organ, keluarga dan teknologi', url: 'https://iifa-aifi.org/wp-content/uploads/2024/07/IIFA-Resolutions-Ebook-2024.pdf' }
   ];
 
   const CARI = [
