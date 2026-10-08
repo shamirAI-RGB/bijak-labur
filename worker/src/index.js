@@ -43,8 +43,12 @@ async function toyyib(env, path, fields) {
   const body = new URLSearchParams(fields);
   const r = await fetch(`${tpBase(env)}/index.php/api/${path}`, { method: 'POST', body });
   const text = await r.text();
-  try { return JSON.parse(text); } catch { throw new Error(`ToyyibPay ${path}: ${text.slice(0, 200)}`); }
+  try { return JSON.parse(text); } catch { throw Object.assign(new Error(`ToyyibPay ${path}: ${text.slice(0, 200)}`), { toyyib: text }); }
 }
+// ToyyibPay hanya menerima huruf, nombor, ruang dan '_' dalam nama dan penerangan bil
+const tpText = (s, n) => String(s).replace(/[^A-Za-z0-9 _]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, n);
+// Mesej ralat ToyyibPay yang pendek (cth. [KEY-DID-NOT-EXIST]) membantu pemilik membetulkan rahsia
+const tpErr = t => String(t || '').replace(/<[^>]*>/g, ' ').replace(/[^\w\s\[\]\-.:]/g, '').replace(/\s+/g, ' ').trim().slice(0, 80);
 
 async function checkout(req, env, url) {
   const who = await authed(req, env);
@@ -62,11 +66,13 @@ async function checkout(req, env, url) {
   if (phone.length < 9 || phone.length > 13) return { status: 400, data: { error: 'Nombor telefon tidak sah.' } };
 
   const ref = `BL-${b.plan}-${b.period}-${crypto.randomUUID().slice(0, 8)}`;
-  const res = await toyyib(env, 'createBill', {
+  if (!env.TOYYIBPAY_SECRET || !env.TOYYIBPAY_CATEGORY) return { status: 503, data: { error: 'Pembayaran belum disediakan sepenuhnya (rahsia ToyyibPay tiada pada pelayan).' } };
+  let res;
+  try { res = await toyyib(env, 'createBill', {
     userSecretKey: env.TOYYIBPAY_SECRET,
     categoryCode: env.TOYYIBPAY_CATEGORY,
-    billName: `Bijak Labur ${plan.name} ${period.label}`,
-    billDescription: `Akses Premium Bijak Labur pelan ${plan.name} selama ${period.days} hari [${b.plan}-${b.period}]`,
+    billName: tpText(`Bijak Labur ${plan.name} ${period.label}`, 30),
+    billDescription: tpText(`Akses Premium Bijak Labur pelan ${plan.name} selama ${period.days} hari ${b.plan}_${b.period}`, 100),
     billPriceSetting: '1',
     billPayorInfo: '1',
     billAmount: String(plan[b.period]),
@@ -82,9 +88,12 @@ async function checkout(req, env, url) {
     billContentEmail: 'Terima kasih kerana melanggan Bijak Labur Premium. Simpan e-mel ini: kod bil diperlukan untuk memulihkan Premium pada peranti lain.',
     billChargeToCustomer: '',
     billExpiryDays: '3'
-  });
+  }); } catch (e) {
+    console.log('createBill ralat', e.message);
+    return { status: 502, data: { error: `ToyyibPay menolak permintaan bil: ${tpErr(e.toyyib) || 'tiada jawapan'}. Semak User Secret Key dan Category Code.` } };
+  }
   const code = Array.isArray(res) && res[0] && res[0].BillCode;
-  if (!code) { console.log('createBill gagal', JSON.stringify(res)); return { status: 502, data: { error: 'Gerbang pembayaran tidak dapat mencipta bil. Cuba lagi sebentar.' } }; }
+  if (!code) { console.log('createBill gagal', JSON.stringify(res)); return { status: 502, data: { error: `Gerbang pembayaran tidak dapat mencipta bil: ${tpErr(JSON.stringify(res))}` } }; }
   // Rekod bil di pelayan: hanya bil yang dicipta di sini boleh dituntut, dengan pelan dan harga yang direkod
   const rec = await callDO(env, `b:${code}`, { op: 'cipta', uid: who.uid, plan: b.plan, period: b.period, sen: plan[b.period] });
   if (rec.status !== 200) return rec;
