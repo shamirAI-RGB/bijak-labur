@@ -371,7 +371,7 @@
             </a>
             <a class="card shortcut hidden" href="#premium" data-premium-entry>
               <span class="sc-ico gold"><svg class="ic"><use href="#i-layers"/></svg></span>
-              <div class="sc-body"><div class="sc-title">Bijak Labur Premium</div><div class="sc-sub" data-premium-sub>15 alat untuk pelabur dan pelajar. Cuba percuma 3 hari</div></div>
+              <div class="sc-body"><div class="sc-title">Bijak Labur Premium</div><div class="sc-sub" data-premium-sub>Semak tugasan tanpa had, amaran harga, portfolio Syariah. Cuba percuma 1 hari</div></div>
               <svg class="ic chev"><use href="#i-chev"/></svg>
             </a>
           </div>
@@ -510,11 +510,12 @@
           <p class="muted small">Notifikasi apabila harga melepasi paras anda, semasa app dibuka.</p>
           <form class="inline-form" id="alForm">
             <select id="alSym" aria-label="Kripto"></select>
-            <select id="alDir" aria-label="Arah"><option value="above">Melebihi</option><option value="below">Di bawah</option></select>
+            <select id="alDir" aria-label="Arah"><option value="above">Melebihi</option><option value="below">Di bawah</option><option value="up">Naik % (24 jam)</option><option value="down">Turun % (24 jam)</option></select>
             <input id="alPrice" type="number" step="any" inputmode="decimal" placeholder="Harga (USD)" aria-label="Harga sasaran">
             <button class="btn" type="submit">Tambah</button>
           </form>
           <div id="alList"></div>
+          <p class="muted small" id="alNote"></p>
         </div>
         <p class="source">Data pasaran awam, dikemas kini secara masa nyata.</p>
       </div>
@@ -724,7 +725,7 @@
       <div class="page-head">
         <p class="eyebrow">Bijak Labur Premium</p>
         <h1 id="h-premium">Alat untuk langkah seterusnya</h1>
-        <p class="lead">15 alat untuk melabur dengan lebih teratur dan menyiapkan tugasan dengan lebih kemas. Cuba percuma selama 3 hari. Semua ciri percuma kekal percuma.</p>
+        <p class="lead">Satu pelan untuk pelajar dan pelabur: semakan tugasan tanpa had, amaran harga dan Syariah, portfolio patuh Syariah, dan AI tanpa had harian. Cuba percuma selama 1 hari. Semua ciri percuma kekal percuma.</p>
       </div>
       <div class="pro-wrap" id="proWrap">
         <div class="card toggle-row hidden" id="proStatus"></div>
@@ -844,7 +845,7 @@
         <div id="plansBlock">
           <div class="block-head"><h2 id="plansTitle">Pilih pelan</h2><div class="segmented small" id="periodSeg" role="tablist" aria-label="Tempoh"></div></div>
           <div class="card trial-card hidden" id="trialCard" data-web-only>
-            <div class="sc-body"><div class="sc-title">Cuba semua alat Premium percuma selama 3 hari</div><div class="sc-sub">Sekali bagi setiap akaun. Tiada bayaran dan tiada butiran kad. Selepas 3 hari, alat dikunci semula sehingga anda memilih pelan.</div></div>
+            <div class="sc-body"><div class="sc-title">Cuba semua ciri Premium percuma selama 1 hari</div><div class="sc-sub">Sekali bagi setiap akaun. Tiada bayaran dan tiada butiran kad. Selepas 24 jam, ciri Premium dikunci semula sehingga anda melanggan.</div></div>
             <button class="btn" id="trialGo" type="button">Mula percubaan</button>
           </div>
           <div class="plan-grid" id="planGrid"></div>
@@ -923,6 +924,7 @@
   <script src="js/pro.js" defer></script>
   <script src="js/pro-invest.js" defer></script>
   <script src="js/pro-study.js" defer></script>
+  <script src="js/pro-syariah.js" defer></script>
   <script src="js/jadual.js" defer></script>
   <script src="js/skrin-kunci.js" defer></script>
   <script src="js/menu.js" defer></script>

@@ -621,3 +621,14 @@ a.card:active, .shortcut:active, .tool-card:active { transform: translateY(0) sc
 .home-mkt-head .segmented { margin-right: auto; }
 .home-mkt-head .seg { min-width: 64px; }
 .coin.tk { font-size: 0.72rem; letter-spacing: -0.02em; }
+
+/* Premium: portfolio patuh Syariah */
+.stat-row.three { grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 560px) { .stat-row.three { grid-template-columns: 1fr; } }
+.pf-row.sy-row { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "main st" "div div"; }
+.sy-row .pf-main { grid-area: main; }
+.sy-row .sy-st { grid-area: st; text-align: right; }
+.sy-row .sy-div { grid-area: div; display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: end; }
+.sy-row .sy-div label { display: grid; gap: 4px; font-size: .8rem; color: var(--muted); }
+.sy-row .sy-div input { width: 9.5rem; }
+.plan-grid > .plan:only-child { grid-column: 1 / -1; width: 100%; max-width: 460px; justify-self: center; }

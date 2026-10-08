@@ -28,6 +28,7 @@
       if (meta.html && !$('#tool-' + key)) $('#toolsBlock').insertAdjacentHTML('beforeend', `<div class="tool hidden" id="tool-${key}"><div class="tool-body">${meta.html}</div></div>`);
       if (meta.init) meta.init = once(meta.init);
     },
+    show(key) { open(key); $('#toolsBlock').scrollIntoView({ block: 'start' }); },
     back() { if (!tool || !$('#view-premium').classList.contains('active')) return false; open(null); return true; },
     kit: null
   };
@@ -52,7 +53,7 @@
     if (lock) {
       lock.classList.toggle('hidden', ok);
       lock.innerHTML = `<span class="sc-ico">${icon('lock')}</span><div class="sc-body"><p class="sc-sub">${m.pitch}</p>
-        <button class="btn sm" data-goplans>${Premium.native ? 'Lihat pelan' : `Cuba percuma 3 hari atau pilih pelan ${Premium.PLANS[m.plan].name}`}</button></div>`;
+        <button class="btn sm" data-goplans>${Premium.native ? 'Lihat pelan' : 'Cuba percuma 1 hari atau langgan Premium'}</button></div>`;
     }
     if (ok) m.init();
   }
@@ -346,7 +347,7 @@
     form.addEventListener('submit', e => e.preventDefault());
     onChange && onChange();
   }
-  ProTools.kit = { fmtRM, pct, sign, numIn, FX, once, REST, field, persist, portfolio: () => hold, valueOf };
+  ProTools.kit = { fmtRM, pct, sign, numIn, FX, once, REST, field, persist, portfolio: () => hold, valueOf, refreshPrices };
 
   /* ---------- Laporan PDF daripada penyemak kertas ---------- */
   $('#reportBtn').addEventListener('click', () => {

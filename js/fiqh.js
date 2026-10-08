@@ -206,6 +206,7 @@
     const q = ($('#fqAsk').value || '').replace(/\s+/g, ' ').trim(), box = $('#fqAns');
     if (asking) return;
     if (q.length < 5) { box.innerHTML = '<p class="muted small">Tulis soalan sekurang-kurangnya 5 huruf.</p>'; return; }
+    if (!(typeof Premium === 'undefined' || Premium.boleh('tanya'))) return;
     asking = true;
     const btn = $('[data-fq-ask]'); if (btn) btn.disabled = true;
     box.innerHTML = `<div class="card fq-ai-wait"><span class="fq-ai-spin" aria-hidden="true"></span><div><b>Mencari dalam kitab, fatwa dan dokumen rasmi</b><p class="muted small">AI sedang membuka muka surat sumber dan menyemak petikan. Ini mungkin mengambil masa sehingga satu minit.</p></div></div>`;
@@ -216,6 +217,7 @@
       if (my !== seq) return;
       if (!r.ok) throw new Error(d.error || (r.status === 503 ? 'Tanya AI belum diaktifkan.' : 'Tanya AI tidak tersedia buat masa ini.'));
       answer(d, q);
+      if (typeof Premium !== 'undefined') Premium.catat('tanya');
     } catch (e) {
       if (my === seq) box.innerHTML = `<p class="note">${icon('alert')}<span>${esc(e.message && !/fetch|network|load/i.test(e.message) ? e.message : 'Tidak dapat menghubungi Tanya AI. Semak sambungan internet anda.')}</span></p>`;
     } finally { asking = false; if (btn) btn.disabled = false; }

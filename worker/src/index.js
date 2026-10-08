@@ -16,10 +16,11 @@ import { Akaun, handleAkaun, authed, callDO, licenceFor } from './akaun.js';
 import { Komuniti, handleKomuniti } from './komuniti.js';
 export { Akaun, Komuniti };
 
+// Harga dalam sen. Hanya Premium (kunci 'lengkap') dijual; Pelajar dan Pelabur ialah pelan lama yang tidak lagi dijual.
 export const PLANS = {
-  pelajar: { name: 'Pelajar', m1: 500, y1: 3900 },
-  pelabur: { name: 'Pelabur', m1: 1200, y1: 8900 },
-  lengkap: { name: 'Lengkap', m1: 1500, y1: 10900 }
+  pelajar: { name: 'Pelajar', m1: 500, y1: 3900, old: true },
+  pelabur: { name: 'Pelabur', m1: 1200, y1: 8900, old: true },
+  lengkap: { name: 'Premium', m1: 690, y1: 4900 }
 };
 export const PERIODS = { m1: { days: 30, label: '30 Hari' }, y1: { days: 365, label: '1 Tahun' } };
 
@@ -55,7 +56,7 @@ async function checkout(req, env, url) {
   const name = String(b.name || '').replace(/[^\p{L}\p{N} .'@-]/gu, '').trim().slice(0, 60);
   const email = cleanEmail(b.email);
   const phone = String(b.phone || '').replace(/\D/g, '');
-  if (!plan || !period) return { status: 400, data: { error: 'Pelan tidak sah.' } };
+  if (!plan || plan.old || !period) return { status: 400, data: { error: 'Pelan tidak sah.' } };
   if (name.length < 2) return { status: 400, data: { error: 'Sila isi nama.' } };
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 100) return { status: 400, data: { error: 'E-mel tidak sah.' } };
   if (phone.length < 9 || phone.length > 13) return { status: 400, data: { error: 'Nombor telefon tidak sah.' } };

@@ -70,12 +70,14 @@
     if (S.busy) return;
     if (S.resume.trim().length < 100) { toast('Tampal resume anda dahulu (sekurang-kurangnya 100 aksara).'); $('#kjResume', root).focus(); return; }
     if (tugas !== 'cadang' && S.jawatan.trim().length < 80) { toast('Tampal iklan jawatan untuk tindakan ini.'); $('#kjJob', root).focus(); return; }
+    if (!(typeof Premium === 'undefined' || Premium.boleh('kerja'))) return;
     Object.assign(S, { busy: tugas, err: '', tugas, hasil: null }); render();
     try {
       const r = await fetch(API + '/kerja', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ tugas, resume: redact(S.resume), jawatan: redact(S.jawatan), bahasa: S.bahasa }) });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(d.error || 'Kerjaya AI tidak tersedia buat masa ini.');
       S.hasil = d;
+      if (typeof Premium !== 'undefined') Premium.catat('kerja');
     } catch (e) { S.err = e.message && !/fetch|network/i.test(e.message) ? e.message : 'Tiada sambungan internet. Cuba lagi.'; }
     S.busy = ''; render();
     if (innerWidth < 960) $('[aria-live]', root)?.scrollIntoView({ behavior: 'smooth', block: 'start' });

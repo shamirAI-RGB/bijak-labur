@@ -560,6 +560,7 @@
   async function run() {
     const text = $('#paper').value.replace(/\r\n/g, '\n').trim();
     if (words(text).length < 20) return toast('Sila masukkan sekurang-kurangnya 20 patah perkataan.');
+    if (!(typeof Premium === 'undefined' || Premium.boleh('semak'))) return;
     const btn = $('#checkBtn'); btn.disabled = true;
     const prog = m => btn.innerHTML = `<span class="spinner"></span> ${m}`;
     prog('Menganalisis…');
@@ -603,6 +604,7 @@
       state.view = 'fix'; $$('#viewTabs .seg').forEach(t => t.classList.toggle('active', t.dataset.v === 'fix'));
       $('#results').classList.remove('hidden'); renderAll();
       document.dispatchEvent(new CustomEvent('checkdone'));
+      if (typeof Premium !== 'undefined') Premium.catat('semak');
       $('#results').scrollIntoView({ behavior: 'smooth' });
     } catch (e) { console.error(e); toast('Ralat semasa menganalisis.'); }
     btn.disabled = false; btn.textContent = 'Semak sekarang';
