@@ -4,10 +4,10 @@
   const API = (store.get('fiqh_api', '') || 'https://fiqh.bijaklabur.my').replace(/\/$/, '');
   const TAHAP = [['beginner', 'Beginner', 'Tahap 1'], ['intermediate', 'Intermediate', 'Tahap 2'], ['professional', 'Professional', 'Tahap 3']];
 
-  // pel: pelajaran berkaitan dalam Akademi Moomoo (id pelajaran dalam learn.js)
+  // pel: pelajaran berkaitan dalam Belajar saham menggunakan Moomoo (id pelajaran dalam learn.js)
   const LALUAN = {
     moomoo: {
-      nama: 'Moomoo', ikon: 'chart', tajuk: 'Akademi Dagangan & Pelaburan Moomoo',
+      nama: 'Moomoo', ikon: 'chart', tajuk: 'Belajar Saham Menggunakan Moomoo',
       tahap: {
         beginner: { tajuk: 'Asas Platform & Pengenalan Pelaburan', modul: [
           { c: 'Mula di Moomoo', d: 'Ketahui apa itu Moomoo dan kenapa ramai menggunakannya.', pel: ['m1'] },
