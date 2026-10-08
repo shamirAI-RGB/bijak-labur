@@ -1,4 +1,4 @@
-/* Akademi Moomoo: kandungan pembelajaran, kuiz dan kalkulator */
+/* Belajar saham menggunakan Moomoo: kandungan pembelajaran, kuiz dan kalkulator */
 (function () {
   const candle = (o, h, l, c, label) => {
     const up = c >= o, top = Math.max(o, c), bot = Math.min(o, c);
