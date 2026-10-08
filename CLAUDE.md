@@ -31,7 +31,7 @@ Laman bijaklabur.my (GitHub Pages, cawangan `main`) dan app Android/iOS (Capacit
   - Jangan tulis rahsia atau kunci dalam repo (ia disimpan sebagai GitHub Secrets).
   - Jangan longgarkan semakan asal (origin), had kadar, pengesahan token atau semakan bil.
 - **Premium:**
-  - `LAUNCH_FREE = true` dan `PAY_OPEN = false` dalam `js/premium.js`. Jangan ubah tanpa arahan pemilik.
+  - `PAY_OPEN = true` dalam `js/premium.js` sejak 8 Oktober 2026 (arahan pemilik): bayaran ToyyibPay dibuka di web, jadi "percuma semasa pelancaran" tamat di web. `LAUNCH_FREE = true` masih membuka semua ciri dalam app sehingga produk kedai wujud. Jangan ubah tanpa arahan pemilik.
   - Log masuk telefon sengaja dimatikan.
 - Jangan buang ciri sedia ada atau ubah reka bentuk secara besar-besaran tanpa arahan pemilik.
 - Jangan sebut nama atau ID model AI dalam commit, PR atau kod.

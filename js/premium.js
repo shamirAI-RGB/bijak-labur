@@ -2,7 +2,7 @@
    Premium terikat pada akaun dan peranti aktif (js/akaun.js). Tetamu tidak mendapat Premium. */
 const Premium = (function () {
   // true selepas ToyyibPay disediakan pada pelayan. URL pelayan ditetapkan dalam js/akaun.js (API).
-  const PAY_OPEN = false;
+  const PAY_OPEN = true;
   const PAY_API = PAY_OPEN && Akaun.enabled;
   // Kunci awam untuk mengesahkan lesen web yang ditandatangani pelayan
   const PUBLIC_JWK = { kty: 'EC', crv: 'P-256', x: 'PopJd-wOskBgsjXRhkdKZwZDEXnwp4JMC3CiOeZNIJs', y: 'BElaqIRYXzSQ595i_PjTkwPSwL6lMCd9Ei2WCyWWdHY' };
