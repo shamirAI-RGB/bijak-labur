@@ -13,12 +13,25 @@
   const sunnahUrl = h => `https://sunnah.com/${h.c}:${h.n}`;
   const hRef = h => `${D.KOLEKSI[h.c]} ${h.n.replace(/[a-z]$/, '')}`;
   const ext = (href, label) => /^https:\/\//.test(href) ? `<a class="link-btn" href="${esc(href)}" target="_blank" rel="noopener">${label}${icon('link')}</a>` : '';
-  // Muka surat cetakan kitab: gambar satu muka surat dari archive.org (dimuat hanya apabila dibuka), bukan PDF penuh yang berat
-  const cetakPage = s => /^https:\/\/(iiif\.)?archive\.org\//.test(s.gambar_url || '')
-    ? `<details class="fq-cetak"><summary>${icon('book')}Lihat muka surat ${esc(s.pdf)} dalam cetakan</summary>
-        <img data-src="${esc(s.gambar_url)}" alt="Muka surat ${esc(s.pdf)} cetakan ${esc(s.tajuk)}" decoding="async">
-        <p class="small fq-links">${ext(s.lihat_url, 'Buka di archive.org')}${ext(s.pdf_url, 'PDF penuh')}</p></details>`
-    : s.pdf_url ? `<p class="small">${ext(s.pdf_url, `Buka PDF cetakan, muka surat ${esc(s.pdf)}`)}</p>` : '';
+  // Muka surat yang dipetik sahaja, bukan PDF penuh yang berat:
+  //  1. Kitab: gambar satu muka surat cetakan dari archive.org (jika telah dipadankan dengan OCR)
+  //  2. Dokumen rasmi: gambar satu muka surat yang dijana oleh pelayan Tanya AI
+  //  3. Jika tiada gambar: teks muka surat itu (halaman Shamela atau muka surat PDF)
+  const pageImg = (src, alt) => `<img class="fq-page-img" src="${esc(src)}" alt="${esc(alt)}" loading="lazy" decoding="async">`;
+  // Gambar satu muka surat dokumen rasmi di pelayan Tanya AI (bukan PDF penuh)
+  const gambarDok = s => s.jenis !== 'kitab' && /^\/halaman\/[a-z]{2,12}\/\d{1,4}\.jpg$/.test(s.gambar || '') ? AI_API + s.gambar : '';
+  const cetakPage = s => {
+    const kitab = s.jenis === 'kitab';
+    const img = kitab && /^https:\/\/(iiif\.)?archive\.org\//.test(s.gambar_url || '') ? s.gambar_url
+      : gambarDok(s);
+    const label = kitab ? (img ? `Muka surat ${esc(s.pdf)} dalam cetakan` : `Teks digital Shamela, halaman ${esc(s.shamela)} (gambar cetakan belum tersedia)`) : `Muka surat ${esc(s.pdf)}`;
+    const teks = s.teks_halaman ? `<div class="fq-page-teks${isAr(s.teks_halaman) ? ' ar' : ''}"${isAr(s.teks_halaman) ? ' lang="ar" dir="rtl"' : ''}>${esc(s.teks_halaman)}</div>` : '';
+    if (!img && !teks) return s.pdf_url ? `<p class="small">${ext(s.pdf_url, `Buka PDF cetakan, muka surat ${esc(s.pdf)}`)}</p>` : '';
+    const links = [kitab && img && ext(s.lihat_url, 'Buka di archive.org'), ext(s.pdf_url || (!kitab && s.url), 'PDF penuh')].filter(Boolean).join('');
+    return `<details class="fq-cetak" open><summary>${icon('book')}${label}</summary>
+      ${img ? pageImg(img, `${label}, ${s.tajuk}`) : teks}
+      ${links ? `<p class="small fq-links">${links}</p>` : ''}</details>`;
+  };
 
   /* ---------- Muat sumber ---------- */
   const cache = {};
@@ -189,7 +202,7 @@
       <div class="fq-hero" style="--c:#c9853a"><span lang="ar" dir="rtl">اسأل</span><div><h2>Tanya AI berasaskan rujukan</h2><p>Setiap jawapan mesti bersandarkan sumber yang boleh anda buka sendiri.</p></div></div>
       <ol class="fq-flow fq-ai-rules">
         <li><span class="num">1</span>AI hanya boleh memetik ${Object.keys(D.KITAB).length} kitab muktabar (Shamela; mazhab Syafie dan perbandingan mazhab), Al-Quran, hadis, fatwa rasmi Malaysia dan ${D.MODEN.length} dokumen keputusan rasmi moden untuk isu semasa.</li>
-        <li><span class="num">2</span>Setiap petikan disemak dengan teks halaman sumber. Petikan yang tidak sepadan dibuang.</li>
+        <li><span class="num">2</span>Setiap petikan disemak dengan teks halaman sumber. Petikan yang tidak sepadan dibuang. Petikan kitab dipaparkan bersama gambar muka surat cetakannya, atau teks digital halaman itu daripada Shamela jika gambarnya belum tersedia.</li>
         <li><span class="num">3</span>Jika tiada sumber yang sah, AI menjawab "tidak pasti" dan meminta anda merujuk mufti.</li>
       </ol>
       <div class="card">
@@ -249,7 +262,7 @@
     const hk = s.id && s.id.startsWith('hadis:') && D.H[s.id.slice(6)] ? s.id.slice(6) : '';
     const live = hk ? `<p class="fq-isi"><span>Isi ringkas</span>${esc(D.H[hk].isi)}</p><div class="fq-live"><p class="muted small">Memuatkan teks hadis</p></div>` : '';
     return `<div class="fq-src fq-ai-src" style="--c:${c}"${hk ? ` data-hadith="${hk}"` : ''}>
-      <div class="row-between"><span class="fq-ai-kind">${label}</span>${ext(s.url, s.jenis === 'kitab' || s.pdf ? 'Buka muka surat' : 'Buka sumber')}</div>
+      <div class="row-between"><span class="fq-ai-kind">${label}</span>${ext(gambarDok(s) || s.url, s.jenis === 'kitab' || s.pdf ? 'Buka muka surat' : 'Buka sumber')}</div>
       <b>${esc(s.tajuk)}</b>${page || printed ? `<p class="small muted">${[page, printed].filter(Boolean).join(' · ')}</p>` : ''}
       ${s.penerbit || s.edisi ? `<p class="small muted">Cetakan: ${esc([s.penerbit, s.edisi && (s.penerbit ? 'cetakan ' + s.edisi : s.edisi), s.tahun].filter(Boolean).join(', '))}</p>` : ''}
       ${cetakPage(s)}
@@ -289,12 +302,10 @@
       box.innerHTML = hits.length ? `<div class="list">${hits.map(hitRow).join('')}</div>` : `<p class="muted small">Tiada masalah sepadan. Cuba cari dalil terus dari sumber di bawah.</p>`;
     } else if (e.target.id === 'fqDalil') $('#fqOut').innerHTML = outLinks(e.target.value.trim());
   });
-  // Gambar muka surat cetakan dimuat apabila pengguna membukanya
-  document.addEventListener('toggle', e => {
-    const img = e.target.open && e.target.matches && e.target.matches('.fq-cetak') && $('img[data-src]', e.target);
-    if (!img || img.src) return;
-    img.addEventListener('error', () => { if (img.isConnected) img.outerHTML = '<p class="muted small">Gambar muka surat tidak dapat dimuat. Cuba pautan di bawah.</p>'; }, { once: true });
-    img.src = img.dataset.src;
+  // Gambar muka surat yang gagal dimuat: paparkan mesej dan kekalkan pautan
+  document.addEventListener('error', e => {
+    const img = e.target;
+    if (img && img.classList && img.classList.contains('fq-page-img') && img.isConnected) img.outerHTML = '<p class="muted small">Gambar muka surat tidak dapat dimuat. Cuba pautan di bawah.</p>';
   }, true);
   document.addEventListener('keydown', e => {
     if (e.target.id === 'fqDalil' && e.key === 'Enter') searchAyat();

@@ -1,4 +1,6 @@
-/* Peta Jalan (peta.html): peta jalan 2D (Leaflet + OpenStreetMap) di atas glob 3D.
+/* Peta Jalan (peta.html): peta jalan 3D (MapLibre GL, jubin vektor OpenFreeMap dengan gaya sendiri dalam data/peta/)
+   di atas glob 3D: condong dan pusing dengan dua jari, bangunan 3D, rupa bumi berbukit, dan kamera navigasi yang
+   berpusing mengikut arah perjalanan.
    Carian tempat (Nominatim), arah perjalanan (OSRM: kereta, basikal, jalan kaki),
    navigasi langsung dengan suara Bahasa Melayu, tempat disimpan, cuaca dan waktu solat di destinasi.
    Dimuat selepas js/peta.js dan bercakap dengan glob melalui window.PetaGlob. */
@@ -9,8 +11,9 @@
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const glob = window.PetaGlob || null;
   const root = $('jalan');
-  if (!root || typeof window.L === 'undefined') return;
-  const L = window.L;
+  const ML = window.maplibregl;
+  if (!root || !ML) return;
+  const PG = window.PetaGaya;
   const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const narrow = () => window.innerWidth < 720;
 
@@ -20,14 +23,34 @@
   const OSRM_SANDARAN = 'https://router.project-osrm.org';
   const CUACA = 'https://api.open-meteo.com/v1/forecast';
   const SOLAT = 'https://api.aladhan.com/v1/timings';
-  const TILES = {
-    jalan: { url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', opt: { maxZoom: 19, attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' } },
-    satelit: { url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', opt: { maxZoom: 19, attribution: 'Imej © Esri, Maxar, Earthstar Geographics' } },
-    gelap: { url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', opt: { maxZoom: 19, subdomains: 'abcd', attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> © <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>' } }
-  };
+  // Lapisan peta: gaya vektor sendiri dalam data/peta/ (OpenFreeMap), raster jika jubin vektor gagal
+  const GAYA = { jalan: 'terang', gelap: 'gelap', satelit: 'satelit' };
   const PUSAT = [3.139, 101.687]; // Kuala Lumpur
   const PROFIL = { car: 'Kereta', bike: 'Basikal', foot: 'Jalan kaki' };
   const CHIPS = [['Masjid', 'masjid'], ['Makan', 'restoran'], ['Minyak', 'stesen minyak'], ['ATM', 'atm'], ['Hospital', 'hospital'], ['Farmasi', 'farmasi'], ['Pasar raya', 'pasar raya'], ['Surau', 'surau']];
+
+  /* ---------- Ikon (SVG garis, 24x24) ---------- */
+  const IKON = {
+    glob: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
+    cari: '<circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/>',
+    tutup: '<path d="M6 6l12 12M18 6 6 18"/>',
+    lapisan: '<path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 13 9 5 9-5"/>',
+    kompas: '<circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5 5-2Z"/>',
+    lokasi: '<circle cx="12" cy="12" r="3.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="7.5"/>',
+    tambah: '<path d="M12 5v14M5 12h14"/>',
+    tolak: '<path d="M5 12h14"/>',
+    arah: '<path d="M12 2.5 21.5 12 12 21.5 2.5 12 12 2.5Z"/><path d="M9 13v-2.5h5M12 8l2.5 2.5L12 13"/>',
+    simpan: '<path d="M7 3.5h10v17l-5-3.5-5 3.5v-17Z"/>',
+    disimpan: '<path d="M7 3.5h10v17l-5-3.5-5 3.5v-17Z" fill="currentColor"/>',
+    kongsi: '<path d="M12 15V3.5M7.5 8 12 3.5 16.5 8"/><path d="M5 12v7.5h14V12"/>',
+    main: '<path d="M8 5.5v13l10.5-6.5L8 5.5Z" fill="currentColor"/>',
+    suara: '<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4v-5Z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/>',
+    senyap: '<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4v-5Z"/><path d="m16 9.5 5 5M21 9.5l-5 5"/>',
+    kereta: '<path d="M5 16.5V12l1.8-4.6A1.5 1.5 0 0 1 8.2 6.5h7.6a1.5 1.5 0 0 1 1.4.9L19 12v4.5"/><path d="M3.5 16.5h17M5 12h14"/><circle cx="8" cy="16.5" r="1.8"/><circle cx="16" cy="16.5" r="1.8"/>',
+    basikal: '<circle cx="6" cy="16" r="3.5"/><circle cx="18" cy="16" r="3.5"/><path d="m6 16 4-7h5l3 7M10 9 8.5 6.5H7M15 9l-3 7"/>',
+    kaki: '<circle cx="13" cy="4.5" r="1.8"/><path d="m9 21 2.5-6.5L14 17v4M11.5 14.5 12.5 9l3.5 3 2.5.5M12.5 9 9.5 10.5 8 13.5"/>'
+  };
+  const ik = n => `<svg class="pj-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IKON[n]}</svg>`;
 
   /* ---------- Pembantu ---------- */
   const haversine = (a, b) => {
@@ -89,16 +112,15 @@
 
   /* ---------- Keadaan ---------- */
   let map = null;
-  let lapisan = {};
   let lapisanSemasa = 'jalan';
   let me = null; // { lat, lng, acc, heading, speed }
   let meMarker = null, meBulatan = null;
   let ikutSaya = false;
   let tempat = null; // tempat yang dipilih
   let tempatMarker = null;
-  let hasilMarkers = L.layerGroup();
+  let hasilMarkers = [];
   let laluan = null; // { coords:[{lat,lng}], steps:[], distance, duration, profil, dari, ke, kumul:[] }
-  let laluanLayer = L.layerGroup();
+  let mod3d = baca('peta.3d', false);
   let alternatif = [];
   let profil = baca('peta.profil', 'car');
   let navi = null; // keadaan navigasi
@@ -111,26 +133,28 @@
   root.innerHTML = `
     <div id="jalan-map" aria-label="Peta jalan"></div>
     <div class="pj-top">
-      <button type="button" class="pj-ikon" id="pjGlob" title="Kembali ke glob 3D" aria-label="Kembali ke glob 3D">◉</button>
+      <button type="button" class="pj-ikon" id="pjGlob" title="Kembali ke glob 3D" aria-label="Kembali ke glob 3D">${ik('glob')}</button>
       <div class="pj-search">
-        <input type="search" id="pjCari" placeholder="Cari tempat, alamat atau koordinat" autocomplete="off" aria-label="Cari tempat" enterkeyhint="search">
-        <button type="button" class="pj-ikon pj-ikon--dalam" id="pjClear" aria-label="Kosongkan" hidden>✕</button>
-        <button type="button" class="pj-ikon pj-ikon--dalam" id="pjGo" aria-label="Cari">⌕</button>
+        <input type="search" id="pjCari" placeholder="Cari tempat atau alamat" autocomplete="off" aria-label="Cari tempat" enterkeyhint="search">
+        <button type="button" class="pj-ikon pj-ikon--dalam" id="pjClear" aria-label="Kosongkan" hidden>${ik('tutup')}</button>
+        <button type="button" class="pj-ikon pj-ikon--dalam" id="pjGo" aria-label="Cari">${ik('cari')}</button>
       </div>
       <div class="pj-hasil" id="pjHasil" hidden></div>
     </div>
     <div class="pj-chips" id="pjChips">${CHIPS.map(([t, q]) => `<button type="button" class="pj-chip" data-q="${esc(q)}">${esc(t)}</button>`).join('')}</div>
     <div class="pj-fab">
-      <button type="button" class="pj-ikon" id="pjLapisan" title="Tukar lapisan peta" aria-label="Tukar lapisan peta">▤</button>
-      <button type="button" class="pj-ikon" id="pjKompas" title="Kompas" aria-label="Kompas" aria-pressed="false">➤</button>
-      <button type="button" class="pj-ikon pj-ikon--gps" id="pjLokasi" title="Lokasi saya" aria-label="Lokasi saya" aria-pressed="false">◎</button>
-      <button type="button" class="pj-ikon" id="pjZoomIn" aria-label="Zum masuk">+</button>
-      <button type="button" class="pj-ikon" id="pjZoomOut" aria-label="Zum keluar">−</button>
+      <button type="button" class="pj-ikon pj-utara" id="pjUtara" title="Hala ke utara" aria-label="Hala peta ke utara" hidden><span class="pj-jarum" aria-hidden="true"></span></button>
+      <button type="button" class="pj-ikon pj-ikon--teks" id="pj3d" title="Paparan 3D" aria-label="Paparan 3D" aria-pressed="false">3D</button>
+      <button type="button" class="pj-ikon" id="pjLapisan" title="Tukar lapisan peta" aria-label="Tukar lapisan peta">${ik('lapisan')}</button>
+      <button type="button" class="pj-ikon" id="pjKompas" title="Kompas" aria-label="Kompas" aria-pressed="false">${ik('kompas')}</button>
+      <button type="button" class="pj-ikon pj-ikon--gps" id="pjLokasi" title="Lokasi saya" aria-label="Lokasi saya" aria-pressed="false">${ik('lokasi')}</button>
+      <button type="button" class="pj-ikon" id="pjZoomIn" aria-label="Zum masuk">${ik('tambah')}</button>
+      <button type="button" class="pj-ikon" id="pjZoomOut" aria-label="Zum keluar">${ik('tolak')}</button>
     </div>
     <div class="pj-lapisan" id="pjLapisanMenu" hidden>
-      <button type="button" data-lapisan="jalan">Jalan</button>
-      <button type="button" data-lapisan="satelit">Satelit</button>
-      <button type="button" data-lapisan="gelap">Gelap</button>
+      <button type="button" data-lapisan="jalan" aria-pressed="false"><i class="pj-sw pj-sw--jalan" aria-hidden="true"></i>Jalan</button>
+      <button type="button" data-lapisan="gelap" aria-pressed="false"><i class="pj-sw pj-sw--gelap" aria-hidden="true"></i>Malam</button>
+      <button type="button" data-lapisan="satelit" aria-pressed="false"><i class="pj-sw pj-sw--satelit" aria-hidden="true"></i>Satelit</button>
     </div>
     <div class="pj-sheet" id="pjSheet" hidden></div>
     <div class="pj-navi" id="pjNavi" hidden></div>
@@ -145,44 +169,115 @@
     toastTimer = setTimeout(() => { el.hidden = true; }, lama || 3000);
   };
 
+  /* ---------- Peta (MapLibre) ---------- */
+  const LL = p => [p.lng, p.lat];
+  const Z = z => z - 1; // zum gaya jubin 256 px (seperti Google/Leaflet) ke zum MapLibre (jubin 512 px)
+  const WARNA = {
+    terang: { saya: '#1d7fd6', laluan: '#1b74c9', tepi: '#0f3f70', alt: '#8a958f', mula: '#ffffff' },
+    gelap: { saya: '#5cb4ff', laluan: '#5cb4ff', tepi: '#0a2440', alt: '#7d8a84', mula: '#101714' },
+    satelit: { saya: '#5cb4ff', laluan: '#5cb4ff', tepi: '#04182c', alt: '#c9d2cd', mula: '#ffffff' }
+  };
+  const warna = () => WARNA[GAYA[lapisanSemasa]] || WARNA.terang;
+  const kosong = () => ({ type: 'FeatureCollection', features: [] });
+  const bulatan = (p, r) => {
+    const n = 48, out = [], dLat = r / 111320, dLng = r / (111320 * Math.cos(p.lat * Math.PI / 180));
+    for (let i = 0; i <= n; i++) { const a = i / n * 2 * Math.PI; out.push([p.lng + dLng * Math.cos(a), p.lat + dLat * Math.sin(a)]); }
+    return { type: 'FeatureCollection', features: [{ type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [out] } }] };
+  };
+  const dataLaluan = () => {
+    const f = [];
+    if (laluan) {
+      alternatif.forEach((r, j) => { if (r !== laluan) f.push({ type: 'Feature', properties: { jenis: 'alt', j }, geometry: { type: 'LineString', coordinates: r.coords.map(LL) } }); });
+      f.push({ type: 'Feature', properties: { jenis: 'utama' }, geometry: { type: 'LineString', coordinates: laluan.coords.map(LL) } });
+      f.push({ type: 'Feature', properties: { jenis: 'mula' }, geometry: { type: 'Point', coordinates: LL(laluan.dari) } });
+    }
+    return { type: 'FeatureCollection', features: f };
+  };
+  const setData = (id, d) => { const src = map && map.getSource(id); if (src) src.setData(d); };
+  const setLaluan = () => setData('pj-laluan', dataLaluan());
+  // Lapisan sendiri (laluan, ketepatan GPS) dipasang semula setiap kali gaya bertukar, di bawah label peta
+  function pasangLapisanSendiri() {
+    const w = warna();
+    const label = (map.getStyle().layers.find(l => l.type === 'symbol') || {}).id;
+    if (!map.getSource('pj-laluan')) map.addSource('pj-laluan', { type: 'geojson', data: dataLaluan() });
+    if (!map.getSource('pj-ketepatan')) map.addSource('pj-ketepatan', { type: 'geojson', data: me ? bulatan(me, me.acc || 0) : kosong() });
+    const lebar = k => ['interpolate', ['exponential', 1.5], ['zoom'], 8, 3 * k, 13, 5 * k, 17, 10 * k, 20, 22 * k];
+    const tambah = l => { if (!map.getLayer(l.id)) map.addLayer(l, label); };
+    tambah({ id: 'pj-ketepatan', type: 'fill', source: 'pj-ketepatan', paint: { 'fill-color': w.saya, 'fill-opacity': 0.1, 'fill-outline-color': w.saya } });
+    tambah({ id: 'pj-laluan-alt', type: 'line', source: 'pj-laluan', filter: ['==', ['get', 'jenis'], 'alt'], layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': w.alt, 'line-width': lebar(1), 'line-opacity': 0.85 } });
+    tambah({ id: 'pj-laluan-tepi', type: 'line', source: 'pj-laluan', filter: ['==', ['get', 'jenis'], 'utama'], layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': w.tepi, 'line-width': lebar(1.6), 'line-opacity': 0.6 } });
+    tambah({ id: 'pj-laluan-garis', type: 'line', source: 'pj-laluan', filter: ['==', ['get', 'jenis'], 'utama'], layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': w.laluan, 'line-width': lebar(1) } });
+    tambah({ id: 'pj-laluan-mula', type: 'circle', source: 'pj-laluan', filter: ['==', ['get', 'jenis'], 'mula'], paint: { 'circle-radius': 6, 'circle-color': w.mula, 'circle-stroke-color': w.laluan, 'circle-stroke-width': 3, 'circle-pitch-alignment': 'map' } });
+    terapkan3D(false);
+  }
+  // Mod 3D: condong, rupa bumi berbukit (Terrain Tiles) dan bangunan 3D. Glob apabila zum jauh.
+  function terapkan3D(gerak) {
+    if (!map || !map.getStyle()) return;
+    PG.terap3D(map, mod3d);
+    $('pj3d').setAttribute('aria-pressed', String(mod3d));
+    $('pj3d').textContent = mod3d ? '2D' : '3D';
+    $('pj3d').setAttribute('aria-label', mod3d ? 'Paparan 2D' : 'Paparan 3D');
+    if (gerak && !navi) map.easeTo({ pitch: mod3d ? 60 : 0, bearing: mod3d ? map.getBearing() : 0, zoom: mod3d ? Math.max(map.getZoom(), Z(16)) : map.getZoom(), duration: reduceMotion ? 0 : 1200 });
+  }
+  // Gaya vektor dengan sandaran raster (js/peta-gaya.js)
+  const muatGaya = k => PG.muatGaya(map, GAYA[k]);
   function pasangPeta() {
     if (map) return;
-    map = L.map('jalan-map', { zoomControl: false, attributionControl: true, worldCopyJump: true }).setView(PUSAT, 12);
-    map.attributionControl.setPrefix('<a href="https://leafletjs.com" target="_blank" rel="noopener">Leaflet</a>');
-    for (const k in TILES) lapisan[k] = L.tileLayer(TILES[k].url, TILES[k].opt);
     lapisanSemasa = baca('peta.lapisan', 'jalan');
-    if (!lapisan[lapisanSemasa]) lapisanSemasa = 'jalan';
-    lapisan[lapisanSemasa].addTo(map);
-    hasilMarkers.addTo(map);
-    laluanLayer.addTo(map);
+    if (!GAYA[lapisanSemasa]) lapisanSemasa = 'jalan';
+    map = new ML.Map({ container: 'jalan-map', style: { version: 8, sources: {}, layers: [] }, center: LL({ lat: PUSAT[0], lng: PUSAT[1] }), zoom: Z(12), maxZoom: 20, maxPitch: 75,
+      attributionControl: { compact: true }, fadeDuration: 200, pixelRatio: Math.min(window.devicePixelRatio || 1, 2), dragRotate: true, pitchWithRotate: true, touchPitch: true });
+    map.on('style.load', pasangLapisanSendiri);
+    muatGaya(lapisanSemasa);
+    // Mod 3D yang disimpan: condongkan kamera sebaik gaya sebenar siap
+    const condongAwal = () => { if (!map.getSource('openmaptiles') && !map.getSource('r')) return; map.off('style.load', condongAwal); if (mod3d) terapkan3D(true); };
+    map.on('style.load', condongAwal);
     map.on('dragstart', () => { if (ikutSaya) setIkut(false); });
-    // Ketik lama atau klik kanan: "Apa di sini?"
-    map.on('contextmenu', e => pilihKoordinat(e.latlng.lat, e.latlng.lng));
+    // Klik kanan, atau tekan lama pada skrin sentuh: "Apa di sini?"
+    map.on('contextmenu', e => pilihKoordinat(e.lngLat.lat, e.lngLat.lng));
+    let tekanLama = 0;
+    map.on('touchstart', e => { clearTimeout(tekanLama); if (e.originalEvent.touches.length === 1) tekanLama = setTimeout(() => pilihKoordinat(e.lngLat.lat, e.lngLat.lng), 650); });
+    for (const ev of ['touchend', 'touchcancel', 'movestart', 'pitchstart', 'rotatestart']) map.on(ev, () => clearTimeout(tekanLama));
     map.on('click', () => { hasilEl.hidden = true; $('pjLapisanMenu').hidden = true; });
+    map.on('click', 'pj-laluan-alt', e => { const f = e.features && e.features[0]; if (f) pilihLaluan(+f.properties.j); });
+    map.on('mouseenter', 'pj-laluan-alt', () => { map.getCanvas().style.cursor = 'pointer'; });
+    map.on('mouseleave', 'pj-laluan-alt', () => { map.getCanvas().style.cursor = ''; });
+    // Jarum utara: muncul apabila peta dipusing atau dicondongkan
+    const jarum = () => {
+      const b = map.getBearing(), p = map.getPitch();
+      $('pjUtara').hidden = Math.abs(b) < 0.5 && p < 1;
+      $('pjUtara').firstElementChild.style.transform = `rotateX(${p * 0.6}deg) rotate(${-b}deg)`;
+    };
+    map.on('rotate', jarum); map.on('pitch', jarum);
     $$('[data-lapisan]').forEach(b => b.addEventListener('click', () => tukarLapisan(b.dataset.lapisan)));
   }
   function tukarLapisan(k) {
-    if (!lapisan[k] || k === lapisanSemasa) { $('pjLapisanMenu').hidden = true; return; }
-    map.removeLayer(lapisan[lapisanSemasa]);
+    if (!GAYA[k] || k === lapisanSemasa) { $('pjLapisanMenu').hidden = true; return; }
     lapisanSemasa = k;
-    lapisan[k].addTo(map);
+    muatGaya(k);
     simpan('peta.lapisan', k);
     root.dataset.lapisan = k;
+    tandaLapisan();
     $('pjLapisanMenu').hidden = true;
   }
+  // Gerak kamera ke titik (zum dalam skala Google/Leaflet)
+  const pandang = (p, z, animasi) => map[animasi && !reduceMotion ? 'easeTo' : 'jumpTo']({ center: LL(p), zoom: z == null ? map.getZoom() : Z(z), duration: 500 });
+
+  const tandaLapisan = () => $$('[data-lapisan]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lapisan === lapisanSemasa)));
 
   /* ---------- Mod: glob <-> jalan ---------- */
   function buka(opsyen) {
     aktif = true;
     document.body.classList.add('mode-jalan');
-    root.hidden = false; // bekas mesti kelihatan sebelum Leaflet mengukur saiznya
-    pasangPeta();
+    root.hidden = false; // bekas mesti kelihatan sebelum peta mengukur saiznya
+    try { pasangPeta(); } catch (e) { $('jalan-map').innerHTML = '<p class="pj-tiada">Peta jalan memerlukan WebGL. Kemas kini pelayar atau cuba pelayar lain.</p>'; return; }
     root.dataset.lapisan = lapisanSemasa;
-    map.invalidateSize();
-    setTimeout(() => map.invalidateSize(), 50);
+    tandaLapisan();
+    map.resize();
+    setTimeout(() => map.resize(), 50);
     lukisSaya();
-    if (opsyen && opsyen.lat != null) map.setView([opsyen.lat, opsyen.lng], opsyen.zoom || 15);
-    else if (me) map.setView([me.lat, me.lng], 15);
+    if (opsyen && opsyen.lat != null) pandang(opsyen, opsyen.zoom || 15);
+    else if (me) pandang(me, 15);
     if (!(opsyen && opsyen.fokusTiada)) setTimeout(() => { if (!narrow()) input.focus({ preventScroll: true }); }, 100);
   }
   function tutup() {
@@ -198,13 +293,15 @@
   });
   $('pjZoomIn').addEventListener('click', () => map.zoomIn());
   $('pjZoomOut').addEventListener('click', () => map.zoomOut());
+  $('pj3d').addEventListener('click', () => { mod3d = !mod3d; simpan('peta.3d', mod3d); terapkan3D(true); });
+  $('pjUtara').addEventListener('click', () => map.easeTo({ bearing: 0, pitch: navi || mod3d ? map.getPitch() : 0, duration: reduceMotion ? 0 : 600 }));
   $('pjLapisan').addEventListener('click', e => { e.stopPropagation(); const m = $('pjLapisanMenu'); m.hidden = !m.hidden; });
 
   /* ---------- Lokasi saya ---------- */
   function setIkut(on) {
     ikutSaya = on;
     $('pjLokasi').setAttribute('aria-pressed', on ? 'true' : 'false');
-    if (on && me) map.setView([me.lat, me.lng], Math.max(map.getZoom(), navi ? 17 : 15), { animate: !reduceMotion });
+    if (on && me) { if (navi) kameraNavi(true); else pandang(me, Math.max(map.getZoom() + 1, 15), true); }
   }
   $('pjLokasi').addEventListener('click', () => {
     if (!me) {
@@ -217,15 +314,24 @@
     if (!map || !me) return;
     const deg = me.heading != null ? me.heading : headingPeranti;
     if (!meMarker) {
-      meMarker = L.marker([me.lat, me.lng], { icon: L.divIcon({ className: 'pj-me-wrap', html: '<div class="pj-me"><div class="pj-me-arah"></div></div>', iconSize: [24, 24], iconAnchor: [12, 12] }), zIndexOffset: 1000, interactive: false }).addTo(map);
-      meBulatan = L.circle([me.lat, me.lng], { radius: me.acc || 0, color: '#39ff14', weight: 1, opacity: 0.5, fillColor: '#39ff14', fillOpacity: 0.08, interactive: false }).addTo(map);
-    } else {
-      meMarker.setLatLng([me.lat, me.lng]);
-      meBulatan.setLatLng([me.lat, me.lng]).setRadius(me.acc || 0);
-    }
-    const el = meMarker.getElement() && meMarker.getElement().querySelector('.pj-me-arah');
-    if (el) { el.style.transform = deg != null ? `rotate(${deg}deg)` : ''; el.classList.toggle('ada', deg != null); }
-    if (ikutSaya) map.setView([me.lat, me.lng], map.getZoom(), { animate: !reduceMotion, duration: 0.5 });
+      const el = document.createElement('div');
+      el.className = 'pj-me-wrap';
+      el.innerHTML = '<div class="pj-me"><div class="pj-me-arah"></div><span class="pg-saya"></span></div>';
+      // Kon arah terletak rata di atas jalan dan berpusing bersama peta
+      meMarker = new ML.Marker({ element: el, rotationAlignment: 'map', pitchAlignment: 'map' }).setLngLat(LL(me)).addTo(map);
+    } else meMarker.setLngLat(LL(me));
+    setData('pj-ketepatan', bulatan(me, Math.min(me.acc || 0, 2000)));
+    meMarker.setRotation(deg != null ? deg : 0);
+    const arah = meMarker.getElement().querySelector('.pj-me-arah');
+    if (arah) arah.classList.toggle('ada', deg != null);
+    if (ikutSaya) { if (navi) kameraNavi(); else pandang(me, null, true); }
+  }
+  // Kamera navigasi: condong, berpusing mengikut arah perjalanan, lokasi di bahagian bawah skrin
+  function kameraNavi(segera) {
+    if (!map || !me) return;
+    const arah = me.heading != null ? me.heading : headingPeranti;
+    map.easeTo({ center: LL(me), zoom: Math.max(map.getZoom(), Z(17)), pitch: 58, bearing: arah != null ? arah : map.getBearing(),
+      offset: [0, Math.round(map.getContainer().clientHeight * 0.22)], duration: reduceMotion || segera ? 0 : 900, easing: t => t });
   }
   let posSebelum = null;
   function padaLokasi(pos) {
@@ -286,6 +392,8 @@
     const lat = +m[1], lng = +m[2];
     return Math.abs(lat) <= 90 && Math.abs(lng) <= 180 ? { lat, lng } : null;
   };
+  const kotak = pts => pts.reduce((b, p) => [[Math.min(b[0][0], p.lng), Math.min(b[0][1], p.lat)], [Math.max(b[1][0], p.lng), Math.max(b[1][1], p.lat)]], [[180, 90], [-180, -90]]);
+  const kosongHasil = () => { hasilMarkers.forEach(m => m.remove()); hasilMarkers = []; };
   async function cari(q, pilihPertama) {
     q = String(q || '').trim();
     if (!q) { paparSenaraiMula(); return; }
@@ -300,14 +408,17 @@
     const senarai = (rows || []).map(keTempat);
     if (!senarai.length) { hasilEl.innerHTML = '<div class="pj-item pj-muted">Tiada hasil. Cuba nama lain.</div>'; return; }
     if (pilihPertama && senarai.length === 1) { pilihTempat(senarai[0]); return; }
-    hasilMarkers.clearLayers();
+    kosongHasil();
     senarai.forEach((t, i) => {
-      L.circleMarker([t.lat, t.lng], { radius: 7, color: '#ff00ff', weight: 2, fillColor: '#ff00ff', fillOpacity: 0.5 }).on('click', () => pilihTempat(t)).addTo(hasilMarkers);
+      const el = document.createElement('button');
+      el.type = 'button'; el.className = 'pj-hasil-titik'; el.setAttribute('aria-label', t.name); el.textContent = String(i + 1);
+      el.addEventListener('click', e => { e.stopPropagation(); pilihTempat(t); });
+      hasilMarkers.push(new ML.Marker({ element: el }).setLngLat(LL(t)).addTo(map));
       t.i = i;
     });
     hasilEl.innerHTML = senarai.map((t, i) => `<button type="button" class="pj-item" data-i="${i}"><b>${esc(t.name)}</b><span>${esc(t.alamat)}</span>${me ? `<em>${fmtM(haversine(me, t))}</em>` : ''}</button>`).join('');
     $$('.pj-item', hasilEl).forEach(b => b.addEventListener('click', () => pilihTempat(senarai[+b.dataset.i])));
-    if (senarai.length > 1 && map) map.fitBounds(L.latLngBounds(senarai.map(t => [t.lat, t.lng])).pad(0.2), { maxZoom: 15 });
+    if (senarai.length > 1 && map) map.fitBounds(kotak(senarai), { padding: { top: 140, bottom: 60, left: narrow() ? 40 : 600, right: 80 }, maxZoom: Z(15), duration: reduceMotion ? 0 : 800 });
     hasilEl.hidden = false;
   }
   input.addEventListener('input', () => {
@@ -319,7 +430,7 @@
   input.addEventListener('focus', () => { if (!input.value.trim()) paparSenaraiMula(); });
   input.addEventListener('keydown', e => { if (e.key === 'Enter') { clearTimeout(cariTimer); cari(input.value, true); } if (e.key === 'Escape') { hasilEl.hidden = true; input.blur(); } });
   $('pjGo').addEventListener('click', () => { clearTimeout(cariTimer); cari(input.value, true); });
-  $('pjClear').addEventListener('click', () => { input.value = ''; $('pjClear').hidden = true; hasilMarkers.clearLayers(); hasilEl.hidden = true; input.focus(); });
+  $('pjClear').addEventListener('click', () => { input.value = ''; $('pjClear').hidden = true; kosongHasil(); hasilEl.hidden = true; input.focus(); });
   $$('.pj-chip').forEach(b => b.addEventListener('click', () => { input.value = b.dataset.q; $('pjClear').hidden = false; cari(b.dataset.q + (me || map ? '' : ' Malaysia')); }));
 
   // Tempat disimpan dan carian terbaru apabila kotak carian kosong
@@ -352,27 +463,32 @@
     input.value = t.name; $('pjClear').hidden = false;
     if (!tanpaIngat) ingat(t);
     if (tempatMarker) tempatMarker.remove();
-    tempatMarker = L.marker([t.lat, t.lng], { icon: L.divIcon({ className: 'pj-pin-wrap', html: '<div class="pj-pin"></div>', iconSize: [26, 34], iconAnchor: [13, 34] }), zIndexOffset: 900 }).addTo(map);
+    const pin = document.createElement('div');
+    pin.className = 'pj-pin-wrap'; pin.innerHTML = '<div class="pj-pin"></div>';
+    tempatMarker = new ML.Marker({ element: pin, anchor: 'bottom' }).setLngLat(LL(t)).addTo(map);
     setIkut(false);
-    map.flyTo([t.lat, t.lng], Math.max(map.getZoom(), 15), { animate: !reduceMotion, duration: 0.8 });
+    const z = Math.max(map.getZoom(), Z(15));
+    if (reduceMotion) map.jumpTo({ center: LL(t), zoom: z }); else map.flyTo({ center: LL(t), zoom: z, duration: 1400, essential: true, padding: narrow() ? { bottom: 260 } : { left: 420 } });
     if (glob) glob.setDest(t.lat, t.lng, t.name);
     paparTempat();
     muatInfoTempat(t);
   }
 
   /* ---------- Kad tempat ---------- */
+  const labelSuara = () => suara ? `${ik('suara')}Suara` : `${ik('senyap')}Senyap`;
+  const labelSimpan = t => disimpanKah(t) ? `${ik('disimpan')}Disimpan` : `${ik('simpan')}Simpan`;
   function paparTempat() {
     if (!tempat) return;
     const t = tempat;
     sheet.dataset.mod = 'tempat';
     sheet.innerHTML = `
       <div class="pj-grip"></div>
-      <div class="pj-sheet-head"><div><h2>${esc(t.name)}</h2><p>${esc(t.alamat || '')}</p>${me ? `<p class="pj-jarak" id="pjJarak">${fmtM(haversine(me, t))} dari anda</p>` : ''}</div><button type="button" class="pj-ikon pj-ikon--kecil" id="pjTutup" aria-label="Tutup">✕</button></div>
+      <div class="pj-sheet-head"><div><h2>${esc(t.name)}</h2><p>${esc(t.alamat || '')}</p>${me ? `<p class="pj-jarak" id="pjJarak">${fmtM(haversine(me, t))} dari anda</p>` : ''}</div><button type="button" class="pj-ikon pj-ikon--kecil" id="pjTutup" aria-label="Tutup">${ik('tutup')}</button></div>
       <div class="pj-aksi">
-        <button type="button" class="pj-btn pj-btn--utama" id="pjArah">➜ Arah ke sini</button>
-        <button type="button" class="pj-btn" id="pjSimpan">${disimpanKah(t) ? '★ Disimpan' : '☆ Simpan'}</button>
-        <button type="button" class="pj-btn" id="pjKongsi">⇪ Kongsi</button>
-        <button type="button" class="pj-btn" id="pjGlobLihat">◉ Glob</button>
+        <button type="button" class="pj-btn pj-btn--utama" id="pjArah">${ik('arah')}Arah ke sini</button>
+        <button type="button" class="pj-btn" id="pjSimpan">${labelSimpan(t)}</button>
+        <button type="button" class="pj-btn" id="pjKongsi">${ik('kongsi')}Kongsi</button>
+        <button type="button" class="pj-btn" id="pjGlobLihat">${ik('glob')}Glob</button>
       </div>
       <div class="pj-info" id="pjInfo"><div class="pj-info-item"><span>Koordinat</span><b>${t.lat.toFixed(5)}, ${t.lng.toFixed(5)}</b></div></div>`;
     sheet.hidden = false;
@@ -383,7 +499,7 @@
       if (disimpanKah(t)) { s = s.filter(x => !(Math.abs(x.lat - t.lat) < 1e-5 && Math.abs(x.lng - t.lng) < 1e-5)); toast('Dibuang daripada tempat disimpan.'); }
       else { s.unshift({ name: t.name, alamat: t.alamat, lat: t.lat, lng: t.lng }); toast('Tempat disimpan.'); }
       simpan('peta.simpan', s.slice(0, 50));
-      $('pjSimpan').textContent = disimpanKah(t) ? '★ Disimpan' : '☆ Simpan';
+      $('pjSimpan').innerHTML = labelSimpan(t);
     });
     $('pjKongsi').addEventListener('click', async () => {
       const url = `${location.origin}${location.pathname}#tempat=${t.lat.toFixed(5)},${t.lng.toFixed(5)},${encodeURIComponent(t.name)}`;
@@ -475,7 +591,7 @@
       if (glob) { glob.startGps(); }
       toast('Menunggu lokasi anda... Benarkan GPS, atau klik kanan peta untuk titik mula.', 5000);
       sheet.dataset.mod = 'arah';
-      sheet.innerHTML = `<div class="pj-grip"></div><div class="pj-sheet-head"><div><h2>Arah ke ${esc(ke.name)}</h2><p>Menunggu isyarat GPS untuk titik mula...</p></div><button type="button" class="pj-ikon pj-ikon--kecil" id="pjTutup" aria-label="Tutup">✕</button></div>
+      sheet.innerHTML = `<div class="pj-grip"></div><div class="pj-sheet-head"><div><h2>Arah ke ${esc(ke.name)}</h2><p>Menunggu isyarat GPS untuk titik mula...</p></div><button type="button" class="pj-ikon pj-ikon--kecil" id="pjTutup" aria-label="Tutup">${ik('tutup')}</button></div>
         <div class="pj-aksi"><button type="button" class="pj-btn" id="pjDariPeta">Pilih titik mula di peta</button></div>`;
       sheet.hidden = false;
       $('pjTutup').addEventListener('click', tutupSheet);
@@ -485,7 +601,7 @@
       return;
     }
     sheet.dataset.mod = 'arah';
-    sheet.innerHTML = `<div class="pj-grip"></div><div class="pj-sheet-head"><div><h2>Arah ke ${esc(ke.name)}</h2><p>Mengira laluan ${PROFIL[profil].toLowerCase()}...</p></div><button type="button" class="pj-ikon pj-ikon--kecil" id="pjTutup" aria-label="Tutup">✕</button></div>`;
+    sheet.innerHTML = `<div class="pj-grip"></div><div class="pj-sheet-head"><div><h2>Arah ke ${esc(ke.name)}</h2><p>Mengira laluan ${PROFIL[profil].toLowerCase()}...</p></div><button type="button" class="pj-ikon pj-ikon--kecil" id="pjTutup" aria-label="Tutup">${ik('tutup')}</button></div>`;
     sheet.hidden = false;
     $('pjTutup').addEventListener('click', () => { tutupSheet(); kosongkanLaluan(); });
     let routes;
@@ -499,25 +615,18 @@
     alternatif = routes.map(r => olahLaluan(r, profil, dari, ke));
     pilihLaluan(0);
   }
-  const pilihanProfil = () => Object.keys(PROFIL).map(k => `<button type="button" class="pj-btn pj-btn--profil${k === profil ? ' aktif' : ''}" data-profil="${k}">${k === 'car' ? '🚗' : k === 'bike' ? '🚲' : '🚶'} ${PROFIL[k]}</button>`).join('');
+  const pilihanProfil = () => Object.keys(PROFIL).map(k => `<button type="button" class="pj-btn pj-btn--profil${k === profil ? ' aktif' : ''}" data-profil="${k}">${ik(k === 'car' ? 'kereta' : k === 'bike' ? 'basikal' : 'kaki')}${PROFIL[k]}</button>`).join('');
   const ikatProfil = (ke, dari) => $$('[data-profil]', sheet).forEach(b => b.addEventListener('click', () => { profil = b.dataset.profil; simpan('peta.profil', profil); mulaArah(ke, dari === me ? null : dari); }));
   function kosongkanLaluan() {
     laluan = null; alternatif = [];
-    laluanLayer.clearLayers();
+    setLaluan();
     if (glob) glob.setRoute(null);
   }
   function pilihLaluan(i) {
     laluan = alternatif[i];
     if (!laluan) return;
-    laluanLayer.clearLayers();
-    alternatif.forEach((r, j) => {
-      if (j === i) return;
-      L.polyline(r.coords.map(c => [c.lat, c.lng]), { color: '#8aa', weight: 5, opacity: 0.6, dashArray: '6 8' }).on('click', () => pilihLaluan(j)).addTo(laluanLayer);
-    });
-    L.polyline(laluan.coords.map(c => [c.lat, c.lng]), { color: '#001a33', weight: 9, opacity: 0.8 }).addTo(laluanLayer);
-    L.polyline(laluan.coords.map(c => [c.lat, c.lng]), { color: '#00ffff', weight: 5, opacity: 0.95 }).addTo(laluanLayer);
-    L.circleMarker([laluan.dari.lat, laluan.dari.lng], { radius: 6, color: '#fff', weight: 2, fillColor: '#39ff14', fillOpacity: 1 }).addTo(laluanLayer);
-    if (!navi) map.fitBounds(L.latLngBounds(laluan.coords.map(c => [c.lat, c.lng])).pad(0.15), narrow() ? { paddingBottomRight: [0, 280] } : { paddingTopLeft: [430, 0] });
+    setLaluan();
+    if (!navi) map.fitBounds(kotak(laluan.coords), { padding: narrow() ? { top: 130, bottom: Math.round(window.innerHeight * 0.5), left: 40, right: 40 } : { top: 130, bottom: 70, left: 470, right: 90 }, bearing: 0, pitch: mod3d ? 45 : 0, duration: reduceMotion ? 0 : 1000 });
     if (glob) glob.setRoute(laluan.coords);
     paparArah(i);
   }
@@ -527,17 +636,17 @@
     sheet.dataset.mod = 'arah';
     sheet.innerHTML = `
       <div class="pj-grip"></div>
-      <div class="pj-sheet-head"><div><h2>${fmtMasa(r.duration)} <small>(${fmtM(r.distance)})</small></h2><p>Ke ${esc(ke.name)} · tiba sekitar ${fmtJam(tiba)}${r.profil !== 'car' ? '' : ' tanpa kesesakan'}</p></div><button type="button" class="pj-ikon pj-ikon--kecil" id="pjTutup" aria-label="Tutup">✕</button></div>
+      <div class="pj-sheet-head"><div><h2>${fmtMasa(r.duration)} <small>(${fmtM(r.distance)})</small></h2><p>Ke ${esc(ke.name)} · tiba sekitar ${fmtJam(tiba)}${r.profil !== 'car' ? '' : ' tanpa kesesakan'}</p></div><button type="button" class="pj-ikon pj-ikon--kecil" id="pjTutup" aria-label="Tutup">${ik('tutup')}</button></div>
       <div class="pj-aksi">${pilihanProfil()}</div>
       ${alternatif.length > 1 ? `<div class="pj-alt">${alternatif.map((a, j) => `<button type="button" class="pj-btn pj-btn--kecil${j === i ? ' aktif' : ''}" data-alt="${j}">Laluan ${j + 1}: ${fmtMasa(a.duration)}, ${fmtM(a.distance)}</button>`).join('')}</div>` : ''}
-      <div class="pj-aksi"><button type="button" class="pj-btn pj-btn--utama pj-btn--besar" id="pjMulaNavi">▶ Mula navigasi</button><button type="button" class="pj-btn" id="pjSuara" aria-pressed="${suara}">${suara ? '🔊 Suara' : '🔇 Senyap'}</button></div>
+      <div class="pj-aksi"><button type="button" class="pj-btn pj-btn--utama pj-btn--besar" id="pjMulaNavi">${ik('main')}Mula navigasi</button><button type="button" class="pj-btn" id="pjSuara" aria-pressed="${suara}">${labelSuara()}</button></div>
       <ol class="pj-langkah">${r.steps.map(s => `<li><span class="pj-ikon-langkah">${esc(s.ikon)}</span><div><b>${esc(s.teks)}</b>${s.jarak > 0 ? `<span>${fmtM(s.jarak)}</span>` : ''}</div></li>`).join('')}</ol>`;
     sheet.hidden = false;
     $('pjTutup').addEventListener('click', () => { tutupSheet(); kosongkanLaluan(); });
     ikatProfil(ke, r.dari);
     $$('[data-alt]', sheet).forEach(b => b.addEventListener('click', () => pilihLaluan(+b.dataset.alt)));
     $('pjMulaNavi').addEventListener('click', mulaNavi);
-    $('pjSuara').addEventListener('click', () => { suara = !suara; simpan('peta.suara', suara); $('pjSuara').textContent = suara ? '🔊 Suara' : '🔇 Senyap'; $('pjSuara').setAttribute('aria-pressed', String(suara)); if (suara) cakap('Suara navigasi dihidupkan.'); });
+    $('pjSuara').addEventListener('click', () => { suara = !suara; simpan('peta.suara', suara); $('pjSuara').innerHTML = labelSuara(); $('pjSuara').setAttribute('aria-pressed', String(suara)); if (suara) cakap('Suara navigasi dihidupkan.'); });
   }
 
   /* ---------- Navigasi langsung ---------- */
@@ -584,7 +693,7 @@
     naviEl.hidden = false;
     document.body.classList.add('mode-navi');
     setIkut(true);
-    map.setZoom(17);
+    kameraNavi();
     kunciSkrin();
     document.addEventListener('visibilitychange', () => { if (!document.hidden && navi) kunciSkrin(); });
     cakap(`Navigasi bermula. ${laluan.steps[0] ? laluan.steps[0].teks : ''}`);
@@ -596,6 +705,7 @@
     document.body.classList.remove('mode-navi');
     if (wakeLock) { try { wakeLock.release(); } catch (e) { /* abaikan */ } wakeLock = null; }
     if (synth) synth.cancel();
+    if (map) map.easeTo({ pitch: mod3d ? 60 : 0, bearing: 0, offset: [0, 0], duration: reduceMotion ? 0 : 800 });
     if (mesej) { toast(mesej, 5000); cakap(mesej); }
     if (laluan) paparArah(alternatif.indexOf(laluan));
   }
@@ -609,9 +719,7 @@
       if (!navi) return;
       alternatif = routes.map(r => olahLaluan(r, laluan.profil, { lat: me.lat, lng: me.lng }, laluan.ke));
       laluan = alternatif[0];
-      laluanLayer.clearLayers();
-      L.polyline(laluan.coords.map(c => [c.lat, c.lng]), { color: '#001a33', weight: 9, opacity: 0.8 }).addTo(laluanLayer);
-      L.polyline(laluan.coords.map(c => [c.lat, c.lng]), { color: '#00ffff', weight: 5, opacity: 0.95 }).addTo(laluanLayer);
+      setLaluan();
       if (glob) glob.setRoute(laluan.coords);
       navi.langkah = 0; navi.diumum = new Set(); navi.sesat = 0;
       kemasNavi();
@@ -640,7 +748,7 @@
       <div class="pj-navi-atas">
         <div class="pj-navi-ikon">${esc(papar.ikon)}</div>
         <div class="pj-navi-teks"><b>${esc(papar.teks)}</b><span>dalam ${fmtM(keSeterusnya)}</span></div>
-        <button type="button" class="pj-ikon pj-ikon--kecil" id="pjNaviSuara" aria-label="Suara" aria-pressed="${suara}">${suara ? '🔊' : '🔇'}</button>
+        <button type="button" class="pj-ikon pj-ikon--kecil" id="pjNaviSuara" aria-label="Suara" aria-pressed="${suara}">${ik(suara ? 'suara' : 'senyap')}</button>
       </div>
       ${laluan.steps[k + 2] ? `<div class="pj-navi-lepas">Kemudian ${esc(laluan.steps[k + 2].ikon)} ${esc(laluan.steps[k + 2].teks)}</div>` : ''}
       <div class="pj-navi-bawah">
@@ -657,7 +765,7 @@
       else if (keSeterusnya < 120) umum('dekat', `Dalam 100 meter, ${seterusnya.teks}`);
       else if (keSeterusnya < 450 && laluan.profil === 'car') umum('jauh', `Dalam 400 meter, ${seterusnya.teks}`);
     }
-    if (ikutSaya) map.setView([me.lat, me.lng], map.getZoom(), { animate: !reduceMotion, duration: 0.5 });
+    if (ikutSaya) kameraNavi();
   }
 
   /* ---------- Pautan dalam (deep link) ---------- */

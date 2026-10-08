@@ -1,7 +1,7 @@
 /* Service worker: simpan app shell untuk kegunaan luar talian */
-const CACHE = 'bijak-labur-v87';
+const CACHE = 'bijak-labur-v93';
 const SHELL = ['./', 'index.html', 'css/style.css', 'css/langit.css', 'css/ibadah.css', 'css/belajar-visual.css', 'css/fiqh.css', 'css/suara.css', 'css/jadual.css', 'css/nota.css', 'css/akaun.css', 'js/ibadah-data.js', 'js/ibadah.js', 'js/fiqh-data.js', 'js/fiqh.js', 'js/quran-src.js', 'fonts/Geist-Variable.woff2', 'fonts/AmiriQuran-Arabic.woff2', 'js/boot.js', 'js/bingkai.js', 'js/app.js', 'js/suara.js', 'js/learn-visuals.js', 'js/akademi.js', 'js/learn.js', 'css/akademi.css', 'js/market.js', 'js/solat.js', 'js/semak-pakar.js', 'js/semak-industri.js', 'js/checker.js', 'js/semak-audit.js', 'js/akaun.js', 'js/premium.js', 'js/pro.js', 'js/pro-invest.js', 'js/pro-study.js', 'js/pro-syariah.js', 'js/jadual.js', 'js/skrin-kunci.js', 'css/skrin-kunci.css', 'js/nota.js', 'js/sihat.js', 'js/studio.js', 'js/buku.js', 'js/kerja.js', 'js/gaya-ai.js', 'js/jejak.js', 'js/komuniti.js', 'css/komuniti.css', 'js/iklan.js', 'js/pemilik.js', 'css/sihat.css', 'css/studio.css', 'css/buku.css', 'css/jejak.css', 'css/iklan.css', 'js/vendor/lightweight-charts.js', 'css/menu.css', 'js/menu.js', 'js/bukupesanan.js', 'js/saringan.js', 'js/halal.js', 'css/alat-syariah.css', 'js/vendor/adhan.min.js', 'images/rajah/saringan-syariah.svg', 'images/rajah/pensijilan-halal.svg', 'images/rajah/aliran-ncr.svg', 'css/rupa.css', 'css/takwim.css', 'js/takwim.js', 'fonts/Newsreader-Variable.woff2', 'fonts/Newsreader-Italic.woff2', 'fonts/SchibstedGrotesk-Variable.woff2', 'fonts/Fraunces-Variable.woff2', 'audio/azan.mp3',
-  'manifest.webmanifest', 'peta.html', 'css/peta.css', 'js/peta.js', 'js/peta-jalan.js', 'privacy.html', 'terma.html', 'terma-app.html', 'tentang.html', 'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-180.png'];
+  'manifest.webmanifest', 'peta.html', 'css/peta.css', 'js/peta.js', 'js/peta-jalan.js', 'js/peta-gaya.js', 'css/peta-gaya.css', 'css/maplibre-gl.css', 'data/peta/gaya-terang.json', 'data/peta/gaya-gelap.json', 'data/peta/gaya-satelit.json', 'privacy.html', 'terma.html', 'terma-app.html', 'tentang.html', 'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-180.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -22,6 +22,18 @@ self.addEventListener('fetch', e => {
       if (r.ok) { const copy = r.clone(); caches.open(CACHE).then(c => c.put(url.origin + url.pathname, copy)); }
       return r;
     }).catch(() => caches.match(e.request, { ignoreSearch: true }).then(r => r || caches.match('index.html'))));
+  } else if (url.hostname === 's3.amazonaws.com' && url.pathname.startsWith('/elevation-tiles-prod/')) {
+    // Jubin ketinggian tidak berubah: cache dahulu
+    e.respondWith(caches.match(e.request).then(r => r || fetch(e.request).then(res => {
+      if (res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); }
+      return res;
+    })));
+  } else if (url.hostname === 'tiles.openfreemap.org') {
+    // Peta vektor: rangkaian dahulu (TileJSON menunjuk ke versi jubin terkini), cache jika luar talian
+    e.respondWith(fetch(e.request).then(res => {
+      if (res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); }
+      return res;
+    }).catch(() => caches.match(e.request).then(r => r || Response.error())));
   } else if (/^(cdn\.jsdelivr\.net|cdnjs\.cloudflare\.com|api\.alquran\.cloud|api\.quran\.com|tile\.openstreetmap\.org|([a-z0-9-]+\.)?basemaps\.cartocdn\.com|server\.arcgisonline\.com)$/.test(url.hostname)) {
     // Jubin peta yang pernah dilihat kekal tersedia luar talian
     // Simpan respons yang berjaya sahaja, supaya ralat sementara (cth. 500) tidak tersimpan selama-lamanya

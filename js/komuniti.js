@@ -20,7 +20,7 @@
 
   let S = { tab: store.get('km_tab', 'peta'), me: null, belum: 0, peta: null, list: null, busy: false, err: '',
     acara: { jenis: 'semua', uni: '' }, servis: { mod: 'layari', jenis: 'tawar', kategori: '', q: '' } };
-  let shown = false, pollT = null, geoT = null, lastSent = null, map = null, layer = null, meDot = null, fitted = false;
+  let shown = false, pollT = null, geoT = null, lastSent = null, peta = null, penanda = [], fitted = false, memuatPeta = false;
 
   /* ---------- Pembantu ---------- */
   const inisial = s => String(s || '?').trim().split(/\s+/).slice(0, 2).map(w => [...w][0] || '').join('').toUpperCase() || '?';
@@ -151,10 +151,10 @@
   function renderPeta() { body(petaHtml()); ensureMap(); loadPeta(); startGeo(); }
   // Lukis semula senarai tanpa memulakan semula peta (elemen peta yang sama dipindahkan semula)
   function repaintPeta() {
-    const old = map ? map.getContainer() : null;
+    const old = peta ? peta.map.getContainer() : null;
     body(petaHtml());
     const slot = $('#kmMap', root);
-    if (old && slot) { slot.replaceWith(old); map.invalidateSize(); paintMarkers(); } else ensureMap();
+    if (old && slot) { slot.replaceWith(old); peta.resize(); paintMarkers(); } else ensureMap();
   }
   function petaHtml() {
     const p = S.peta, me = S.me;
@@ -194,40 +194,53 @@
     if (S.tab === 'peta' && shown && S.me) repaintPeta();
   }
 
+  // Peta 3D bersama (js/peta-gaya.js): MapLibre, jubin vektor OpenFreeMap, tema ikut laman
   async function ensureMap() {
     const el = $('#kmMap', root);
     if (!el) return;
-    if (map && map.getContainer() === el) { map.invalidateSize(); return; }
-    if (map) { map.remove(); map = null; layer = null; meDot = null; fitted = false; }
-    if (!document.querySelector('link[href="css/leaflet.css"]')) document.head.appendChild(Object.assign(document.createElement('link'), { rel: 'stylesheet', href: 'css/leaflet.css' }));
-    try { await loadScript('js/vendor/leaflet.js'); } catch { el.innerHTML = '<p class="muted km-nomap">Peta tidak dapat dimuatkan.</p>'; return; }
-    if (!el.isConnected || map) return;
+    if (peta && peta.map.getContainer() === el) { peta.resize(); return; }
+    if (peta) { peta.buang(); peta = null; penanda = []; fitted = false; }
+    if (memuatPeta) return;
+    memuatPeta = true;
     const sendiri = S.peta && S.peta.saya;
-    map = L.map(el, { zoomControl: false, attributionControl: true }).setView(sendiri ? [sendiri.lat, sendiri.lng] : PUSAT, sendiri ? 14 : 16);
-    map.attributionControl.setPrefix(false);
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' }).addTo(map);
-    L.control.zoom({ position: 'bottomright' }).addTo(map);
-    layer = L.layerGroup().addTo(map);
-    setTimeout(() => map && map.invalidateSize(), 150);
+    let p = null;
+    try {
+      await loadScript('js/peta-gaya.js');
+      p = await PetaGaya.cipta(el, { kunci: 'rakan', pusat: sendiri ? [sendiri.lat, sendiri.lng] : PUSAT, zum: sendiri ? 14 : 16 });
+    } catch { p = null; } finally { memuatPeta = false; }
+    // Bekas peta diganti semasa memuat (halaman dilukis semula): cipta semula pada bekas baharu
+    if (!el.isConnected) { if (p) p.buang(); return ensureMap(); }
+    if (!p) { el.innerHTML = '<p class="muted km-nomap">Peta tidak dapat dimuatkan.</p>'; return; }
+    peta = p;
+    setTimeout(() => peta && peta.resize(), 150);
     paintMarkers();
   }
 
+  // Pin rakan: bulatan berwarna dengan inisial dan nama pertama, berdiri tegak walaupun peta dicondongkan
   function pin(p, me) {
-    return L.divIcon({ className: 'km-pin-wrap', iconSize: [46, 58], iconAnchor: [23, 54],
-      html: `<span class="km-pin ${me ? 'me' : ''}" style="--c:${esc(WARNA.includes(p.warna) ? p.warna : WARNA[0])}"><span>${esc(inisial(p.nama))}</span></span><span class="km-pin-name">${esc(me ? 'Anda' : p.nama.split(' ')[0])}</span>` });
+    const el = document.createElement('div');
+    el.className = 'km-pin-wrap';
+    el.innerHTML = `<span class="km-pin ${me ? 'me' : ''}" style="--c:${esc(WARNA.includes(p.warna) ? p.warna : WARNA[0])}"><span>${esc(inisial(p.nama))}</span></span><span class="km-pin-name">${esc(me ? 'Anda' : p.nama.split(' ')[0])}</span>`;
+    el.title = me ? 'Anda' : p.nama;
+    return el;
   }
   function paintMarkers() {
-    if (!map || !layer || !S.peta) return;
-    layer.clearLayers();
-    const pts = [];
+    if (!peta || !S.peta) return;
+    penanda.forEach(m => m.remove()); penanda = [];
+    const pts = [], ML = peta.ML;
     for (const r of S.peta.rakan) if (r.lokasi) {
       const ll = [r.lokasi.lat, r.lokasi.lng]; pts.push(ll);
-      L.marker(ll, { icon: pin(r), title: r.nama, keyboard: true }).on('click', () => urus(r.uid)).addTo(layer);
+      const el = pin(r);
+      el.tabIndex = 0; el.setAttribute('role', 'button'); el.setAttribute('aria-label', `${r.nama}: pilihan`);
+      el.addEventListener('click', e => { e.stopPropagation(); urus(r.uid); });
+      el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); urus(r.uid); } });
+      penanda.push(new ML.Marker({ element: el, anchor: 'bottom' }).setLngLat(peta.LL(ll)).addTo(peta.map));
     }
     const s = S.peta.saya;
-    if (s) { const ll = [s.lat, s.lng]; pts.push(ll); L.marker(ll, { icon: pin(S.me, true), zIndexOffset: 500, title: 'Anda' }).addTo(layer); }
-    if (!fitted && pts.length) { fitted = true; pts.length === 1 ? map.setView(pts[0], 15) : map.fitBounds(pts, { padding: [50, 50], maxZoom: 15 }); }
+    if (s) { const ll = [s.lat, s.lng]; pts.push(ll); const el = pin(S.me, true); el.classList.add('saya'); penanda.push(new ML.Marker({ element: el, anchor: 'bottom' }).setLngLat(peta.LL(ll)).addTo(peta.map)); }
+    if (!fitted && pts.length) { fitted = true; peta.muat(pts, { top: 80, bottom: 96, left: 50, right: 70 }, 15); }
   }
+
 
   // Hantar lokasi semasa halaman Peta dibuka (setiap 60 saat, atau apabila bergerak > 30 m)
   function startGeo() {
@@ -263,7 +276,7 @@
       const x = e.target.closest('[data-x]'); if (!x) return;
       const a = x.dataset.x;
       if (a === 'sembang') { d.close(); sembang(uid); }
-      if (a === 'peta') { d.close(); if (map) map.setView([r.lokasi.lat, r.lokasi.lng], 16); $('#kmMap', root)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+      if (a === 'peta') { d.close(); if (peta) peta.pandang([r.lokasi.lat, r.lokasi.lng], 16, true); $('#kmMap', root)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
       if (a === 'buang' && confirm(`Buang ${r.nama} daripada senarai rakan?`)) { try { await api('buang', { uid }); d.close(); toast('Rakan dibuang.'); loadPeta(); } catch (er) { toast(errMsg(er)); } }
       if (a === 'sekat' && confirm(`Sekat ${r.nama}? Dia tidak akan dapat menghubungi anda atau melihat lokasi anda.`)) {
         try { await api('sekat', { uid }); await api('lapor', { uid, sebab: 'Disekat oleh pengguna' }); d.close(); toast('Pengguna disekat.'); loadPeta(); } catch (er) { toast(errMsg(er)); }
@@ -649,7 +662,7 @@
     else if ((x = e.target.closest('[data-urus]'))) urus(x.dataset.urus);
     else if ((x = e.target.closest('[data-rakan]'))) {
       const r = S.peta.rakan.find(f => f.uid === x.dataset.rakan);
-      if (r && r.lokasi && map) map.setView([r.lokasi.lat, r.lokasi.lng], 16); else urus(x.dataset.rakan);
+      if (r && r.lokasi && peta) peta.pandang([r.lokasi.lat, r.lokasi.lng], 16, true); else urus(x.dataset.rakan);
     }
     else if ((x = e.target.closest('[data-terima],[data-tolak]'))) {
       const uid = x.dataset.terima || x.dataset.tolak;
