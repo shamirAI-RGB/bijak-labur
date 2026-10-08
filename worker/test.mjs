@@ -30,7 +30,7 @@ async function idToken(uid, over = {}, kid = 'k1') {
 }
 const pwUsers = new Set(['ali', 'abu']), verified = new Set();
 const W = 'https://pay.example.workers.dev';
-let created = null, tx = [];
+let created = null, tx = [], tpReply = null;
 globalThis.fetch = async (u, init) => {
   if (u.startsWith('https://www.googleapis.com/service_accounts/')) return new Response(JSON.stringify({ keys: [rsaPub] }), { headers: { 'cache-control': 'max-age=600' } });
   if (u.startsWith('https://identitytoolkit.googleapis.com/v1/accounts:lookup')) {
@@ -38,7 +38,7 @@ globalThis.fetch = async (u, init) => {
     return new Response(JSON.stringify({ users: [{ localId: uid, emailVerified: verified.has(uid), providerUserInfo: [{ providerId: 'google.com' }, ...(pwUsers.has(uid) ? [{ providerId: 'password' }] : [])] }] }));
   }
   const f = Object.fromEntries(init.body);
-  if (u.endsWith('/createBill')) { created = f; return new Response(JSON.stringify([{ BillCode: 'abc12345' }])); }
+  if (u.endsWith('/createBill')) { created = f; if (tpReply) return new Response(tpReply); return new Response(JSON.stringify([{ BillCode: 'abc12345' }])); }
   if (u.endsWith('/getBillTransactions')) { assert.equal(f.billCode, 'abc12345'); return new Response(JSON.stringify(tx)); }
   throw new Error('unexpected ' + u);
 };
@@ -118,6 +118,12 @@ assert.equal(created.billAmount, '4900'); assert.equal(created.billEmail, 'ali@m
 assert.ok(created.billName.length <= 30, created.billName);
 assert.ok(created.billDescription.length <= 100, created.billDescription);
 assert.equal(created.billReturnUrl, W + '/return');
+assert.match(created.billName, /^[A-Za-z0-9 _]+$/); assert.match(created.billDescription, /^[A-Za-z0-9 _]+$/);
+// ToyyibPay menjawab dengan teks bukan JSON (cth. kunci salah): 502 dengan mesej yang jelas, bukan 500
+tpReply = '[KEY-DID-NOT-EXIST]';
+r = await call('/checkout', { plan: 'lengkap', period: 'm1', name: 'Ali Abu', email: 'a@b.co', phone: '0123456789' }); d = await r.json();
+assert.equal(r.status, 502); assert.match(d.error, /KEY-DID-NOT-EXIST/);
+tpReply = null;
 assert.equal((await call('/checkout', { plan: 'emas', period: 'y1', name: 'A b', email: 'a@b.co', phone: '0123456789' })).status, 400);
 assert.equal((await call('/checkout', { plan: 'lengkap', period: 'm1', name: 'A b', email: 'bukan-emel', phone: '0123456789' })).status, 400);
 // Pelan lama tidak lagi dijual
