@@ -6,11 +6,11 @@
  * dalam Durable Object (satu objek bagi setiap akaun, pelan percuma Cloudflare).
  *
  * POST /akaun/sesi        { device, label, takeover }  -> { licence, ... } atau 409 peranti lain
- * POST /akaun/percubaan   { device }                   -> { licence }  percubaan 3 hari, sekali bagi setiap akaun
+ * POST /akaun/percubaan   { device }                   -> { licence }  percubaan 1 hari, sekali bagi setiap akaun
  * POST /akaun/keluar      { device }                   -> { ok }       lepaskan peranti ini
  */
 
-export const TRIAL_DAYS = 3;
+export const TRIAL_DAYS = 1;
 // Lesen dalam peranti mesti diperbaharui dalam tempoh ini. Peranti lama yang luar talian
 // kehilangan Premium selewat-lewatnya selepas tempoh ini.
 export const LICENCE_GRACE_DAYS = 7;

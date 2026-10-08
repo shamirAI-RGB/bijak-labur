@@ -102,9 +102,11 @@
   }
 
   async function call(tugas, soalan) {
+    if (!(typeof Premium === 'undefined' || Premium.boleh('buku'))) throw new Error('Had percuma Buku Nota AI hari ini sudah dicapai. Premium tiada had harian.');
     const r = await fetch(API + '/buku', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ tugas, soalan, bahasa: S.bahasa, sumber: active().map(s => ({ tajuk: s.tajuk, teks: s.teks })) }) });
     const d = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(d.error || 'Buku Nota AI tidak tersedia buat masa ini.');
+    if (typeof Premium !== 'undefined') Premium.catat('buku');
     return d;
   }
   const netErr = e => e.message && !/fetch|network/i.test(e.message) ? e.message : 'Tiada sambungan internet. Cuba lagi.';

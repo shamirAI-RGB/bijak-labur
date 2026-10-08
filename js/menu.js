@@ -106,7 +106,7 @@
   /* ---------- Ruang Soalan ---------- */
   const TOPICS = ['Umum', 'Belajar & pasaran', 'Waktu solat & ibadah', 'Semak kertas kerja', 'Premium & bayaran', 'Laporkan masalah'];
   const FAQ = [
-    ['Umum', 'Adakah Bijak Labur percuma?', 'Ya. Pelajaran pelaburan, harga pasaran, waktu solat, ibadah dan penyemak kertas kerja asas adalah percuma. Premium hanya menambah alat lanjutan dan ciri percuma kekal percuma.'],
+    ['Umum', 'Adakah Bijak Labur percuma?', 'Ya. Pelajaran pelaburan, harga pasaran, waktu solat, ibadah dan penyemak kertas kerja asas adalah percuma dan kekal percuma. Semakan tugasan dan AI mempunyai had harian percuma; Premium membuang had itu dan menambah amaran harga, portfolio patuh Syariah dan alat lanjutan.'],
     ['Umum', 'Perlukah saya daftar akaun?', 'Tidak buat masa ini. Anda boleh guna sebagai tetamu. Tetapan, profil dan rekod disimpan dalam peranti anda sahaja.'],
     ['Umum', 'Bagaimana pasang Bijak Labur seperti app?', 'Di iPhone, buka bijaklabur.my dalam Safari, tekan butang Kongsi, kemudian Add to Home Screen. Di Android, buka dalam Chrome dan tekan Install app, atau guna Pasang app dalam menu ini.'],
     ['Umum', 'Bolehkah saya guna tanpa internet?', 'Halaman utama, pelajaran dan waktu solat yang sudah dimuat turun boleh dibuka tanpa internet. Harga pasaran, audio Al-Quran dan semakan plagiat memerlukan internet.'],
@@ -118,7 +118,7 @@
     ['Waktu solat & ibadah', 'Kenapa tarikh Hijri berbeza sehari?', 'Kalendar dikira mengikut Umm al-Qura. Malaysia menentukan awal bulan melalui rukyah dan hisab. Laraskan dalam Tetapan ibadah.'],
     ['Semak kertas kerja', 'Setepat mana peratus AI dan plagiarisme?', 'Peratus AI ialah anggaran berdasarkan gaya penulisan, bukan bukti. Plagiarisme disemak terhadap ensiklopedia dalam talian dan pangkalan jurnal akademik terbuka, bukan pangkalan peribadi sistem semakan universiti.'],
     ['Semak kertas kerja', 'Adakah kertas kerja saya dimuat naik ke pelayan?', 'Teks diproses dalam pelayar anda. Hanya potongan ayat pendek dihantar ke enjin carian sumber terbuka untuk mencari padanan.'],
-    ['Premium & bayaran', 'Bagaimana cuba Premium percuma?', 'Buka halaman Premium dan mulakan percubaan percuma 3 hari. Dalam app telefon, percubaan dan langganan diuruskan oleh Google Play atau App Store.'],
+    ['Premium & bayaran', 'Bagaimana cuba Premium percuma?', 'Buka halaman Premium dan mulakan percubaan percuma 1 hari (sekali bagi setiap akaun). Dalam app telefon, percubaan 3 hari dan langganan diuruskan oleh Google Play atau App Store.'],
     ['Premium & bayaran', 'Saya sudah bayar tetapi Premium tidak aktif.', 'Di laman web, buka halaman Premium, tekan "Sudah membayar? Aktifkan Premium pada peranti ini", kemudian masukkan kod bil dan e-mel semasa membayar. Dalam app, guna akaun Google Play atau App Store yang sama. Jika masih gagal, hantar soalan kepada kami.']
   ];
   const root = $('#view-soalan');

@@ -1,21 +1,30 @@
-/* Bijak Labur Premium: pelan, percubaan 3 hari, bayaran web (ToyyibPay) dan langganan app (Google Play / App Store).
+/* Bijak Labur Premium: pelan, percubaan 1 hari (web) atau 3 hari (kedai app), bayaran web (ToyyibPay) dan langganan app (Google Play / App Store).
    Premium terikat pada akaun dan peranti aktif (js/akaun.js). Tetamu tidak mendapat Premium. */
 const Premium = (function () {
   // true selepas ToyyibPay disediakan pada pelayan. URL pelayan ditetapkan dalam js/akaun.js (API).
-  const PAY_OPEN = false;
+  const PAY_OPEN = true;
   const PAY_API = PAY_OPEN && Akaun.enabled;
   // Kunci awam untuk mengesahkan lesen web yang ditandatangani pelayan
   const PUBLIC_JWK = { kty: 'EC', crv: 'P-256', x: 'PopJd-wOskBgsjXRhkdKZwZDEXnwp4JMC3CiOeZNIJs', y: 'BElaqIRYXzSQ595i_PjTkwPSwL6lMCd9Ei2WCyWWdHY' };
-  const TRIAL_DAYS = 3;
+  // Percubaan web: 1 hari (pelayan akaun). Kedai app: 3 hari, tempoh percubaan paling singkat yang dibenarkan Google Play.
+  const TRIAL_DAYS = 1, STORE_TRIAL_DAYS = 3;
 
+  // Satu pelan untuk dijual: Premium (kunci 'lengkap' dikekalkan supaya ID produk kedai dan lesen lama kekal sah).
+  // Pelajar dan Pelabur ialah pelan lama: masih diiktiraf jika ada lesen, tetapi tidak lagi dijual.
   const PLANS = {
-    pelajar: { name: 'Pelajar', m1: 5, y1: 39, blurb: 'Untuk pelajar sekolah, kolej dan universiti.',
-      feats: ['Laporan semakan PDF', 'Penjana rujukan APA, MLA dan Harvard', 'Kalkulator PNGK dan sasaran', 'Penjana muka depan tugasan', 'Bandingkan dua draf', 'Sejarah semakan'] },
-    pelabur: { name: 'Pelabur', m1: 12, y1: 89, blurb: 'Untuk yang sudah mula melabur.',
-      feats: ['Portfolio dalam Ringgit', 'Simulator DCA dengan harga sebenar', 'Saiz posisi dan risiko', 'Jurnal dagangan', 'Kos dagangan Bursa', 'Dividen dan DRIP', 'Perancang matlamat', 'Bandingkan ASB, KWSP, FD dan emas', 'Kalkulator zakat pelaburan'] },
-    lengkap: { name: 'Lengkap', m1: 15, y1: 109, blurb: 'Semua alat Pelajar dan Pelabur.',
-      feats: ['Semua 7 ciri pelan Pelajar', 'Semua 9 alat pelan Pelabur', 'Ciri Premium baharu tanpa caj tambahan'] }
+    pelajar: { name: 'Pelajar', m1: 5, y1: 39, old: true, feats: [] },
+    pelabur: { name: 'Pelabur', m1: 12, y1: 89, old: true, feats: [] },
+    lengkap: { name: 'Premium', m1: 6.9, y1: 49, blurb: 'Untuk pelajar dan pelabur. Semua ciri percuma kekal percuma.',
+      feats: ['Semak Tugasan Pro: semakan AI dan plagiarisme tanpa had, laporan PDF', 'Amaran harga tanpa had, amaran naik atau turun %, dan amaran status Syariah',
+        'Portfolio patuh Syariah: status setiap pegangan, tarikh haul zakat dan pembersihan dividen', 'Tanya AI Fiqh, Buku Nota AI dan Kerjaya AI tanpa had harian',
+        'Alat pelajar: rujukan APA/MLA/Harvard, PNGK, muka depan, bandingkan draf', 'Alat pelabur: DCA, saiz posisi, jurnal, kos Bursa, dividen, matlamat, zakat'] }
   };
+  const FOR_SALE = Object.keys(PLANS).filter(k => !PLANS[k].old);
+  // Had harian percuma (dikira dalam peranti, waktu Malaysia). Premium tiada had.
+  const KUOTA = { semak: [3, 'semakan tugasan'], tanya: [5, 'soalan Tanya AI'], buku: [10, 'permintaan Buku Nota AI'], kerja: [3, 'permintaan Kerjaya AI'] };
+  const today = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kuala_Lumpur' }).format(new Date());
+  const used = () => { const u = store.get('kuota', {}); return u.d === today() ? u : { d: today() }; };
+  const rmFmt = v => 'RM' + (v % 1 ? v.toFixed(2) : v);
   const PERIOD = { m1: '30 hari', y1: 'setahun' };
   const PERIOD_STORE = { m1: 'bulan', y1: 'tahun' };
 
@@ -53,7 +62,7 @@ const Premium = (function () {
     } catch { return null; }
   }
 
-  // Percubaan 3 hari kini sekali bagi setiap akaun (pelayan), bukan setiap peranti
+  // Percubaan web kini sekali bagi setiap akaun (pelayan), bukan setiap peranti
   const validLic = () => lic && lic.x > now() && Akaun.active ? lic : null;
   const isTrialLic = () => !!(validLic() && lic.b === 'PERCUBAAN');
 
@@ -64,17 +73,35 @@ const Premium = (function () {
     get plan() {
       if (launchFree()) return 'lengkap';
       if (!Akaun.active) return null;   // tetamu: tiada Premium
-      if (isNative) return storePlans.includes('lengkap') || (storePlans.includes('pelajar') && storePlans.includes('pelabur')) ? 'lengkap' : storePlans[0] || null;
+      if (isNative) {
+        // Langganan kedai, atau lesen web yang dibeli pada akaun yang sama
+        const sp = storePlans.includes('lengkap') || (storePlans.includes('pelajar') && storePlans.includes('pelabur')) ? 'lengkap' : storePlans[0] || null;
+        return sp || (validLic() ? lic.p : null);
+      }
       return validLic() ? lic.p : null;
     },
     get trialing() { return launchFree() ? false : isNative ? Akaun.active && storeTrial : isTrialLic(); },
     has(feature) { const p = this.plan; return !!p && (p === 'lengkap' || p === feature); },
     require(feature) {
       if (this.has(feature)) return true;
-      toast(Akaun.active ? `Ciri ini sebahagian daripada pelan ${PLANS[feature].name}.` : 'Premium memerlukan akaun. Log masuk atau daftar dahulu.', 3200);
+      toast(Akaun.active ? 'Ciri ini sebahagian daripada Bijak Labur Premium.' : 'Premium memerlukan akaun. Log masuk atau daftar dahulu.', 3200);
       location.hash = '#premium';
       return false;
     },
+    // Had harian percuma: boleh(k) sebelum memanggil, catat(k) selepas berjaya
+    baki(k) { return this.plan ? Infinity : Math.max(0, KUOTA[k][0] - (used()[k] || 0)); },
+    boleh(k) {
+      if (this.baki(k) > 0) return true;
+      toast(`Had percuma ${KUOTA[k][0]} ${KUOTA[k][1]} sehari sudah dicapai. Cuba lagi esok, atau naik taraf ke Premium untuk tanpa had.`, 5000);
+      return false;
+    },
+    catat(k) {
+      if (this.plan) return;
+      const u = used(); u[k] = (u[k] || 0) + 1; store.set('kuota', u);
+      const left = KUOTA[k][0] - u[k];
+      if (left <= 1) toast(left ? `Baki 1 ${KUOTA[k][1]} percuma hari ini.` : `Itu ${KUOTA[k][1]} percuma terakhir hari ini.`, 3500);
+    },
+    KUOTA,
     PLANS
   };
 
@@ -82,19 +109,20 @@ const Premium = (function () {
 
   /* ---------- Paparan ---------- */
   let period = 'y1';
-  // Web: percubaan 3 hari sentiasa ada, jadi Premium dipaparkan walaupun bayaran belum dibuka
+  // Web: percubaan sentiasa ada, jadi Premium dipaparkan walaupun bayaran belum dibuka
   const salesOpen = () => isNative ? Object.keys(products).length > 0 : true;
 
   function statusHTML() {
     const p = api.plan; if (!p) return '';
     if (launchFree()) return `<span class="sc-ico">${icon('check')}</span><div class="sc-body"><div class="sc-title">Percuma semasa pelancaran</div><div class="sc-sub">Semua alat Premium dibuka untuk semua orang. Tiada akaun atau bayaran diperlukan buat masa ini.</div></div>`;
     let sub;
-    if (isNative) sub = storeTrial ? 'Dalam tempoh percubaan percuma. Urus atau batal dalam tetapan langganan.' : 'Langganan aktif. Urus atau batal dalam tetapan langganan.';
+    if (isNative && !storePlans.length) sub = `Dibeli melalui laman web, sah hingga ${dateMs(lic.e || lic.x)}.`;
+    else if (isNative) sub = storeTrial ? 'Dalam tempoh percubaan percuma. Urus atau batal dalam tetapan langganan.' : 'Langganan aktif. Urus atau batal dalam tetapan langganan.';
     else if (api.trialing) {
       const left = (lic.e || lic.x) - now(), d = Math.floor(left / 86400), h = Math.floor(left % 86400 / 3600);
       sub = `Percubaan percuma: tinggal ${d ? d + ' hari ' : ''}${h} jam. Pilih pelan di bawah untuk terus menggunakan alat ini.`;
     } else sub = `Sah hingga ${dateMs(lic.e || lic.x)}. Kod bil ${esc(lic.b || '')}`;
-    return `<span class="sc-ico">${icon('check')}</span><div class="sc-body"><div class="sc-title">${api.trialing ? 'Percubaan Lengkap aktif' : `Pelan ${PLANS[p].name} aktif`}</div><div class="sc-sub">${sub}</div></div>`;
+    return `<span class="sc-ico">${icon('check')}</span><div class="sc-body"><div class="sc-title">${api.trialing ? 'Percubaan Premium aktif' : `Pelan ${PLANS[p].name} aktif`}</div><div class="sc-sub">${sub}</div></div>`;
   }
 
   function priceHTML(k) {
@@ -103,10 +131,10 @@ const Premium = (function () {
       const pr = products[k] && products[k][period];
       if (!pr) return `<div class="plan-price"><span class="muted">Tidak tersedia</span></div><div class="plan-per">&nbsp;</div>`;
       return `<div class="plan-price"><span class="num">${esc(pr.priceString)}</span><span class="muted">/${PERIOD_STORE[period]}</span></div>
-        <div class="plan-per">${pr.trial ? `Percuma ${TRIAL_DAYS} hari, kemudian ${esc(pr.priceString)} se${PERIOD_STORE[period]}` : 'Diperbaharui secara automatik, batal bila-bila masa'}</div>`;
+        <div class="plan-per">${pr.trial ? `Percuma ${STORE_TRIAL_DAYS} hari, kemudian ${esc(pr.priceString)} se${PERIOD_STORE[period]}` : 'Diperbaharui secara automatik, batal bila-bila masa'}</div>`;
     }
     const price = pl[period], saving = Math.round((1 - pl.y1 / (pl.m1 * 12)) * 100);
-    return `<div class="plan-price"><span class="num">RM${price}</span><span class="muted">/${PERIOD[period]}</span></div>
+    return `<div class="plan-price"><span class="num">${rmFmt(price)}</span><span class="muted">/${PERIOD[period]}</span></div>
       <div class="plan-per">${period === 'y1' ? `RM${(price / 12).toFixed(2)} sebulan, jimat ${saving}%` : 'Bayar sekali, tiada caj automatik'}</div>`;
   }
 
@@ -127,7 +155,7 @@ const Premium = (function () {
     const guest = $('#proGuest');
     if (guest) {
       guest.classList.toggle('hidden', Akaun.active || free);
-      $('#proGuestText').textContent = !Akaun.enabled ? 'Log masuk akan dibuka tidak lama lagi. Premium dan percubaan percuma 3 hari memerlukan akaun.'
+      $('#proGuestText').textContent = !Akaun.enabled ? 'Log masuk akan dibuka tidak lama lagi. Premium dan percubaan percuma 1 hari memerlukan akaun.'
         : Akaun.user ? 'Lengkapkan log masuk akaun anda untuk menggunakan Premium pada peranti ini.'
         : 'Log masuk atau daftar dengan Google atau e-mel. Tetamu boleh menggunakan semua ciri percuma, tetapi tidak Premium.';
       $('#proGuestGo').classList.toggle('hidden', !Akaun.enabled);
@@ -137,11 +165,11 @@ const Premium = (function () {
 
     $('#periodSeg').innerHTML = Object.keys(PERIOD).map(k =>
       `<button class="seg ${k === period ? 'active' : ''}" data-period="${k}" role="tab" aria-selected="${k === period}">${k === 'y1' ? (isNative ? 'Tahunan' : 'Setahun') : (isNative ? 'Bulanan' : '30 hari')}</button>`).join('');
-    $('#planGrid').innerHTML = Object.entries(PLANS).map(([k, pl]) => {
+    $('#planGrid').innerHTML = FOR_SALE.map(k => [k, PLANS[k]]).map(([k, pl]) => {
       const cur = p === k && !api.trialing, pr = isNative && products[k] && products[k][period];
-      const label = isNative ? (cur ? 'Langganan aktif' : pr && pr.trial ? `Cuba percuma ${TRIAL_DAYS} hari` : 'Langgan') : !PAY_API ? 'Bayaran dibuka tidak lama lagi' : !Akaun.active ? 'Log masuk untuk membeli' : (cur ? 'Sambung' : 'Pilih ' + pl.name);
+      const label = isNative ? (cur ? 'Langganan aktif' : pr && pr.trial ? `Cuba percuma ${STORE_TRIAL_DAYS} hari` : 'Langgan') : !PAY_API ? 'Bayaran dibuka tidak lama lagi' : !Akaun.active ? 'Log masuk untuk membeli' : (cur ? 'Sambung' : 'Langgan ' + pl.name);
       return `<article class="plan ${k === 'lengkap' ? 'featured' : ''}">
-        <header><h3>${pl.name}</h3>${k === 'lengkap' ? '<span class="plan-tag">Paling berbaloi</span>' : ''}</header>
+        <header><h3>${pl.name}</h3>${k === 'lengkap' ? '<span class="plan-tag">Satu pelan, semua ciri</span>' : ''}</header>
         <p class="muted small">${pl.blurb}</p>
         ${priceHTML(k)}
         <ul class="plan-feats">${pl.feats.map(f => `<li>${icon('check')}<span>${f}</span></li>`).join('')}</ul>
@@ -154,7 +182,7 @@ const Premium = (function () {
   function storeTermsHTML() {
     const store = PLATFORM === 'ios' ? 'Apple ID' : 'akaun Google Play';
     const eula = PLATFORM === 'ios' ? 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/' : 'terma-app.html';
-    return `Bayaran dicaj kepada ${store} anda apabila pembelian disahkan, atau pada akhir tempoh percubaan percuma ${TRIAL_DAYS} hari jika ada. Langganan diperbaharui secara automatik pada harga yang sama melainkan dibatalkan sekurang-kurangnya 24 jam sebelum tempoh semasa tamat. Urus atau batal dalam tetapan langganan ${PLATFORM === 'ios' ? 'App Store' : 'Google Play'}. Percubaan percuma untuk pelanggan baharu sahaja. <a href="${eula}" target="_blank" rel="noopener">Terma penggunaan</a> · <a href="privacy.html">Dasar privasi</a>`;
+    return `Bayaran dicaj kepada ${store} anda apabila pembelian disahkan, atau pada akhir tempoh percubaan percuma ${STORE_TRIAL_DAYS} hari jika ada. Langganan diperbaharui secara automatik pada harga yang sama melainkan dibatalkan sekurang-kurangnya 24 jam sebelum tempoh semasa tamat. Urus atau batal dalam tetapan langganan ${PLATFORM === 'ios' ? 'App Store' : 'Google Play'}. Percubaan percuma untuk pelanggan baharu sahaja. <a href="${eula}" target="_blank" rel="noopener">Terma penggunaan</a> · <a href="privacy.html">Dasar privasi</a>`;
   }
 
   /* ---------- Langganan app (Google Play / App Store) ---------- */
@@ -164,7 +192,7 @@ const Premium = (function () {
       const { isBillingSupported } = await IAP.isBillingSupported();
       if (!isBillingSupported) return;
       products = {};
-      const plans = Object.keys(PLANS);
+      const plans = FOR_SALE;
       if (PLATFORM === 'ios') {
         const ids = plans.flatMap(p => ['m1', 'y1'].map(per => IOS_ID(p, per)));
         const { products: list } = await IAP.getProducts({ productIdentifiers: ids, productType: 'subs' });
@@ -226,8 +254,8 @@ const Premium = (function () {
     if (!Akaun.active) { Akaun.open(); return; }
     const pl = PLANS[plan], dlg = $('#payDlg'), saved = store.get('payer', {});
     dlg.dataset.plan = plan;
-    $('#payTitle').textContent = `Pelan ${pl.name}, ${PERIOD[period]}`;
-    $('#payAmount').textContent = `RM${pl[period]}.00`;
+    $('#payTitle').textContent = `Bijak Labur ${pl.name}, ${PERIOD[period]}`;
+    $('#payAmount').textContent = `RM${pl[period].toFixed(2)}`;
     $('#payName').value = saved.name || ''; $('#payEmail').value = saved.email || ''; $('#payPhone').value = saved.phone || '';
     $('#payErr').textContent = '';
     dlg.showModal();
@@ -302,7 +330,7 @@ const Premium = (function () {
       lic = await verify(d.licence);
       Akaun.info.trialUsed = true;
       announce();
-      toast(`Percubaan Lengkap aktif selama ${TRIAL_DAYS} hari. Semua alat Premium kini dibuka.`, 4500);
+      toast('Percubaan Premium aktif selama 1 hari (24 jam). Semua ciri Premium kini dibuka.', 4500);
       $('#toolsBlock').scrollIntoView({ behavior: 'smooth' });
     } catch (e) { toast(e.message, 4500); if (e.data && e.data.code === 'used') { Akaun.info.trialUsed = true; render(); } }
     b.disabled = false;
@@ -335,9 +363,7 @@ const Premium = (function () {
   async function load() {
     // Lesen dan percubaan lama yang tidak terikat pada akaun tidak lagi digunakan
     store.set('trial', null); store.set('license', null);
-    if (isNative) { await Promise.all([loadProducts(), refreshEntitlements()]); return; }
-    await Akaun.ready.catch(() => {});
-    await loadLicence();
+    await Promise.all([isNative ? loadProducts() : null, isNative ? refreshEntitlements() : null, Akaun.ready.catch(() => {}).then(loadLicence)]);
   }
   api.ready = load().then(() => { announce(); if (!isNative) handleReturn(); });
   return api;

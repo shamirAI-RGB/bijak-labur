@@ -24,6 +24,7 @@
     if (SHARLIFE[s] === 'ragu') return { k: 'ragu', why: 'Tiada dalam senarai patuh Syariah MPS SC. Saringan Sharlife meletakkannya dalam kategori kelabu (diragui).', src: SY_SRC.sharlife };
     return { k: 'belum', why: 'Belum diluluskan oleh Majlis Penasihat Syariah SC. Sejak 30 Mac 2026, DAX di Malaysia hanya boleh menawarkan kripto sebagai patuh Syariah selepas pengesahan MPS SC.', src: SY_SRC.sc };
   }
+  window.SyariahKripto = s => Object.assign({ label: SY_LABEL[syStatus(s).k] }, syStatus(s));
   const syBadge = s => { const k = syStatus(s).k; return `<span class="sy sy-${k}">${SY_LABEL[k]}</span>`; };
   function paintSyariah() {
     const st = syStatus(chartSym), el = $('#syInfo');
@@ -231,25 +232,41 @@
     } catch { toast(`${s} tidak ditemui sebagai pasangan USDT.`); }
   });
 
-  /* Amaran harga */
+  /* Amaran harga: percuma sehingga FREE_ALERTS amaran harga aktif. Premium: tanpa had, amaran naik/turun % dalam 24 jam,
+     dan amaran apabila status Syariah kripto dalam senarai berubah. Disemak semasa app dibuka. */
+  const FREE_ALERTS = 3;
+  const isPro = () => typeof Premium !== 'undefined' && !!Premium.plan;
+  const AL_TXT = { above: 'melebihi', below: 'di bawah', up: 'naik sekurang-kurangnya', down: 'turun sekurang-kurangnya' };
+  const alVal = a => a.dir === 'up' || a.dir === 'down' ? a.price + '% dalam 24 jam' : fmt(a.price);
   function renderAlerts() {
-    $('#alList').innerHTML = alerts.map((a, i) => `<div class="alert-item"><span><b>${esc(a.sym)}</b> ${a.dir === 'above' ? 'melebihi' : 'di bawah'} <span class="num">${fmt(a.price)}</span></span><button class="btn sm ghost" data-ai="${i}">Buang</button></div>`).join('');
+    $('#alList').innerHTML = alerts.map((a, i) => `<div class="alert-item"><span><b>${esc(a.sym)}</b> ${AL_TXT[a.dir] || ''} <span class="num">${alVal(a)}</span></span><button class="btn sm ghost" data-ai="${i}">Buang</button></div>`).join('');
+    const n = $('#alNote');
+    if (n) n.textContent = isPro() ? 'Premium: amaran tanpa had, termasuk naik atau turun % dalam 24 jam.' : `Percuma: sehingga ${FREE_ALERTS} amaran harga. Premium: tanpa had, amaran naik atau turun %, dan amaran status Syariah.`;
   }
   function checkAlerts(s, p) {
     let changed = false;
+    const chg = data[s] && data[s].chg;
     alerts = alerts.filter(a => {
       if (a.sym !== s) return true;
-      const hit = a.dir === 'above' ? p >= a.price : p <= a.price;
-      if (hit) { Notify.show(`${s} ${a.dir === 'above' ? 'melebihi' : 'jatuh di bawah'} ${fmt(a.price)}`, `Harga semasa ${fmt(p)}`); changed = true; }
+      const hit = a.dir === 'above' ? p >= a.price : a.dir === 'below' ? p <= a.price
+        : chg == null ? false : a.dir === 'up' ? chg >= a.price : -chg >= a.price;
+      if (hit) {
+        if (a.dir === 'up' || a.dir === 'down') Notify.show(`${s} ${a.dir === 'up' ? 'naik' : 'turun'} ${Math.abs(chg).toFixed(1)}% dalam 24 jam`, `Harga semasa ${fmt(p)}`);
+        else Notify.show(`${s} ${a.dir === 'above' ? 'melebihi' : 'jatuh di bawah'} ${fmt(a.price)}`, `Harga semasa ${fmt(p)}`);
+        changed = true;
+      }
       return !hit;
     });
     if (changed) { store.set('alerts', alerts); renderAlerts(); }
   }
+  $('#alDir').addEventListener('change', () => { const pc = /up|down/.test($('#alDir').value); $('#alPrice').placeholder = pc ? 'Peratus (%)' : 'Harga (USD)'; });
   $('#alForm').addEventListener('submit', async e => {
     e.preventDefault();
-    const price = parseFloat($('#alPrice').value);
-    if (!(price > 0)) return toast('Masukkan harga sasaran.');
-    alerts.push({ sym: $('#alSym').value, dir: $('#alDir').value, price });
+    const price = parseFloat($('#alPrice').value), dir = $('#alDir').value, pc = dir === 'up' || dir === 'down';
+    if (!(price > 0)) return toast(pc ? 'Masukkan peratus perubahan.' : 'Masukkan harga sasaran.');
+    if (pc && !isPro()) return toast('Amaran naik atau turun % ialah ciri Premium.', 3500);
+    if (!isPro() && alerts.length >= FREE_ALERTS) return toast(`Had percuma ${FREE_ALERTS} amaran. Buang satu amaran, atau naik taraf ke Premium untuk tanpa had.`, 4500);
+    alerts.push({ sym: $('#alSym').value, dir, price });
     store.set('alerts', alerts); renderAlerts(); $('#alPrice').value = '';
     if (!Notify.granted()) await Notify.request();
     toast('Amaran ditambah');
@@ -258,6 +275,14 @@
     const b = e.target.closest('[data-ai]'); if (!b) return;
     alerts.splice(+b.dataset.ai, 1); store.set('alerts', alerts); renderAlerts();
   });
+  // Amaran status Syariah (Premium): bandingkan status semasa dengan status yang terakhir dilihat
+  function checkSyariah() {
+    const last = store.get('syLast', {}), now = {}, berubah = [];
+    syms.forEach(s => { now[s] = syStatus(s).k; if (last[s] && last[s] !== now[s]) berubah.push(s); });
+    store.set('syLast', now);
+    if (isPro()) berubah.forEach(s => Notify.show(`Status Syariah ${s} berubah`, `${SY_LABEL[last[s]]} kepada ${SY_LABEL[now[s]]}. ${syStatus(s).why}`));
+  }
+  document.addEventListener('premiumchange', () => { renderAlerts(); checkSyariah(); });
 
   /* Saham AS: widget TradingView */
   const STOCKS = [['NASDAQ:AAPL', 'Apple'], ['NASDAQ:NVDA', 'Nvidia'], ['NASDAQ:TSLA', 'Tesla'], ['NASDAQ:MSFT', 'Microsoft'], ['NASDAQ:GOOGL', 'Alphabet'],
