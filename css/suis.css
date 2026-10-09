@@ -167,3 +167,7 @@
 /* Penafian utama di kaki laman (arahan pemilik, 10 Oktober 2026) */
 .site-footer .kaki-amaran { color: var(--text); font-size: .92rem; }
 .site-footer .kaki-amaran b { font-weight: 700; }
+
+/* Logo SiswaCap: "Cap" berwarna ungu jenama */
+.logo span b { font-weight: inherit; color: #7c3aed; }
+:root:not([data-theme="light"]) .logo span b { color: #a78bfa; }
