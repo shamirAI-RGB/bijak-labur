@@ -17,21 +17,26 @@
   };
   const SC_SAC = { BTC: 'mesyuarat MPS ke-234 (20 Julai 2020)', ETH: 'mesyuarat MPS ke-234 (20 Julai 2020)', XRP: 'mesyuarat MPS ke-234 (20 Julai 2020)', LTC: 'mesyuarat MPS ke-234 (20 Julai 2020)', BCH: 'mesyuarat MPS ke-247 (23 Ogos 2021)', SOL: 'mesyuarat MPS ke-264 (12 Januari 2023)', ADA: 'mesyuarat MPS ke-264 (12 Januari 2023)', LINK: 'mesyuarat MPS ke-265 (9 Februari 2023)', UNI: 'mesyuarat MPS ke-265 (9 Februari 2023)', MATIC: 'mesyuarat MPS ke-271 (10 Ogos 2023)', AVAX: 'mesyuarat MPS ke-271 (10 Ogos 2023)', DOT: 'mesyuarat MPS ke-279 (16 Mei 2024)', ATOM: 'mesyuarat MPS ke-279 (16 Mei 2024)', WLD: 'mesyuarat MPS ke-280 (11 Jun 2024)', XLM: 'mesyuarat MPS ke-286 (10 Disember 2024)' };
   const SHARLIFE = { DOGE: 'ragu', SHIB: 'ragu', PEPE: 'tidak' };
-  const SY_LABEL = { patuh: 'Patuh Syariah', tidak: 'Tidak patuh', ragu: 'Diragui', belum: 'Belum disaring' };
+  const SY_LABEL = { patuh: 'Patuh Syariah', tidak: 'Haram', ragu: 'Diragui', belum: 'Belum disaring' };
   function syStatus(s) {
     if (SC_SAC[s]) return { k: 'patuh', why: `Diluluskan patuh Syariah oleh Majlis Penasihat Syariah SC, ${SC_SAC[s]}.`, src: SY_SRC.sc };
-    if (SHARLIFE[s] === 'tidak') return { k: 'tidak', why: 'Tiada dalam senarai patuh Syariah MPS SC. Saringan Sharlife menilainya tidak patuh Syariah.', src: SY_SRC.sharlife };
-    if (SHARLIFE[s] === 'ragu') return { k: 'ragu', why: 'Tiada dalam senarai patuh Syariah MPS SC. Saringan Sharlife meletakkannya dalam kategori kelabu (diragui).', src: SY_SRC.sharlife };
+    if (SHARLIFE[s] === 'tidak') return { k: 'tidak', why: 'Tiada dalam senarai patuh Syariah MPS SC. Saringan Sharlife menilainya tidak patuh Syariah: syiling meme tanpa kegunaan atau aset sandaran, nilainya bergantung pada spekulasi semata-mata (maisir dan gharar).', src: SY_SRC.sharlife };
+    if (SHARLIFE[s] === 'ragu') return { k: 'ragu', why: 'Tiada dalam senarai patuh Syariah MPS SC. Saringan Sharlife meletakkannya dalam kategori kelabu: bermula sebagai syiling meme dengan kegunaan terhad, jadi unsur spekulasi (gharar) tinggi walaupun ia kini digunakan untuk bayaran.', src: SY_SRC.sharlife };
     return { k: 'belum', why: 'Belum diluluskan oleh Majlis Penasihat Syariah SC. Sejak 30 Mac 2026, DAX di Malaysia hanya boleh menawarkan kripto sebagai patuh Syariah selepas pengesahan MPS SC.', src: SY_SRC.sc };
   }
   window.SyariahKripto = s => Object.assign({ label: SY_LABEL[syStatus(s).k] }, syStatus(s));
   const syBadge = s => { const k = syStatus(s).k; return `<span class="sy sy-${k}">${SY_LABEL[k]}</span>`; };
-  function paintSyariah() {
-    const st = syStatus(chartSym), el = $('#syInfo');
-    if (!el) return;
-    el.innerHTML = `<div class="sy-head"><b>${esc(chartSym)}</b>${syBadge(chartSym)}</div>
+  // Senarai sebab untuk setiap aset: lencana, sebab dan sumber (digunakan untuk kripto dan saham)
+  const syRow = (sym, nama, st) => `<li class="sy-why"><div class="sy-head"><b>${esc(sym)}</b><span class="sy sy-${st.k}">${SY_LABEL[st.k]}</span><span class="muted small">${esc(nama)}</span></div>
       <p class="small">${esc(st.why)}</p>
-      <p class="source">Sumber: <a href="${st.src[1]}" target="_blank" rel="noopener">${esc(st.src[0])}</a>, disemak ${SY_CHECKED}.</p>`;
+      <p class="source">Sumber: <a href="${st.src[1]}" target="_blank" rel="noopener">${esc(st.src[0])}</a></p></li>`;
+  function paintSyariah() {
+    const el = $('#syInfo');
+    if (!el) return;
+    // Aset yang sedang dipaparkan dalam carta di atas, diikuti semua syiling lain dalam senarai anda
+    const order = [chartSym].concat(syms.filter(s => s !== chartSym));
+    el.innerHTML = `<ul class="sy-list">${order.map(s => syRow(s, NAMES[s] || s, syStatus(s))).join('')}</ul>
+      <p class="source">Disemak ${SY_CHECKED}.</p>`;
   }
   const DEFAULT = ['BTC', 'ETH', 'SOL', 'BNB', 'XRP', 'DOGE', 'ADA', 'LINK'];
 
@@ -289,6 +294,43 @@
     ['NASDAQ:AMZN', 'Amazon'], ['NASDAQ:META', 'Meta'], ['AMEX:SPY', 'S&P 500 ETF'], ['NASDAQ:QQQ', 'Nasdaq 100 ETF'], ['NASDAQ:FUTU', 'Futu']];
   const BURSA = [['MAYBANK', '1155', 'Malayan Banking'], ['PBBANK', '1295', 'Public Bank'], ['CIMB', '1023', 'CIMB Group'], ['TENAGA', '5347', 'Tenaga Nasional'],
     ['PCHEM', '5183', 'Petronas Chemicals'], ['IHH', '5225', 'IHH Healthcare'], ['GAMUDA', '5398', 'Gamuda'], ['YTLPOWR', '6742', 'YTL Power']];
+  /* Status Syariah saham. Bursa: senarai sekuriti patuh Syariah MPS SC (kemas kini Mei dan November).
+     Saham AS tidak disaring oleh SC, jadi labelnya anggaran berdasarkan indeks S&P 500 Shariah
+     (pegangan dana SPUS, Februari 2026), dan sebab bagi dana indeks konvensional. */
+  const SY_STOCK_CHECKED = 'Oktober 2026';
+  const SRC_SC_SAHAM = ['Senarai sekuriti patuh Syariah, MPS Suruhanjaya Sekuriti', 'https://www.sc.com.my/development/icm/shariah-compliant-securities'];
+  const SRC_SPUS = ['Indeks S&P 500 Shariah (pegangan dana SPUS)', 'https://fintel.io/s/us/spus'];
+  const US_PATUH = 'Termasuk dalam indeks S&P 500 Shariah: perniagaan terasnya dibenarkan, dan nisbah hutang serta tunai berfaedah di bawah had saringan. Ini anggaran kerana MPS SC hanya menyaring saham Bursa Malaysia.';
+  const BURSA_PATUH = 'Tersenarai dalam senarai sekuriti patuh Syariah MPS SC: aktiviti teras halal, pendapatan tidak patuh di bawah penanda aras 5% dan 20%, serta nisbah tunai dan hutang konvensional di bawah 33%.';
+  const BANK_KONV = 'Perniagaan teras ialah perbankan konvensional berasaskan faedah (riba), melebihi penanda aras 5% MPS SC. Tiada dalam senarai sekuriti patuh Syariah SC. Pilihan patuh Syariah: saham bank Islam yang tersenarai dalam senarai SC.';
+  const STOCK_SY = {
+    AAPL: ['patuh', US_PATUH, SRC_SPUS], NVDA: ['patuh', US_PATUH, SRC_SPUS], MSFT: ['patuh', US_PATUH, SRC_SPUS],
+    GOOGL: ['patuh', US_PATUH, SRC_SPUS], TSLA: ['patuh', US_PATUH, SRC_SPUS],
+    AMZN: ['belum', 'Kami belum dapat mengesahkan statusnya dalam indeks Syariah terkini. Status saham AS berubah setiap suku tahun mengikut laporan kewangan.', SRC_SPUS],
+    META: ['belum', 'Kami belum dapat mengesahkan statusnya dalam indeks Syariah terkini. Status saham AS berubah setiap suku tahun mengikut laporan kewangan.', SRC_SPUS],
+    SPY: ['ragu', 'Dana indeks konvensional tanpa saringan Syariah. Ia memegang semua syarikat S&P 500, termasuk bank dan insurans konvensional yang berasaskan riba. Pilihan patuh Syariah: dana indeks Syariah seperti SPUS.', SRC_SPUS],
+    QQQ: ['ragu', 'Dana indeks konvensional tanpa saringan Syariah. Nasdaq-100 tidak memasukkan bank, tetapi sebahagian syarikatnya mungkin melebihi had hutang berfaedah atau pendapatan tidak patuh.', SRC_SPUS],
+    FUTU: ['ragu', 'Syarikat pembrokeran yang memperoleh pendapatan faedah besar daripada pembiayaan margin dan pinjaman saham, jadi berkemungkinan melebihi penanda aras 5%. Belum ada keputusan rasmi.', SRC_SC_SAHAM],
+    MAYBANK: ['tidak', BANK_KONV, SRC_SC_SAHAM], PBBANK: ['tidak', BANK_KONV, SRC_SC_SAHAM], CIMB: ['tidak', BANK_KONV, SRC_SC_SAHAM],
+    TENAGA: ['patuh', BURSA_PATUH, SRC_SC_SAHAM], PCHEM: ['patuh', BURSA_PATUH, SRC_SC_SAHAM], IHH: ['patuh', BURSA_PATUH, SRC_SC_SAHAM],
+    GAMUDA: ['patuh', BURSA_PATUH, SRC_SC_SAHAM], YTLPOWR: ['patuh', BURSA_PATUH, SRC_SC_SAHAM]
+  };
+  function sySaham(t) {
+    const v = STOCK_SY[String(t).split(':').pop()];
+    return v ? { k: v[0], why: v[1], src: v[2] } : { k: 'belum', why: 'Belum ada dalam senarai semakan kami. Untuk saham Bursa, semak senarai SC; untuk saham AS, gunakan kalkulator saringan di bawah dengan angka laporan tahunan.', src: SRC_SC_SAHAM };
+  }
+  window.SyariahSaham = sySaham;
+  const syBadgeSaham = t => { const k = sySaham(t).k; return `<span class="sy sy-${k}">${SY_LABEL[k]}</span>`; };
+  function paintStockSy() {
+    const el = $('#stockSy'); if (!el) return;
+    const cur = String(stockSym).split(':').pop();
+    const us = STOCKS.map(([tv, n]) => [tv.split(':')[1], n]), my = BURSA.map(([t, , n]) => [t, n]);
+    const known = us.concat(my).some(([t]) => t === cur);
+    el.innerHTML = `${known ? '' : `<ul class="sy-list">${syRow(cur, 'Carian anda', sySaham(cur))}</ul>`}
+      <h4>Saham AS</h4><ul class="sy-list">${us.map(([t, n]) => syRow(t, n, sySaham(t))).join('')}</ul>
+      <h4>Bursa Malaysia</h4><ul class="sy-list">${my.map(([t, n]) => syRow(t, n, sySaham(t))).join('')}</ul>
+      <p class="source">Disemak ${SY_STOCK_CHECKED}. Senarai SC dikemas kini setiap hujung Mei dan November.</p>`;
+  }
   let stockSym = store.get('stockSym', 'NASDAQ:AAPL');
   if (/^MYX:/.test(stockSym)) stockSym = 'NASDAQ:AAPL';
   function tvWidget(el, name, cfg) {
@@ -302,7 +344,8 @@
     tvWidget($('#tvStock'), 'advanced-chart', { symbol: stockSym, interval: 'D', timezone: 'Asia/Kuala_Lumpur', style: '1', allow_symbol_change: true, autosize: true, hide_side_toolbar: true, save_image: false, support_host: 'https://www.tradingview.com' });
   }
   function renderStockTabs() {
-    $('#stockTabs').innerHTML = STOCKS.map(([s, n]) => `<button class="chip ${s === stockSym ? 'active' : ''}" data-s="${s}">${esc(n)}</button>`).join('');
+    $('#stockTabs').innerHTML = STOCKS.map(([s, n]) => `<button class="chip ${s === stockSym ? 'active' : ''}" data-s="${s}"><i class="sy-dot sy-${sySaham(s).k}" aria-hidden="true"></i>${esc(n)}<span class="sr-only">, ${SY_LABEL[sySaham(s).k]}</span></button>`).join('');
+    paintStockSy();
   }
   $('#stockTabs').addEventListener('click', e => {
     const b = e.target.closest('[data-s]'); if (!b) return;
@@ -316,8 +359,9 @@
   });
   $('#bursaList').innerHTML = BURSA.map(([t, code, n]) => `<a class="qrow" href="https://www.tradingview.com/symbols/MYX-${t}/" target="_blank" rel="noopener">
       <span class="coin" style="--c:var(--brand)">${esc(t.slice(0, 1))}</span>
-      <span style="min-width:0"><div class="q-sym">${esc(t)} <span class="muted small num">${code}</span></div><div class="q-name">${esc(n)}</div></span>
+      <span style="min-width:0"><div class="q-sym">${esc(t)} ${syBadgeSaham(t)} <span class="muted small num">${code}</span></div><div class="q-name">${esc(n)}</div></span>
       <span></span><span class="q-right muted">${icon('link')}</span></a>`).join('');
+  paintStockSy();
   let tvLoaded = false;
   function loadTV() {
     tvLoaded = true; renderStockTabs(); loadStock();
@@ -333,7 +377,7 @@
   let stockTimer = null, stockOk = false;
   $('#homeStocks').innerHTML = HOME_STOCKS.map(({ tv, n, s, ex }) => `<div class="qrow" role="button" tabindex="0" data-tv="${esc(tv)}" id="hs-${esc(s)}">
       ${STOCK_LOGOS.includes(s) ? `<span class="coin logo"><img src="icons/saham/${s.toLowerCase()}.svg" alt="" width="34" height="34" loading="lazy" decoding="async"></span>` : `<span class="coin tk" style="--c:${STOCK_COLORS[s] || 'var(--brand)'}">${esc(s.slice(0, 4))}</span>`}
-      <span style="min-width:0"><div class="q-sym">${esc(s)} <span class="sy sy-belum">${esc(ex)}</span></div><div class="q-name">${esc(n)}</div></span>
+      <span style="min-width:0"><div class="q-sym">${esc(s)} ${syBadgeSaham(s)}</div><div class="q-name">${esc(n)}</div></span>
       <svg class="spark" viewBox="0 0 64 28" preserveAspectRatio="none" aria-hidden="true"></svg>
       <span class="q-right"><div class="q-price"><span class="skeleton"></span></div><div class="q-chg">&nbsp;</div></span>
     </div>`).join('');
