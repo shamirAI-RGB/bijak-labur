@@ -1,4 +1,4 @@
-/* Bijak Labur: Komuniti (peta rakan, acara, servis, sembang) */
+/* SiswaCap: Komuniti (peta rakan, acara, servis, sembang) */
 #view-komuniti { position: relative; padding-bottom: 80px; }
 .km-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
 .km-acts { display: flex; gap: 4px; flex: none; margin-top: 4px; }

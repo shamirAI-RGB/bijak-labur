@@ -1,4 +1,4 @@
-/* Bijak Labur: kedai nota IC220 */
+/* SiswaCap: kedai nota IC220 */
 .nt-head-acts { display: flex; gap: 8px; align-items: center; }
 .nt-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; font-weight: 650; color: var(--gold); background: color-mix(in srgb, var(--gold) 12%, var(--surface)); border-radius: 999px; padding: 5px 11px; }
 .nt-badge .ic { width: 14px; height: 14px; }

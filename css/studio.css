@@ -1,4 +1,4 @@
-/* Bijak Labur: Studio Gambar AI */
+/* SiswaCap: Studio Gambar AI */
 .st-grid { display: grid; gap: 0 14px; }
 @media (min-width: 900px) { .st-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); align-items: start; } }
 .st-form { display: grid; gap: 10px; }

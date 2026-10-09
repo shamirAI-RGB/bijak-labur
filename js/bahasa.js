@@ -1,4 +1,4 @@
-/* Bijak Labur: suis bahasa BM / EN / العربية.
+/* SiswaCap: suis bahasa BM / EN / العربية.
    Teks laman ditulis dalam BM. Untuk EN dan Arab, kamus (data/bahasa/<kod>.json) dimuat apabila dipilih,
    kemudian setiap nod teks dan atribut (placeholder, aria-label, title, alt) yang sepadan ditukar.
    MutationObserver menukar teks yang dilukis kemudian oleh modul lain. Teks asal BM disimpan supaya

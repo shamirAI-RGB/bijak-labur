@@ -1,4 +1,4 @@
-/* Bijak Labur: Studio Skrin Kunci. Menjana wallpaper skrin kunci daripada jadual kelas UiTM.
+/* SiswaCap: Studio Skrin Kunci. Menjana wallpaper skrin kunci daripada jadual kelas UiTM.
    Satu reka bentuk: Minggu (seminggu sekali pandang, hari terpilih ditonjolkan). Pilihan hari (setiap hari ada gambar sendiri),
    latar (gradien, warna atau foto sendiri), susun atur dan paparan (bilik, tarikh Hijri, waktu solat, warna kursus).
    Reka bentuk lain (Hari ini, Jadual, Grid) dibuang buat masa ini dan boleh ditambah semula apabila app sudah ada.

@@ -1,5 +1,5 @@
 /*
- * Bijak Labur: AI Coach Akademi Pelaburan (laluan Moomoo dan laluan Kripto)
+ * SiswaCap: AI Coach Akademi Pelaburan (laluan Moomoo dan laluan Kripto)
  *
  * POST /coach { laluan, tahap, soalan, sejarah? }
  *   laluan: moomoo | kripto
@@ -24,7 +24,7 @@ export const MAX_SOALAN = 1000, MAX_SEJARAH = 6, MAX_TEKS = 1500;
 
 export function systemFor(laluan, tahap) {
   const L = LALUAN[laluan];
-  return `Anda ialah "${L.persona}", AI Coach dalam Akademi Pelaburan Bijak Labur (bijaklabur.my), laman pendidikan pelaburan patuh Syariah untuk pelajar di Malaysia.
+  return `Anda ialah "${L.persona}", AI Coach dalam Akademi Pelaburan SiswaCap (bijaklabur.my), laman pendidikan pelaburan patuh Syariah untuk pelajar di Malaysia.
 Bidang anda: ${L.bidang}.
 ${TAHAP[tahap]}
 Peraturan:

@@ -1,4 +1,4 @@
-/* Bijak Labur: Jadual kelas UiTM. Data awam iCress (kampus, kursus, kumpulan) melalui pelayan jadual Bijak Labur.
+/* SiswaCap: Jadual kelas UiTM. Data awam iCress (kampus, kursus, kumpulan) melalui pelayan jadual SiswaCap.
    Jadual disimpan dalam peranti supaya boleh dibuka tanpa talian. Tiada log masuk dan tiada data peribadi dihantar. */
 (function () {
   const root = $('#view-jadual');
@@ -103,7 +103,7 @@
       ${S.demo && S.items.length ? `<p class="jd-demo">${icon('alert')}<span>Ini jadual contoh. Tekan <b>Urus kursus</b> untuk membina jadual anda sendiri.</span></p>` : ''}
       ${ui.editing ? setupHTML() : ''}
       ${S.items.length && !ui.editing ? viewHTML() : ''}
-      <p class="note">${icon('alert')}<span>Data jadual dibaca daripada sumber jadual awam UiTM dan boleh berubah. Sahkan dengan jadual rasmi di MyStudent. Bijak Labur tidak bergabung dengan UiTM.</span></p>`;
+      <p class="note">${icon('alert')}<span>Data jadual dibaca daripada sumber jadual awam UiTM dan boleh berubah. Sahkan dengan jadual rasmi di MyStudent. SiswaCap tidak bergabung dengan UiTM.</span></p>`;
     if (ui.editing) bindSetup(); else bindView();
   }
 
@@ -441,7 +441,7 @@
     const n = nowMY(), today = new Date();
     const stamp = d => `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}00Z`;
     const escI = s => String(s).replace(/[\\;,]/g, m => '\\' + m).replace(/\n/g, '\\n');
-    const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Bijak Labur//Jadual UiTM//MS', 'CALSCALE:GREGORIAN', 'X-WR-CALNAME:Jadual kelas UiTM'];
+    const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//SiswaCap//Jadual UiTM//MS', 'CALSCALE:GREGORIAN', 'X-WR-CALNAME:Jadual kelas UiTM'];
     slotsAll().forEach((s, i) => {
       // Tarikh kejadian pertama: minggu ini (atau minggu depan jika sudah lepas), waktu Malaysia UTC+8
       let add = (s.d - n.d + 7) % 7; if (add === 0 && s.e <= n.m) add = 7;
@@ -449,7 +449,7 @@
       const start = new Date(base.getTime() + (s.s - 480) * 60000), end = new Date(base.getTime() + (s.e - 480) * 60000);
       lines.push('BEGIN:VEVENT', `UID:bl-${S.session || 'jadual'}-${i}-${s.it.course}@bijaklabur.my`, `DTSTAMP:${stamp(new Date())}`, `DTSTART:${stamp(start)}`, `DTEND:${stamp(end)}`,
         'RRULE:FREQ=WEEKLY;COUNT=14', `SUMMARY:${escI(s.it.course + (s.it.name ? ' ' + nice(s.it.name) : ''))}`, `LOCATION:${escI(s.room || '')}`,
-        `DESCRIPTION:${escI('Kumpulan ' + s.it.group + '. Daripada Bijak Labur.')}`, 'BEGIN:VALARM', 'TRIGGER:-PT15M', 'ACTION:DISPLAY', `DESCRIPTION:${escI(s.it.course)}`, 'END:VALARM', 'END:VEVENT');
+        `DESCRIPTION:${escI('Kumpulan ' + s.it.group + '. Daripada SiswaCap.')}`, 'BEGIN:VALARM', 'TRIGGER:-PT15M', 'ACTION:DISPLAY', `DESCRIPTION:${escI(s.it.course)}`, 'END:VALARM', 'END:VEVENT');
     });
     lines.push('END:VCALENDAR');
     const blob = new Blob([lines.join('\r\n')], { type: 'text/calendar;charset=utf-8' });
@@ -554,7 +554,7 @@
     obj(3, () => put(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PW} ${PH}] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>`));
     obj(4, () => { put(`<< /Type /XObject /Subtype /Image /Width ${iw} /Height ${ih} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${bytes.length} >>\nstream\n`); put(bytes); put('\nendstream'); });
     obj(5, () => put(`<< /Length ${content.length} >>\nstream\n${content}\nendstream`));
-    obj(6, () => put(`<< /Title (Jadual kelas UiTM) /Producer (Bijak Labur) >>`));
+    obj(6, () => put(`<< /Title (Jadual kelas UiTM) /Producer (SiswaCap) >>`));
     const xref = len;
     put(`xref\n0 7\n0000000000 65535 f \n${offs.slice(1).map(o => String(o).padStart(10, '0') + ' 00000 n \n').join('')}trailer\n<< /Size 7 /Root 1 0 R /Info 6 0 R >>\nstartxref\n${xref}\n%%EOF\n`);
     return new Blob(parts, { type: 'application/pdf' });
@@ -583,11 +583,11 @@
   }
 
   async function addHome() {
-    if (Native) { toast('Dalam app, tekan lama ikon Bijak Labur di skrin utama dan pilih Jadual kelas.', 5000); return; }
+    if (Native) { toast('Dalam app, tekan lama ikon SiswaCap di skrin utama dan pilih Jadual kelas.', 5000); return; }
     if (window.installApp && await window.installApp()) return;
     const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
     toast(matchMedia('(display-mode: standalone)').matches || navigator.standalone
-      ? 'Bijak Labur sudah ada di skrin utama. Tekan lama ikonnya dan pilih Jadual kelas untuk terus ke jadual.'
+      ? 'SiswaCap sudah ada di skrin utama. Tekan lama ikonnya dan pilih Jadual kelas untuk terus ke jadual.'
       : ios ? 'Di Safari, tekan butang Kongsi, kemudian Add to Home Screen. Jadual anda terbuka tanpa talian.'
         : 'Di Chrome, tekan menu ⋮, kemudian Add to Home screen atau Install app.', 6000);
   }

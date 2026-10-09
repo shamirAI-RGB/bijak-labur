@@ -1,5 +1,5 @@
 /*
- * Bijak Labur: akaun pengguna dan had satu peranti
+ * SiswaCap: akaun pengguna dan had satu peranti
  *
  * Log masuk dibuat oleh Firebase Authentication (Google, Facebook, nombor telefon, e-mel).
  * Pelayan ini mengesahkan token ID Firebase, kemudian menyimpan peranti aktif setiap akaun
@@ -180,7 +180,7 @@ export class Akaun {
 
   async op_lihat() {
     const bil = await this.storage.get('bil');
-    if (!bil) return { status: 404, data: { error: 'Kod bil ini bukan daripada Bijak Labur. Gunakan kod bil yang diterima selepas membayar di laman ini.' } };
+    if (!bil) return { status: 404, data: { error: 'Kod bil ini bukan daripada SiswaCap. Gunakan kod bil yang diterima selepas membayar di laman ini.' } };
     return { data: bil };
   }
 

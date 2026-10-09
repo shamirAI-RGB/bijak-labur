@@ -1,4 +1,4 @@
-/* Bijak Labur: 4 ruang iklan di halaman utama (penaja dan rakan kerjasama).
+/* SiswaCap: 4 ruang iklan di halaman utama (penaja dan rakan kerjasama).
    Iklan diurus oleh pemilik dalam Mod Pemilik (js/pemilik.js) dan disimpan di pelayan nota.
    Ruang kosong mempelawa pengiklan menghubungi pemilik melalui WhatsApp. Klik dikira oleh pelayan
    (pautan /iklan/:n/klik), tanpa penjejakan pengguna. */
@@ -10,7 +10,7 @@
   let data = store.get('iklan_cache', null);
 
   const initials = s => String(s || '').split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
-  const waLink = (wa, n) => `https://wa.me/${encodeURIComponent(wa || '60102546720')}?text=${encodeURIComponent(`Salam, saya berminat untuk mengiklankan perniagaan saya di Bijak Labur (ruang iklan ${n}). Boleh kongsi pakej dan harga?`)}`;
+  const waLink = (wa, n) => `https://wa.me/${encodeURIComponent(wa || '60102546720')}?text=${encodeURIComponent(`Salam, saya berminat untuk mengiklankan perniagaan saya di SiswaCap (ruang iklan ${n}). Boleh kongsi pakej dan harga?`)}`;
 
   function card(ad, n, wa) {
     if (!ad) return `<a class="ik-card ik-empty" href="${esc(waLink(wa, n))}" target="_blank" rel="noopener">

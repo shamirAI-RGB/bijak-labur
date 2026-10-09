@@ -93,7 +93,7 @@
     }
     if (e.target.closest('#kmShare')) {
       close();
-      const data = { title: 'Bijak Labur', text: 'Belajar melabur, harga pasaran masa nyata dan waktu solat seluruh Malaysia.', url: 'https://bijaklabur.my/' };
+      const data = { title: 'SiswaCap', text: 'Belajar melabur, harga pasaran masa nyata dan waktu solat seluruh Malaysia.', url: 'https://bijaklabur.my/' };
       try {
         if (navigator.share) await navigator.share(data);
         else { await navigator.clipboard.writeText(data.url); toast('Pautan disalin'); }
@@ -107,11 +107,11 @@
   /* ---------- Ruang Soalan ---------- */
   const TOPICS = ['Umum', 'Belajar & pasaran', 'Waktu solat & ibadah', 'Semak kertas kerja', 'Premium & bayaran', 'Laporkan masalah'];
   const FAQ = [
-    ['Umum', 'Adakah Bijak Labur percuma?', 'Ya. Pelajaran pelaburan, harga pasaran, waktu solat, ibadah dan penyemak kertas kerja asas adalah percuma dan kekal percuma. Semakan tugasan dan AI mempunyai had harian percuma; Premium membuang had itu dan menambah amaran harga, portfolio patuh Syariah dan alat lanjutan.'],
+    ['Umum', 'Adakah SiswaCap percuma?', 'Ya. Pelajaran pelaburan, harga pasaran, waktu solat, ibadah dan penyemak kertas kerja asas adalah percuma dan kekal percuma. Semakan tugasan dan AI mempunyai had harian percuma; Premium membuang had itu dan menambah amaran harga, portfolio patuh Syariah dan alat lanjutan.'],
     ['Umum', 'Perlukah saya daftar akaun?', 'Tidak buat masa ini. Anda boleh guna sebagai tetamu. Tetapan, profil dan rekod disimpan dalam peranti anda sahaja.'],
-    ['Umum', 'Bagaimana pasang Bijak Labur seperti app?', 'Di iPhone, buka bijaklabur.my dalam Safari, tekan butang Kongsi, kemudian Add to Home Screen. Di Android, buka dalam Chrome dan tekan Install app, atau guna Pasang app dalam menu ini.'],
+    ['Umum', 'Bagaimana pasang SiswaCap seperti app?', 'Di iPhone, buka bijaklabur.my dalam Safari, tekan butang Kongsi, kemudian Add to Home Screen. Di Android, buka dalam Chrome dan tekan Install app, atau guna Pasang app dalam menu ini.'],
     ['Umum', 'Bolehkah saya guna tanpa internet?', 'Halaman utama, pelajaran dan waktu solat yang sudah dimuat turun boleh dibuka tanpa internet. Harga pasaran, audio Al-Quran dan semakan plagiat memerlukan internet.'],
-    ['Belajar & pasaran', 'Adakah ini nasihat kewangan?', 'Tidak. Bijak Labur ialah bahan pendidikan. Buat kajian sendiri dan rujuk penasihat berlesen sebelum melabur. Kami tidak bergabung dengan mana-mana broker yang disebut.'],
+    ['Belajar & pasaran', 'Adakah ini nasihat kewangan?', 'Tidak. SiswaCap ialah bahan pendidikan. Buat kajian sendiri dan rujuk penasihat berlesen sebelum melabur. Kami tidak bergabung dengan mana-mana broker yang disebut.'],
     ['Belajar & pasaran', 'Dari mana harga kripto dan saham diambil?', 'Harga kripto dan carta saham AS daripada data pasaran awam yang dikemas kini secara masa nyata. Untuk saham Bursa Malaysia, semak kaunter dalam app broker anda.'],
     ['Belajar & pasaran', 'Bagaimana tahu saham atau kripto patuh Syariah?', 'Bahagian Belajar dan Fiqh menerangkan kaedah saringan Suruhanjaya Sekuriti dan pandangan ulama, dengan rujukan. Untuk keputusan muktamad, rujuk senarai rasmi SC dan Majlis Penasihat Syariah.'],
     ['Waktu solat & ibadah', 'Dari mana waktu solat diambil?', 'Daripada data waktu solat rasmi Malaysia, mengikut zon yang anda pilih di halaman Waktu Solat.'],
@@ -142,7 +142,7 @@
       <div class="page-head">
         <p class="eyebrow">Bantuan</p>
         <h1 id="h-soalan">Ruang soalan</h1>
-        <p class="lead">Cari jawapan kepada soalan lazim, atau hantar soalan anda terus kepada pasukan Bijak Labur.</p>
+        <p class="lead">Cari jawapan kepada soalan lazim, atau hantar soalan anda terus kepada pasukan SiswaCap.</p>
       </div>
       <div class="sq-grid">
         <div>
@@ -151,7 +151,7 @@
         </div>
         <aside class="card sq-ask">
           <h2>Tanya kami</h2>
-          <p class="muted small">Soalan anda terus masuk ke e-mel pasukan Bijak Labur. Isi e-mel anda supaya kami boleh membalas.</p>
+          <p class="muted small">Soalan anda terus masuk ke e-mel pasukan SiswaCap. Isi e-mel anda supaya kami boleh membalas.</p>
           <form id="sqForm" novalidate>
             <div class="field"><label for="sqNama">Nama (pilihan)</label><input id="sqNama" maxlength="40" autocomplete="name" value="${esc(draft.nama)}"></div>
             <div class="field"><label for="sqEmel">E-mel anda</label><input id="sqEmel" type="email" inputmode="email" maxlength="120" autocomplete="email" placeholder="nama@gmail.com" value="${esc(draft.emel)}"></div>
@@ -178,7 +178,7 @@
   const EMEL_RE = /^[^\s@<>()",;:]{1,64}@[a-z0-9.-]{1,190}\.[a-z]{2,24}$/i;
   function message() {
     const nama = $('#sqNama').value.trim(), emel = $('#sqEmel').value.trim(), topik = $('#sqTopik').value, teks = $('#sqTeks').value.trim();
-    return { nama, emel, topik, teks, msg: `Salam Bijak Labur, saya ${nama || 'pengguna'} ada soalan.\n\nTopik: ${topik}\nSoalan: ${teks}\n\n(Dihantar dari bijaklabur.my)` };
+    return { nama, emel, topik, teks, msg: `Salam SiswaCap, saya ${nama || 'pengguna'} ada soalan.\n\nTopik: ${topik}\nSoalan: ${teks}\n\n(Dihantar dari bijaklabur.my)` };
   }
   const saveDraft = () => store.set('soalanDraf', { nama: $('#sqNama').value, emel: $('#sqEmel').value, topik: $('#sqTopik').value, teks: $('#sqTeks').value });
   function clearQuestion() {
@@ -193,7 +193,7 @@
   }
   // Jika pelayan tidak dapat dihubungi, tawarkan aplikasi e-mel pengguna sebagai jalan lain
   function fallback(m, why) {
-    const href = `mailto:${EMEL}?subject=${encodeURIComponent('[Bijak Labur] ' + m.topik)}&body=${encodeURIComponent(m.msg)}`;
+    const href = `mailto:${EMEL}?subject=${encodeURIComponent('[SiswaCap] ' + m.topik)}&body=${encodeURIComponent(m.msg)}`;
     $('#sqErr').innerHTML = `${esc(why)} <a href="${esc(href)}">Hantar melalui aplikasi e-mel</a> ke ${EMEL}, atau pilih WhatsApp di bawah.`;
   }
   root.addEventListener('input', e => {

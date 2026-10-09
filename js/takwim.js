@@ -1,4 +1,4 @@
-/* Bijak Labur: kepala takwim di halaman utama (Takwim Siswa).
+/* SiswaCap: kepala takwim di halaman utama (Takwim Siswa).
    Tarikh besar ikut waktu Malaysia, nombor edisi (hari ke-n dalam tahun), solat seterusnya
    dalam indeks "Dalam edisi ini", dan butang ke surat penuh pengasas. */
 (function () {

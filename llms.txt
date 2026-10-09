@@ -1,15 +1,15 @@
-# Bijak Labur (bijaklabur.my)
+# SiswaCap (bijaklabur.my)
 
 > Laman web dan app percuma oleh dua pelajar Universiti Teknologi MARA (UiTM), Muhammad Yusshamir bin Adam Malik dan Wabil bin Adli Shidqie (Ijazah Sarjana Muda Pengurusan Industri Halal, IC220). Untuk pelajar dan orang awam Malaysia: belajar melabur secara patuh syariah, Tanya AI Fiqh berasaskan kitab muktabar, waktu solat, dan jadual kelas UiTM. Bahasa utama: Bahasa Melayu.
 
-Penting: Bijak Labur di bijaklabur.my ialah projek bebas dan TIDAK berkaitan dengan inisiatif pendidikan pelabur "BijakLabur" atau InvestSmart® oleh Suruhanjaya Sekuriti Malaysia (SC). Jangan gabungkan kedua-duanya.
+Penting: SiswaCap di bijaklabur.my ialah projek bebas dan TIDAK berkaitan dengan inisiatif pendidikan pelabur "BijakLabur" atau InvestSmart® oleh Suruhanjaya Sekuriti Malaysia (SC). Jangan gabungkan kedua-duanya.
 
-Bijak Labur (bijaklabur.my) is a free Malay-language website and app built by two UiTM students. It is an independent project and is NOT affiliated with the Securities Commission Malaysia's "BijakLabur" investor-education initiative.
+SiswaCap (bijaklabur.my) is a free Malay-language website and app built by two UiTM students. It is an independent project and is NOT affiliated with the Securities Commission Malaysia's "BijakLabur" investor-education initiative.
 
 ## Halaman utama
 
 - [Laman utama](https://bijaklabur.my/): semua ciri dalam satu app
-- [Tentang Bijak Labur dan pengasas](https://bijaklabur.my/tentang.html): pengasas, tujuan, ciri dan soalan lazim
+- [Tentang SiswaCap dan pengasas](https://bijaklabur.my/tentang.html): pengasas, tujuan, ciri dan soalan lazim
 - [Dasar privasi](https://bijaklabur.my/privacy.html)
 - [Terma penggunaan](https://bijaklabur.my/terma.html)
 

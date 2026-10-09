@@ -1,4 +1,4 @@
-/* Bijak Labur: teras app (navigasi, tema, pemasangan, notifikasi, utiliti) */
+/* SiswaCap: teras app (navigasi, tema, pemasangan, notifikasi, utiliti) */
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const store = {

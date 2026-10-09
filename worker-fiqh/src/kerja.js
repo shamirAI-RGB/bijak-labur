@@ -1,5 +1,5 @@
 /*
- * Bijak Labur: Kerjaya AI (gaya AI Job Search)
+ * SiswaCap: Kerjaya AI (gaya AI Job Search)
  *
  * POST /kerja { resume, jawatan?, tugas, bahasa? }
  *   tugas: cadang (jawatan sesuai + kata kunci carian) | padan (skor padanan dengan iklan kerja)

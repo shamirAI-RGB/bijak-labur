@@ -1,4 +1,4 @@
-/* Bijak Labur: kandungan statik untuk Ibadah (doa, Asmaul Husna, panduan). Teks Al-Quran dimuat dari api.alquran.cloud. */
+/* SiswaCap: kandungan statik untuk Ibadah (doa, Asmaul Husna, panduan). Teks Al-Quran dimuat dari api.alquran.cloud. */
 const IbadahData = (function () {
   // [tajuk, arab, rumi, maksud, rujukan]
   const DOA = [

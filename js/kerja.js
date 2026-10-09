@@ -1,4 +1,4 @@
-/* Bijak Labur: Kerjaya AI (gaya AI Job Search). Cadangan jawatan dan carian di portal kerja Malaysia,
+/* SiswaCap: Kerjaya AI (gaya AI Job Search). Cadangan jawatan dan carian di portal kerja Malaysia,
    skor padanan resume dengan iklan, surat permohonan dan persediaan temu duga.
    Nombor IC, telefon dan e-mel ditapis di pelayan sebelum dihantar kepada AI. */
 (function () {

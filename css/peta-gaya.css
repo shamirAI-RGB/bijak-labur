@@ -1,4 +1,4 @@
-/* Bijak Labur: rupa peta bersama (js/peta-gaya.js). Dimuat oleh modul itu sendiri. */
+/* SiswaCap: rupa peta bersama (js/peta-gaya.js). Dimuat oleh modul itu sendiri. */
 .pg-peta { --pg-saya: #1d7fd6; --pg-saya-halo: rgba(29, 127, 214, .18); --pg-kaca: rgba(255, 255, 255, .94); --pg-kaca-2: #f1efe9; --pg-teks: #1d2722; --pg-lembut: #66716b; --pg-garis: rgba(29, 39, 34, .12); --pg-aksen: #0f7a5c; --pg-aksen-lembut: rgba(15, 122, 92, .14); --pg-bayang: 0 1px 2px rgba(0, 0, 0, .08), 0 6px 18px rgba(0, 0, 0, .14); font-family: inherit; }
 .pg-peta[data-pg-tema="gelap"], .pg-peta[data-pg-tema="satelit"] { --pg-saya: #5cb4ff; --pg-saya-halo: rgba(92, 180, 255, .2); --pg-kaca: rgba(20, 28, 24, .92); --pg-kaca-2: #1d2622; --pg-teks: #e6ece8; --pg-lembut: #9ba7a1; --pg-garis: rgba(255, 255, 255, .1); --pg-aksen: #52c3a1; --pg-aksen-lembut: rgba(82, 195, 161, .16); --pg-bayang: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 22px rgba(0, 0, 0, .45); }
 .pg-peta[data-pg-tema="terang"] { background: #f2f0e9; }

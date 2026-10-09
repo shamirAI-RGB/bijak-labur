@@ -31,7 +31,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const CACHE = join(ROOT, '.cache'), OUT = join(ROOT, 'aset', 'rujukan'), TMP = join(tmpdir(), 'padan-pdf');
 const VERSI = 4, SAMPEL = 12, SELARI = 4, MAX_MB = 350;
 const DEADLINE = Date.now() + (+process.env.PADAN_MINIT || 24) * 60000;
-const UA = 'Mozilla/5.0 (BijakLabur rujukan; +https://bijaklabur.my)';
+const UA = 'Mozilla/5.0 (SiswaCap rujukan; +https://bijaklabur.my)';
 const summary = s => process.env.GITHUB_STEP_SUMMARY ? appendFile(process.env.GITHUB_STEP_SUMMARY, s + '\n') : null;
 const masa = () => Date.now() < DEADLINE;
 

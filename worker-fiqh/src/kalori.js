@@ -1,5 +1,5 @@
 /*
- * Bijak Labur: Sihat, anggaran kalori makanan (Gemini, termasuk gambar)
+ * SiswaCap: Sihat, anggaran kalori makanan (Gemini, termasuk gambar)
  *
  * POST /kalori { image?: base64 JPEG/PNG/WebP (tanpa awalan data:), mime?, text?: penerangan makanan }
  *   -> { items: [{ nama, hidangan, berat_g, kalori, protein_g, karbohidrat_g, lemak_g }], jumlah: {...}, nota, yakin }

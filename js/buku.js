@@ -1,4 +1,4 @@
-/* Bijak Labur: Buku Nota AI (gaya Open Notebook / NotebookLM).
+/* SiswaCap: Buku Nota AI (gaya Open Notebook / NotebookLM).
    Tambah sumber (teks, PDF, DOCX), kemudian tanya soalan dengan petikan yang disahkan, ringkasan, panduan belajar,
    kuiz, kad imbas dan podcast dua hos yang dibacakan dengan suara HD. Sumber disimpan dalam peranti ini sahaja. */
 (function () {
@@ -97,7 +97,7 @@
           ${!active().length ? `<div class="bk-empty"><p class="muted">Tambah sekurang-kurangnya satu sumber untuk bermula.</p></div>` : S.tab === 'tanya' ? tanyaHTML() : hasilHTML(S.tab)}
           ${S.err ? `<p class="error">${esc(S.err)}</p>` : ''}
         </div></div>
-      <p class="note">${icon('alert')}<span>AI boleh tersilap walaupun berpandukan sumber. Semak petikan sebelum menggunakan jawapan dalam tugasan. Teks sumber dihantar kepada penyedia AI untuk diproses dan tidak disimpan di pelayan Bijak Labur. Jangan muat naik dokumen sulit atau maklumat peribadi.</span></p>`;
+      <p class="note">${icon('alert')}<span>AI boleh tersilap walaupun berpandukan sumber. Semak petikan sebelum menggunakan jawapan dalam tugasan. Teks sumber dihantar kepada penyedia AI untuk diproses dan tidak disimpan di pelayan SiswaCap. Jangan muat naik dokumen sulit atau maklumat peribadi.</span></p>`;
     const chat = $('.bk-chat', root); if (chat) chat.scrollTop = chat.scrollHeight;
   }
 

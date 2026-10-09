@@ -1,4 +1,4 @@
-/* Bijak Labur: akaun pengguna (Firebase Authentication) dan had satu akaun untuk satu peranti */
+/* SiswaCap: akaun pengguna (Firebase Authentication) dan had satu akaun untuk satu peranti */
 const Akaun = (function () {
   // Isi daripada Firebase Console > Tetapan projek > Apl anda (web). Nilai ini memang awam.
   // Selagi kosong, laman berjalan dalam mod tetamu sahaja dan butang akaun menunjukkan "akan dibuka".
@@ -36,7 +36,7 @@ const Akaun = (function () {
   const label = (() => {
     const ua = navigator.userAgent;
     const os = /iphone/i.test(ua) ? 'iPhone' : /ipad/i.test(ua) || (/macintosh/i.test(ua) && navigator.maxTouchPoints > 1) ? 'iPad' : /android/i.test(ua) ? 'Android' : /windows/i.test(ua) ? 'Windows' : /mac os/i.test(ua) ? 'Mac' : /linux/i.test(ua) ? 'Linux' : 'peranti';
-    const br = Native ? 'App Bijak Labur' : /edg\//i.test(ua) ? 'Edge' : /samsungbrowser/i.test(ua) ? 'Samsung Internet' : /firefox|fxios/i.test(ua) ? 'Firefox' : /chrome|crios/i.test(ua) ? 'Chrome' : /safari/i.test(ua) ? 'Safari' : 'Pelayar';
+    const br = Native ? 'App SiswaCap' : /edg\//i.test(ua) ? 'Edge' : /samsungbrowser/i.test(ua) ? 'Samsung Internet' : /firefox|fxios/i.test(ua) ? 'Firefox' : /chrome|crios/i.test(ua) ? 'Chrome' : /safari/i.test(ua) ? 'Safari' : 'Pelayar';
     return `${br}, ${os}`;
   })();
 
@@ -228,7 +228,7 @@ const Akaun = (function () {
     if (verifier) { try { verifier.clear(); } catch {} verifier = null; }
     let h = '';
     if (p === 'tutup') h = `<h2 id="akTitle">Akaun akan dibuka tidak lama lagi</h2><p class="muted">Buat masa ini semua ciri percuma boleh digunakan sebagai tetamu. Log masuk dengan Google, Facebook atau nombor telefon akan dibuka tidak lama lagi.</p>${footer(true)}`;
-    else if (p === 'pilih') h = `<p class="eyebrow">Akaun Bijak Labur</p><h2 id="akTitle">Log masuk atau daftar</h2>
+    else if (p === 'pilih') h = `<p class="eyebrow">Akaun SiswaCap</p><h2 id="akTitle">Log masuk atau daftar</h2>
       <p class="muted small">Satu akaun untuk satu peranti. Akaun diperlukan untuk Premium.</p>
       <div class="ak-list">
         ${SOCIAL && METHODS.google ? `<button type="button" class="btn ghost block ak-prov" data-ak="google">${GOOGLE}Teruskan dengan Google</button>` : ''}
@@ -264,7 +264,7 @@ const Akaun = (function () {
       <form id="akCodeForm"><div class="field"><label for="akCode">Kod 6 digit</label><input id="akCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="\\d{6}" required></div>
       <p class="err" id="akErr" role="alert"></p><button class="btn block" type="submit" id="akGo">Sahkan</button></form>`;
     else if (p === 'katalaluan') h = `<p class="eyebrow">Langkah terakhir</p><h2 id="akTitle">Tetapkan kata laluan</h2>
-      <p class="muted small">Setiap akaun Bijak Labur wajib ada kata laluan. Anda boleh log masuk dengan ${u.phone && !u.email ? 'nombor telefon' : 'kaedah tadi'} atau dengan e-mel dan kata laluan ini.</p>
+      <p class="muted small">Setiap akaun SiswaCap wajib ada kata laluan. Anda boleh log masuk dengan ${u.phone && !u.email ? 'nombor telefon' : 'kaedah tadi'} atau dengan e-mel dan kata laluan ini.</p>
       <form id="akSetPwForm" autocomplete="on">
         <div class="field"><label for="akEmail">E-mel</label><input id="akEmail" type="email" autocomplete="email" required maxlength="100" value="${esc(u.email)}" ${u.email ? 'readonly' : ''}></div>
         <div class="field"><label for="akPw">Kata laluan baharu</label><input id="akPw" type="password" autocomplete="new-password" required minlength="8"></div>
@@ -291,7 +291,7 @@ const Akaun = (function () {
     else if (p === 'profil') {
       const prov = user.providerData.map(x => ({ 'google.com': 'Google', 'facebook.com': 'Facebook', phone: 'Telefon', password: 'E-mel dan kata laluan' }[x.providerId])).filter(Boolean);
       const plan = typeof Premium !== 'undefined' && Premium.plan;
-      h = `<p class="eyebrow">Akaun Bijak Labur</p><h2 id="akTitle">${esc(u.name || 'Akaun anda')}</h2>
+      h = `<p class="eyebrow">Akaun SiswaCap</p><h2 id="akTitle">${esc(u.name || 'Akaun anda')}</h2>
       <dl class="ak-dl">
         ${u.email ? `<dt>E-mel</dt><dd>${esc(u.email)}</dd>` : ''}
         ${u.phone ? `<dt>Telefon</dt><dd>${esc(u.phone)}</dd>` : ''}
