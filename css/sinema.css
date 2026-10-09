@@ -1,0 +1,162 @@
+/* Bijak Labur: rupa sinema.
+   Lapisan rupa paling akhir (selepas takwim.css). Gelap seperti pawagam: latar hitam, kad kaca,
+   tajuk sans tebal, butang pil putih, dan setiap halaman dibuka dengan sepanduk gambar penuh
+   (lukisan sendiri dalam images/jelajah). Tema "Cerah" dalam menu masih memaparkan rupa kertas Takwim;
+   Auto dan Gelap memaparkan rupa sinema. */
+
+/* ---------- Palet gelap (Auto dan Gelap) ---------- */
+:root:not([data-theme="light"]) {
+  color-scheme: dark;
+  --bg: #07080b; --surface: #101217; --surface-2: #181b22; --text: #f3f2ee; --muted: #a9adb6; --faint: #8b9099;
+  --border: #23262e; --rule: #3a3e48; --brand: #7fe3b9; --brand-ink: #06110c; --brand-soft: #12241c;
+  --gold: #e9b860; --ink-red: #ff7a6b;
+  --radius: 16px;
+  --display: "Schibsted Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  --sn-glass: rgba(255, 255, 255, .06); --sn-line: rgba(255, 255, 255, .1);
+}
+:root:not([data-theme="light"]) body { background: var(--bg); }
+
+/* Tajuk sans tebal, rapat */
+:root:not([data-theme="light"]) h1 { font-family: var(--display); font-weight: 800; letter-spacing: -0.035em; line-height: 1; }
+:root:not([data-theme="light"]) h2, :root:not([data-theme="light"]) .block-head h2, :root:not([data-theme="light"]) .card > h2 { font-family: var(--display); font-weight: 750; letter-spacing: -0.02em; }
+:root:not([data-theme="light"]) .lead { font-family: var(--font); font-size: 1.02rem; }
+
+/* Bar atas dan bar tab: kaca gelap */
+:root:not([data-theme="light"]) .topbar { background: rgba(7, 8, 11, .72); backdrop-filter: blur(18px) saturate(1.3); -webkit-backdrop-filter: blur(18px) saturate(1.3); border-bottom: 1px solid var(--sn-line); }
+:root:not([data-theme="light"]) .desk-nav a { border-radius: 999px; padding: 7px 14px; }
+:root:not([data-theme="light"]) .desk-nav a.active { background: #f3f2ee; color: #07080b; box-shadow: none; }
+:root:not([data-theme="light"]) .icon-btn { border-radius: 999px; background: var(--sn-glass); border-color: var(--sn-line); }
+:root:not([data-theme="light"]) .tabbar { background: rgba(10, 11, 15, .82); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); border-top: 1px solid var(--sn-line); }
+:root:not([data-theme="light"]) .tabbar a.active { color: #fff; }
+:root:not([data-theme="light"]) .tabbar a.active::before { background: var(--brand); border-radius: 0 0 3px 3px; }
+
+/* Kad dan senarai: kaca dengan bucu bulat */
+:root:not([data-theme="light"]) .card { background: linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.02)); border: 1px solid var(--sn-line); border-radius: var(--radius); }
+:root:not([data-theme="light"]) a.card:hover, :root:not([data-theme="light"]) .card.shortcut:hover { border-color: rgba(255,255,255,.22); }
+
+/* Butang pil: utama putih, kedua kaca */
+:root:not([data-theme="light"]) .btn, :root:not([data-theme="light"]) .btn.sm { border-radius: 999px; }
+:root:not([data-theme="light"]) .btn:not(.ghost) { background: #f3f2ee; color: #07080b; }
+:root:not([data-theme="light"]) .btn:not(.ghost):hover { background: #fff; color: #07080b; }
+:root:not([data-theme="light"]) .btn.ghost { background: var(--sn-glass); border: 1px solid var(--sn-line); color: var(--text); }
+:root:not([data-theme="light"]) input, :root:not([data-theme="light"]) select, :root:not([data-theme="light"]) textarea { border-radius: 12px; }
+:root:not([data-theme="light"]) .seg.active, :root:not([data-theme="light"]) .segmented .seg.active { background: #f3f2ee; color: #07080b; }
+
+/* ---------- Sepanduk setiap halaman (semua tema) ---------- */
+.view:not(#view-utama) > .page-head {
+  --sn-img: url("../images/jelajah/belajar.svg");
+  position: relative; isolation: isolate; overflow: hidden; color: #f3f2ee;
+  margin: 8px 0 22px; padding: clamp(84px, 16vw, 150px) clamp(18px, 4vw, 40px) clamp(22px, 4vw, 34px);
+  border: 1px solid rgba(255,255,255,.1) !important; border-radius: 20px;
+  background: #07080b var(--sn-img) center / cover no-repeat;
+}
+.view:not(#view-utama) > .page-head::before {
+  content: ""; position: absolute; inset: 0; z-index: -1;
+  background: linear-gradient(180deg, rgba(0,0,0,0) 20%, rgba(0,0,0,.72) 100%), linear-gradient(90deg, rgba(0,0,0,.55), rgba(0,0,0,0) 70%);
+}
+.view:not(#view-utama) > .page-head h1 { color: #fff; font-family: "Schibsted Grotesk", var(--font); font-weight: 800; letter-spacing: -0.035em; text-shadow: 0 2px 24px rgba(0,0,0,.45); }
+.view:not(#view-utama) > .page-head .lead { color: rgba(255,255,255,.84); font-family: var(--font); font-style: normal; }
+.view:not(#view-utama) > .page-head .eyebrow {
+  display: inline-block; color: #07080b; background: #f3f2ee; border-radius: 999px; padding: 4px 10px; letter-spacing: .08em;
+}
+.view:not(#view-utama) > .page-head a:not(.btn) { color: #fff; }
+.view:not(#view-utama) > .page-head .btn.ghost { background: rgba(255,255,255,.1); color: #fff; border-color: rgba(255,255,255,.25); }
+.view#view-pasaran > .page-head, .view#view-jejak > .page-head { --sn-img: url("../images/jelajah/pasaran.svg"); }
+.view#view-solat > .page-head, .view#view-premium > .page-head { --sn-img: url("../images/jelajah/solat.svg"); }
+.view#view-belajar > .page-head, .view#view-nota > .page-head { --sn-img: url("../images/jelajah/belajar.svg"); }
+.view#view-semak > .page-head, .view#view-studio > .page-head { --sn-img: url("../images/jelajah/semak.svg"); }
+.view#view-buku > .page-head { --sn-img: url("../images/jelajah/fiqh.svg"); }
+.view#view-ibadah > .page-head, .view#view-soalan > .page-head { --sn-img: url("../images/jelajah/ibadah.svg"); }
+.view#view-halal > .page-head, .view#view-sihat > .page-head { --sn-img: url("../images/jelajah/halal.svg"); }
+.view#view-jadual > .page-head, .view#view-kerja > .page-head, .view#view-komuniti > .page-head { --sn-img: url("../images/jelajah/jadual.svg"); }
+
+/* ---------- Pentas ciri di halaman utama ---------- */
+.sn-stage {
+  position: relative; isolation: isolate; overflow: hidden; color: #f3f2ee; background: #07080b;
+  width: 100vw; margin: -8px calc(50% - 50vw) 28px; min-height: min(78svh, 720px);
+  display: flex; flex-direction: column; justify-content: space-between;
+  padding: 18px max(16px, calc(50vw - 544px)) 22px;
+  font-family: "Schibsted Grotesk", var(--font);
+}
+.sn-bg, .sn-layer { position: absolute; inset: 0; }
+.sn-bg { z-index: -2; }
+.sn-layer { background: center / cover no-repeat; opacity: 0; transform: scale(1.08); transition: opacity .9s ease, transform 9s ease-out; }
+.sn-layer.on { opacity: 1; transform: scale(1); }
+.sn-stage::after {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(180deg, rgba(7,8,11,.55) 0, rgba(7,8,11,0) 22%, rgba(7,8,11,0) 45%, rgba(7,8,11,.88) 100%), linear-gradient(90deg, rgba(7,8,11,.6), rgba(7,8,11,0) 65%);
+}
+.sn-glyph { position: absolute; right: max(16px, calc(50vw - 544px)); top: 22%; z-index: -1; width: clamp(120px, 24vw, 260px); aspect-ratio: 1; color: #fff; opacity: .1; transition: opacity .6s; }
+.sn-glyph .ic { width: 100%; height: 100%; stroke-width: 1.2; }
+
+.sn-icons { display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; padding: 4px 2px 8px; margin: 0 -2px; }
+.sn-icons::-webkit-scrollbar { display: none; }
+.sn-ic {
+  flex: none; width: 50px; height: 50px; border-radius: 14px; display: grid; place-items: center; cursor: pointer;
+  color: rgba(255,255,255,.78); background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); transition: background .2s, color .2s, transform .2s, box-shadow .2s;
+}
+.sn-ic .ic { width: 24px; height: 24px; }
+.sn-ic:hover { background: rgba(255,255,255,.16); color: #fff; }
+.sn-ic[aria-selected="true"] { background: rgba(255,255,255,.18); color: #fff; box-shadow: 0 0 0 2px #fff, 0 8px 24px rgba(0,0,0,.4); transform: translateY(-1px); }
+.sn-ic:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+
+.sn-body { max-width: 560px; padding-top: 60px; }
+.sn-body.masuk > * { animation: snNaik .55s cubic-bezier(.2,.7,.2,1) both; }
+.sn-body.masuk > :nth-child(2) { animation-delay: .05s; } .sn-body.masuk > :nth-child(3) { animation-delay: .1s; }
+.sn-body.masuk > :nth-child(4) { animation-delay: .15s; } .sn-body.masuk > :nth-child(5) { animation-delay: .2s; }
+@keyframes snNaik { from { opacity: 0; transform: translateY(14px); filter: blur(4px); } to { opacity: 1; transform: none; filter: none; } }
+
+.sn-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.sn-chip { font-size: .72rem; font-weight: 700; padding: 4px 10px; border-radius: 999px; background: rgba(255,255,255,.12); color: rgba(255,255,255,.85); border: 1px solid rgba(255,255,255,.14); }
+.sn-chip-on { background: #f3f2ee; color: #07080b; border-color: #f3f2ee; }
+.sn-title { margin: 12px 0 8px; font-size: clamp(2.5rem, 9vw, 4.4rem); font-weight: 800; letter-spacing: -0.045em; line-height: .95; color: #fff; text-shadow: 0 4px 30px rgba(0,0,0,.4); }
+.sn-desc { margin: 0 0 16px; color: rgba(255,255,255,.8); font-size: 1rem; line-height: 1.5; max-width: 46ch; }
+.sn-cmd {
+  display: flex; align-items: center; gap: 10px; max-width: 440px; padding: 8px 8px 8px 14px; border-radius: 12px;
+  background: rgba(0,0,0,.45); border: 1px solid rgba(255,255,255,.14); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+}
+.sn-prompt { color: var(--brand, #7fe3b9); font-weight: 800; }
+.sn-cmd code { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 .86rem ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: rgba(255,255,255,.9); background: none; padding: 0; }
+.sn-copy { flex: none; width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; cursor: pointer; color: #fff; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.14); }
+.sn-copy .ic { width: 16px; height: 16px; }
+.sn-acts { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+.sn-btn {
+  display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 18px; border-radius: 999px; cursor: pointer;
+  font: 700 .92rem "Schibsted Grotesk", var(--font); text-decoration: none; color: #fff;
+  background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.18); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  transition: transform .15s, background .2s;
+}
+.sn-btn .ic { width: 17px; height: 17px; }
+.sn-btn:hover { background: rgba(255,255,255,.18); }
+.sn-btn:active { transform: scale(.97); }
+.sn-btn-main { background: #f3f2ee; color: #07080b; border-color: #f3f2ee; }
+.sn-btn-main:hover { background: #fff; }
+.sn-keys { display: none; gap: 16px; margin-top: 18px; font-size: .74rem; color: rgba(255,255,255,.55); }
+.sn-keys kbd { font: 600 .7rem ui-monospace, Menlo, monospace; padding: 2px 6px; margin-right: 3px; border-radius: 5px; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.16); color: #fff; }
+@media (hover: hover) and (min-width: 900px) { .sn-keys { display: flex; } }
+
+/* Panduan bertab (seperti halaman butiran) */
+.sn-guide { position: absolute; inset: 0; z-index: 3; overflow-y: auto; background: rgba(7,8,11,.82); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); animation: snNaik .35s ease both; }
+.sn-g-inner { max-width: 760px; margin: 0 auto; padding: 18px 16px 28px; }
+.sn-back { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px; border-radius: 999px; cursor: pointer; color: #fff; font: 600 .85rem "Schibsted Grotesk", var(--font); background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.16); }
+.sn-back .ic { width: 15px; height: 15px; }
+.sn-g-head { display: flex; gap: 16px; align-items: flex-start; margin: 26px 0 18px; }
+.sn-g-ic { flex: none; width: 58px; height: 58px; border-radius: 16px; display: grid; place-items: center; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2); color: #fff; }
+.sn-g-ic .ic { width: 28px; height: 28px; }
+.sn-g-head .sn-title { font-size: clamp(1.8rem, 6vw, 2.6rem); margin: 8px 0 6px; }
+.sn-tabs { display: flex; gap: 6px; flex-wrap: wrap; padding: 5px; border-radius: 999px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); width: max-content; max-width: 100%; }
+.sn-tab { height: 34px; padding: 0 14px; border-radius: 999px; cursor: pointer; border: 0; background: none; color: rgba(255,255,255,.7); font: 600 .86rem "Schibsted Grotesk", var(--font); }
+.sn-tab[aria-selected="true"] { background: #f3f2ee; color: #07080b; }
+.sn-g-body { margin: 18px 0 0; padding: 18px; border-radius: 16px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); color: rgba(255,255,255,.88); line-height: 1.6; max-width: 62ch; }
+
+@media (max-width: 600px) {
+  .sn-stage { min-height: 74svh; padding-top: 14px; }
+  .sn-ic { width: 46px; height: 46px; border-radius: 13px; }
+  .sn-glyph { top: 16%; opacity: .08; }
+  .sn-body { padding-top: 40px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sn-layer { transition: opacity .2s; transform: none !important; }
+  .sn-body.masuk > *, .sn-guide { animation: none; }
+}

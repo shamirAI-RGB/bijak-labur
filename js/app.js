@@ -80,7 +80,8 @@ const Notify = {
 /* Tema */
 const isDark = () => {
   const t = document.documentElement.dataset.theme;
-  return t ? t === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  // Rupa sinema: Auto memaparkan tema gelap (lihat css/sinema.css)
+  return t ? t === 'dark' : true;
 };
 function paintThemeIcon() {
   $('#themeBtn use').setAttribute('href', isDark() ? '#i-sun' : '#i-moon');
