@@ -72,7 +72,7 @@
 
 /* ---------- Pentas ciri di halaman utama ---------- */
 .sn-stage {
-  position: relative; isolation: isolate; overflow: hidden; color: #f3f2ee; background: #07080b;
+  touch-action: pan-y; position: relative; isolation: isolate; overflow: hidden; color: #f3f2ee; background: #07080b;
   width: 100vw; margin: -8px calc(50% - 50vw) 28px; min-height: min(78svh, 720px);
   display: flex; flex-direction: column; justify-content: space-between;
   padding: 18px max(16px, calc(50vw - 544px)) 22px;
@@ -172,6 +172,10 @@
   .sn-glyph { top: 16%; opacity: .08; }
   .sn-body { padding-top: 40px; }
 }
+/* Semasa diseret dengan jari: ikut jari serta-merta, tanpa peralihan */
+.sn-stage.seret .sn-track, .sn-stage.seret .sn-body, .sn-stage.seret .sn-bg { transition: none; }
+.sn-body { transition: transform .6s cubic-bezier(.22, 1, .36, 1), opacity .4s; }
+
 @media (prefers-reduced-motion: reduce) {
   .sn-layer { transition: opacity .2s; transform: none !important; filter: none; }
   .sn-track, .sn-ic, .sn-tile, .sn-lbl { transition: none; }
