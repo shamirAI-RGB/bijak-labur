@@ -116,6 +116,7 @@
   <link rel="stylesheet" href="css/sinema.css">
   <link rel="stylesheet" href="css/masa-depan.css">
   <link rel="stylesheet" href="css/pameran.css">
+  <link rel="stylesheet" href="css/suis.css">
 </head>
 <body>
   <a class="skip-link" href="#main">Langkau ke kandungan</a>
@@ -211,6 +212,9 @@
         <details class="nav-more">
           <summary>Alat<svg class="ic" aria-hidden="true"><use href="#i-chev-down"/></svg></summary>
           <div class="nav-pop">
+            <a href="#ibadah" data-nav="ibadah" class="nav-sempit">Ibadah</a>
+            <a href="#jadual" data-nav="jadual" class="nav-sempit">Jadual</a>
+            <a href="#nota" data-nav="nota" class="nav-sempit">Nota</a>
             <a href="#komuniti" data-nav="komuniti">Komuniti pelajar</a>
             <a href="#studio" data-nav="studio">Studio Gambar AI</a>
             <a href="#buku" data-nav="buku">Buku Nota AI</a>
@@ -224,7 +228,15 @@
         <a href="#premium" data-nav="premium" data-premium-entry class="hidden">Premium</a>
       </nav>
       <button class="icon-btn" id="sayBtn" aria-label="Bacakan halaman ini" aria-pressed="false" title="Bacakan halaman ini"><svg class="ic"><use href="#i-volume"/></svg></button>
-      <button class="icon-btn" id="themeBtn" aria-label="Tukar tema cerah atau gelap"><svg class="ic"><use href="#i-moon"/></svg></button>
+      <div class="bh-wrap" translate="no">
+        <button type="button" class="icon-btn bh-btn" id="bahasaBtn" aria-haspopup="true" aria-expanded="false" aria-controls="bahasaPop" aria-label="Bahasa" title="Bahasa"><span class="bh-kod" aria-hidden="true">BM</span></button>
+        <div class="bh-pop" id="bahasaPop" role="menu" aria-label="Bahasa" hidden>
+          <button type="button" role="menuitemradio" aria-checked="true" data-bahasa="ms" lang="ms"><b>BM</b><span>Bahasa Melayu</span></button>
+          <button type="button" role="menuitemradio" aria-checked="false" data-bahasa="en" lang="en"><b>EN</b><span>English</span></button>
+          <button type="button" role="menuitemradio" aria-checked="false" data-bahasa="ar" lang="ar"><b>ع</b><span dir="rtl">العربية</span></button>
+        </div>
+      </div>
+      <button type="button" class="tm-suis" id="themeBtn" role="switch" aria-checked="true" aria-label="Tema gelap" title="Tukar hitam atau putih"><span class="tm-trek" aria-hidden="true"><svg class="ic tm-cerah"><use href="#i-sun"/></svg><svg class="ic tm-gelap"><use href="#i-moon"/></svg><span class="tm-tombol"></span></span></button>
       <button class="icon-btn ak-btn" id="akaunBtn" aria-label="Log masuk atau daftar" title="Log masuk atau daftar"><svg class="ic"><use href="#i-user"/></svg></button>
       <div class="kebab">
         <button class="icon-btn" id="menuBtn" aria-label="Menu tetapan dan bantuan" title="Tetapan" aria-haspopup="true" aria-expanded="false" aria-controls="mainMenu"><svg class="ic"><use href="#i-dots"/></svg></button>
@@ -240,6 +252,8 @@
               <button type="button" class="seg" data-km-theme="auto">Auto</button><button type="button" class="seg" data-km-theme="light">Cerah</button><button type="button" class="seg" data-km-theme="dark">Gelap</button></div></div>
             <div class="km-row"><span>Saiz tulisan</span><div class="segmented small" role="group" aria-label="Saiz tulisan">
               <button type="button" class="seg" data-km-font="sm" aria-label="Kecil">A</button><button type="button" class="seg" data-km-font="md" aria-label="Biasa">A</button><button type="button" class="seg" data-km-font="lg" aria-label="Besar">A</button></div></div>
+            <div class="km-row"><span>Bahasa</span><div class="segmented small" role="group" aria-label="Bahasa" translate="no">
+              <button type="button" class="seg" data-bahasa="ms" lang="ms" aria-label="Bahasa Melayu">BM</button><button type="button" class="seg" data-bahasa="en" lang="en" aria-label="English">EN</button><button type="button" class="seg" data-bahasa="ar" lang="ar" aria-label="العربية">عربي</button></div></div>
           </div>
           <div class="km-group">
             <p class="km-label">Tetapan</p>
@@ -964,6 +978,7 @@
   <script src="js/sinema.js" defer></script>
   <script src="js/masa-depan.js" defer></script>
   <script src="js/pameran.js" defer></script>
+  <script src="js/bahasa.js" defer></script>
   <div class="azan-bar hidden" id="azanBar" role="status" aria-live="polite">
     <svg class="ic"><use href="#i-volume"/></svg><span id="azanBarText">Azan sedang berbunyi</span>
     <button type="button" class="btn sm" id="azanStop"><svg class="ic"><use href="#i-pause"/></svg>Hentikan</button>
