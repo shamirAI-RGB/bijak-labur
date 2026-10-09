@@ -200,4 +200,10 @@
     requestAnimationFrame(langkah);
   }
   mula();
+  // Dikongsi dengan lapisan masa depan (js/masa-depan.js): pilih ciri, condong paralaks (giroskop), ciri semasa
+  window.Sinema = {
+    stage, ciri: CIRI.map(c => c.id), semasa: () => CIRI[cur] && CIRI[cur].id,
+    pilih: id => { const i = CIRI.findIndex(c => c.id === id); if (i >= 0) show(i); },
+    condong: (x, y) => { tx = x; ty = y; }
+  };
 })();

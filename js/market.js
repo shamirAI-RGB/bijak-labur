@@ -466,4 +466,6 @@
     if (!ws || ws.readyState > 1) connect();
     snapshot();
   });
+  // Harga terkini untuk HUD halaman utama (js/masa-depan.js)
+  window.Pasaran = { harga: s => data[s] ? { price: data[s].price, chg: data[s].chg } : null, simbol: () => syms.slice() };
 })();
