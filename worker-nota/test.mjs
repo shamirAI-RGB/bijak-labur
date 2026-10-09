@@ -1,6 +1,6 @@
 // Ujian pelayan nota tanpa rangkaian: node worker-nota/test.mjs
 import assert from 'node:assert/strict';
-import worker, { sha256, waNumber, price, sanitizeSettings, adUrl, sanitizeAd, live, mergeText, stockSyms, parseChart } from './src/index.js';
+import worker, { sha256, waNumber, price, sanitizeSettings, adUrl, sanitizeAd, live, mergeText, stockSyms, parseChart, sanitizeTanya, mimeTanya, TANYA_HARIAN } from './src/index.js';
 
 assert.equal(waNumber('010-254 6720'), '60102546720');
 assert.equal(waNumber('0176040973'), '60176040973');
@@ -162,6 +162,58 @@ assert.equal(r.status, 200);
 j = await (await call('/kandungan')).json(); assert.deepEqual(j.teks, { 'utama.lead': 'Teks baharu', 'nota.h1': 'Nota' });
 await call('/admin/kandungan', { method: 'PUT', body: JSON.stringify({ teks: { 'nota.h1': '' } }) }, KEY2);
 assert.deepEqual((await (await call('/kandungan')).json()).teks, { 'utama.lead': 'Teks baharu' });
+
+// Ruang Soalan: hantar ke e-mel
+assert.throws(() => sanitizeTanya({ teks: 'hai' }), /soalan/);
+assert.throws(() => sanitizeTanya({ teks: 'Soalan panjang', emel: 'bukan emel' }), /e-mel/);
+assert.throws(() => sanitizeTanya({ teks: 'Soalan panjang', emel: 'a@b.com\r\nBcc: x@y.com' }), /e-mel/);
+const sq = sanitizeTanya({ nama: 'Ali\r\nBcc: x@y.com', emel: 'ali@contoh.my', topik: 'Umum', teks: 'Baris satu\r\n\r\n\r\n\r\nBaris dua\u0007' });
+assert.equal(sq.nama, 'Ali  Bcc: x@y.com');
+assert.equal(sq.teks, 'Baris satu\n\nBaris dua');
+const raw = mimeTanya({ ...sq, nama: 'Siti "Aisyah" <x>', teks: 'Apa itu saham patuh syariah?' }, 'tanya@bijaklabur.my', 'pemilik@gmail.com', new Date('2026-10-09T05:00:00Z'));
+const [head, body] = raw.split('\r\n\r\n');
+assert.ok(!/^Bcc:/mi.test(head));
+assert.match(head, /^Reply-To: =\?UTF-8\?B\?[A-Za-z0-9+/=]+\?= <ali@contoh\.my>$/m);
+assert.match(head, /^Subject: \[Bijak Labur\] Umum: Apa itu saham patuh syariah\?$/m);
+const teksBadan = new TextDecoder().decode(Uint8Array.from(atob(body.replace(/\s/g, '')), c => c.charCodeAt(0)));
+assert.match(teksBadan, /Masa   : 2026-10-09 13:00 \(waktu Malaysia\)/);
+assert.match(teksBadan, /Apa itu saham patuh syariah\?/);
+assert.ok(body.split('\r\n').every(l => l.length <= 76));
+assert.match(mimeTanya({ ...sq, topik: 'Solat – ibadah' }, 'tanya@bijaklabur.my', 'p@gmail.com'), /^Subject: =\?UTF-8\?B\?/m);
+
+const tanyaBody = b => ({ method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) });
+const soalan = { nama: 'Ali', emel: 'ali@contoh.my', topik: 'Umum', teks: 'Bagaimana mula melabur?' };
+assert.equal((await call('/tanya', tanyaBody(soalan))).status, 503);   // belum disediakan
+const dihantar = [];
+env.EMEL = { send: async m => { if (m.to === 'gagal@gmail.com') throw new Error('x'); dihantar.push(m); } };
+env.TANYA_KE = 'pemilik@gmail.com';
+env.EmailMessage = class { constructor(from, to, raw) { Object.assign(this, { from, to, raw }); } };
+r = await call('/tanya', tanyaBody(soalan));
+assert.equal(r.status, 200);
+assert.equal(dihantar.length, 1);
+assert.equal(dihantar[0].from, 'tanya@bijaklabur.my');
+assert.equal(dihantar[0].to, 'pemilik@gmail.com');
+assert.match(dihantar[0].raw, /Reply-To: .*<ali@contoh\.my>/);
+// Asal asing ditolak
+r = await worker.fetch(new Request(B + '/tanya', { ...tanyaBody(soalan), headers: { Origin: 'https://jahat.example', 'Content-Type': 'application/json' } }), env);
+assert.equal(r.status, 403);
+// Medan perangkap: dibalas ok tetapi tidak dihantar
+assert.equal((await call('/tanya', tanyaBody({ ...soalan, laman: 'http://spam' }))).status, 200);
+assert.equal(dihantar.length, 1);
+assert.equal((await call('/tanya', tanyaBody({ teks: 'x' }))).status, 400);
+// Had kadar dan had harian
+env.TANYA_LIMIT = { limit: async () => ({ success: false }) };
+assert.equal((await call('/tanya', tanyaBody(soalan))).status, 429);
+delete env.TANYA_LIMIT;
+const hariIni = 'tanya:' + new Date(Date.now() + 8 * 3600e3).toISOString().slice(0, 10);
+assert.equal(await env.NOTA.get(hariIni), '1');
+await env.NOTA.put(hariIni, String(TANYA_HARIAN));
+assert.equal((await call('/tanya', tanyaBody(soalan))).status, 429);
+await env.NOTA.delete(hariIni);
+// Gagal hantar
+env.TANYA_KE = 'gagal@gmail.com';
+assert.equal((await call('/tanya', tanyaBody(soalan))).status, 502);
+delete env.EMEL; delete env.TANYA_KE; delete env.EmailMessage;
 
 // Tanpa KV
 assert.equal((await worker.fetch(new Request(B + '/notes'), {})).status, 503);

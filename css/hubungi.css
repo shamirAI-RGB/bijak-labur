@@ -1,0 +1,66 @@
+/* Butang WhatsApp terapung (js/hubungi.js) */
+.wa-fab {
+  --wa: #25d366; --wa-deep: #128c4b;
+  position: fixed; z-index: 35;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: calc(var(--tab-h) + 14px + env(safe-area-inset-bottom));
+  display: flex; flex-direction: column; align-items: flex-end; gap: 12px;
+  pointer-events: none;
+}
+.wa-fab > * { pointer-events: auto; }
+@media (min-width: 900px) { .wa-fab { right: 24px; bottom: 24px; } }
+/* Halaman yang sudah ada butang terapung sendiri atau peta skrin penuh */
+[data-view="komuniti"] .wa-fab, [data-view="jejak"] .wa-fab { display: none; }
+@media print { .wa-fab { display: none; } }
+
+.wa-btn {
+  position: relative; width: 56px; height: 56px; border-radius: 50%; border: 0; padding: 0; cursor: pointer;
+  display: grid; place-items: center; color: #fff; background: var(--wa);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, .35) inset, 0 8px 22px -6px rgba(18, 140, 75, .55), 0 2px 5px rgba(0, 0, 0, .12);
+  transition: transform .18s ease, background-color .18s ease, box-shadow .18s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.wa-btn:hover { transform: translateY(-2px); background: #22c35e; }
+.wa-btn:active { transform: scale(.96); }
+.wa-btn:focus-visible { outline: 3px solid color-mix(in srgb, var(--wa) 45%, transparent); outline-offset: 3px; }
+.wa-btn .wa-logo { width: 29px; height: 29px; fill: currentColor; transition: transform .2s ease, opacity .2s ease; }
+.wa-btn .wa-x { position: absolute; width: 24px; height: 24px; opacity: 0; transform: rotate(-90deg); transition: transform .2s ease, opacity .2s ease; }
+.wa-fab.open .wa-btn { background: var(--wa-deep); }
+.wa-fab.open .wa-btn .wa-logo { opacity: 0; transform: rotate(90deg) scale(.6); }
+.wa-fab.open .wa-btn .wa-x { opacity: 1; transform: none; }
+
+.wa-pop {
+  width: min(300px, calc(100vw - 32px)); padding: 16px 12px 10px;
+  background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 18px;
+  box-shadow: 0 22px 50px -14px rgba(0, 0, 0, .3), 0 2px 6px rgba(0, 0, 0, .06);
+  transform-origin: bottom right; animation: wa-in .17s ease-out;
+}
+.wa-pop[hidden] { display: none; }
+@keyframes wa-in { from { opacity: 0; transform: translateY(6px) scale(.97); } to { opacity: 1; transform: none; } }
+.wa-pop-h { margin: 0 4px; font-family: var(--display, inherit); font-size: 1.12rem; font-weight: 600; letter-spacing: -0.01em; }
+.wa-pop-sub { margin: 2px 4px 10px; font-size: .84rem; color: var(--muted); }
+
+.wa-person {
+  display: flex; align-items: center; gap: 12px; padding: 9px 8px; border-radius: 12px;
+  color: var(--text); text-decoration: none;
+}
+.wa-person + .wa-person { margin-top: 2px; }
+.wa-person:hover, .wa-person:focus-visible { background: var(--surface-2); outline: none; }
+.wa-person img { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; object-position: 50% 18%; display: block; box-shadow: 0 0 0 2px var(--surface), 0 0 0 3.5px var(--wa); }
+.wa-person-t { display: grid; line-height: 1.25; min-width: 0; }
+.wa-person-t b { font-size: .98rem; }
+.wa-person-t small { font-size: .8rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.wa-go { width: 16px; height: 16px; margin-left: auto; color: var(--faint); flex: none; }
+.wa-person:hover .wa-go { color: var(--wa-deep); }
+
+.wa-alt {
+  display: flex; align-items: center; gap: 8px; margin: 8px 0 0; padding: 10px 8px 4px; border-top: 1px dashed var(--border);
+  font-size: .82rem; color: var(--muted); text-decoration: none;
+}
+.wa-alt .ic { width: 16px; height: 16px; flex: none; }
+.wa-alt:hover span { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .wa-btn, .wa-btn .wa-logo, .wa-btn .wa-x { transition: none; }
+  .wa-pop { animation: none; }
+}
