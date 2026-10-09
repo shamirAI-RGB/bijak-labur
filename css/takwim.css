@@ -176,3 +176,72 @@ input, select, textarea { border-radius: 2px !important; }
   .founders-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.6fr); }
   .founder { aspect-ratio: auto; min-height: 340px; min-width: 0; }
 }
+
+/* ---------- Kemas rupa (Oktober 2026) ---------- */
+/* Penanda tab aktif: langit.css memberi lebar tetap 52px dan translateX(-50%), jadi garis merah
+   tersasar ke kiri. Garis kini dipusatkan dengan left/right sahaja. */
+.tabbar a::before { top: -1.5px; left: 24%; right: 24%; width: auto; height: 3px; border-radius: 0; background: var(--ink-red); z-index: 1; transform: scaleX(.3); opacity: 0; }
+.tabbar a.active::before { transform: none; opacity: 1; }
+
+/* Footer selari dengan tepi kandungan */
+.site-footer { width: calc(100% - 32px); max-width: 1088px; padding-left: 0; padding-right: 0; }
+
+/* Butang "Dengar azan" ikut bentuk butang lain (segi empat) */
+.azan-uji { border-radius: 2px; border-color: var(--rule); }
+
+/* Pasaran: lencana Syariah kekal sebaris dengan simbol pada telefon */
+.home-mkt-head { flex-wrap: nowrap; min-width: 0; }
+.home-mkt-head .live { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; display: block; }
+.home-mkt-head .live::before { display: inline-block; margin-right: 6px; vertical-align: 1px; }
+.home-mkt-head .more { white-space: nowrap; flex: none; }
+@media (max-width: 480px) {
+  .qrow { grid-template-columns: 34px minmax(0, 1fr) 44px auto; gap: 10px; padding: 11px 12px; }
+  .spark { width: 44px; }
+  .q-right { min-width: 84px; }
+  .q-sym .sy { font-size: 0.62rem; padding: 0 6px; }
+}
+
+/* Pengasas: nama di bawah gambar seperti kapsyen majalah, bukan menindih wajah */
+.founder { aspect-ratio: auto; background: none; box-shadow: none; overflow: visible; min-height: 0; }
+.founder picture { display: block; }
+.founder img { aspect-ratio: 4 / 5; height: auto; }
+.founder figcaption { position: static; padding: 10px 0 0; background: none; color: var(--text); gap: 3px; }
+.founder figcaption span { color: var(--muted); opacity: 1; }
+.founder figcaption .founder-mail { color: var(--brand); }
+@media (max-width: 520px) { .founder figcaption { padding: 8px 0 0; } .founder figcaption b { font-size: 0.98rem; } }
+
+/* Ruang iklan: jalur leret pada telefon supaya empat kad kosong tidak memanjangkan halaman */
+@media (max-width: 899px) {
+  .home-grid { grid-template-columns: minmax(0, 1fr); }
+  .home-main, .ik-block { min-width: 0; }
+  .home-side { margin-top: 22px; }
+  .ik-grid { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(220px, 70%); overflow-x: auto; scroll-snap-type: x mandatory; margin: 0 -16px; padding: 0 16px 8px; scroll-padding-inline: 16px; scrollbar-width: thin; }
+  .ik-card { scroll-snap-align: start; }
+}
+
+/* Halaman utama (desktop): solat dan harga di atas sebelah-menyebelah, kemudian senarai alat
+   dan ruang iklan selebar halaman. Sebelum ini senarai alat memanjangkan lajur kiri sahaja dan
+   lajur kanan kosong separuh halaman. */
+@media (min-width: 900px) {
+  .home-main { display: contents; }
+  .home-grid { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); grid-template-areas: "solat side" "quick side" "list list" "iklan iklan"; grid-template-rows: auto 1fr; column-gap: 24px; }
+  .home-grid > .home-side { grid-area: side; }
+  .home-main > .prayer-card { grid-area: solat; }
+  .home-main > .quick-row { grid-area: quick; align-self: start; }
+  .home-main > .shortcut-row { grid-area: list; margin-top: 18px; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 28px; }
+  .home-main > .shortcut-row > .shortcut:first-child { grid-column: 1 / -1; }
+  .home-main > .ik-block { grid-area: iklan; }
+  .ik-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (min-width: 1100px) {
+  .home-main > .shortcut-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* Jalur cip yang boleh dileret: cip pertama sejajar dengan tepi kandungan, bukan tepi skrin */
+.chips { scroll-padding-inline: 16px; }
+
+/* Sihat: label makro di atas nilai pada telefon supaya ketiga-tiga kotak sama bentuk */
+@media (max-width: 759px) {
+  .sh-macro > div { flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 2px; padding-bottom: 16px; }
+  .sh-macro b { font-size: 1.1rem; }
+}
