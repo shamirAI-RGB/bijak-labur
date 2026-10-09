@@ -163,3 +163,7 @@
   .topbar .desk-nav a, .topbar .nav-more > summary, :root:not([data-theme="light"]) .topbar .desk-nav > a { padding: 7px 5px; font-size: .8rem; }
   .topbar #arahanBtn ~ .icon-btn, .topbar #akaunBtn, .bh-wrap, .topbar .tm-suis { margin-left: 4px; }
 }
+
+/* Penafian utama di kaki laman (arahan pemilik, 10 Oktober 2026) */
+.site-footer .kaki-amaran { color: var(--text); font-size: .92rem; }
+.site-footer .kaki-amaran b { font-weight: 700; }
