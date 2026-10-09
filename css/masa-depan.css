@@ -1,0 +1,117 @@
+/* Bijak Labur: lapisan masa depan (js/masa-depan.js). Dimuat selepas sinema.css.
+   Palet arahan, HUD hidup di pentas utama, aurora WebGL, kad condong 3D dan tanda ciri disyorkan. */
+
+/* ---------- Palet arahan ---------- */
+.md-palet {
+  position: fixed; inset: 0; z-index: 120; display: flex; align-items: flex-start; justify-content: center;
+  padding: clamp(12px, 12vh, 120px) 12px 12px; background: rgba(4, 5, 8, .55);
+  backdrop-filter: blur(14px) saturate(1.2); -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  animation: mdPudar .2s ease both;
+}
+.md-palet[hidden] { display: none; }
+html.md-buka { overflow: hidden; }
+.md-box {
+  width: min(680px, 100%); border-radius: 22px; overflow: hidden; color: #f3f2ee;
+  background: linear-gradient(180deg, rgba(28, 30, 38, .96), rgba(14, 15, 20, .98));
+  border: 1px solid rgba(255, 255, 255, .14);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, .6), 0 0 0 1px rgba(0, 0, 0, .4), inset 0 1px 0 rgba(255, 255, 255, .08);
+  animation: mdNaik .32s cubic-bezier(.22, 1, .36, 1) both;
+  font-family: "Schibsted Grotesk", var(--font);
+}
+.md-in { display: flex; align-items: center; gap: 10px; padding: 12px 14px 12px 18px; border-bottom: 1px solid rgba(255, 255, 255, .08); }
+.md-in > .ic { width: 20px; height: 20px; color: rgba(255, 255, 255, .6); flex: none; }
+.md-in input {
+  flex: 1; min-width: 0; height: 44px; border: 0; background: none; color: #fff; font: 500 1.08rem "Schibsted Grotesk", var(--font); outline: none; padding: 0;
+}
+.md-in input:focus { outline: none; box-shadow: none; border: 0; }
+.md-in input::placeholder { color: rgba(255, 255, 255, .42); }
+.md-mic, .md-tutup {
+  flex: none; width: 38px; height: 38px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, .14); background: rgba(255, 255, 255, .07);
+  color: #fff; display: grid; place-items: center; cursor: pointer; transition: background .2s, transform .15s;
+}
+.md-mic .ic, .md-tutup .ic { width: 17px; height: 17px; }
+.md-mic:hover, .md-tutup:hover { background: rgba(255, 255, 255, .16); }
+.md-mic[aria-pressed="true"] { background: #ff6b5b; border-color: #ff6b5b; color: #fff; animation: mdDenyut 1.2s ease-in-out infinite; }
+.md-dengar .md-in input::placeholder { color: #ffb3aa; }
+.md-hasil { list-style: none; margin: 0; padding: 8px; max-height: min(52vh, 440px); overflow-y: auto; }
+.md-hasil li {
+  display: grid; grid-template-columns: 22px 1fr auto; grid-template-areas: "ic t luar" "ic s luar"; column-gap: 12px; align-items: center;
+  padding: 10px 12px; border-radius: 12px; cursor: pointer; color: rgba(255, 255, 255, .88); transition: background .12s;
+}
+.md-hasil li > .ic { grid-area: ic; width: 20px; height: 20px; color: rgba(255, 255, 255, .62); }
+.md-hasil li .md-t { grid-area: t; font-weight: 650; font-size: .98rem; letter-spacing: -.01em; }
+.md-hasil li .md-s { grid-area: s; font-size: .8rem; color: rgba(255, 255, 255, .55); }
+.md-hasil li .md-luar { grid-area: luar; width: 14px; height: 14px; color: rgba(255, 255, 255, .4); }
+.md-hasil li[aria-selected="true"] { background: #f3f2ee; color: #07080b; }
+.md-hasil li[aria-selected="true"] > .ic, .md-hasil li[aria-selected="true"] .md-s, .md-hasil li[aria-selected="true"] .md-luar { color: rgba(7, 8, 11, .65); }
+.md-hasil li.md-ctx > .ic { color: #7fe3b9; }
+.md-hasil li.md-kira .md-t { font-size: 1.12rem; }
+.md-kaki { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; padding: 10px 16px 12px; border-top: 1px solid rgba(255, 255, 255, .08); font-size: .72rem; color: rgba(255, 255, 255, .5); }
+.md-kaki kbd { font: 600 .68rem ui-monospace, Menlo, monospace; padding: 2px 6px; margin-right: 3px; border-radius: 5px; background: rgba(255, 255, 255, .1); border: 1px solid rgba(255, 255, 255, .16); color: #fff; }
+.md-eg { margin-left: auto; }
+@media (max-width: 600px) { .md-palet { padding: 10px 8px; align-items: flex-start; } .md-eg { display: none; } .md-hasil { max-height: calc(100dvh - 190px); } }
+@keyframes mdPudar { from { opacity: 0; } }
+@keyframes mdNaik { from { opacity: 0; transform: translate3d(0, -14px, 0) scale(.98); } }
+@keyframes mdDenyut { 50% { box-shadow: 0 0 0 8px rgba(255, 107, 91, .25); } }
+
+/* ---------- HUD hidup di atas pentas utama ---------- */
+.md-hud { position: relative; z-index: 1; display: flex; gap: 8px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding: 2px 2px 10px; margin: 0 -2px; -webkit-mask-image: linear-gradient(90deg, #000 94%, transparent); mask-image: linear-gradient(90deg, #000 94%, transparent); }
+.md-hud::-webkit-scrollbar { display: none; }
+.md-chip {
+  flex: none; display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 12px 0 10px; border-radius: 999px;
+  color: rgba(255, 255, 255, .9); text-decoration: none; cursor: default; white-space: nowrap;
+  font: 600 .8rem "Schibsted Grotesk", var(--font); letter-spacing: -.005em;
+  background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 255, 255, .14);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  transition: background .25s, transform .3s cubic-bezier(.22, 1, .36, 1), border-color .25s;
+}
+.md-chip[hidden] { display: none; }
+.md-chip .ic { width: 15px; height: 15px; color: rgba(255, 255, 255, .7); }
+.md-chip b { font-weight: 700; color: #fff; }
+a.md-chip, button.md-chip { cursor: pointer; }
+a.md-chip:hover, button.md-chip:hover { background: rgba(255, 255, 255, .16); border-color: rgba(255, 255, 255, .3); }
+.md-solat.md-hampir { background: rgba(127, 227, 185, .16); border-color: rgba(127, 227, 185, .45); }
+.md-solat.md-hampir b { color: #7fe3b9; animation: mdKelip 1.4s ease-in-out infinite; }
+.md-kripto b { color: #7fe3b9; } .md-kripto b.turun { color: #ff8a7a; }
+.md-taklimat { padding-right: 14px; }
+.md-taklimat.on { background: #f3f2ee; color: #07080b; border-color: #f3f2ee; }
+.md-taklimat.on .ic { color: #07080b; }
+@keyframes mdKelip { 50% { opacity: .55; } }
+
+/* Ikon ciri yang disyorkan sekarang: titik bercahaya */
+.sn-ic.md-syor .sn-tile::after {
+  content: ""; position: absolute; top: -3px; right: -3px; width: 10px; height: 10px; border-radius: 50%;
+  background: #7fe3b9; box-shadow: 0 0 0 2px #07080b, 0 0 14px #7fe3b9; animation: mdKelip 1.6s ease-in-out infinite;
+}
+.sn-tile { position: relative; }
+
+/* ---------- Aurora WebGL ---------- */
+.md-aurora { position: absolute; inset: 0; z-index: -1; width: 100%; height: 100%; pointer-events: none; mix-blend-mode: screen; opacity: .62; }
+.sn-stage.md-ada-aurora .sn-layer.on { filter: saturate(.85) brightness(.92); }
+
+/* ---------- Kad condong 3D (tetikus sahaja) ---------- */
+@media (hover: hover) and (pointer: fine) {
+  :root:not([data-theme="light"]) a.card, :root:not([data-theme="light"]) .card.shortcut, :root:not([data-theme="light"]) .tool-card {
+    transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+    transition: transform .35s cubic-bezier(.22, 1, .36, 1), border-color .2s, background .2s, box-shadow .35s;
+    will-change: auto;
+  }
+  :root:not([data-theme="light"]) .md-condong { box-shadow: 0 18px 40px rgba(0, 0, 0, .45); border-color: rgba(255, 255, 255, .26) !important; z-index: 1; }
+  :root:not([data-theme="light"]) .md-condong::after { opacity: 1; }
+  :root:not([data-theme="light"]) a.card::after, :root:not([data-theme="light"]) .card.shortcut::after, :root:not([data-theme="light"]) .tool-card::after {
+    content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .3s;
+    background: radial-gradient(240px circle at var(--gx, 50%) var(--gy, 50%), rgba(255, 255, 255, .12), transparent 60%);
+  }
+  :root:not([data-theme="light"]) a.card, :root:not([data-theme="light"]) .card.shortcut, :root:not([data-theme="light"]) .tool-card { position: relative; }
+  .sn-btn, .md-chip { transform: perspective(600px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); }
+}
+
+/* Butang Arahan di bar atas: tema sembunyi lebih awal supaya bar muat di telefon kecil */
+@media (max-width: 559px) { .topbar #themeBtn { display: none; } }
+.topbar #arahanBtn { margin-left: auto; }
+.topbar #arahanBtn ~ .icon-btn { margin-left: 8px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .md-palet, .md-box { animation: none; }
+  .md-mic[aria-pressed="true"], .md-solat.md-hampir b, .sn-ic.md-syor .sn-tile::after { animation: none; }
+}

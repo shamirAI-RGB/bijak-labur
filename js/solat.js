@@ -583,4 +583,9 @@ WLY02|Wilayah Persekutuan|Labuan`.split('\n').map(l => { const [jakimCode, neger
     else if (p.day !== lastDay) { lastDay = p.day; dayOff = 0; renderToday(); renderMonth(); }
     else tick();
   }, 1000);
+  // Data untuk lapisan masa depan (js/masa-depan.js): waktu seterusnya, zon dan tarikh Hijri JAKIM hari ini
+  window.Solat = {
+    seterusnya: nextPrayer, zon: zoneInfo,
+    hijri: () => { const d = dayRow(0); return d && d.hijri ? hijriStr(d.hijri) : ''; }
+  };
 })();
