@@ -84,7 +84,10 @@ const isDark = () => {
   return t ? t === 'dark' : true;
 };
 function paintThemeIcon() {
-  $('#themeBtn use').setAttribute('href', isDark() ? '#i-sun' : '#i-moon');
+  // Suis Hitam/Putih di bar atas: aria-checked = gelap
+  const tb = $('#themeBtn');
+  tb.setAttribute('aria-checked', String(isDark()));
+  tb.setAttribute('aria-label', isDark() ? 'Tema gelap (tekan untuk putih)' : 'Tema putih (tekan untuk gelap)');
   const SB = plugin('StatusBar');
   if (SB) SB.setStyle({ style: isDark() ? 'DARK' : 'LIGHT' }).catch(() => {});
 }
