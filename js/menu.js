@@ -6,7 +6,8 @@
   });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') $$('details.nav-more[open]').forEach(d => { d.open = false; d.querySelector('summary').focus(); }); });
   const btn = $('#menuBtn'), menu = $('#mainMenu');
-  const WA = '60102546720';
+  const NOTA_API = (store.get('nota_api', '') || 'https://nota.bijaklabur.my').replace(/\/$/, '');
+  const EMEL = 'hello@bijaklabur.my';
 
   /* ---------- Saiz tulisan ---------- */
   const FONT = { sm: '93.75%', md: '', lg: '112.5%' };
@@ -135,7 +136,8 @@
 
   function render() {
     rendered = true;
-    const draft = store.get('soalanDraf', { nama: '', topik: TOPICS[0], teks: '' });
+    const draft = { nama: '', emel: '', topik: TOPICS[0], teks: '', ...store.get('soalanDraf', {}) };
+    const orang = window.Hubungi ? Hubungi.ORANG : [];
     root.innerHTML = `
       <div class="page-head">
         <p class="eyebrow">Bantuan</p>
@@ -149,42 +151,96 @@
         </div>
         <aside class="card sq-ask">
           <h2>Tanya kami</h2>
-          <p class="muted small">Soalan dihantar melalui WhatsApp kepada pengasas. Kami balas secepat mungkin.</p>
-          <form id="sqForm">
+          <p class="muted small">Soalan anda terus masuk ke e-mel pasukan Bijak Labur. Isi e-mel anda supaya kami boleh membalas.</p>
+          <form id="sqForm" novalidate>
             <div class="field"><label for="sqNama">Nama (pilihan)</label><input id="sqNama" maxlength="40" autocomplete="name" value="${esc(draft.nama)}"></div>
+            <div class="field"><label for="sqEmel">E-mel anda</label><input id="sqEmel" type="email" inputmode="email" maxlength="120" autocomplete="email" placeholder="nama@gmail.com" value="${esc(draft.emel)}"></div>
+            <div class="sq-perangkap" aria-hidden="true"><label for="sqLaman">Laman web</label><input id="sqLaman" tabindex="-1" autocomplete="off"></div>
             <div class="field"><label for="sqTopik">Topik</label><select id="sqTopik">${TOPICS.map(t => `<option ${t === draft.topik ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select></div>
             <div class="field"><label for="sqTeks">Soalan anda</label><textarea id="sqTeks" class="short" maxlength="1000" required placeholder="Tulis soalan anda di sini">${esc(draft.teks)}</textarea><p class="muted small sq-count"><span id="sqLen">${draft.teks.length}</span>/1000</p></div>
             <p class="err" id="sqErr" role="alert"></p>
-            <button class="btn block" type="submit">${icon('chat')}Hantar melalui WhatsApp</button>
-            <button class="btn ghost block sq-copy" type="button" id="sqCopy">${icon('copy')}Salin soalan</button>
+            <button class="btn block" type="submit" id="sqHantar">${icon('mail')}<span>Hantar ke e-mel kami</span></button>
+            <div class="sq-or"><span>atau WhatsApp</span></div>
+            <div class="sq-wa">${orang.map(o => `<button class="btn ghost" type="button" data-sq-wa="${esc(o.no)}">${Hubungi.LOGO}${esc(o.nama)}</button>`).join('')}</div>
+            <button class="link-btn sq-copy" type="button" id="sqCopy">${icon('copy')}Salin soalan</button>
           </form>
+          <div class="sq-done" id="sqDone" hidden role="status">
+            <span class="sq-done-ic">${icon('check')}</span>
+            <h3>Soalan diterima</h3>
+            <p class="muted small" id="sqDoneTeks"></p>
+            <button class="btn ghost" type="button" id="sqLagi">Tanya soalan lain</button>
+          </div>
           <p class="muted small sq-note">Jangan kongsi kata laluan, nombor kad atau maklumat peribadi sensitif dalam soalan.</p>
         </aside>
       </div>`;
   }
 
+  const EMEL_RE = /^[^\s@<>()",;:]{1,64}@[a-z0-9.-]{1,190}\.[a-z]{2,24}$/i;
   function message() {
-    const nama = $('#sqNama').value.trim(), topik = $('#sqTopik').value, teks = $('#sqTeks').value.trim();
-    return { teks, msg: `Salam Bijak Labur, saya ${nama || 'pengguna'} ada soalan.\n\nTopik: ${topik}\nSoalan: ${teks}\n\n(Dihantar dari bijaklabur.my)` };
+    const nama = $('#sqNama').value.trim(), emel = $('#sqEmel').value.trim(), topik = $('#sqTopik').value, teks = $('#sqTeks').value.trim();
+    return { nama, emel, topik, teks, msg: `Salam Bijak Labur, saya ${nama || 'pengguna'} ada soalan.\n\nTopik: ${topik}\nSoalan: ${teks}\n\n(Dihantar dari bijaklabur.my)` };
+  }
+  const saveDraft = () => store.set('soalanDraf', { nama: $('#sqNama').value, emel: $('#sqEmel').value, topik: $('#sqTopik').value, teks: $('#sqTeks').value });
+  function clearQuestion() {
+    store.set('soalanDraf', { nama: $('#sqNama').value, emel: $('#sqEmel').value, topik: TOPICS[0], teks: '' });
+    $('#sqTeks').value = ''; $('#sqLen').textContent = '0'; $('#sqTopik').value = TOPICS[0];
+  }
+  // Soalan mesti ada sebelum dihantar ke mana-mana saluran
+  function check(m) {
+    if (m.teks.length < 5) { $('#sqErr').textContent = 'Tulis soalan anda dahulu.'; $('#sqTeks').focus(); return false; }
+    $('#sqErr').textContent = '';
+    return true;
+  }
+  // Jika pelayan tidak dapat dihubungi, tawarkan aplikasi e-mel pengguna sebagai jalan lain
+  function fallback(m, why) {
+    const href = `mailto:${EMEL}?subject=${encodeURIComponent('[Bijak Labur] ' + m.topik)}&body=${encodeURIComponent(m.msg)}`;
+    $('#sqErr').innerHTML = `${esc(why)} <a href="${esc(href)}">Hantar melalui aplikasi e-mel</a> ke ${EMEL}, atau pilih WhatsApp di bawah.`;
   }
   root.addEventListener('input', e => {
     if (e.target.id === 'sqFind') { $('#sqFaq').innerHTML = faqHtml(e.target.value.trim()); return; }
     if (e.target.id === 'sqTeks') $('#sqLen').textContent = e.target.value.length;
-    if (e.target.closest('#sqForm')) store.set('soalanDraf', { nama: $('#sqNama').value, topik: $('#sqTopik').value, teks: $('#sqTeks').value });
+    if (e.target.closest('#sqForm') && e.target.id !== 'sqLaman') saveDraft();
   });
-  root.addEventListener('change', e => { if (e.target.id === 'sqTopik') store.set('soalanDraf', { nama: $('#sqNama').value, topik: e.target.value, teks: $('#sqTeks').value }); });
-  root.addEventListener('submit', e => {
+  root.addEventListener('change', e => { if (e.target.id === 'sqTopik') saveDraft(); });
+  root.addEventListener('submit', async e => {
     if (e.target.id !== 'sqForm') return;
     e.preventDefault();
-    const { teks, msg } = message();
-    if (teks.length < 5) { $('#sqErr').textContent = 'Tulis soalan anda dahulu.'; $('#sqTeks').focus(); return; }
-    $('#sqErr').textContent = '';
-    window.open(`https://wa.me/${WA}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener');
-    store.set('soalanDraf', { nama: $('#sqNama').value, topik: TOPICS[0], teks: '' });
-    $('#sqTeks').value = ''; $('#sqLen').textContent = '0';
-    toast('WhatsApp dibuka. Tekan hantar di sana.', 3500);
+    const m = message(), b = $('#sqHantar');
+    if (!check(m) || b.disabled) return;
+    if (!m.emel) { $('#sqErr').textContent = 'Isi e-mel anda supaya kami boleh membalas. Jika tidak mahu, pilih WhatsApp di bawah.'; $('#sqEmel').focus(); return; }
+    if (!EMEL_RE.test(m.emel)) { $('#sqErr').textContent = 'Semak semula alamat e-mel anda.'; $('#sqEmel').focus(); return; }
+    b.disabled = true; b.lastElementChild.textContent = 'Menghantar...';
+    try {
+      const r = await fetch(NOTA_API + '/tanya', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nama: m.nama, emel: m.emel, topik: m.topik, teks: m.teks, sumber: Native ? 'app' : 'web', laman: $('#sqLaman').value })
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        if (r.status === 400 || r.status === 429) $('#sqErr').textContent = j.error || 'Soalan tidak dapat dihantar.';
+        else fallback(m, 'Soalan tidak dapat dihantar sekarang.');
+        return;
+      }
+      clearQuestion();
+      $('#sqDoneTeks').textContent = `Terima kasih${m.nama ? ', ' + m.nama : ''}. Kami akan membalas ke ${m.emel}. Semak juga folder Spam atau Promosi.`;
+      $('#sqForm').hidden = true; $('#sqDone').hidden = false; $('#sqLagi').focus();
+    } catch {
+      fallback(m, 'Tiada sambungan internet atau pelayan tidak dapat dihubungi.');
+    } finally {
+      b.disabled = false; b.lastElementChild.textContent = 'Hantar ke e-mel kami';
+    }
   });
   root.addEventListener('click', async e => {
+    let b;
+    if ((b = e.target.closest('[data-sq-wa]'))) {
+      const m = message();
+      if (!check(m)) return;
+      window.open(Hubungi.waUrl(b.dataset.sqWa, m.msg), '_blank', 'noopener');
+      clearQuestion();
+      toast('WhatsApp dibuka. Tekan hantar di sana.', 3500);
+      return;
+    }
+    if (e.target.closest('#sqLagi')) { $('#sqDone').hidden = true; $('#sqForm').hidden = false; $('#sqTeks').focus(); return; }
     if (!e.target.closest('#sqCopy')) return;
     const { teks, msg } = message();
     if (!teks) { $('#sqErr').textContent = 'Tulis soalan anda dahulu.'; return; }

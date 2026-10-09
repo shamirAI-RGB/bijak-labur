@@ -35,9 +35,14 @@
  *   DELETE /admin/iklan/:n           kosongkan ruang
  *   PUT    /admin/kandungan          (JSON: { teks: { kunci: teks | null } }) gabung; null = kembali ke asal
  *
+ * Ruang Soalan (borang "Tanya kami"): soalan dihantar terus ke Gmail pengasas melalui Cloudflare Email Routing
+ *   POST /tanya                     (JSON: nama?, emel?, topik, teks, sumber?) -> { ok: true }
+ *   Hanya daripada asal yang dibenarkan; 3 soalan seminit bagi setiap IP dan 150 sehari secara keseluruhan.
+ *   Alamat penerima ialah rahsia TANYA_KE (bukan dalam repo); tanpa ikatan EMEL atau TANYA_KE -> 503.
+ *
  * Kunci KV: idx (senarai nota), f:<id> (fail), p:<id> (pratonton), cfg (tetapan), qr, owner (cincang kunci baru),
  *           dl:<token> (pautan pembeli, tamat sendiri), iklan (4 ruang), ig:<n> (gambar iklan),
- *           klik:<n>:<YYYY-MM> (kiraan klik), kandungan (teks laman)
+ *           klik:<n>:<YYYY-MM> (kiraan klik), kandungan (teks laman), tanya:<YYYY-MM-DD> (kiraan soalan)
  */
 
 export const MAX_FILE = 24 * 1024 * 1024;   // had nilai KV ialah 25 MiB
@@ -210,6 +215,77 @@ async function quote(s) {
   } catch { return null; }
 }
 
+/* ---------- Ruang Soalan ke e-mel ---------- */
+export const TANYA_HARIAN = 150;
+const EMEL_RE = /^[^\s@<>()",;:]{1,64}@[a-z0-9.-]{1,190}\.[a-z]{2,24}$/i;
+// Seperti clean(), tetapi baris baharu dikekalkan untuk badan soalan
+const cleanText = (v, max) => String(v ?? '').replace(/\r\n?/g, '\n').replace(/[\u0000-\u0009\u000b-\u001f\u007f]/g, ' ').replace(/\n{3,}/g, '\n\n').trim().slice(0, max);
+export function sanitizeTanya(b) {
+  if (!b || typeof b !== 'object') throw new HttpError(400, 'Permintaan tidak sah.');
+  const emel = clean(b.emel, 120);
+  if (emel && !EMEL_RE.test(emel)) throw new HttpError(400, 'Alamat e-mel tidak sah.');
+  const teks = cleanText(b.teks, 2000);
+  if (teks.length < 5) throw new HttpError(400, 'Tulis soalan anda dahulu.');
+  return { nama: clean(b.nama, 60), emel, topik: clean(b.topik, 40) || 'Umum', teks, sumber: b.sumber === 'app' ? 'app' : 'web' };
+}
+function b64(s) {
+  const bytes = new TextEncoder().encode(s);
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
+const hdr = s => /^[\x20-\x7e]*$/.test(s) ? s : `=?UTF-8?B?${b64(s)}?=`;
+/** Mesej MIME teks biasa (UTF-8, base64) untuk Cloudflare send_email */
+export function mimeTanya(q, from, to, now = new Date()) {
+  const masa = new Date(now.getTime() + 8 * 3600e3).toISOString().replace('T', ' ').slice(0, 16);
+  const ringkas = q.teks.replace(/\s+/g, ' ').slice(0, 60);
+  const badan = [
+    'Soalan baharu daripada Ruang Soalan bijaklabur.my', '',
+    `Nama   : ${q.nama || '(tidak dinyatakan)'}`,
+    `E-mel  : ${q.emel ? q.emel + ' (tekan Balas untuk menjawab terus)' : '(tidak dinyatakan, jadi soalan ini tidak boleh dibalas melalui e-mel)'}`,
+    `Topik  : ${q.topik}`,
+    `Dari   : ${q.sumber === 'app' ? 'app telefon' : 'laman web'}`,
+    `Masa   : ${masa} (waktu Malaysia)`, '',
+    'Soalan:', q.teks, '',
+    '--', 'Dihantar oleh borang "Tanya kami" di https://bijaklabur.my/#soalan'
+  ].join('\r\n');
+  const lines = [
+    `From: ${hdr('Ruang Soalan Bijak Labur')} <${from}>`,
+    `To: <${to}>`,
+    ...(q.emel ? [`Reply-To: ${q.nama ? `=?UTF-8?B?${b64(q.nama)}?= ` : ''}<${q.emel}>`] : []),
+    `Subject: ${hdr(`[Bijak Labur] ${q.topik}: ${ringkas}`)}`,
+    `Date: ${now.toUTCString()}`,
+    `Message-ID: <${rid(16)}@${from.split('@')[1]}>`,
+    'MIME-Version: 1.0',
+    'Content-Type: text/plain; charset=utf-8',
+    'Content-Transfer-Encoding: base64',
+    '',
+    b64(badan).replace(/.{76}/g, '$&\r\n')
+  ];
+  return lines.join('\r\n');
+}
+async function tanya(req, env, h) {
+  if (!h['Access-Control-Allow-Origin']) throw new HttpError(403, 'Asal permintaan tidak dibenarkan.');
+  if (!env.EMEL || !env.TANYA_KE) throw new HttpError(503, 'Penghantaran e-mel belum disediakan.');
+  if (await limited(env.TANYA_LIMIT, ip(req))) throw new HttpError(429, 'Terlalu banyak soalan dalam masa singkat. Cuba lagi sebentar.');
+  const b = await req.json().catch(() => null);
+  if (b && b.laman) return json({ ok: true }, 200, h);   // medan perangkap: bot mengisi semua medan
+  const q = sanitizeTanya(b);
+  const k = 'tanya:' + new Date(Date.now() + 8 * 3600e3).toISOString().slice(0, 10);
+  const n = env.NOTA ? (+(await env.NOTA.get(k)) || 0) : 0;
+  if (n >= TANYA_HARIAN) throw new HttpError(429, 'Had soalan hari ini telah dicapai. Hubungi kami melalui WhatsApp atau cuba esok.');
+  const from = env.TANYA_DARI || 'tanya@bijaklabur.my';
+  try {
+    const EmailMessage = env.EmailMessage || (await import('cloudflare:email')).EmailMessage;
+    await env.EMEL.send(new EmailMessage(from, env.TANYA_KE, mimeTanya(q, from, env.TANYA_KE)));
+  } catch (err) {
+    console.error('tanya', err && err.message);
+    throw new HttpError(502, 'E-mel tidak dapat dihantar sekarang. Cuba lagi atau hubungi kami melalui WhatsApp.');
+  }
+  if (env.NOTA) try { await env.NOTA.put(k, String(n + 1), { expirationTtl: 3 * 86400 }); } catch {}
+  return json({ ok: true }, 200, h);
+}
+
 /* ---------- Laluan ---------- */
 async function handle(req, env, h) {
   const url = new URL(req.url);
@@ -226,6 +302,7 @@ async function handle(req, env, h) {
     if (!quotes.length) throw new HttpError(502, 'Harga saham tidak dapat diambil sekarang.');
     return json({ quotes }, 200, h, 'public, max-age=60');
   }
+  if (p === '/tanya' && M === 'POST') return tanya(req, env, h);
   if (!env.NOTA) throw new HttpError(503, 'Storan nota belum disediakan.');
 
   // Awam

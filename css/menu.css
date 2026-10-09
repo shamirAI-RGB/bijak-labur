@@ -49,7 +49,25 @@
 .sq-ask form { margin-top: 14px; }
 .sq-count { text-align: right; margin: 4px 0 0; }
 .sq-ask .btn .ic { width: 18px; height: 18px; }
-.sq-copy { margin-top: 8px; }
+.sq-copy { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; font-size: .84rem; color: var(--muted); }
+.sq-copy .ic { width: 15px; height: 15px; }
+.sq-copy:hover { color: var(--text); }
+.sq-perangkap { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+.sq-ask form { position: relative; }
+.sq-ask #sqErr a { color: inherit; font-weight: 650; text-decoration: underline; text-underline-offset: 2px; }
+.sq-or { display: flex; align-items: center; gap: 10px; margin: 14px 0 8px; font-size: .76rem; color: var(--faint); text-transform: uppercase; letter-spacing: .1em; }
+.sq-or::before, .sq-or::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+.sq-wa { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.sq-wa .btn { gap: 8px; }
+.sq-wa .wa-logo { width: 17px; height: 17px; fill: #128c4b; flex: none; }
+:root[data-theme="dark"] .sq-wa .wa-logo { fill: #25d366; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .sq-wa .wa-logo { fill: #25d366; } }
+.sq-done { text-align: center; padding: 18px 4px 6px; }
+.sq-done[hidden] { display: none; }
+.sq-done h3 { margin: 10px 0 4px; font-family: var(--display, inherit); font-size: 1.25rem; font-weight: 600; }
+.sq-done p { margin: 0 0 14px; }
+.sq-done-ic { display: inline-grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; background: var(--brand-soft); color: var(--brand); }
+.sq-done-ic .ic { width: 24px; height: 24px; }
 .sq-note { margin: 12px 0 0; }
 
 /* Dimuat selepas akaun.css supaya peraturan bar atas di sini menang.

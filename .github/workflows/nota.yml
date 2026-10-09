@@ -18,6 +18,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       HAS_CF: ${{ secrets.CLOUDFLARE_API_TOKEN != '' && secrets.CLOUDFLARE_ACCOUNT_ID != '' }}
+      # Gmail penerima soalan Ruang Soalan. Mesti alamat destinasi yang sudah disahkan dalam Cloudflare Email Routing.
+      HAS_TANYA: ${{ secrets.TANYA_EMEL != '' }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
@@ -40,10 +42,29 @@ jobs:
           fi
           if [ -z "$id" ] || [ "$id" = "null" ]; then echo "::error::Tidak dapat mencipta ruang nama KV. Pastikan token Cloudflare ada kebenaran Workers KV Storage: Edit."; exit 1; fi
           printf '\n[[kv_namespaces]]\nbinding = "NOTA"\nid = "%s"\n' "$id" >> worker-nota/wrangler.toml
+      # Ruang Soalan: pasang dengan ikatan e-mel dahulu jika rahsia TANYA_EMEL ada.
+      # Jika gagal (cth. alamat belum disahkan), pasang semula tanpa e-mel supaya kedai nota tidak terjejas.
+      - name: Pasang ke Cloudflare (domain + e-mel Ruang Soalan)
+        id: emel
+        if: github.ref == 'refs/heads/main' && env.HAS_CF == 'true' && env.HAS_TANYA == 'true'
+        continue-on-error: true
+        run: |
+          cp wrangler.toml wrangler.asal.toml
+          printf '\n[[send_email]]\nname = "EMEL"\n' >> wrangler.toml
+          npx -y wrangler@3 deploy
+          printf '%s' "$TANYA_KE" | npx -y wrangler@3 secret put TANYA_KE
+        working-directory: worker-nota
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          TANYA_KE: ${{ secrets.TANYA_EMEL }}
+      - name: Buang ikatan e-mel
+        if: steps.emel.outcome == 'failure'
+        run: cp worker-nota/wrangler.asal.toml worker-nota/wrangler.toml
       # Cuba dengan domain nota.bijaklabur.my dahulu; jika gagal, pasang ke alamat workers.dev sahaja.
       - name: Pasang ke Cloudflare (domain nota.bijaklabur.my)
         id: domain
-        if: github.ref == 'refs/heads/main' && env.HAS_CF == 'true'
+        if: github.ref == 'refs/heads/main' && env.HAS_CF == 'true' && steps.emel.outcome != 'success'
         continue-on-error: true
         uses: cloudflare/wrangler-action@9acf94ace14e7dc412b076f2c5c20b8ce93c79cd # v3.15.0
         with:
@@ -64,8 +85,15 @@ jobs:
         run: |
           if [ "$HAS_CF" != "true" ]; then
             echo "Rahsia CLOUDFLARE_API_TOKEN dan CLOUDFLARE_ACCOUNT_ID belum ditetapkan, jadi pelayan nota tidak dipasang." >> "$GITHUB_STEP_SUMMARY"
+          elif [ "${{ steps.emel.outcome }}" = "success" ]; then
+            echo "Pelayan nota dipasang di https://nota.bijaklabur.my dengan Ruang Soalan ke e-mel." >> "$GITHUB_STEP_SUMMARY"
           elif [ "${{ steps.domain.outcome }}" = "success" ]; then
             echo "Pelayan nota dipasang di https://nota.bijaklabur.my" >> "$GITHUB_STEP_SUMMARY"
+            if [ "$HAS_TANYA" != "true" ]; then
+              echo "Ruang Soalan ke e-mel belum aktif: tetapkan rahsia GitHub TANYA_EMEL (Gmail yang sudah disahkan dalam Cloudflare Email Routing)." >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "::warning::Ruang Soalan ke e-mel gagal dipasang. Pastikan TANYA_EMEL ialah alamat destinasi yang disahkan dalam Email Routing; lihat log langkah e-mel."
+            fi
           else
             echo "Domain nota.bijaklabur.my belum boleh digunakan. Pelayan dipasang di alamat workers.dev; lihat log langkah di atas untuk URL." >> "$GITHUB_STEP_SUMMARY"
           fi
