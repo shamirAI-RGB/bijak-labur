@@ -2,12 +2,12 @@
    jawapan dengan tahap pelajar. Dipaparkan sebagai tab pertama dalam halaman Belajar (lihat learn.js). */
 (function () {
   const API = (store.get('fiqh_api', '') || 'https://fiqh.bijaklabur.my').replace(/\/$/, '');
-  const TAHAP = [['beginner', 'Beginner', 'Tahap 1'], ['intermediate', 'Intermediate', 'Tahap 2'], ['professional', 'Professional', 'Tahap 3']];
+  const TAHAP = [['beginner', 'Pemula', 'Tahap 1'], ['intermediate', 'Pertengahan', 'Tahap 2'], ['professional', 'Profesional', 'Tahap 3']];
 
   // pel: pelajaran berkaitan dalam Belajar saham menggunakan Moomoo (id pelajaran dalam learn.js)
   const LALUAN = {
     moomoo: {
-      nama: 'Moomoo', ikon: 'chart', tajuk: 'Belajar Saham Menggunakan Moomoo',
+      nama: 'Moomoo', ikon: 'chart', tajuk: 'Belajar saham menggunakan Moomoo',
       tahap: {
         beginner: { tajuk: 'Asas Platform & Pengenalan Pelaburan', modul: [
           { c: 'Mula di Moomoo', d: 'Ketahui apa itu Moomoo dan kenapa ramai menggunakannya.', pel: ['m1'] },
@@ -26,7 +26,7 @@
       },
       coach: {
         persona: 'Pakar Dagangan Moomoo',
-        salam: "Hai! Saya AI Coach Moomoo anda. Jika anda 'Beginner', tanya saya cara tekan butang 'Buy'. Jika anda 'Pro', mari bincangkan tetapan VWAP.",
+        salam: "Hai! Saya AI Coach Moomoo anda. Jika anda pemula, tanya saya cara tekan butang 'Buy'. Jika anda sudah mahir, mari bincangkan tetapan VWAP.",
         ph: 'Tanya AI Coach (Cth: Macam mana nak set Stop-Loss?)...'
       }
     },
