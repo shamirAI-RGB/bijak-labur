@@ -23,6 +23,7 @@
  */
 
 // key: rahsia kunci; model: model lalai (kosong = mesti ditetapkan melalui <ID>_MODEL); vision: model gambar (pilihan)
+import { catatGuna } from './guna.js';
 export const PENYEDIA = [
   // Peringkat percuma (didahulukan)
   { id: 'groq', nama: 'Groq', key: 'GROQ_API_KEY', url: 'https://api.groq.com/openai/v1/chat/completions', model: 'llama-3.3-70b-versatile', vision: 'meta-llama/llama-4-maverick-17b-128e-instruct', percuma: true },
@@ -179,6 +180,7 @@ export async function penghalaGenerate(env, body) {
       }
       if (!r.ok) { console.log(`penghala ${p.id} ${r.status} ${r.text.slice(0, 200)}`); gagal(p.id, r.status, r.text); continue; }
       const d = JSON.parse(r.text);
+      catatGuna(env, { penyedia: p.id, model, usage: d.usage });
       const m = d.choices && d.choices[0] && d.choices[0].message;
       let text = String((m && m.content) || '');
       if (json) text = potongJson(text);

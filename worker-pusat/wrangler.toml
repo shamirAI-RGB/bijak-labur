@@ -1,0 +1,61 @@
+# Pusat Kawalan Bijak Labur (Cloudflare Workers + Durable Object SQLite, pelan percuma)
+# Pelawat langsung, penggunaan token AI setiap ciri, kesihatan perkhidmatan dan agen AI pemilik melalui Telegram.
+name = "bijak-labur-pusat"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+workers_dev = true
+
+# Domain tetap (zon bijaklabur.my dalam akaun Cloudflare yang sama)
+routes = [{ pattern = "pusat.bijaklabur.my", custom_domain = true }]
+
+[vars]
+ALLOWED_ORIGINS = "https://bijaklabur.my,https://www.bijaklabur.my,https://shamirai-rgb.github.io,capacitor://localhost,https://localhost"
+SITE_URL = "https://bijaklabur.my"
+REPO = "shamirAI-RGB/bijak-labur"
+# Anggaran kos (USD bagi setiap sejuta token) untuk penyedia berbayar sahaja. Gemini, penghala percuma dan Workers AI dikira RM0 (kuota percuma).
+# Ubah angka ini mengikut harga semasa model yang digunakan dalam worker-fiqh.
+KOS_CLAUDE_MASUK = "5"
+KOS_CLAUDE_KELUAR = "25"
+KADAR_MYR = "4.3"
+# Model agen Telegram jika ANTHROPIC_API_KEY ditetapkan (jika tidak, Gemini percuma digunakan)
+AGEN_MODEL = "claude-opus-5-5"
+AGEN_GEMINI_MODEL = "gemini-flash-latest"
+
+# Rahsia (ditetapkan oleh GitHub Actions melalui .github/workflows/pusat.yml, jangan tulis di sini):
+#   PUSAT_SECRET        kunci kongsi worker-fiqh -> /catat (wajib untuk kiraan token)
+#   TELEGRAM_BOT_TOKEN  token bot daripada @BotFather (wajib untuk agen Telegram)
+#   TELEGRAM_CHAT_ID    pilihan: id sembang pemilik. Jika tiada, pemilik berpasangan dengan "/mula <kunci pemilik>"
+#   ANTHROPIC_API_KEY   pilihan: agen dengan Claude. GEMINI_API_KEY: agen dengan Gemini percuma
+#   GH_TOKEN            pilihan: token GitHub (repo) untuk membuka issue "arahan" dan membaca Actions tanpa had kadar awam
+#   CF_ANALYTICS_TOKEN, CF_ACCOUNT_ID  pilihan: token Cloudflare "Account Analytics: Read" untuk penggunaan Workers
+
+[[durable_objects.bindings]]
+name = "PUSAT"
+class_name = "Pusat"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Pusat"]
+
+# Kunci pemilik disahkan melalui pelayan nota (sumber tunggal kunci Mod Pemilik)
+[[services]]
+binding = "NOTA_SVC"
+service = "bijak-labur-nota"
+
+# Setiap 15 minit: semak kesihatan perkhidmatan (amaran Telegram jika rosak). Jam 00:00 UTC (08:00 Malaysia): laporan harian.
+[triggers]
+crons = ["*/15 * * * *"]
+
+# Denyut pelawat: 40 seminit bagi setiap alamat IP (satu tab menghantar paling banyak 2 seminit)
+[[unsafe.bindings]]
+name = "DENYUT_LIMIT"
+type = "ratelimit"
+namespace_id = "5001"
+simple = { limit = 40, period = 60 }
+
+# Papan pemilik dan cubaan kunci: 60 seminit bagi setiap alamat IP
+[[unsafe.bindings]]
+name = "PAPAN_LIMIT"
+type = "ratelimit"
+namespace_id = "5002"
+simple = { limit = 60, period = 60 }

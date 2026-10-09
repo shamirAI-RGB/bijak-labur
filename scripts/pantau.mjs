@@ -75,6 +75,11 @@ await check('kritikal', 'Pelayan Premium, akaun, suara', async () => {
   const off = ['ok', 'tts', 'akaun'].filter(k => !d[k]);
   if (off.length) throw new Error(`tidak aktif: ${off.join(', ')}`);
 });
+await check('amaran', 'Pusat Kawalan (pelawat, token, Telegram)', async () => {
+  const d = await json('https://pusat.bijaklabur.my/', H);
+  if (!d.ok) throw new Error('tidak aktif');
+  return `agen: ${d.agen}${d.telegram ? ', Telegram aktif' : ', Telegram belum'}${d.catat ? '' : ', PUSAT_SECRET belum'}`;
+});
 await check('kritikal', 'Tanya AI / Semak / Kalori (fiqh)', async () => {
   const d = await json('https://fiqh.bijaklabur.my/', H);
   if (!d.ok || !d.ai) throw new Error('AI tidak aktif');
