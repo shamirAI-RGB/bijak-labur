@@ -1,5 +1,5 @@
 /* Rupa sinema: pentas ciri di atas halaman utama. Barisan ikon di atas; setiap ikon menukar latar
-   penuh (lukisan sendiri dalam images/jelajah), tajuk besar, penerangan, alamat dan panduan bertab.
+   penuh (lukisan sendiri dalam images/jelajah), tajuk besar, penerangan, dan panduan bertab.
    Tiada h2, .card atau .page-head di sini supaya kunci teks Mod Pemilik tidak beralih. */
 (function () {
   const home = $('#view-utama');
@@ -62,7 +62,6 @@
       <div class="sn-chips"><span class="sn-chip sn-chip-on" data-sn="jenis"></span><span class="sn-chip">Percuma</span></div>
       <p class="sn-title" data-sn="tajuk"></p>
       <p class="sn-desc" data-sn="desc"></p>
-      <div class="sn-cmd"><span class="sn-prompt" aria-hidden="true">›</span><code data-sn="url"></code><button type="button" class="sn-copy" aria-label="Salin pautan">${icon('copy')}</button></div>
       <div class="sn-acts">
         <a class="sn-btn sn-btn-main" data-sn="href" href="#">${icon('play')}<span>Buka</span></a>
         <button type="button" class="sn-btn" data-sn-guide>${icon('book')}<span>Lihat panduan</span></button>
@@ -82,13 +81,11 @@
   const layers = $$('.sn-layer', stage), btns = $$('.sn-ic', stage), guide = $('.sn-guide', stage);
   const reduce = matchMedia('(prefers-reduced-motion: reduce)');
   let cur = -1, top = 0, tab = 0;
-  const url = c => location.host ? location.host + location.pathname.replace(/index\.html$/, '') + c.href : 'bijaklabur.my/' + c.href;
 
   function fill(c) {
     $$('[data-sn="jenis"]', stage).forEach(e => { e.textContent = c.jenis; });
     $$('[data-sn="tajuk"]', stage).forEach(e => { e.textContent = c.tajuk; });
     $$('[data-sn="desc"]', stage).forEach(e => { e.textContent = c.desc; });
-    $('[data-sn="url"]', stage).textContent = url(c);
     $('[data-sn="href"]', stage).setAttribute('href', c.href);
     $('.sn-glyph', stage).innerHTML = icon(c.ic);
     $('.sn-g-ic', stage).innerHTML = icon(c.ic);
@@ -132,11 +129,6 @@
   stage.addEventListener('click', e => {
     const b = e.target.closest('.sn-ic');
     if (b) { show(btns.indexOf(b)); return; }
-    if (e.target.closest('.sn-copy')) {
-      const t = 'https://' + url(CIRI[cur]);
-      (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast('Pautan disalin'), () => toast(t));
-      return;
-    }
     if (e.target.closest('[data-sn-guide]')) { guide.hidden = false; stage.classList.add('panduan'); $('.sn-back', guide).focus(); return; }
     if (e.target.closest('[data-sn-close]')) { tutup(); return; }
     const t = e.target.closest('[data-sn-tab]');

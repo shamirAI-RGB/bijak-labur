@@ -135,15 +135,7 @@
 .sn-chip-on { background: #f3f2ee; color: #07080b; border-color: #f3f2ee; }
 .sn-title { margin: 12px 0 8px; font-size: clamp(2.5rem, 9vw, 4.4rem); font-weight: 800; letter-spacing: -0.045em; line-height: .95; color: #fff; text-shadow: 0 4px 30px rgba(0,0,0,.4); }
 .sn-desc { margin: 0 0 16px; color: rgba(255,255,255,.8); font-size: 1rem; line-height: 1.5; max-width: 46ch; }
-.sn-cmd {
-  display: flex; align-items: center; gap: 10px; max-width: 440px; padding: 8px 8px 8px 14px; border-radius: 12px;
-  background: rgba(0,0,0,.45); border: 1px solid rgba(255,255,255,.14); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-}
-.sn-prompt { color: var(--brand, #7fe3b9); font-weight: 800; }
-.sn-cmd code { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 .86rem ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: rgba(255,255,255,.9); background: none; padding: 0; }
-.sn-copy { flex: none; width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; cursor: pointer; color: #fff; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.14); }
-.sn-copy .ic { width: 16px; height: 16px; }
-.sn-acts { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+.sn-acts { display: flex; gap: 10px; margin-top: 6px; flex-wrap: wrap; }
 .sn-btn {
   display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 18px; border-radius: 999px; cursor: pointer;
   font: 700 .92rem "Schibsted Grotesk", var(--font); text-decoration: none; color: #fff;
