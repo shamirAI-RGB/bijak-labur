@@ -633,3 +633,14 @@ a.card:active, .shortcut:active, .tool-card:active { transform: translateY(0) sc
 .sy-row .sy-div label { display: grid; gap: 4px; font-size: .8rem; color: var(--muted); }
 .sy-row .sy-div input { width: 9.5rem; }
 .plan-grid > .plan:only-child { grid-column: 1 / -1; width: 100%; max-width: 460px; justify-self: center; }
+
+/* Senarai status Syariah dengan sebab (kripto dan saham) */
+.sy-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+.sy-why { padding: 10px 0; border-bottom: 1px solid var(--border); }
+.sy-why:last-child { border-bottom: 0; }
+.sy-why .sy-head { flex-wrap: wrap; gap: 6px; }
+.sy-why .sy-head .sy { margin-left: 0; }
+.sy-why p.small { margin: 2px 0 2px; }
+.sy-why .source { margin: 0; }
+.sy-card h4 { margin: 14px 0 2px; font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.sy-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; background: var(--c); }
