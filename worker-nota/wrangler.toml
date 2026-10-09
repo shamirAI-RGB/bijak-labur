@@ -11,7 +11,11 @@ routes = [{ pattern = "nota.bijaklabur.my", custom_domain = true }]
 ALLOWED_ORIGINS = "https://bijaklabur.my,https://www.bijaklabur.my,https://shamirai-rgb.github.io,capacitor://localhost,https://localhost"
 # Cincang SHA-256 kunci pemilik (bukan kunci itu sendiri). Kunci boleh ditukar dari ruang pemilik.
 OWNER_KEY_HASH = "ba63c8003b26e061933c6529ee7e103940ec510c1aa7aa6438f5ecf2e221d4ef"
+# Alamat pengirim soalan Ruang Soalan (domain bijaklabur.my yang menggunakan Cloudflare Email Routing)
+TANYA_DARI = "tanya@bijaklabur.my"
 
+# Ikatan e-mel EMEL ([[send_email]]) dan rahsia TANYA_KE (Gmail penerima) ditambah oleh nota.yml
+# hanya apabila rahsia GitHub TANYA_EMEL ditetapkan.
 # Ruang nama KV "bijak-labur-nota" dicipta dan diikat oleh .github/workflows/nota.yml semasa dipasang.
 
 # Ruang pemilik: 60 permintaan seminit bagi setiap alamat IP (mengehadkan cubaan meneka kunci)
@@ -34,3 +38,10 @@ name = "SAHAM_LIMIT"
 type = "ratelimit"
 namespace_id = "3003"
 simple = { limit = 30, period = 60 }
+
+# Ruang Soalan ke e-mel: 3 soalan seminit bagi setiap alamat IP
+[[unsafe.bindings]]
+name = "TANYA_LIMIT"
+type = "ratelimit"
+namespace_id = "3004"
+simple = { limit = 3, period = 60 }
