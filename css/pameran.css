@@ -1,0 +1,135 @@
+/* Bijak Labur: pameran gaya agensi di halaman utama (js/pameran.js). Dimuat selepas masa-depan.css. */
+
+/* ---------- Pada pentas ---------- */
+.xb-mark {
+  position: absolute; left: max(16px, calc(50vw - 544px)); right: 0; bottom: -0.22em; z-index: 0; pointer-events: none; overflow: hidden;
+  font: 800 clamp(80px, 13.5vw, 190px)/1 "Schibsted Grotesk", var(--font); letter-spacing: -0.05em; white-space: nowrap;
+  color: #fff; opacity: .07; -webkit-mask-image: linear-gradient(180deg, #000 55%, transparent); mask-image: linear-gradient(180deg, #000 55%, transparent);
+}
+.sn-stage { position: relative; }
+.xb-sosial { position: absolute; left: max(16px, calc(50vw - 544px)); bottom: 22px; z-index: 2; display: flex; gap: 8px; }
+.xb-sosial a, .xb-sosial button {
+  width: 36px; height: 36px; border-radius: 999px; display: grid; place-items: center; cursor: pointer; color: #fff;
+  background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.18); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  transition: background .2s, transform .2s;
+}
+.xb-sosial a:hover, .xb-sosial button:hover { background: rgba(255,255,255,.22); transform: translateY(-2px); }
+.xb-sosial .ic, .xb-sosial .wa-logo { width: 16px; height: 16px; }
+.xb-sosial .wa-logo { fill: currentColor; }
+.xb-petik {
+  position: absolute; right: max(16px, calc(50vw - 544px)); bottom: 22px; z-index: 2; width: 300px;
+  display: grid; grid-template-columns: 64px 1fr; grid-template-rows: auto auto; column-gap: 12px; align-items: center;
+  padding: 10px; border-radius: 16px; color: #fff;
+  background: rgba(20, 22, 28, .55); border: 1px solid rgba(255,255,255,.14); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 18px 40px rgba(0,0,0,.35);
+}
+.xb-petik-img { grid-row: 1 / 3; width: 64px; height: 64px; border-radius: 10px; background: #111 center / cover no-repeat; border: 1px solid rgba(255,255,255,.12); transition: background-image .4s; }
+.xb-petik-t { margin: 0; font: 500 .8rem/1.35 "Schibsted Grotesk", var(--font); color: rgba(255,255,255,.9); }
+.xb-petik-nav { display: flex; gap: 6px; justify-content: flex-end; margin-top: 6px; }
+.xb-petik-nav button { width: 26px; height: 26px; border-radius: 999px; border: 1px solid rgba(255,255,255,.2); background: rgba(255,255,255,.1); color: #fff; display: grid; place-items: center; cursor: pointer; }
+.xb-petik-nav button:hover { background: #f3f2ee; color: #07080b; }
+.xb-petik-nav .ic { width: 13px; height: 13px; }
+.xb-petik-nav [data-xb-prev] .ic { transform: rotate(180deg); }
+.sn-stage { padding-bottom: 92px; }
+@media (max-width: 899px) { .xb-petik { display: none; } .sn-stage { padding-bottom: 74px; } .xb-mark { font-size: clamp(72px, 19vw, 140px); } }
+
+
+/* ---------- Jalur putih ---------- */
+.xb {
+  --xb-ink: #121212; --xb-muted: #8a8a86; --xb-paper: #f5f4f0;
+  position: relative; width: 100vw; margin: -28px calc(50% - 50vw) 34px; padding: clamp(44px, 7vw, 96px) max(16px, calc(50vw - 544px));
+  background: var(--xb-paper); color: var(--xb-ink); font-family: "Schibsted Grotesk", var(--font);
+}
+.xb-bab { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: clamp(24px, 5vw, 64px); align-items: center; }
+.xb-kiri { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+.xb-no { font: 600 .78rem ui-monospace, Menlo, monospace; color: var(--xb-muted); letter-spacing: .08em; }
+.xb-kecil { margin: 0 0 clamp(28px, 6vw, 72px); max-width: 34ch; font-size: .82rem; line-height: 1.5; color: var(--xb-muted); }
+.xb-eyebrow { margin: 0; font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--xb-muted); }
+.xb-h { margin: 0 0 14px; font-size: clamp(1.9rem, 4.2vw, 3rem); font-weight: 500; letter-spacing: -0.03em; line-height: 1.08; max-width: 14ch; }
+.xb-pil {
+  display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 16px 0 18px; border-radius: 999px; text-decoration: none; cursor: pointer;
+  font: 600 .86rem "Schibsted Grotesk", var(--font); transition: transform .2s, background .2s;
+}
+.xb-pil .ic { width: 14px; height: 14px; }
+.xb-pil:hover { transform: translateY(-1px); }
+.xb-pil-gelap { background: var(--xb-ink); color: #fff; }
+.xb-pil-gelap:hover { background: #000; }
+.xb-pil-kaca { height: 36px; background: rgba(255,255,255,.14); color: #fff; border: 1px solid rgba(255,255,255,.25); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); font-size: .8rem; }
+
+.xb-kanan { min-width: 0; position: relative; }
+.xb-kad-track { display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; padding: 6px 2px 10px; margin: 0 -2px; }
+.xb-kad-track::-webkit-scrollbar { display: none; }
+.xb-kad-track:focus-visible { outline: 2px solid var(--xb-ink); outline-offset: 4px; border-radius: 12px; }
+.xb-kad {
+  position: relative; isolation: isolate; flex: 0 0 min(250px, 72vw); aspect-ratio: 3 / 4; scroll-snap-align: start; overflow: hidden;
+  display: flex; flex-direction: column; justify-content: flex-end; gap: 4px; padding: 18px; border-radius: 20px; color: #fff; text-decoration: none;
+  background: #0e0f13 var(--img) center / cover no-repeat; box-shadow: 0 20px 40px rgba(0,0,0,.18); transition: transform .5s cubic-bezier(.22, 1, .36, 1), box-shadow .5s, opacity .8s cubic-bezier(.22, 1, .36, 1), translate .8s cubic-bezier(.22, 1, .36, 1);
+}
+.xb-kad:nth-child(even) { transform: translateY(22px); }
+.xb-kad::before { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, rgba(0,0,0,.05) 30%, rgba(0,0,0,.78) 100%); }
+.xb-kad:hover { transform: translateY(-4px); box-shadow: 0 28px 50px rgba(0,0,0,.28); }
+.xb-kad:nth-child(even):hover { transform: translateY(18px); }
+.xb-kad[data-ciri="belajar"] { --img: url("../images/jelajah/belajar.svg"); }
+.xb-kad[data-ciri="pasaran"] { --img: url("../images/jelajah/pasaran.svg"); }
+.xb-kad[data-ciri="solat"] { --img: url("../images/jelajah/solat.svg"); }
+.xb-kad[data-ciri="jadual"] { --img: url("../images/jelajah/jadual.svg"); }
+.xb-kad-e { position: absolute; top: 16px; left: 18px; font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.75); }
+.xb-kad-t { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.02em; }
+.xb-kad-s { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.03em; line-height: 1; margin: 6px 0 2px; }
+.xb-kad-d { font-size: .78rem; line-height: 1.4; color: rgba(255,255,255,.78); margin-bottom: 10px; }
+.xb-arah { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
+.xb-arah button { width: 34px; height: 34px; border-radius: 999px; border: 1px solid rgba(0,0,0,.14); background: #fff; color: var(--xb-ink); display: grid; place-items: center; cursor: pointer; transition: background .2s, color .2s; }
+.xb-arah button:hover { background: var(--xb-ink); color: #fff; }
+.xb-arah .ic { width: 14px; height: 14px; }
+.xb-arah [data-xb-kad="-1"] .ic { transform: rotate(180deg); }
+
+.xb-kata { margin-top: clamp(56px, 9vw, 120px); display: grid; gap: clamp(26px, 4vw, 44px); }
+.xb-besar { margin: 0 auto; max-width: 30ch; text-align: center; font-size: clamp(1.25rem, 2.6vw, 1.9rem); font-weight: 400; letter-spacing: -0.02em; line-height: 1.3; color: var(--xb-muted); }
+.xb-besar b { font-weight: 600; color: var(--xb-ink); }
+.xb-dua { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 16px; align-items: stretch; }
+.xb-video {
+  position: relative; isolation: isolate; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; align-items: flex-start; gap: 4px;
+  min-height: 260px; padding: 22px; border: 0; border-radius: 22px; cursor: pointer; text-align: left; color: #fff;
+  background: #0b0c10 url("../images/jelajah/ibadah.svg") center / cover no-repeat; box-shadow: 0 24px 48px rgba(0,0,0,.2); font-family: inherit;
+}
+.xb-video::before { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, rgba(0,0,0,.1), rgba(0,0,0,.7)); }
+.xb-play {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -60%); width: 64px; height: 64px; border-radius: 999px; display: grid; place-items: center;
+  background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.35); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  transition: transform .4s cubic-bezier(.34, 1.56, .64, 1), background .2s;
+}
+.xb-play .ic { width: 24px; height: 24px; }
+.xb-video:hover .xb-play { transform: translate(-50%, -60%) scale(1.1); background: #f3f2ee; color: #07080b; }
+.xb-video.on .xb-play { background: #7fe3b9; color: #06110c; animation: xbDenyut 1.4s ease-in-out infinite; }
+.xb-video-t { font-size: 1.1rem; font-weight: 600; letter-spacing: -0.02em; }
+.xb-video-s { font-size: .8rem; color: rgba(255,255,255,.75); }
+@keyframes xbDenyut { 50% { box-shadow: 0 0 0 10px rgba(127, 227, 185, .25); } }
+.xb-saksi {
+  margin: 0; display: grid; grid-template-columns: 48px 1fr; grid-template-rows: auto 1fr auto; column-gap: 12px; row-gap: 10px; align-items: center;
+  padding: 22px; border-radius: 22px; background: #fff; border: 1px solid rgba(0,0,0,.08); box-shadow: 0 12px 30px rgba(0,0,0,.06);
+}
+.xb-saksi img { width: 48px; height: 60px; object-fit: cover; border-radius: 10px; }
+.xb-saksi figcaption { display: flex; flex-direction: column; }
+.xb-saksi figcaption b { font-size: 1rem; }
+.xb-saksi figcaption span { font-size: .76rem; color: var(--xb-muted); }
+.xb-saksi blockquote { grid-column: 1 / -1; margin: 0; font-size: .92rem; line-height: 1.5; color: #3a3a38; }
+.xb-saksi-link { grid-column: 1 / -1; display: inline-flex; align-items: center; gap: 4px; font-size: .8rem; font-weight: 600; color: var(--xb-ink); text-decoration: none; }
+.xb-saksi-link .ic { width: 13px; height: 13px; }
+
+/* Masuk perlahan */
+.xb-kiri, .xb-besar, .xb-video, .xb-saksi { transition: opacity .8s cubic-bezier(.22, 1, .36, 1), translate .8s cubic-bezier(.22, 1, .36, 1); }
+.xb-kiri, .xb-kad, .xb-besar, .xb-video, .xb-saksi { opacity: 0; translate: 0 22px; }
+.xb-kad:nth-child(2) { transition-delay: .08s; } .xb-kad:nth-child(3) { transition-delay: .16s; } .xb-kad:nth-child(4) { transition-delay: .24s; }
+.xb-saksi { transition-delay: .1s; }
+.nampak { opacity: 1; translate: 0 0; }
+
+@media (max-width: 899px) {
+  .xb-bab { grid-template-columns: 1fr; }
+  .xb-kad:nth-child(even), .xb-kad:nth-child(even):hover { transform: none; }
+  .xb-dua { grid-template-columns: 1fr; }
+  .xb-video { min-height: 220px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .xb-kiri, .xb-kad, .xb-besar, .xb-video, .xb-saksi { opacity: 1; translate: none; transition: none; }
+  .xb-video.on .xb-play { animation: none; }
+}
