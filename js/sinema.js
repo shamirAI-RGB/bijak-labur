@@ -109,14 +109,15 @@
   // Seperti menu konsol: barisan meluncur supaya ikon terpilih sentiasa di hujung kiri
   const track = $('.sn-track', stage);
   const ukur = () => btns.forEach(b => b.style.setProperty('--lbl', $('.sn-lbl', b).offsetWidth + 'px'));
-  function geser() {
-    const b = btns[cur]; if (!b) return;
+  function kedudukan(i = cur) {
+    const b = btns[i]; if (!b) return 0;
     // Kira kedudukan sasaran sendiri: offsetLeft masih membaca margin yang sedang beranimasi
     const w = b.offsetWidth, gap = parseFloat(getComputedStyle(track).columnGap) || 0;
     const lebar = btns.length * (w + gap) + (parseFloat(b.style.getPropertyValue('--lbl')) || 0) + 34;
     const max = Math.max(0, lebar - track.parentElement.clientWidth + 8);
-    track.style.transform = `translate3d(${-Math.min(cur * (w + gap), max)}px,0,0)`;
+    return -Math.min(i * (w + gap), max);
   }
+  function geser() { if (btns[cur]) track.style.transform = `translate3d(${kedudukan()}px,0,0)`; }
   addEventListener('resize', geser, { passive: true });
   if (document.fonts) document.fonts.ready.then(() => { ukur(); geser(); });
 
@@ -144,14 +145,41 @@
     else if (e.key === 'End') { e.preventDefault(); show(CIRI.length - 1, true); }
     else if (e.key === 'Enter' && e.target.closest('.sn-ic')) { e.preventDefault(); location.hash = CIRI[cur].href; }
   });
-  // Leret kiri atau kanan pada telefon
-  let x0 = null, y0 = 0;
-  stage.addEventListener('touchstart', e => { if (!guide.hidden) return; x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
-  stage.addEventListener('touchend', e => {
-    if (x0 === null) return;
-    const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null;
-    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) show(cur + (dx < 0 ? 1 : -1));
+  // Leret pada telefon: barisan ikon, tajuk dan latar mengikut jari semasa diseret (seperti menu konsol),
+  // kemudian melantun ke ciri seterusnya apabila dilepaskan, atau kembali jika leretan terlalu pendek
+  const body = $('.sn-body', stage), bgSeret = $('.sn-bg', stage);
+  let x0 = null, y0 = 0, seret = false, asasX = 0, xAkhir = 0, tAkhir = 0, laju = 0;
+  stage.addEventListener('touchstart', e => {
+    if (!guide.hidden || e.touches.length !== 1) return;
+    x0 = xAkhir = e.touches[0].clientX; y0 = e.touches[0].clientY; tAkhir = e.timeStamp; laju = 0; seret = false; asasX = kedudukan();
   }, { passive: true });
+  stage.addEventListener('touchmove', e => {
+    if (x0 === null) return;
+    const x = e.touches[0].clientX, dx = x - x0, dy = e.touches[0].clientY - y0;
+    if (!seret) {
+      if (Math.abs(dy) > 12 && Math.abs(dy) > Math.abs(dx)) { x0 = null; return; }   // tatal menegak biasa
+      if (Math.abs(dx) < 8) return;
+      seret = true; stage.classList.add('seret');
+    }
+    const dt = e.timeStamp - tAkhir; if (dt > 0) { laju = (x - xAkhir) / dt; xAkhir = x; tAkhir = e.timeStamp; }
+    // Tahanan getah di hujung senarai
+    const hujung = (cur === 0 && dx > 0) || (cur === CIRI.length - 1 && dx < 0);
+    track.style.transform = `translate3d(${(asasX + dx * (hujung ? .25 : .55)).toFixed(1)}px,0,0)`;
+    body.style.transform = `translate3d(${(dx * .4).toFixed(1)}px,0,0)`;
+    body.style.opacity = Math.max(.3, 1 - Math.abs(dx) / 360).toFixed(2);
+    bgSeret.style.setProperty('--seret', (dx * .12).toFixed(1) + 'px');
+  }, { passive: true });
+  function lepas(e) {
+    if (x0 === null) return;
+    const dx = (e.changedTouches && e.changedTouches.length ? e.changedTouches[0].clientX : xAkhir) - x0; x0 = null;
+    if (!seret) return;
+    seret = false; stage.classList.remove('seret');
+    body.style.transform = ''; body.style.opacity = ''; bgSeret.style.setProperty('--seret', '0px');
+    const jentik = Math.abs(laju) > .45 && Math.abs(dx) > 16;
+    if (Math.abs(dx) > 56 || jentik) show(cur + (dx < 0 ? 1 : -1)); else geser();
+  }
+  stage.addEventListener('touchend', lepas, { passive: true });
+  stage.addEventListener('touchcancel', lepas, { passive: true });
 
   // Muat semua latar sekali di belakang tabir supaya pertukaran tidak berkelip
   const pra = () => CIRI.forEach(c => { const im = new Image(); im.src = `images/jelajah/${c.id}.svg`; });
@@ -188,7 +216,7 @@
     const t = (now - t0) / 1000;
     const hx = tx || Math.sin(t / 7) * .25, hy = ty || Math.cos(t / 9) * .18;
     px += (hx - px) * .05; py += (hy - py) * .05;
-    bg.style.transform = `translate3d(${(-px * 22).toFixed(2)}px,${(-py * 16).toFixed(2)}px,0) scale(1.06)`;
+    bg.style.transform = `translate3d(calc(${(-px * 22).toFixed(2)}px + var(--seret, 0px)),${(-py * 16).toFixed(2)}px,0) scale(1.06)`;
     glyph.style.transform = `translate3d(${(px * 34).toFixed(2)}px,${(py * 26).toFixed(2)}px,0)`;
     cx.clearRect(0, 0, W, H);
     for (const z of Z) {
