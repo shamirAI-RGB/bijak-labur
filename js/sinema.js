@@ -54,9 +54,10 @@
   stage.innerHTML = `
     <div class="sn-bg" aria-hidden="true"><div class="sn-layer"></div><div class="sn-layer"></div></div>
     <div class="sn-glyph" aria-hidden="true"></div>
-    <div class="sn-icons" role="tablist" aria-label="Pilih ciri">
-      ${CIRI.map((c, i) => `<button type="button" role="tab" class="sn-ic" id="snt-${c.id}" aria-controls="sn-panel" aria-selected="${i === 0}" tabindex="${i === 0 ? 0 : -1}" title="${esc(c.tajuk)}">${icon(c.ic)}<span class="sr-only">${esc(c.tajuk)}</span></button>`).join('')}
-    </div>
+    <canvas class="sn-zarah" aria-hidden="true"></canvas>
+    <div class="sn-icons" role="tablist" aria-label="Pilih ciri"><div class="sn-track">
+      ${CIRI.map((c, i) => `<button type="button" role="tab" class="sn-ic" id="snt-${c.id}" aria-controls="sn-panel" aria-selected="${i === 0}" tabindex="${i === 0 ? 0 : -1}" title="${esc(c.tajuk)}"><span class="sn-tile">${icon(c.ic)}</span><span class="sn-lbl">${esc(c.tajuk)}</span></button>`).join('')}
+    </div></div>
     <div class="sn-body" id="sn-panel" role="tabpanel" aria-live="polite">
       <div class="sn-chips"><span class="sn-chip sn-chip-on" data-sn="jenis"></span><span class="sn-chip">Percuma</span></div>
       <p class="sn-title" data-sn="tajuk"></p>
@@ -102,11 +103,26 @@
     layers[top].classList.add('on'); layers[1 - top].classList.remove('on');
     stage.dataset.ciri = c.id;
     btns.forEach((b, k) => { const on = k === i; b.setAttribute('aria-selected', on); b.tabIndex = on ? 0 : -1; });
-    if (focus) btns[i].focus();
+    if (focus) btns[i].focus({ preventScroll: true });
+    geser();
     const body = $('.sn-body', stage);
     body.classList.remove('masuk'); void body.offsetWidth; body.classList.add('masuk');
     fill(c); tab = 0; paintTabs();
   }
+  // Seperti menu konsol: barisan meluncur supaya ikon terpilih sentiasa di hujung kiri
+  const track = $('.sn-track', stage);
+  const ukur = () => btns.forEach(b => b.style.setProperty('--lbl', $('.sn-lbl', b).offsetWidth + 'px'));
+  function geser() {
+    const b = btns[cur]; if (!b) return;
+    // Kira kedudukan sasaran sendiri: offsetLeft masih membaca margin yang sedang beranimasi
+    const w = b.offsetWidth, gap = parseFloat(getComputedStyle(track).columnGap) || 0;
+    const lebar = btns.length * (w + gap) + (parseFloat(b.style.getPropertyValue('--lbl')) || 0) + 34;
+    const max = Math.max(0, lebar - track.parentElement.clientWidth + 8);
+    track.style.transform = `translate3d(${-Math.min(cur * (w + gap), max)}px,0,0)`;
+  }
+  addEventListener('resize', geser, { passive: true });
+  if (document.fonts) document.fonts.ready.then(() => { ukur(); geser(); });
+
   function paintTabs() {
     const c = CIRI[cur];
     $('.sn-tabs', stage).innerHTML = c.tab.map((t, k) => `<button type="button" role="tab" class="sn-tab" aria-selected="${k === tab}" data-sn-tab="${k}">${esc(t[0])}</button>`).join('');
@@ -149,5 +165,47 @@
   const pra = () => CIRI.forEach(c => { const im = new Image(); im.src = `images/jelajah/${c.id}.svg`; });
   'requestIdleCallback' in window ? requestIdleCallback(pra) : setTimeout(pra, 1500);
   if (reduce.matches) stage.classList.add('tenang');
-  show(0);
+  ukur(); show(0);
+
+  // Latar bergerak perlahan ikut tetikus (paralaks) dan hanyut sendiri pada telefon
+  const bg = $('.sn-bg', stage), glyph = $('.sn-glyph', stage);
+  let tx = 0, ty = 0, px = 0, py = 0, nampak = true, jalan = false, t0 = performance.now();
+  stage.addEventListener('pointermove', e => {
+    if (e.pointerType !== 'mouse') return;
+    const r = stage.getBoundingClientRect();
+    tx = ((e.clientX - r.left) / r.width - .5); ty = ((e.clientY - r.top) / r.height - .5);
+  }, { passive: true });
+  stage.addEventListener('pointerleave', () => { tx = ty = 0; });
+
+  // Zarah cahaya terapung, dilukis dalam kanvas (berhenti apabila pentas tidak kelihatan)
+  const cv = $('.sn-zarah', stage), cx = cv.getContext('2d');
+  let Z = [], W = 0, H = 0, dpr = 1;
+  function saiz() {
+    dpr = Math.min(devicePixelRatio || 1, 2); W = stage.clientWidth; H = stage.clientHeight;
+    cv.width = W * dpr; cv.height = H * dpr; cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const n = Math.round(Math.min(46, W / 28));
+    Z = Array.from({ length: n }, () => ({ x: Math.random() * W, y: Math.random() * H, r: .6 + Math.random() * 1.8, v: .08 + Math.random() * .28, a: .15 + Math.random() * .45, f: Math.random() * 6.28 }));
+  }
+  saiz(); addEventListener('resize', saiz, { passive: true });
+  const mula = () => { if (!jalan && !reduce.matches) { jalan = true; requestAnimationFrame(langkah); } };
+  if ('IntersectionObserver' in window) new IntersectionObserver(es => { nampak = es[0].isIntersecting; mula(); }).observe(stage);
+  document.addEventListener('visibilitychange', mula);
+  document.addEventListener('viewchange', mula);
+  function langkah(now) {
+    if (!nampak || document.hidden || reduce.matches || !home.classList.contains('active')) { jalan = false; return; }
+    const t = (now - t0) / 1000;
+    const hx = tx || Math.sin(t / 7) * .25, hy = ty || Math.cos(t / 9) * .18;
+    px += (hx - px) * .05; py += (hy - py) * .05;
+    bg.style.transform = `translate3d(${(-px * 22).toFixed(2)}px,${(-py * 16).toFixed(2)}px,0) scale(1.06)`;
+    glyph.style.transform = `translate3d(${(px * 34).toFixed(2)}px,${(py * 26).toFixed(2)}px,0)`;
+    cx.clearRect(0, 0, W, H);
+    for (const z of Z) {
+      z.y -= z.v; z.x += Math.sin(t + z.f) * .15 - px * .2;
+      if (z.y < -6) { z.y = H + 6; z.x = Math.random() * W; }
+      cx.globalAlpha = z.a * (.6 + .4 * Math.sin(t * 1.3 + z.f));
+      cx.beginPath(); cx.arc(z.x, z.y, z.r, 0, 6.283); cx.fillStyle = '#fff'; cx.fill();
+    }
+    requestAnimationFrame(langkah);
+  }
+  mula();
 })();

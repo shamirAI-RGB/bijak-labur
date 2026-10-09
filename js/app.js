@@ -111,12 +111,18 @@ function route() {
   const v = (location.hash || '#utama').slice(1).split('/')[0];
   const name = VIEWS.includes(v) ? v : 'utama';
   if (location.hash === currentHash && name === currentView) return;
+  const tukarHalaman = name !== currentView && currentView !== null;
   currentView = name; currentHash = location.hash;
-  document.documentElement.dataset.view = name;
-  $$('.view').forEach(el => el.classList.toggle('active', el.id === 'view-' + name));
-  $$('[data-nav]').forEach(a => { const on = a.dataset.nav === name; a.classList.toggle('active', on); on ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'); });
-  window.scrollTo({ top: 0 });
-  document.dispatchEvent(new CustomEvent('viewchange', { detail: name }));
+  const pasang = () => {
+    document.documentElement.dataset.view = name;
+    $$('.view').forEach(el => el.classList.toggle('active', el.id === 'view-' + name));
+    $$('[data-nav]').forEach(a => { const on = a.dataset.nav === name; a.classList.toggle('active', on); on ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'); });
+    window.scrollTo({ top: 0 });
+    document.dispatchEvent(new CustomEvent('viewchange', { detail: name }));
+  };
+  // Peralihan halus antara halaman (css/sinema.css) jika pelayar menyokong View Transitions
+  if (tukarHalaman && document.startViewTransition && !matchMedia('(prefers-reduced-motion: reduce)').matches) document.startViewTransition(pasang);
+  else pasang();
 }
 window.addEventListener('hashchange', route);
 // Pautan langkau: fokus ke kandungan tanpa menukar hash (hash digunakan untuk navigasi)
