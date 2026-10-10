@@ -3,13 +3,18 @@
   <url>
     <loc>https://siswacap.my/</loc>
     <lastmod>2026-10-10</lastmod>
-    <image:image><image:loc>https://siswacap.my/images/og-bijaklabur.png</image:loc></image:image>
+    <image:image><image:loc>https://siswacap.my/images/og-siswacap.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://siswacap.my/tentang.html</loc>
     <lastmod>2026-10-10</lastmod>
     <image:image><image:loc>https://siswacap.my/images/pengasas/yusshamir.jpg</image:loc></image:image>
     <image:image><image:loc>https://siswacap.my/images/pengasas/wabil.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://siswacap.my/siswa.html</loc>
+    <lastmod>2026-10-10</lastmod>
+    <image:image><image:loc>https://siswacap.my/images/og-siswacap.png</image:loc></image:image>
   </url>
   <url><loc>https://siswacap.my/peta.html</loc><lastmod>2026-10-10</lastmod></url>
   <url><loc>https://siswacap.my/privacy.html</loc><lastmod>2026-10-10</lastmod></url>

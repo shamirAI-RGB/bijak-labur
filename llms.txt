@@ -10,6 +10,7 @@ SiswaCap (siswacap.my) is a free Malay-language website and app built by two UiT
 
 - [Laman utama](https://siswacap.my/): semua ciri dalam satu app
 - [Tentang SiswaCap dan pengasas](https://siswacap.my/tentang.html): pengasas, tujuan, ciri dan soalan lazim
+- [SiswaCap untuk siswa](https://siswacap.my/siswa.html): alat percuma untuk siswa dan pelajar universiti Malaysia, dengan soalan lazim
 - [Dasar privasi](https://siswacap.my/privacy.html)
 - [Terma penggunaan](https://siswacap.my/terma.html)
 
