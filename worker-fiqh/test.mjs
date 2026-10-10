@@ -387,6 +387,8 @@ assert.equal(d.status, 'tidak_pasti');
   assert.equal(tajukHtml(jm('Fatwa Tentang Hukum Menghisap Rokok')), 'Fatwa Tentang Hukum Menghisap Rokok');
   assert.equal(tajukHtml('<title>Bahagian Fatwa – Portal Rasmi Jabatan Mufti Negeri Kedah</title>'), 'Bahagian Fatwa');
   assert.equal(tajukHtml('<h1>Menu</h1><h1>Hukum Vape</h1>', t => t === 'Menu'), 'Hukum Vape');
+  // Sarawak: <h1>Irsyad</h1> (nama bahagian) diikuti tajuk irsyad sebenar
+  assert.equal(tajukHtml('<title>Irsyad - Laman Web Rasmi Jabatan Mufti Sarawak</title><h1>Irsyad</h1><h1>Solat jumaat</h1>'), 'Solat jumaat');
   assert.ok(!artikelOk('https://mufti.johor.gov.my/profil/bahagian-fatwa/', 'Bahagian Fatwa', HUKUM));
   assert.ok(!artikelOk('https://mufti.kelantan.gov.my/index.php?view=category&id=52', 'Privacy Policy', HUKUM));
   // PDF: muka surat pendek digabung, setiap bahagian memaut ke muka surat pertamanya

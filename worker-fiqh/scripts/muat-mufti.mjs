@@ -56,7 +56,9 @@ export const tanpaNamaLaman = t => {
   return b.join(' - ').trim();
 };
 // Tajuk umum (nama laman atau pautan "Lihat PDF") diganti dengan ayat pertama artikel atau nama fail
-export const tajukUmum = (t, laman = '') => !t || t === laman || /^privacy policy$|^dasar privasi:?$/i.test(t.trim()) || !/\p{L}{3}/u.test(t) || /^(lihat|muat ?turun|download|klik|baca|papar|view|buka)\b|^pdf$|^(jabatan|pejabat) mufti|^portal|^laman web|^https?:|bank soalan|borang pertanyaan/i.test(t.trim());
+export const tajukUmum = (t, laman = '') => !t || t === laman || /^privacy policy$|^dasar privasi:?$/i.test(t.trim()) || !/\p{L}{3}/u.test(t) || /^(lihat|muat ?turun|download|klik|baca|papar|view|buka)\b|^pdf$|^(jabatan|pejabat) mufti|^portal|^laman web|^https?:|bank soalan|borang pertanyaan/i.test(t.trim())
+  // Nama bahagian sahaja (cth. <title>Irsyad</title> pada setiap halaman irsyad Sarawak)
+  || /^(al[- ]?)?(irsyad|fatwa|soal jawab|artikel|berita|irsyad hukum|kemusykilan|penjelasan)$/i.test(t.trim());
 // Nama fail (atau segmen URL terakhir yang bermakna, cth. .../buku-himpunan-fatwa/file), dengan huruf besar CamelCase dipisahkan
 export const tajukFail = url => {
   const seg = String(url).split(/[?#]/)[0].split('/').map(x => { try { return decodeURIComponent(x); } catch { return x; } })
@@ -389,7 +391,7 @@ async function laman(m) {
         try {
           const teks = await teksPdf(r.buf);
           // Teks pautan seperti "Popular Buku Irsyad Fatwa" (label senarai muat turun) tanpa label di hadapan
-          let tajuk = (tajukUmum(teksPautan, tajukLaman) ? tajukFail(url) : teksPautan.replace(/^(popular|terkini|baharu|new|hot)\s+/i, '')).slice(0, 300);
+          let tajuk = (tajukUmum(teksPautan, tajukLaman) ? tajukFail(url) : teksPautan.replace(/^(popular|terkini|baharu|new|hot)\s+/i, '').replace(/\.pdf$/i, '')).slice(0, 300);
           // Nama fail tidak bermakna (cth. ".../FATWA/"): tajuk daripada muka surat pertama PDF
           if (tajuk.split(/\s+/).length < 2 || tajukUmum(tajuk)) tajuk = tajukTeks(teks.split('\f')[0]) || tajuk;
           if (artikelOk(url, tajuk, teks)) {
