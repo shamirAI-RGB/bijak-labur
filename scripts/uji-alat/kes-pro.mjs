@@ -134,7 +134,10 @@ export default [
     await bolehKlik(page, '#toolBack'); await bolehKlik(page, '#toolTitle');
     await tekan(page, '#pfForm button[type=submit]');
     await toastAda(t, /Lengkapkan simbol, kuantiti, kos dan harga/);
+    // Kuantiti negatif ditolak oleh semakan borang pelayar (min="0"); kuantiti sifar ditolak oleh app
     await t.isi('#pfSym', 'ETH'); await t.isi('#pfQty', '-2'); await t.isi('#pfCost', '3000');
+    if (await page.$eval('#pfQty', e => e.checkValidity())) throw new Error('Kuantiti negatif diterima oleh borang');
+    await t.isi('#pfQty', '0');
     await tekan(page, '#pfForm button[type=submit]');
     await toastAda(t, /Lengkapkan simbol/);
     await t.isi('#pfQty', '2'); await t.pilih('#pfCur', 'MYR');

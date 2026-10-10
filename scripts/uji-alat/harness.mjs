@@ -131,6 +131,11 @@ export async function mula({ fixture = [], env = {} } = {}) {
     page.on('console', m => { if (m.type() === 'error') page.konsol.push(m.text()); });
     await ctx.addInitScript(([st, prem]) => {
       try { for (const [k, v] of Object.entries(st)) localStorage.setItem(k, typeof v === 'string' ? v : JSON.stringify(v)); } catch {}
+      // Rekod setiap toast (hanya kelihatan beberapa saat) supaya semakan toast tidak bergantung pada kelajuan mesin
+      window.__toast = []; window.__toastSesi = Math.random();
+      new MutationObserver(ms => ms.forEach(m => m.target === document.body && m.addedNodes.forEach(n => {
+        if (n.classList && n.classList.contains('toast')) window.__toast.push(n.textContent || '');
+      }))).observe(document, { childList: true, subtree: true });
       // Premium dibuka untuk ujian alat Premium (lesen sebenar ditandatangani pelayan dan tidak boleh dijana di sini)
       if (prem) {
         // Premium diisytihar dengan const (bukan window.Premium), jadi dicapai melalui nama global
@@ -165,6 +170,17 @@ export async function mula({ fixture = [], env = {} } = {}) {
 
 /* ---------- Pembantu langkah ---------- */
 export function alat(page, base) {
+  // Toast yang muncul selepas toast terakhir yang disemak (atau semasa paparan) mesti sepadan
+  const adaToast = async (padan, ms) => {
+    const k = page.__toast || {};
+    const h = await page.waitForFunction(([src, fl, sesi, dari]) => {
+      const T = window.__toast || [], mula = window.__toastSesi === sesi ? dari : 0, re = new RegExp(src, fl);
+      const i = T.findIndex((x, j) => j >= mula && re.test(x));
+      return i >= 0 ? { sesi: window.__toastSesi, dari: i + 1 } : null;
+    }, [padan.source, padan.flags, k.sesi, k.dari || 0], { timeout: ms })
+      .catch(async () => { const T = await page.evaluate(() => window.__toast || []).catch(() => []); throw new Error(`.toast tidak sepadan ${padan}: ${T.length ? JSON.stringify(T.slice(-4)) : 'tiada toast'}`); });
+    page.__toast = await h.jsonValue();
+  };
   const t = {
     buka: async hash => { await page.goto(base + '/' + hash); await page.waitForLoadState('domcontentloaded'); await page.waitForTimeout(400); },
     isi: (sel, v) => page.fill(sel, v),
@@ -174,6 +190,7 @@ export function alat(page, base) {
     teks: async sel => (await page.textContent(sel)) || '',
     // Pastikan elemen wujud dan teksnya sepadan (regex atau panjang minimum)
     ada: async (sel, padan = /\S/, ms = 15000) => {
+      if (sel === '.toast') return adaToast(padan, ms);
       await page.waitForFunction(([s, src, fl]) => { const e = document.querySelector(s); return e && new RegExp(src, fl).test(e.textContent || ''); }, [sel, padan.source, padan.flags], { timeout: ms })
         .catch(async () => { const x = await page.$(sel); throw new Error(`${sel} ${x ? `tidak sepadan ${padan}: "${((await x.textContent()) || '').trim().slice(0, 160)}"` : 'tidak dijumpai'}`); });
     },

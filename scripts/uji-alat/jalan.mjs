@@ -13,16 +13,14 @@ const fail = readdirSync(DIR).filter(f => /^kes-.+\.mjs$/.test(f)).sort()
   .filter(f => !pilih.length || pilih.includes(f.slice(4, -4)));
 if (!fail.length) { console.error('Tiada fail kes sepadan:', pilih.join(' ')); process.exit(2); }
 
-const kes = [], fixture = [], env = {};
-for (const f of fail) {
-  const m = await import(pathToFileURL(join(DIR, f)));
-  kes.push(...m.default);
-  if (m.fixture) fixture.push(...m.fixture);
-  if (m.env) Object.assign(env, m.env);   // binding tambahan untuk worker-fiqh dalam proses
-}
 if (process.env.UJI_GAMBAR) mkdirSync(process.env.UJI_GAMBAR, { recursive: true });
 const t0 = Date.now();
-const hasil = await jalan(kes, { fixture, env });
+// Setiap fail kes dijalankan dengan data contoh (fixture) dan binding worker-fiqh (env) miliknya sahaja
+const hasil = [];
+for (const f of fail) {
+  const m = await import(pathToFileURL(join(DIR, f)));
+  hasil.push(...await jalan(m.default, { fixture: m.fixture || [], env: m.env || {} }));
+}
 const gagal = hasil.filter(r => !r.lulus);
 console.log(`\n${hasil.length - gagal.length}/${hasil.length} lulus dalam ${((Date.now() - t0) / 1000).toFixed(1)} s`);
 if (gagal.length) console.log('Gagal:\n' + gagal.map(r => `  - ${r.kumpulan} / ${r.nama}: ${r.ralat || r.pageerror.join(' | ')}`).join('\n'));

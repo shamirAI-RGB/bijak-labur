@@ -124,7 +124,7 @@ async function tiadaLimpahan(page) {
 
 /* Tetapkan jawapan model bagi tugas tertentu buat sementara (selebihnya kekal model palsu harness).
    Nilai: objek (JSON), rentetan (teks mentah), Response, atau fungsi (badan permintaan) -> nilai. */
-const GEMINI = 'https://generativelanguage.googleapis.com/';
+const API_MODEL = 'https://generativelanguage.googleapis.com/';
 function tugasDari(b) {
   const p = (b.generationConfig && b.generationConfig.responseSchema && b.generationConfig.responseSchema.properties) || {};
   if (p.transkrip) return 'transkrip';
@@ -141,7 +141,7 @@ async function denganModel(jawapan, fn) {
   const asal = globalThis.fetch, dipanggil = [];
   globalThis.fetch = async (u, init = {}) => {
     const url = String(u && u.url || u);
-    if (url.startsWith(GEMINI)) {
+    if (url.startsWith(API_MODEL)) {
       const b = JSON.parse(init.body || '{}'), tg = tugasDari(b);
       if (tg in jawapan) {
         dipanggil.push(tg);
