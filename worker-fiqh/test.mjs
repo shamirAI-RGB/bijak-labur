@@ -2,8 +2,8 @@
 import assert from 'node:assert/strict';
 import worker, { readJson, NOTA_PDF, kataKunci, verify, collectRetrieved, norm, normUrl, parseAnswer, MODEL, GEMINI_MODEL, GEMINI_FALLBACKS, DOMAINS } from './src/app.js';
 import { BY_ID, CORPUS_TEXT } from './src/corpus.js';
-import { MODEN, KITAB, MUFTI, DOC, buildIndex, muftiDocs, potong, search, expand, pageUrl, pagesText, tokens, cetakan, cetakPdf, assetTag } from './src/rujukan.js';
-import { robots, kandungan, tarikhHtml, tajukHtml, pautanHtml, KUNCI, ABAI } from './scripts/muat-mufti.mjs';
+import { MODEN, KITAB, MUFTI, DOC, buildIndex, muftiDocs, potong, bahagianPdf, search, expand, pageUrl, pagesText, tokens, cetakan, cetakPdf, assetTag } from './src/rujukan.js';
+import { robots, kandungan, tarikhHtml, tajukHtml, pautanHtml, artikelOk, tajukUmum, tajukFail, KUNCI, ABAI } from './scripts/muat-mufti.mjs';
 import { clean, semakBody, systemFor } from './src/semak.js';
 import { clean as cleanK, kaloriBody, check as checkK } from './src/kalori.js';
 import { blocked, check as checkG, promptBody, GAYA, FLUX } from './src/gambar.js';
@@ -321,10 +321,10 @@ assert.equal(d.status, 'tidak_pasti');
   assert.equal(MUFTI.length, 15);
   assert.equal(new Set(MUFTI.map(m => m.negeri)).size, 15);
   for (const n of ['Wilayah Persekutuan', 'Selangor', 'Sabah', 'Sarawak', 'Johor', 'Kelantan', 'Terengganu', 'Pulau Pinang', 'Negeri Sembilan']) assert.ok(MUFTI.some(m => m.negeri === n), n);
-  for (const m of MUFTI) { assert.ok(m.laman.every(u => /^https:\/\/[^/]+\.gov\.my\//.test(u)), m.k); assert.equal(DOC[m.k].jenis, 'mufti', m.k); }
+  for (const m of MUFTI) { assert.ok(m.laman.every(u => /^https?:\/\/[^/]+\.gov\.my\//.test(u)) && /^https:/.test(m.laman[0]), m.k); assert.equal(DOC[m.k].jenis, 'mufti', m.k); }
   // Kod laman tidak bertindih dengan kod dokumen moden atau kitab
   assert.equal(new Set([...MODEN, ...KITAB, ...MUFTI].map(d => d.k)).size, MODEN.length + KITAB.length + MUFTI.length);
-  assert.ok(DOMAINS.includes('mufti.sabah.gov.my') && DOMAINS.includes('muftisarawak.gov.my'));
+  assert.ok(DOMAINS.includes('mufti.sabah.gov.my') && DOMAINS.includes('muftinegeri.sarawak.gov.my'));
 
   // Pemuat turun: robots.txt, kandungan artikel tanpa menu, tajuk, tarikh dan pautan
   const rb = robots('User-agent: Googlebot\nDisallow: /\n\nUser-agent: *\nDisallow: /wp-admin/\nAllow: /wp-admin/admin-ajax.php\nDisallow: /*?s=\nSitemap: https://x.gov.my/peta.xml');
@@ -342,6 +342,22 @@ assert.equal(d.status, 'tidak_pasti');
   assert.deepEqual(pautanHtml('<a href="/irsyad-fatwa/1?utm_source=x#a">Irsyad <b>1</b></a><a href="mailto:x">m</a>', 'https://www.muftiwp.gov.my/ms/'), [{ url: 'https://www.muftiwp.gov.my/irsyad-fatwa/1', teks: 'Irsyad 1' }]);
   assert.ok(KUNCI.test('/artikel/irsyad-hukum/123') && KUNCI.test('Keputusan Fatwa') && !KUNCI.test('/hubungi-kami'));
   assert.ok(ABAI.test('https://x/a.jpg') && ABAI.test('https://x/tag/a') && !ABAI.test('https://x/irsyad/1'));
+  // Hanya artikel hukum: halaman profil, dasar privasi dan menu ditolak walaupun menyebut "fatwa"
+  const HUKUM = 'Soalan: Apakah hukum solat di atas kerusi? Jawapan: Hukumnya harus bagi yang uzur berdasarkan hadis dan pandangan ulama mazhab Syafie. Wallahu a\'lam. ' + 'Huraian. '.repeat(40);
+  const PROFIL = 'Jabatan Mufti ditubuhkan pada tahun 1990. Bahagian Fatwa menyediakan keputusan fatwa negeri. Visi kami menjadi peneraju. ' + 'Maklumat. '.repeat(40);
+  assert.ok(artikelOk('https://muftiperlis.gov.my/index.php/himpunan-fatwa-negeri/225-hukum-solat-di-atas-kerusi', 'Hukum Solat Di Atas Kerusi', HUKUM));
+  assert.ok(!artikelOk('https://mufti.johor.gov.my/profil/bahagian-fatwa/', 'Bahagian Fatwa', PROFIL));
+  assert.ok(!artikelOk('https://muftins.gov.my/dasar-privasi', 'Dasar Privasi', HUKUM));
+  assert.ok(!artikelOk('https://mufti.kedah.gov.my/', 'UTAMA', HUKUM));
+  assert.ok(artikelOk('https://x.gov.my/berita/123', 'Hukum Menyertai Program Hiburan', HUKUM));
+  assert.ok(!artikelOk('https://x.gov.my/a/1', 'Hukum', 'pendek'));
+  assert.ok(tajukUmum('Lihat PDF') && tajukUmum('Jabatan Mufti Negeri Selangor') && tajukUmum('Utama X', 'Utama X') && !tajukUmum('Hukum Vape'));
+  assert.equal(tajukFail('https://mufti.sabah.gov.my/wp-content/uploads/2026/07/Fatwa_Zakat_Penggajian.pdf'), 'Fatwa Zakat Penggajian');
+  // PDF: muka surat pendek digabung, setiap bahagian memaut ke muka surat pertamanya
+  assert.deepEqual(bahagianPdf('a\fb\f\fc', 3), [['a\nb', 1], ['c', 4]]);
+  // Muka surat 2 lebih panjang daripada satu bahagian: dipecah dua, kedua-duanya memaut ke muka surat 2
+  const pdfMf = muftiDocs({ sabah: [['https://mufti.sabah.gov.my/f.pdf', 'Fatwa Zakat', '', 'Fatwa zakat pendapatan.\f' + 'x '.repeat(2000) + '\fMuka surat tiga']] });
+  assert.deepEqual(JSON.parse(pdfMf.files.get('rujukan/m/sabah/0.json')).map(a => a[0]), ['https://mufti.sabah.gov.my/f.pdf#page=1', 'https://mufti.sabah.gov.my/f.pdf#page=2', 'https://mufti.sabah.gov.my/f.pdf#page=2', 'https://mufti.sabah.gov.my/f.pdf#page=3']);
 
   // Artikel dipecah di sempadan perenggan; setiap bahagian bermula dengan tajuk; artikel pendua diindeks sekali
   const panjang = Array.from({ length: 12 }, (_, i) => `Perenggan ${i} ` + 'huraian hukum '.repeat(30)).join('\n');

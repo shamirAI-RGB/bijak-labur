@@ -96,6 +96,22 @@ export function potong(teks, max = SEG) {
   if (t) out.push(t);
   return out;
 }
+/* PDF (muka surat dipisahkan dengan \f): muka surat pendek yang berturutan digabung; [teks, muka surat pertama] */
+export function bahagianPdf(teks, max = SEG) {
+  const out = [];
+  let cur = '', mula = 0;
+  const tolak = () => { if (cur) out.push([cur, mula]); cur = ''; };
+  String(teks).split('\f').forEach((t, i) => {
+    t = t.trim();
+    if (!t) return;
+    if (t.length > max) { tolak(); for (const b of potong(t, max)) out.push([b, i + 1]); return; }
+    if (cur && cur.length + t.length + 1 > max) tolak();
+    if (!cur) mula = i + 1;
+    cur = cur ? `${cur}\n${t}` : t;
+  });
+  tolak();
+  return out;
+}
 export function muftiDocs(laman) {
   const docs = {}, files = new Map();
   for (const [k, artikel] of Object.entries(laman)) {
@@ -105,7 +121,9 @@ export function muftiDocs(laman) {
       const cap = normText(String(teks).slice(0, 600));
       if (!url || !teks || ada.has(cap)) continue;
       ada.add(cap);
-      for (const b of potong(teks)) { pages.push(b.startsWith(tajuk) ? b : `${tajuk}\n${b}`); info.push([url, tajuk, tarikh || '']); }
+      // PDF: setiap bahagian memaut ke muka suratnya sendiri
+      const bahagian = String(teks).includes('\f') ? bahagianPdf(teks).map(([b, n]) => [b, `${url}#page=${n}`]) : potong(teks).map(b => [b, url]);
+      for (const [b, u] of bahagian) { pages.push(b.startsWith(tajuk) ? b : `${tajuk}\n${b}`); info.push([u, tajuk, tarikh || '']); }
     }
     if (!pages.length) continue;
     docs[k] = pages;
@@ -211,9 +229,10 @@ async function pilihMufti(env, list, skorModen) {
   await Promise.all([...info.keys()].map(async p => info.set(p, await assetJson(env, p))));
   const dulu = [], kemudian = [], url = new Set(), negeri = new Set();
   for (const x of calon) {
-    const a = (info.get(muftiPath(x.k, x.n)) || [])[(x.n - 1) % PAGES];
-    if (!a || url.has(a[0])) continue;
-    url.add(a[0]);
+    // Satu bahagian bagi setiap artikel (bahagian PDF berbeza hanya berbeza #page)
+    const a = (info.get(muftiPath(x.k, x.n)) || [])[(x.n - 1) % PAGES], asal = a && a[0].split('#')[0];
+    if (!a || url.has(asal)) continue;
+    url.add(asal);
     const y = { ...x, url: a[0], tajuk: a[1], tarikh: a[2] };
     (negeri.has(x.k) ? kemudian : (negeri.add(x.k), dulu)).push(y);
   }

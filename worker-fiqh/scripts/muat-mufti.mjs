@@ -17,17 +17,36 @@ import '../../js/fiqh-data.js';
 
 const MUFTI = globalThis.FiqhData.MUFTI;
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..'), CACHE = join(ROOT, '.cache', 'mufti');
-const VERSI = 1;
+const VERSI = 2;
 const UA = 'Mozilla/5.0 (compatible; SiswaCap-Fatwa/1.0; +https://siswacap.my/tentang.html)';
 const DEADLINE = Date.now() + (+process.env.MUFTI_MINIT || 20) * 60000;
 const SEKATAN = +process.env.MUFTI_HAD || 0;          // had halaman bagi setiap laman dalam satu larian (0 = tiada had)
-const PEKERJA = 2, JEDA = 400, MAX_BAIT = 8e6, MAX_TEKS = 60000, MAX_GILIRAN = 40000;
+const PEKERJA = 2, JEDA = 400, MAX_BAIT = 25e6, MAX_TEKS = 60000, MAX_TEKS_PDF = 400000, MAX_PDF = 300, MAX_GILIRAN = 40000;
 const masa = () => Date.now() < DEADLINE;
 const tidur = ms => new Promise(z => setTimeout(z, ms));
 const summary = s => process.env.GITHUB_STEP_SUMMARY ? appendFile(process.env.GITHUB_STEP_SUMMARY, s + '\n') : null;
 
 // URL, tajuk atau teks pautan yang berkaitan fatwa dan hukum didahulukan dan diikuti lebih jauh
 export const KUNCI = /fatwa|irsyad|bayan|kafi|tashih|musykil|soal|jawab|tanya|hukum|keputusan|muzakarah|warta|fiq[h]?|feqah|ibadah|ibadat|muamalat|munakahat|zakat|halal|haram|faraid|akidah|aqidah|syariah|risalah|isu|soalan|penjelasan|pandangan|bayanat|ijtihad|e-?smaf|q-?a\b/i;
+// Halaman korporat dan berita (bukan keputusan atau penjelasan hukum), dikenal pasti melalui URL atau tajuk
+export const TOLAK = /dasar[- ]?(privasi|keselamatan|web)|penafian|hak[- ]?cipta|notis|data[- ]?terbuka|sejarah[- ](jabatan|penubuhan|bangunan|ringkas|institusi|pejabat)|visi|misi|objektif|piagam|carta|organisasi|struktur|perkhidmatan|hubungi|lokasi|profil|pengurusan|bahagian[- ]|unit[- ]|kakitangan|direktori|navigation|soalan[- ]?lazim|\bfaq\b|tender|sebut[- ]?harga|jawatan|galeri|berita|pengumuman|aktiviti|program|lawatan|kursus|seminar|tauliah|takwim|pelan[- ]strategik|maklum[- ]?balas|aduan|peta[- ]laman|sitemap|mufti[- ](pertama|kedua|ketiga|keempat|kelima|keenam|ketujuh|kelapan)|senarai[- ]mufti|arkib[- ]berita|log[- ]?masuk/i;
+// Istilah hukum: artikel mesti mengandungi beberapa istilah berbeza (halaman profil hanya menyebut "fatwa" sekali-sekala)
+const ISTILAH = /\b(hukum|hukumnya|fatwa|haram|harus|wajib|sunat|sunnah|makruh|halal|sah|batal|dalil|al-?quran|hadis|hadith|ulama|mazhab|syarak|syariat|jawapan|soalan|wallahu|imam|firman|sabda|rasulullah|ijmak|qiyas|nas)\b/gi;
+export const istilah = t => new Set((String(t).slice(0, 6000).match(ISTILAH) || []).map(x => x.toLowerCase())).size;
+/** Artikel fatwa, irsyad atau soal jawab hukum (bukan halaman korporat, menu atau berita) */
+export function artikelOk(url, tajuk, teks) {
+  if (String(teks).length < 300) return false;
+  let path = url;
+  try { const u = new URL(url); path = decodeURIComponent(u.pathname + u.search); } catch {}
+  // Tajuk yang jelas tentang hukum (cth. "Hukum Menyertai Program ...") tidak ditolak walaupun URL di bawah "berita" atau "program"
+  if ((TOLAK.test(path + ' ' + tajuk) && !/hukum|fatwa|irsyad|soal|jawab|bayan|kafi|musykil|keputusan|pandangan/i.test(tajuk))
+    || /^(utama|laman utama|home|navigation|soalan lazim)$/i.test(String(tajuk).trim())) return false;
+  return istilah(teks) >= (KUNCI.test(path + ' ' + tajuk) ? 3 : 6);
+}
+// Tajuk umum (nama laman atau pautan "Lihat PDF") diganti dengan ayat pertama artikel atau nama fail
+export const tajukUmum = (t, laman = '') => !t || t === laman || /^(lihat|muat ?turun|download|klik|baca|papar|view|buka)\b|^pdf$|^(jabatan|pejabat) mufti|^portal|^laman web/i.test(t.trim());
+export const tajukFail = url => decodeURIComponent(String(url).split(/[?#]/)[0].split('/').pop()).replace(/\.pdf$/i, '').replace(/[-_+]+|%20/g, ' ').replace(/\s+/g, ' ').trim();
+const tajukTeks = teks => (String(teks).split('\n').map(x => x.trim()).find(x => x.length >= 15) || '').slice(0, 160);
 export const ABAI = /galeri|gallery|tender|sebut-?harga|jawatan-kosong|kerjaya|career|piagam|carta|organisasi|kakitangan|direktori|staff|login|wp-admin|wp-login|\/feed\/?$|\/tag\/|\/author\/|[?&](print|tmpl|format|share|replytocom)=|mailto:|javascript:|whatsapp|facebook\.com|twitter\.com|\.(jpe?g|png|gif|webp|svg|ico|css|js|zip|rar|docx?|xlsx?|pptx?|mp3|mp4|avi|mov|apk)(\?|$)/i;
 
 /* ---------- HTML ---------- */
@@ -91,6 +110,10 @@ export function tarikhHtml(html, teks = '') {
   return b ? iso(+b[3], +b[2], +b[1]) : '';
 }
 
+// Sesetengah laman meletakkan tarikh hari ini pada setiap halaman; tarikh itu bukan tarikh terbit artikel
+const HARI_INI = new Date().toISOString().slice(0, 10);
+const tarikhSah = t => t && t < HARI_INI ? t : '';
+
 export function pautanHtml(html, asas) {
   const out = [];
   for (const m of html.matchAll(/<a\b[^>]*?\bhref\s*=\s*(["'])(.*?)\1[^>]*>([\s\S]*?)<\/a>/gi)) {
@@ -148,16 +171,17 @@ async function ambil(url) {
   return { status: 0, error: 'gagal' };
 }
 
+// Teks setiap muka surat dipisahkan dengan \f, supaya Tanya AI boleh memaut ke muka surat yang dipetik (#page=N)
 async function teksPdf(buf) {
   const task = getDocument({ data: new Uint8Array(buf), useSystemFonts: true, isEvalSupported: false, verbosity: 0 }), pdf = await task.promise;
   const out = [];
-  for (let n = 1; n <= Math.min(pdf.numPages, 60); n++) {
+  for (let n = 1; n <= Math.min(pdf.numPages, MAX_PDF); n++) {
     const p = await pdf.getPage(n), tc = await p.getTextContent();
     out.push(tc.items.map(it => (it.str || '') + (it.hasEOL ? '\n' : ' ')).join('').replace(/[ \t]+/g, ' ').trim());
     p.cleanup();
   }
   await task.destroy();
-  return out.join('\n').replace(/\n{2,}/g, '\n').trim();
+  return out.map(t => t.replace(/\n{2,}/g, '\n')).join('\f');
 }
 
 /* ---------- satu laman ---------- */
@@ -184,8 +208,8 @@ async function laman(m) {
   const dalamLaman = u => { try { const h = new URL(u).hostname.replace(/^www\./, ''); return h === hos || h.endsWith('.' + hos); } catch { return false; } };
   lapor.laman = asas.origin;
   c.asas = asas.origin;
-  const tajukUtama = tajukHtml(utama.buf.toString('utf8'));
-  log(`tajuk: ${tajukUtama}`);
+  const tajukLaman = tajukHtml(utama.buf.toString('utf8'));
+  log(`tajuk: ${tajukLaman}`);
 
   // 2. robots.txt dan peta laman
   const rb = await ambil(`${asas.origin}/robots.txt`);
@@ -221,7 +245,7 @@ async function laman(m) {
   if (jenis.status === 200 && /json/.test(jenis.ct)) {
     let types = {};
     try { types = JSON.parse(jenis.buf.toString('utf8')); } catch {}
-    const bases = Object.values(types).map(t => t && t.rest_base).filter(b => b && !/^(attachment|media|wp_|nav_menu|menu-items|blocks|templates|template-parts|global-styles|font)/.test(b));
+    const bases = Object.values(types).map(t => t && t.rest_base).filter(b => b && !/^(attachment|media|wp_|nav_menu|menu-items|blocks|templates|template-parts|global-styles|font|navigation|e-floating|elementor|astra|pdfposter|staff|product|portfolio|project|direktori|senarai_mufti|gm_menu|falak)/.test(b));
     log(`WordPress: jenis kandungan ${bases.join(', ')}`);
     for (const b of bases) {
       for (let p = 1; p <= 200 && masa(); p++) {
@@ -232,11 +256,13 @@ async function laman(m) {
         if (!Array.isArray(list) || !list.length) break;
         let lama = 0;
         for (const x of list) {
-          const url = x.link, tajuk = teksHtml(x.title && x.title.rendered).slice(0, 300), teks = teksHtml(x.content && x.content.rendered);
-          if (!url || sudah.has(url)) { lama++; continue; }
-          dilawat[url] = 'a';
-          if (teks.length >= 300 && KUNCI.test(url + ' ' + tajuk + ' ' + teks.slice(0, 400))) {
-            c.artikel.push([url, tajuk, String(x.date || '').slice(0, 10), teks.slice(0, MAX_TEKS)]); sudah.add(url); dariWp++; lapor.baharu++;
+          const url = x.link, teks = teksHtml(x.content && x.content.rendered);
+          let tajuk = teksHtml(x.title && x.title.rendered).slice(0, 300);
+          if (!url || sudah.has(url) || url in dilawat) { lama++; continue; }
+          dilawat[url] = 's';
+          if (tajukUmum(tajuk)) tajuk = tajukTeks(teks);
+          if (artikelOk(url, tajuk, teks)) {
+            c.artikel.push([url, tajuk, tarikhSah(String(x.date || '').slice(0, 10)), teks.slice(0, MAX_TEKS)]); sudah.add(url); dilawat[url] = 'a'; dariWp++; lapor.baharu++;
           }
         }
         // Senarai disusun dari yang terbaharu: berhenti apabila satu halaman penuh sudah ada dalam cache
@@ -271,21 +297,24 @@ async function laman(m) {
         if (!KUNCI.test(url + ' ' + teksPautan)) continue;
         try {
           const teks = await teksPdf(r.buf);
-          if (teks.length >= 300) {
-            const tajuk = (teksPautan || decodeURIComponent(url.split('/').pop()).replace(/\.pdf.*$/i, '').replace(/[-_]+/g, ' ')).slice(0, 300);
-            c.artikel.push([url, tajuk, tarikhHtml('', teks), teks.slice(0, MAX_TEKS)]); sudah.add(url); dilawat[url] = 'a'; lapor.baharu++;
+          const tajuk = (tajukUmum(teksPautan, tajukLaman) ? tajukFail(url) : teksPautan).slice(0, 300);
+          if (artikelOk(url, tajuk, teks)) {
+            c.artikel.push([url, tajuk, tarikhSah(tarikhHtml('', teks)), teks.slice(0, MAX_TEKS_PDF)]); sudah.add(url); dilawat[url] = 'a'; lapor.baharu++;
           }
         } catch (e) { log(`PDF ${url}: ${e.message}`); }
         continue;
       }
       if (!/html/.test(r.ct)) { dilawat[url] = 'x'; continue; }
-      const html = r.buf.toString('utf8'), teks = kandungan(html), tajuk = tajukHtml(html);
+      const html = r.buf.toString('utf8'), teks = kandungan(html);
+      let tajuk = tajukHtml(html);
+      if (tajukUmum(tajuk, tajukLaman)) tajuk = tajukTeks(teks) || tajuk;
       const links = pautanHtml(html, r.url || url).filter(l => dalamLaman(l.url));
       const teksPautanSemua = links.reduce((n, l) => n + l.teks.length, 0);
       const berkaitan = KUNCI.test(url + ' ' + tajuk + ' ' + teks.slice(0, 400));
+      if (aras === 0) log(`halaman utama: ${links.length} pautan dalam laman${links.length < 5 ? `; contoh HTML: ${html.replace(/\s+/g, ' ').slice(0, 600)}` : ''}`);
       // Artikel: teks panjang yang bukan sekadar senarai pautan
-      if (teks.length >= 600 && berkaitan && teksPautanSemua < teks.length * 0.5) {
-        c.artikel.push([url, tajuk, tarikhHtml(html, teks), teks.slice(0, MAX_TEKS)]); sudah.add(url); dilawat[url] = 'a'; lapor.baharu++;
+      if (teks.length >= 600 && teksPautanSemua < teks.length * 0.5 && artikelOk(url, tajuk, teks)) {
+        c.artikel.push([url, tajuk, tarikhSah(tarikhHtml(html, teks)), teks.slice(0, MAX_TEKS)]); sudah.add(url); dilawat[url] = 'a'; lapor.baharu++;
       } else {
         dilawat[url] = 's';
         if (berkaitan && !senarai.has(url)) { senarai.add(url); c.senarai.push(url); }
