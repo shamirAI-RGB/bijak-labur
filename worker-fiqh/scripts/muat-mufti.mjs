@@ -67,17 +67,22 @@ export const tajukFail = url => {
 };
 // Baris pertama yang kelihatan seperti tajuk atau soalan (sekurang-kurangnya 4 perkataan), selain tajuk umum laman
 // Soalan (baris yang berakhir dengan "?") didahulukan; label seperti "Kategori Subjek :" dilangkau
+const SALAM = /^(wa?['‘’]?\s?alaikum|waalaikum|assalamu|as-salamu|bismillah|alhamdulillah|segala puji|terima kasih)|^(وعليكم|السلام|بسم الله|الحمد لله)/i;
 export const tajukTeks = (teks, umum = '') => {
-  const baris = String(teks).split('\n').map(x => x.trim()).slice(0, 25)
+  const semua = String(teks).split('\n').map(x => x.trim()).filter(Boolean).slice(0, 60);
+  const baris = semua.slice(0, 25)
     .filter(x => x.length >= 15 && x.length <= 300 && x.split(/\s+/).length >= 4 && x !== umum && !tajukUmum(x) && !/^(kategori|tarikh|oleh|sumber|penulis|dikemas ?kini|bilangan|no\.?)\b/i.test(x)
       // Salam dan pembuka jawapan (cth. "Waalaikumussalam ...", "وعليكم السلام ...") bukan tajuk
-      && !/^(wa?['‘’]?\s?alaikum|waalaikum|assalamu|as-salamu|bismillah|alhamdulillah|segala puji|terima kasih)|^(وعليكم|السلام|بسم الله|الحمد لله)/i.test(x));
-  let t = baris.find(x => x.endsWith('?')) || baris[0];
+      && !SALAM.test(x) && !/^(sorry|maaf)\b|failed to load|ajax error|contact your system administrator/i.test(x));
+  // Sistem soal jawab: baris selepas label "SOALAN :" / "PERSOALAN / SOALAN PEMOHON :" ialah soalan itu
+  const label = semua.findIndex(x => x.length < 60 && /^(persoalan|soalan)\b[^.?!]*:$/i.test(x));
+  const soalan = label >= 0 ? semua.slice(label + 1, label + 6).find(x => x.length >= 15 && !SALAM.test(x)) : '';
+  let t = soalan || baris.find(x => x.endsWith('?')) || baris[0];
   // Tiada baris pendek: ayat pertama perenggan pertama (cth. soalan panjang dalam sistem soal jawab)
-  if (!t) {
-    const p = String(teks).split('\n').map(x => x.trim()).slice(0, 25).find(x => x.length > 300 && x !== umum && !/^(وعليكم|السلام|بسم الله)/.test(x)) || '';
-    const ayat = p.match(/^.{20,200}?[?.!](?=\s|$)/);
-    t = ayat ? ayat[0] : p.length ? p.slice(0, 140).replace(/\s+\S*$/, '') + '…' : '';
+  if (!t) t = semua.slice(0, 25).find(x => x.length > 300 && x !== umum && !/^(وعليكم|السلام|بسم الله)/.test(x)) || '';
+  if (t.length > 200) {
+    const ayat = t.match(/^.{20,200}?[?.!](?=\s|$)/);
+    t = ayat ? ayat[0] : t.slice(0, 140).replace(/\s+\S*$/, '') + '…';
   }
   // "Assalamualaikum ustaz, saya ..." -> "Saya ..."
   t = t.replace(/^soalan\s*[:.-]\s*/i, '').replace(/^(as+alamu\s?['‘’]?\s?alaikum|salam sejahtera)[^,.!?]{0,40}[,.!]\s*/i, '');
@@ -249,7 +254,9 @@ async function laman(m) {
   if (!utama) { lapor.status = 'tidak dapat dicapai'; log('tidak dapat dicapai'); return lapor; }
   const asas = new URL(utama.url), hos = asas.hostname.replace(/^www\./, '');
   // Sistem fatwa atau soal jawab jabatan di hos lain (m.tambahan): hanya halaman di bawah folder alamat itu
-  const tambahan = (m.tambahan || []).map(u => new URL(u)).map(u => ({ url: u, hos: u.hostname.replace(/^www\./, ''), folder: u.pathname.replace(/[^/]*$/, '') }));
+  // m.fail: folder muat turun dokumen jabatan di hos lain (cth. PDF fatwa Sarawak di itibyan.sarawak.gov.my), tidak dibuka sebagai halaman mula
+  const hosLain = (senarai, mula) => (senarai || []).map(u => new URL(u)).map(u => ({ url: u, mula, hos: u.hostname.replace(/^www\./, ''), folder: u.pathname.replace(/[^/]*$/, '') }));
+  const tambahan = [...hosLain(m.tambahan, true), ...hosLain(m.fail, false)];
   // e-SMAF: hanya hos e-smaf (portal JAKIM yang lain sangat besar dan bukan fatwa)
   const dalamLaman = u => {
     try {
@@ -339,7 +346,7 @@ async function laman(m) {
 
   // 4. Carian luas: halaman utama, halaman senarai yang lalu, peta laman, kemudian baki giliran larian lepas
   tambah(asas.href, 0, '', true);
-  for (const t of tambahan) tambah(t.url.href, 0, '', true);
+  for (const t of tambahan) if (t.mula) tambah(t.url.href, 0, '', true);
   for (const [u, aras, teks] of tambahWp) tambah(u, aras, teks);
   for (const u of c.senarai.slice(-80)) tambah(u, 1, '', true);
   for (const [u, aras, teks] of c.giliran) tambah(u, aras, teks);
@@ -377,7 +384,9 @@ async function laman(m) {
         try {
           const teks = await teksPdf(r.buf);
           // Teks pautan seperti "Popular Buku Irsyad Fatwa" (label senarai muat turun) tanpa label di hadapan
-          const tajuk = (tajukUmum(teksPautan, tajukLaman) ? tajukFail(url) : teksPautan.replace(/^(popular|terkini|baharu|new|hot)\s+/i, '')).slice(0, 300);
+          let tajuk = (tajukUmum(teksPautan, tajukLaman) ? tajukFail(url) : teksPautan.replace(/^(popular|terkini|baharu|new|hot)\s+/i, '')).slice(0, 300);
+          // Nama fail tidak bermakna (cth. ".../FATWA/"): tajuk daripada muka surat pertama PDF
+          if (tajuk.split(/\s+/).length < 2 || tajukUmum(tajuk)) tajuk = tajukTeks(teks.split('\f')[0]) || tajuk;
           if (artikelOk(url, tajuk, teks)) {
             c.artikel.push([url, tajuk, tarikhSah(tarikhHtml('', teks)), teks.slice(0, MAX_TEKS_PDF)]); sudah.add(url); dilawat[url] = 'a'; lapor.baharu++;
           }

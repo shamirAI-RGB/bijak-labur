@@ -232,7 +232,7 @@ const FiqhData = (() => {
      setiap hari oleh pelayan Tanya AI (worker-fiqh/scripts/muat-mufti.mjs) supaya isu yang baru timbul dijawab dengan
      keputusan terkini. laman: alamat yang dicuba mengikut tertib; yang pertama berjaya digunakan. tambahan: sistem fatwa
      atau soal jawab jabatan yang sama di hos lain (hanya halaman di bawah folder alamat itu diambil), atau senarai yang
-     dimuat dengan AJAX (cth. Sarawak). */
+     dimuat dengan AJAX (cth. Sarawak). fail: folder dokumen (PDF) jabatan di hos lain yang dipaut dari senarai itu. */
   const MUFTI = [
     { k: 'esmaf', negeri: 'Kebangsaan', by: 'Portal Rasmi Fatwa Malaysia (e-SMAF), JAKIM', laman: ['https://e-smaf.islam.gov.my/e-smaf/', 'http://e-smaf.islam.gov.my/e-smaf/', 'https://www.e-fatwa.gov.my/', 'http://www.e-fatwa.gov.my/'] },
     { k: 'wp', negeri: 'Wilayah Persekutuan', by: 'Pejabat Mufti Wilayah Persekutuan', laman: ['https://www.muftiwp.gov.my/', 'https://muftiwp.gov.my/'] },
@@ -249,7 +249,8 @@ const FiqhData = (() => {
     { k: 'ppinang', negeri: 'Pulau Pinang', by: 'Jabatan Mufti Negeri Pulau Pinang', laman: ['https://mufti.penang.gov.my/'] },
     { k: 'sabah', negeri: 'Sabah', by: 'Jabatan Mufti Negeri Sabah', laman: ['https://mufti.sabah.gov.my/'] },
     { k: 'sarawak', negeri: 'Sarawak', by: 'Jabatan Mufti Negeri Sarawak', laman: ['https://muftinegeri.sarawak.gov.my/', 'http://muftinegeri.sarawak.gov.my/', 'https://jmns.sarawak.gov.my/'],
-      tambahan: ['https://muftinegeri.sarawak.gov.my/web/subpage/fatwa_list_ajax/', 'https://muftinegeri.sarawak.gov.my/web/subpage/irsyad_list_ajax/'] },
+      tambahan: ['https://muftinegeri.sarawak.gov.my/web/subpage/fatwa_list_ajax/', 'https://muftinegeri.sarawak.gov.my/web/subpage/irsyad_list_ajax/'],
+      fail: ['https://itibyan.sarawak.gov.my/web/itibyan/share/public_att_dl/'] },
     { k: 'terengganu', negeri: 'Terengganu', by: 'Jabatan Mufti Negeri Terengganu', laman: ['https://mufti.terengganu.gov.my/', 'https://www.mufti.terengganu.gov.my/'] }
   ];
 

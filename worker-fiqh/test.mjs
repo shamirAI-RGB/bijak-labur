@@ -324,7 +324,7 @@ assert.equal(d.status, 'tidak_pasti');
   for (const m of MUFTI) { assert.ok(m.laman.every(u => /^https?:\/\/[^/]+\.gov\.my\//.test(u)) && /^https:/.test(m.laman[0]), m.k); assert.equal(DOC[m.k].jenis, 'mufti', m.k); }
   // Kod laman tidak bertindih dengan kod dokumen moden atau kitab
   assert.equal(new Set([...MODEN, ...KITAB, ...MUFTI].map(d => d.k)).size, MODEN.length + KITAB.length + MUFTI.length);
-  assert.ok(DOMAINS.includes('mufti.sabah.gov.my') && DOMAINS.includes('muftinegeri.sarawak.gov.my') && DOMAINS.includes('ifatwa.kedah.gov.my') && DOMAINS.includes('said.johor.gov.my'));
+  assert.ok(DOMAINS.includes('mufti.sabah.gov.my') && DOMAINS.includes('muftinegeri.sarawak.gov.my') && DOMAINS.includes('ifatwa.kedah.gov.my') && DOMAINS.includes('said.johor.gov.my') && DOMAINS.includes('itibyan.sarawak.gov.my'));
 
   // Pemuat turun: robots.txt, kandungan artikel tanpa menu, tajuk, tarikh dan pautan
   const rb = robots('User-agent: Googlebot\nDisallow: /\n\nUser-agent: *\nDisallow: /wp-admin/\nAllow: /wp-admin/admin-ajax.php\nDisallow: /*?s=\nSitemap: https://x.gov.my/peta.xml');
@@ -370,6 +370,11 @@ assert.equal(d.status, 'tidak_pasti');
   assert.equal(tajukHtml('<meta property="og:title" content="Pengharaman Ajaran Qadiani | Jabatan Mufti Negeri Melaka">'), 'Pengharaman Ajaran Qadiani');
   assert.equal(tanpaNamaLaman('Hukum Solat - Panduan Ringkas'), 'Hukum Solat - Panduan Ringkas');
   assert.equal(tajukTeks('وعليكم السلام ورحمة الله وبركاته\nBolehkah taklik murtad dibatalkan sebelum dilanggar?\nJawapan...'), 'Bolehkah taklik murtad dibatalkan sebelum dilanggar?');
+  // Soal jawab Johor: menu di atas, soalan selepas label "PERSOALAN / SOALAN PEMOHON :"
+  const menu = Array.from({ length: 20 }, (_, i) => `Menu ${i}\n`).join('\n');
+  assert.equal(tajukTeks(menu + 'Perincian Soal Jawab Agama\nKATEGORI\nLain-lain\nPERSOALAN / SOALAN PEMOHON :\nAssalamualaikum WBT..\nSaya ingin minta pendapat. Boleh ke saya namakan anak lelaki saya dengan Akbar sahaja.\nTerima kasih.\nKEPUTUSAN / JAWAPAN :'), 'Saya ingin minta pendapat. Boleh ke saya namakan anak lelaki saya dengan Akbar sahaja.');
+  assert.equal(tajukTeks('Soalan Lazim\nHubungi kami di pejabat setiap hari bekerja\nHukum solat jamak ketika musafir jauh?'), 'Hukum solat jamak ketika musafir jauh?');
+  assert.equal(tajukTeks('AJAX Error\nSorry, failed to load required information. Please contact your system administrator.\nClose\nHukum Penggunaan Cadar Sutera Atas Faktor Kesihatan'), 'Hukum Penggunaan Cadar Sutera Atas Faktor Kesihatan');
   // Soalan panjang tanpa baris tajuk: ayat pertamanya
   assert.equal(tajukTeks('Al Irsyad\nAssalamualaikum ustaz, saya ingin bertanya tentang hukum menggunakan duit syarikat untuk urusan peribadi kerana terdesak. ' + 'Huraian lanjut soalan. '.repeat(20)), 'Saya ingin bertanya tentang hukum menggunakan duit syarikat untuk urusan peribadi kerana terdesak.');
   assert.equal(tajukTeks('Waalaikumussalam warahmatullahi wabarakatuh tuan.\nHukum menjual barang terpakai secara dalam talian adalah harus'), 'Hukum menjual barang terpakai secara dalam talian adalah harus');
