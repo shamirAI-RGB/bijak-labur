@@ -154,8 +154,11 @@ function route() {
     document.dispatchEvent(new CustomEvent('viewchange', { detail: name }));
   };
   // Peralihan halus antara halaman (css/sinema.css) jika pelayar menyokong View Transitions
-  if (tukarHalaman && document.startViewTransition && !matchMedia('(prefers-reduced-motion: reduce)').matches) document.startViewTransition(pasang);
-  else pasang();
+  // Navigasi pantas melangkau peralihan yang sedang berjalan ("Transition was skipped"): janji yang ditolak itu dijangka, bukan ralat
+  if (tukarHalaman && document.startViewTransition && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const vt = document.startViewTransition(pasang);
+    [vt.ready, vt.finished, vt.updateCallbackDone].forEach(p => p && p.catch(() => {}));
+  } else pasang();
 }
 window.addEventListener('hashchange', route);
 // Pautan langkau: fokus ke kandungan tanpa menukar hash (hash digunakan untuk navigasi)

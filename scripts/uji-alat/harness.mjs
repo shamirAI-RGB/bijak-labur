@@ -126,7 +126,8 @@ export async function mula({ fixture = [], env = {} } = {}) {
       const st = String(e.stack || '');
       // Kesan sampingan cangkuk Premium ujian (pelan tanpa lesen), bukan ralat sebenar
       if (premium && /statusHTML/.test(st)) return;
-      page.ralat.push(e.message); page.tindanan.push(st.split('\n').slice(0, 4).map(x => x.trim()).join(' <- '));
+      // Ralat tanpa tindanan (cth. DOMException daripada janji yang ditolak) dilaporkan dengan nama dan mesejnya
+      page.ralat.push(e.message || e.name || String(e)); page.tindanan.push(st.trim() ? st.split('\n').slice(0, 4).map(x => x.trim()).join(' <- ') : `${e.name || 'Error'}: ${e.message}`);
     });
     page.on('console', m => { if (m.type() === 'error') page.konsol.push(m.text()); });
     await ctx.addInitScript(([st, prem]) => {

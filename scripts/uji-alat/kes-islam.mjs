@@ -421,7 +421,9 @@ const KES = [
     await page.waitForFunction(() => location.hash === '#solat');
     await lompat(page, '#ibadah/tiada-panel');
     await page.waitForFunction(() => location.hash === '#ibadah');
-    pastikan(await page.$eval('#ibPanel', p => p.classList.contains('hidden')), 'Panel tidak disembunyikan');
+    // Paparan dikemas kini selepas peralihan halaman (View Transition) selesai, bukan serta-merta apabila hash berubah
+    await page.waitForFunction(() => document.querySelector('#ibPanel').classList.contains('hidden'), null, { timeout: 5000 })
+      .catch(() => pastikan(false, 'Panel tidak disembunyikan'));
     await tiadaLimpahan(page);
   } },
 
