@@ -324,7 +324,7 @@ assert.equal(d.status, 'tidak_pasti');
   for (const m of MUFTI) { assert.ok(m.laman.every(u => /^https?:\/\/[^/]+\.gov\.my\//.test(u)) && /^https:/.test(m.laman[0]), m.k); assert.equal(DOC[m.k].jenis, 'mufti', m.k); }
   // Kod laman tidak bertindih dengan kod dokumen moden atau kitab
   assert.equal(new Set([...MODEN, ...KITAB, ...MUFTI].map(d => d.k)).size, MODEN.length + KITAB.length + MUFTI.length);
-  assert.ok(DOMAINS.includes('mufti.sabah.gov.my') && DOMAINS.includes('muftinegeri.sarawak.gov.my'));
+  assert.ok(DOMAINS.includes('mufti.sabah.gov.my') && DOMAINS.includes('muftinegeri.sarawak.gov.my') && DOMAINS.includes('ifatwa.kedah.gov.my') && DOMAINS.includes('said.johor.gov.my'));
 
   // Pemuat turun: robots.txt, kandungan artikel tanpa menu, tajuk, tarikh dan pautan
   const rb = robots('User-agent: Googlebot\nDisallow: /\n\nUser-agent: *\nDisallow: /wp-admin/\nAllow: /wp-admin/admin-ajax.php\nDisallow: /*?s=\nSitemap: https://x.gov.my/peta.xml');
@@ -369,6 +369,8 @@ assert.equal(d.status, 'tidak_pasti');
   assert.ok(!artikelOk('https://mufti.kedah.gov.my/bahagian-fatwa/', 'Bahagian Fatwa', WARTA + ' Hukumnya haram.'));
   assert.equal(tajukHtml('<meta property="og:title" content="Pengharaman Ajaran Qadiani | Jabatan Mufti Negeri Melaka">'), 'Pengharaman Ajaran Qadiani');
   assert.equal(tanpaNamaLaman('Hukum Solat - Panduan Ringkas'), 'Hukum Solat - Panduan Ringkas');
+  assert.equal(tajukTeks('وعليكم السلام ورحمة الله وبركاته\nBolehkah taklik murtad dibatalkan sebelum dilanggar?\nJawapan...'), 'Bolehkah taklik murtad dibatalkan sebelum dilanggar?');
+  assert.equal(tajukTeks('Waalaikumussalam warahmatullahi wabarakatuh tuan.\nHukum menjual barang terpakai secara dalam talian adalah harus'), 'Hukum menjual barang terpakai secara dalam talian adalah harus');
   assert.equal(tajukFail('https://www.muftimelaka.gov.my/uploads/page_content/p61/FATWA23-KewajipanMembayarZakatPendapatan.pdf'), 'FATWA23 Kewajipan Membayar Zakat Pendapatan');
   // Tajuk: <title> tanpa nama laman; tajuk yang berulang pada banyak halaman (cth. "Privacy Policy" dalam modul) dilangkau
   const jm = t => `<html><head><title>${t} - Jabatan Mufti Negeri Kelantan</title></head><body><h1>Privacy Policy</h1><h1>${t}</h1></body></html>`;

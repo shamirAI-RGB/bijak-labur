@@ -69,7 +69,9 @@ export const tajukFail = url => {
 // Soalan (baris yang berakhir dengan "?") didahulukan; label seperti "Kategori Subjek :" dilangkau
 export const tajukTeks = (teks, umum = '') => {
   const baris = String(teks).split('\n').map(x => x.trim()).slice(0, 25)
-    .filter(x => x.length >= 15 && x.length <= 300 && x.split(/\s+/).length >= 4 && x !== umum && !tajukUmum(x) && !/^(kategori|tarikh|oleh|sumber|penulis|dikemas ?kini|bilangan|no\.?)\b/i.test(x));
+    .filter(x => x.length >= 15 && x.length <= 300 && x.split(/\s+/).length >= 4 && x !== umum && !tajukUmum(x) && !/^(kategori|tarikh|oleh|sumber|penulis|dikemas ?kini|bilangan|no\.?)\b/i.test(x)
+      // Salam dan pembuka jawapan (cth. "Waalaikumussalam ...", "وعليكم السلام ...") bukan tajuk
+      && !/^(wa?['‘’]?\s?alaikum|waalaikum|assalamu|as-salamu|bismillah|alhamdulillah|segala puji|terima kasih)|^(وعليكم|السلام|بسم الله|الحمد لله)/i.test(x));
   return (baris.find(x => x.endsWith('?')) || baris[0] || '').replace(/^soalan\s*[:.-]\s*/i, '').slice(0, 160);
 };
 export const ABAI = /galeri|gallery|tender|sebut-?harga|jawatan-kosong|kerjaya|career|piagam|carta|organisasi|kakitangan|direktori|staff|login|wp-admin|wp-login|\/feed\/?$|\/tag\/|\/author\/|[?&](print|tmpl|format|share|replytocom)=|mailto:|javascript:|whatsapp|facebook\.com|twitter\.com|\.(jpe?g|png|gif|webp|svg|ico|css|js|zip|rar|docx?|xlsx?|pptx?|mp3|mp4|avi|mov|apk)(\?|$)/i;
@@ -237,23 +239,37 @@ async function laman(m) {
   }
   if (!utama) { lapor.status = 'tidak dapat dicapai'; log('tidak dapat dicapai'); return lapor; }
   const asas = new URL(utama.url), hos = asas.hostname.replace(/^www\./, '');
+  // Sistem fatwa atau soal jawab jabatan di hos lain (m.tambahan): hanya halaman di bawah folder alamat itu
+  const tambahan = (m.tambahan || []).map(u => new URL(u)).map(u => ({ url: u, hos: u.hostname.replace(/^www\./, ''), folder: u.pathname.replace(/[^/]*$/, '') }));
   // e-SMAF: hanya hos e-smaf (portal JAKIM yang lain sangat besar dan bukan fatwa)
-  const dalamLaman = u => { try { const h = new URL(u).hostname.replace(/^www\./, ''); return h === hos || h.endsWith('.' + hos); } catch { return false; } };
+  const dalamLaman = u => {
+    try {
+      const x = new URL(u), h = x.hostname.replace(/^www\./, '');
+      return h === hos || h.endsWith('.' + hos) || tambahan.some(t => h === t.hos && x.pathname.startsWith(t.folder));
+    } catch { return false; }
+  };
   lapor.laman = asas.origin;
   c.asas = asas.origin;
   const tajukLaman = tajukHtml(utama.buf.toString('utf8'));
   log(`tajuk: ${tajukLaman}`);
 
   // 2. robots.txt dan peta laman
-  const rb = await ambil(`${asas.origin}/robots.txt`);
-  const peraturan = robots(rb.status === 200 && !/html/.test(rb.ct) ? rb.buf.toString('utf8') : '');
-  const jeda = Math.min(10000, Math.max(JEDA, peraturan.jeda * 1000));
-  log(`robots.txt: ${rb.status}; sitemap: ${peraturan.sitemaps.length}; jeda ${jeda} ms`);
+  // robots.txt bagi setiap hos (laman utama dan hos tambahan)
+  const aturan = new Map();
+  for (const o of [asas.origin, ...new Set(tambahan.map(t => t.url.origin))]) {
+    const rb = await ambil(`${o}/robots.txt`);
+    aturan.set(o, robots(rb.status === 200 && !/html/.test(rb.ct) ? rb.buf.toString('utf8') : ''));
+    log(`robots.txt ${o}: ${rb.status}; sitemap: ${aturan.get(o).sitemaps.length}; crawl-delay ${aturan.get(o).jeda}`);
+  }
+  const peraturan = aturan.get(asas.origin);
+  const boleh = u => { try { const a = aturan.get(new URL(u).origin); return a ? a.boleh(u) : peraturan.boleh(u); } catch { return false; } };
+  const jeda = Math.min(10000, Math.max(JEDA, ...[...aturan.values()].map(a => a.jeda * 1000)));
+  log(`jeda ${jeda} ms`);
   const dilawat = c.dilawat, sudah = new Set(c.artikel.map(a => a[0]));
   const giliran = [[], []];   // [keutamaan tinggi, biasa]
   const dalamGiliran = new Set();
   const tambah = (url, aras, teks = '', paksa = false) => {
-    if (!dalamLaman(url) || ABAI.test(url) || dalamGiliran.has(url) || (!paksa && url in dilawat) || !peraturan.boleh(url)) return;
+    if (!dalamLaman(url) || ABAI.test(url) || dalamGiliran.has(url) || (!paksa && url in dilawat) || !boleh(url)) return;
     if (dalamGiliran.size > MAX_GILIRAN) return;
     dalamGiliran.add(url);
     giliran[KUNCI.test(url + ' ' + teks) ? 0 : 1].push([url, aras, teks]);
@@ -314,6 +330,7 @@ async function laman(m) {
 
   // 4. Carian luas: halaman utama, halaman senarai yang lalu, peta laman, kemudian baki giliran larian lepas
   tambah(asas.href, 0, '', true);
+  for (const t of tambahan) tambah(t.url.href, 0, '', true);
   for (const [u, aras, teks] of tambahWp) tambah(u, aras, teks);
   for (const u of c.senarai.slice(-80)) tambah(u, 1, '', true);
   for (const [u, aras, teks] of c.giliran) tambah(u, aras, teks);
@@ -350,7 +367,8 @@ async function laman(m) {
         if (!KUNCI.test(url + ' ' + teksPautan)) continue;
         try {
           const teks = await teksPdf(r.buf);
-          const tajuk = (tajukUmum(teksPautan, tajukLaman) ? tajukFail(url) : teksPautan).slice(0, 300);
+          // Teks pautan seperti "Popular Buku Irsyad Fatwa" (label senarai muat turun) tanpa label di hadapan
+          const tajuk = (tajukUmum(teksPautan, tajukLaman) ? tajukFail(url) : teksPautan.replace(/^(popular|terkini|baharu|new|hot)\s+/i, '')).slice(0, 300);
           if (artikelOk(url, tajuk, teks)) {
             c.artikel.push([url, tajuk, tarikhSah(tarikhHtml('', teks)), teks.slice(0, MAX_TEKS_PDF)]); sudah.add(url); dilawat[url] = 'a'; lapor.baharu++;
           }
@@ -365,7 +383,7 @@ async function laman(m) {
       const links = pautanHtml(html, r.url || url).filter(l => dalamLaman(l.url));
       const teksPautanSemua = links.reduce((n, l) => n + l.teks.length, 0);
       const berkaitan = KUNCI.test(url + ' ' + tajuk + ' ' + teks.slice(0, 400));
-      if (aras === 0) log(`halaman utama: ${links.length} pautan dalam laman${links.length < 5 ? `; contoh HTML: ${html.replace(/\s+/g, ' ').slice(0, 600)}` : ''}`);
+      if (aras === 0) log(`halaman permulaan ${url}: ${links.length} pautan dalam laman${links.length < 5 ? `; contoh HTML: ${html.replace(/\s+/g, ' ').slice(0, 600)}` : ''}`);
       // Artikel: teks panjang yang bukan sekadar senarai pautan
       if (teks.length >= 600 && teksPautanSemua < teks.length * 0.5 && artikelOk(url, tajuk, teks)) {
         c.artikel.push([url, tajuk, tarikhSah(tarikhHtml(html, teks)), teks.slice(0, MAX_TEKS)]); sudah.add(url); dilawat[url] = 'a'; lapor.baharu++;

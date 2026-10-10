@@ -230,13 +230,15 @@ const FiqhData = (() => {
 
   /* Laman web rasmi Jabatan Mufti setiap negeri dan portal fatwa kebangsaan. Fatwa, irsyad dan soal jawab hukum diambil
      setiap hari oleh pelayan Tanya AI (worker-fiqh/scripts/muat-mufti.mjs) supaya isu yang baru timbul dijawab dengan
-     keputusan terkini. laman: alamat yang dicuba mengikut tertib; yang pertama berjaya digunakan. */
+     keputusan terkini. laman: alamat yang dicuba mengikut tertib; yang pertama berjaya digunakan. tambahan: sistem fatwa
+     atau soal jawab jabatan yang sama di hos lain (hanya halaman di bawah folder alamat itu diambil). */
   const MUFTI = [
     { k: 'esmaf', negeri: 'Kebangsaan', by: 'Portal Rasmi Fatwa Malaysia (e-SMAF), JAKIM', laman: ['https://e-smaf.islam.gov.my/e-smaf/', 'http://e-smaf.islam.gov.my/e-smaf/', 'https://www.e-fatwa.gov.my/', 'http://www.e-fatwa.gov.my/'] },
     { k: 'wp', negeri: 'Wilayah Persekutuan', by: 'Pejabat Mufti Wilayah Persekutuan', laman: ['https://www.muftiwp.gov.my/', 'https://muftiwp.gov.my/'] },
     { k: 'selangor', negeri: 'Selangor', by: 'Jabatan Mufti Negeri Selangor', laman: ['https://www.muftiselangor.gov.my/', 'https://muftiselangor.gov.my/'] },
-    { k: 'johor', negeri: 'Johor', by: 'Jabatan Mufti Johor', laman: ['https://mufti.johor.gov.my/'] },
-    { k: 'kedah', negeri: 'Kedah', by: 'Jabatan Mufti Negeri Kedah', laman: ['https://mufti.kedah.gov.my/'] },
+    { k: 'johor', negeri: 'Johor', by: 'Jabatan Mufti Johor', laman: ['https://mufti.johor.gov.my/'],
+      tambahan: ['https://said.johor.gov.my/perkhidmatan/paparan_fatwa.php', 'https://said.johor.gov.my/perkhidmatan/paparan_kemusykilan.php'] },
+    { k: 'kedah', negeri: 'Kedah', by: 'Jabatan Mufti Negeri Kedah', laman: ['https://mufti.kedah.gov.my/'], tambahan: ['https://ifatwa.kedah.gov.my/'] },
     { k: 'kelantan', negeri: 'Kelantan', by: 'Jabatan Mufti Negeri Kelantan', laman: ['https://mufti.kelantan.gov.my/'] },
     { k: 'melaka', negeri: 'Melaka', by: 'Jabatan Mufti Negeri Melaka', laman: ['https://www.muftimelaka.gov.my/', 'https://muftimelaka.gov.my/'] },
     { k: 'nsembilan', negeri: 'Negeri Sembilan', by: 'Jabatan Mufti Kerajaan Negeri Sembilan', laman: ['https://muftins.gov.my/', 'https://www.muftins.gov.my/'] },

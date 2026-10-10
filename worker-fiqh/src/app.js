@@ -32,7 +32,7 @@ export { GEMINI_MODEL, GEMINI_FALLBACKS, geminiModels };
 export const MODEL = 'claude-opus-5-5';
 // Termasuk laman web rasmi Jabatan Mufti setiap negeri (FiqhData.MUFTI)
 export const DOMAINS = [...new Set(['shamela.ws', 'quran.com', 'sunnah.com', 'muftiwp.gov.my', 'muftiselangor.gov.my', 'islam.gov.my', 'sc.com.my', 'iifa-aifi.org', 'zakat.com.my',
-  ...MUFTI.flatMap(m => m.laman.map(u => new URL(u).hostname.replace(/^www\./, '')))])];
+  ...MUFTI.flatMap(m => [...m.laman, ...(m.tambahan || [])].map(u => new URL(u).hostname.replace(/^www\./, '')))])];
 const MAX_Q = 500;
 const CACHE_DAYS = 7;
 
