@@ -76,7 +76,7 @@
   }
 
   function buyHTML(note) {
-    const s = S.settings, text = note ? `${s.msg}\n\nNota: ${note.code ? note.code + ' · ' : ''}${note.title} (${rm(note.price)})` : s.msg;
+    const s = S.settings, text = note ? `${s.msg}\n\nNota: ${note.code ? note.code + ' · ' : ''}${note.title} (${note.price ? rm(note.price) : 'Percuma'})` : s.msg;
     return `<div class="card nt-buy${note ? ' in-dialog' : ''}">
       <div class="nt-buy-b">
         ${note ? '' : '<h2>Cara membeli</h2>'}

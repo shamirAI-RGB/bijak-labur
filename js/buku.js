@@ -68,6 +68,9 @@
     const go = `<button class="btn" type="button" data-jana="${t}" ${S.busy ? 'disabled' : ''}>${icon(h ? 'refresh' : 'star')}${S.busy === t ? 'Menjana…' : h ? 'Jana semula' : 'Jana ' + TABS.find(x => x[0] === t)[1].toLowerCase()}</button>`;
     if (S.busy === t) return `<div class="bk-wait" role="status"><div class="st-spin" aria-hidden="true"></div><p>Membaca ${active().length} sumber…</p></div>`;
     if (!h) return `<div class="bk-empty"><p class="muted">${{ ringkasan: 'Ringkasan dan perkara utama daripada semua sumber, dengan petikan.', panduan: 'Topik, istilah penting dan soalan kajian untuk ulang kaji.', kuiz: '8 soalan aneka pilihan dengan penerangan jawapan.', kad: '12 kad imbas untuk menghafal istilah dan konsep.', podcast: 'Dua hos, Aina dan Hakim, berbual tentang sumber anda. Dengar dengan suara HD.' }[t]}</p>${go}</div>`;
+    // Pelayan membuang item yang tidak sah (cth. soalan tanpa 4 pilihan); jangan paparkan kuiz kosong dengan "Markah: 0/0"
+    const kosong = { kuiz: [h.soalan, 'soalan kuiz'], kad: [h.kad, 'kad imbas'], podcast: [h.baris, 'skrip podcast'] }[t];
+    if (kosong && !(kosong[0] || []).length) return `<div class="bk-empty"><p class="muted">Tiada ${kosong[1]} yang sah dapat dijana daripada sumber ini. Cuba jana semula.</p>${go}</div>`;
     let body = '';
     if (t === 'ringkasan') body = `<p>${esc(h.ringkasan)}</p><h3>Perkara utama</h3><ul>${h.perkara_utama.map(p => `<li>${esc(p)}</li>`).join('')}</ul>${h.petikan.length ? `<h3>Petikan penting</h3>${h.petikan.map(cite).join('')}` : ''}`;
     if (t === 'panduan') body = `<h3>${esc(h.tajuk)}</h3>${h.topik.map(x => `<div class="bk-topic"><b>${esc(x.nama)}</b><p>${esc(x.penerangan)}</p></div>`).join('')}

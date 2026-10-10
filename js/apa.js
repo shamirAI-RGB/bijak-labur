@@ -66,9 +66,11 @@ const APA = (function () {
     const tulisTajuk = () => {
       if (!tajuk) return;
       t(tajuk, italikTajuk);
-      if (jenis === 'buku' && bersih(m.edisi) && !/^(1|1st|pertama)$/i.test(bersih(m.edisi))) t(` (${ordinal(m.edisi)} ed.)`);
-      if (jenis === 'tesis') t(` [${bersih(m.peringkat) || 'Master’s thesis'}${bersih(m.institusi) ? ', ' + tanpaTitik(m.institusi) : ''}]`);
-      t('. ');
+      // Tajuk yang berakhir dengan ? atau ! tidak diikuti titik (APA 7), kecuali jika edisi atau jenis tesis menyusul
+      let tanda = /[?!]$/.test(tajuk);
+      if (jenis === 'buku' && bersih(m.edisi) && !/^(1|1st|pertama)$/i.test(bersih(m.edisi))) { t(` (${ordinal(m.edisi)} ed.)`); tanda = false; }
+      if (jenis === 'tesis') { t(` [${bersih(m.peringkat) || 'Master’s thesis'}${bersih(m.institusi) ? ', ' + tanpaTitik(m.institusi) : ''}]`); tanda = false; }
+      t(tanda ? ' ' : '. ');
     };
     if (tajukDulu) { tulisTajuk(); t(`(${tarikh(m)}). `); }
     else { t(pengarang.endsWith('.') ? pengarang + ' ' : pengarang + '. '); t(`(${tarikh(m)}). `); tulisTajuk(); }

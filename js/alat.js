@@ -185,13 +185,15 @@
   const CR_JENIS = { 'journal-article': 'jurnal', book: 'buku', 'book-chapter': 'bab', 'proceedings-article': 'prosiding', report: 'laporan', dissertation: 'tesis', 'posted-content': 'web' };
   const tok = t => new Set(String(t || '').toLowerCase().normalize('NFKD').replace(/[^\p{L}\p{N}\s]/gu, ' ').split(/\s+/).filter(w => w.length > 2));
   const serupa = (a, b) => { const A = tok(a), Bs = tok(b); if (!A.size || !Bs.size) return 0; let n = 0; A.forEach(w => Bs.has(w) && n++); return n / Math.max(A.size, Bs.size); };
+  // Crossref kadangkala memulangkan tanda HTML (<i>, <sub>) dan &amp; dalam tajuk dan nama jurnal
+  const crTeks = s => String(s || '').replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
   function dariCrossref(w) {
     const d = (w.issued && w.issued['date-parts'] && w.issued['date-parts'][0]) || [];
     return {
       jenis: CR_JENIS[w.type] || 'jurnal',
-      pengarang: (w.author || []).map(a => a.family ? { akhir: a.family, awal: a.given || '' } : a.name ? { org: a.name } : null).filter(Boolean),
-      tahun: d[0] ? String(d[0]) : '', tajuk: (w.title || [])[0] || '', sumber: (w['container-title'] || [])[0] || '',
-      jilid: w.volume || '', isu: w.issue || '', halaman: w.page || '', penerbit: w.publisher || '', doi: w.DOI || ''
+      pengarang: (w.author || []).map(a => a.family ? { akhir: crTeks(a.family), awal: crTeks(a.given) } : a.name ? { org: crTeks(a.name) } : null).filter(Boolean),
+      tahun: d[0] ? String(d[0]) : '', tajuk: crTeks((w.title || [])[0]), sumber: crTeks((w['container-title'] || [])[0]),
+      jilid: w.volume || '', isu: w.issue || '', halaman: w.page || '', penerbit: crTeks(w.publisher), doi: w.DOI || ''
     };
   }
   async function sahkanCrossref() {
@@ -207,12 +209,14 @@
         } else if (k.tajuk && k.tajuk.length > 15) {
           const r = await fetch('https://api.crossref.org/works?rows=3&select=DOI,title,author,issued,container-title,volume,issue,page,publisher,type&query.bibliographic=' + encodeURIComponent(k.tajuk));
           const items = r.ok ? (await r.json()).message.items || [] : [];
-          w = items.find(it => serupa((it.title || [])[0], k.tajuk) >= 0.85) || null;
+          w = items.find(it => serupa(crTeks((it.title || [])[0]), k.tajuk) >= 0.85) || null;
           k.cr = w ? 'tajuk' : 'tiada';
         } else k.cr = 'tiada';
         if (w) { k.asal = metaApa(k); Object.assign(k, Object.fromEntries(Object.entries(dariCrossref(w)).filter(([, v]) => v && (!Array.isArray(v) || v.length)))); }
       } catch { k.cr = ''; }
     }));
+    // Analisis baharu mungkin sudah menggantikan hasil ini semasa menunggu Crossref: jangan timpa
+    if (R() !== h) return;
     simpanHasil('rujukan', h);
     if (aktif() === 'rujukan') render();
   }
@@ -273,7 +277,7 @@
     return list.map((k, i) => {
       const kunci = ((k.pengarang[0] && (k.pengarang[0].akhir || k.pengarang[0].org) || 'tanpanama').replace(/[^A-Za-z]/g, '').toLowerCase() || 'rujukan') + (k.tahun || 'nd') + String.fromCharCode(97 + i % 26);
       const jenis = { jurnal: 'article', buku: 'book', bab: 'incollection', prosiding: 'inproceedings', laporan: 'techreport', tesis: 'phdthesis', web: 'misc' }[k.jenis] || 'article';
-      const f = [['author', k.pengarang.map(p => p.org ? `{${p.org}}` : `${p.akhir}, ${p.awal}`).join(' and ')], ['title', k.tajuk], [jenis === 'article' ? 'journal' : 'booktitle', k.sumber], ['year', k.tahun], ['volume', k.jilid], ['number', k.isu], ['pages', (k.halaman || '').replace(/[–—]/g, '--')], ['publisher', k.penerbit], ['doi', k.doi], ['url', k.url]].filter(x => x[1]);
+      const f = [['author', k.pengarang.map(p => p.org ? `{${p.org}}` : `${p.akhir}, ${p.awal}`).join(' and ')], ['title', k.tajuk], [jenis === 'article' ? 'journal' : 'booktitle', k.sumber], ['year', k.tahun], ['volume', k.jilid], ['number', k.isu], ['pages', (k.halaman || '').replace(/\s*[-–—]+\s*/g, '--')], ['publisher', k.penerbit], ['doi', k.doi], ['url', k.url]].filter(x => x[1]);
       return `@${jenis}{${kunci},\n${f.map(([a, b]) => `  ${a} = {${String(b).replace(/[{}]/g, '')}}`).join(',\n')}\n}`;
     }).join('\n\n');
   }
@@ -300,7 +304,8 @@
       <h3>Konsep utama</h3>${h.konsep.map(k => `<div class="bk-topic al-konsep"><span class="al-titik" title="Kekerapan diuji" aria-label="Kepentingan ${k.penting} daripada 3">${'●'.repeat(k.penting)}${'○'.repeat(3 - k.penting)}</span><b>${esc(k.nama)}</b><p>${esc(k.huraian)}</p></div>`).join('')}</div>`;
     if (tab === 'mcq') {
       const jawab = Object.keys(pekJawab).length, betul = h.mcq.filter((q, i) => pekJawab[i] === q.jawapan).length;
-      isi = `<div class="card"><div class="row-between"><h2>Soalan aneka pilihan</h2><div class="row-gap">${pekMasa ? `<span class="al-masa num" id="alMasa"></span>` : `<button class="btn ghost sm" type="button" data-act="mod-masa">${icon('clock')}Mod peperiksaan (${h.mcq.length} min)</button>`}${jawab ? `<button class="link-btn" type="button" data-act="ulang-mcq">Ulang</button>` : ''}</div></div>
+      isi = `<div class="card"><div class="row-between"><h2>Soalan aneka pilihan</h2><div class="row-gap">${pekMasa ? `<span class="al-masa num" id="alMasa"></span>` : h.mcq.length ? `<button class="btn ghost sm" type="button" data-act="mod-masa">${icon('clock')}Mod peperiksaan (${h.mcq.length} min)</button>` : ''}${jawab ? `<button class="link-btn" type="button" data-act="ulang-mcq">Ulang</button>` : ''}</div></div>
+        ${h.mcq.length ? '' : `<p class="muted">Tiada soalan aneka pilihan yang sah dalam pek ini. Tekan "Jana semula pek" untuk mencuba lagi.</p>`}
         ${jawab ? `<p class="bk-score">Skor: <b class="num">${betul}/${jawab}</b>${jawab === h.mcq.length ? ` (${Math.round(betul / h.mcq.length * 100)}%)` : ''}</p>` : ''}
         ${h.mcq.map((q, i) => { const a = pekJawab[i]; return `<div class="bk-mcq"><p><b>${i + 1}.</b> ${esc(q.soalan)} <span class="al-aras">${esc(q.aras)}</span></p><div class="bk-opts">${q.pilihan.map((p, j) => `<button type="button" class="bk-opt${a != null ? (j === q.jawapan ? ' ok' : j === a ? ' bad' : '') : ''}" data-mcq="${i}:${j}" ${a != null ? 'disabled' : ''}>${'ABCD'[j]}. ${esc(p)}</button>`).join('')}</div>${a != null ? `<p class="muted small">${esc(q.penerangan)}</p>` : ''}</div>`; }).join('')}</div>`;
     }
@@ -649,7 +654,19 @@ Rujukan APA 7 dan format (15 markah).`]
      ========================================================= */
   let tl = load('alat_tulis', { teks: '', mod: 'akademik' });
   const MODS = [['akademik', 'Nada akademik'], ['ringkas', 'Ringkaskan'], ['jelas', 'Jelaskan'], ['aliran', 'Aliran & kohesi']];
-  const pecahPerenggan = t => String(t).split(/\n\s*\n|\n(?=\s*\S)/).map(p => p.trim()).filter(p => p.length >= 20);
+  // Perenggan dipisahkan oleh baris baharu. Teks PDF memecahkan setiap baris cetakan, jadi baris panjang yang tidak
+  // berakhir dengan tanda baca penamat disambung dengan baris berikutnya. Baris asal dikekalkan supaya teksAkhir() dapat
+  // mencari setiap perenggan dalam teks asal.
+  const pecahPerenggan = t => {
+    const out = []; let sambung = false;
+    for (const baris of String(t).split('\n')) {
+      const s = baris.trim();
+      if (!s) { sambung = false; continue; }
+      if (sambung) out[out.length - 1] += '\n' + baris; else out.push(baris);
+      sambung = s.length >= 40 && !/[.!?:;)\]"”']$/.test(s);
+    }
+    return out.map(p => p.trim()).filter(p => p.length >= 20);
+  };
   function metrik(t) {
     const ayat = String(t).split(/(?<=[.!?])\s+/).map(s => s.trim()).filter(s => kata(s) >= 3);
     const w = kata(t), panjang = ayat.filter(s => kata(s) > 30).length;
@@ -671,6 +688,19 @@ Rujukan APA 7 dan format (15 markah).`]
     while (j < n) { out += /^\s+$/.test(Bw[j]) ? esc(Bw[j]) : `<ins>${esc(Bw[j])}</ins>`; j++; }
     return out.replace(/<\/del><del>/g, ' ').replace(/<\/ins>(\s+)<ins>/g, '$1');
   }
+  // Teks akhir: perenggan yang diterima diganti di tempatnya dalam teks asal, jadi tajuk dan baris pendek
+  // (yang tidak dihantar untuk dibaiki) serta susunan baris kekal
+  function teksAkhir(h) {
+    const asal = h.asal != null ? h.asal : h.perenggan.join('\n\n');
+    let out = '', dari = 0;
+    h.perenggan.forEach((p, i) => {
+      const j = asal.indexOf(p, dari);
+      if (j < 0) return;
+      out += asal.slice(dari, j) + (h.terima[i] && h.baru[i] ? h.baru[i].baru : p);
+      dari = j + p.length;
+    });
+    return out + asal.slice(dari);
+  }
   function tulisHTML() {
     const h = H.tulis, m0 = metrik(tl.teks);
     const borang = `<form class="card" id="alTlForm">
@@ -682,7 +712,7 @@ Rujukan APA 7 dan format (15 markah).`]
       </form>`;
     if (S.busy === 'tulis') return borang + tunggu('Membaiki perenggan demi perenggan…');
     if (!h) return borang + ralat();
-    const akhir = h.perenggan.map((p, i) => h.terima[i] && h.baru[i] ? h.baru[i].baru : p).join('\n\n');
+    const akhir = teksAkhir(h);
     const m1 = metrik(akhir);
     const ubah = h.perenggan.filter((p, i) => h.baru[i] && h.baru[i].baru !== p).length;
     return borang + ralat() + `<div class="card al-tl-ringkas">
@@ -707,7 +737,9 @@ Rujukan APA 7 dan format (15 markah).`]
   const BADAN = { rujukan: rujukanHTML, pek: pekHTML, rubrik: rubrikHTML, coach: coachHTML, ingat: ingatHTML, kuliah: kuliahHTML, tulis: tulisHTML };
   function render() {
     const id = aktif();
-    if (!id) { root.innerHTML = hubHTML(); return; }
+    // Ralat milik alat yang sedang dibuka sahaja: dibersihkan apabila bertukar alat atau ke hab
+    if (root.dataset.id !== id) S.err = '';
+    if (!id) { root.innerHTML = hubHTML(); root.dataset.id = ''; return; }
     // Kekalkan kedudukan tatal apabila hasil dikemas kini
     const y = scrollY;
     root.innerHTML = kepala(byId[id]) + `<div class="al-badan">${BADAN[id]()}</div>`;
@@ -747,7 +779,7 @@ Rujukan APA 7 dan format (15 markah).`]
     },
     'ke-semak': () => { const el = $('#paper'); if (el) { el.value = rb.draf; el.dispatchEvent(new Event('input', { bubbles: true })); } location.hash = '#semak'; },
     'ke-tulis': () => { tl.teks = rb.draf; save('alat_tulis', tl); location.hash = '#alat/tulis'; },
-    'jana-coach': async () => { if (perluBahan(100)) return; berhentiRakam(); const d = await jalan('coach', { tugas: 'coach_soalan', teks: bahan.teks, tajuk: bahan.tajuk }); if (tanpaRalat(d)) { simpanHasil('coach', d); render(); keHasil(); } },
+    'jana-coach': async () => { if (perluBahan()) return; berhentiRakam(); const d = await jalan('coach', { tugas: 'coach_soalan', teks: bahan.teks, tajuk: bahan.tajuk }); if (tanpaRalat(d)) { simpanHasil('coach', d); render(); keHasil(); } },
     'jana-ingat': async () => { if (perluBahan()) return; const d = await jalan('ingat', { tugas: 'ingat_soalan', teks: bahan.teks }); if (tanpaRalat(d)) { simpanHasil('ingat', d); ig = null; render(); keHasil(); } },
     'semak-ingat': semakIngat,
     'ig-ulang': () => { ig = null; render(); },
@@ -778,16 +810,18 @@ Rujukan APA 7 dan format (15 markah).`]
       if (!pr.length) { toast('Tampal teks anda dahulu.'); $('#alTl')?.focus(); return; }
       if (pr.length > 30) { toast('Paling banyak 30 perenggan sekali semak. Semak bahagian demi bahagian.'); return; }
       const d = await jalan('tulis', { tugas: 'tulis', perenggan: pr, mod: tl.mod });
-      if (tanpaRalat(d)) { const baru = {}; d.hasil.forEach(r => { baru[r.i] = r; }); simpanHasil('tulis', { perenggan: pr, baru, terima: {}, struktur: d.struktur, nada: d.nada }); render(); keHasil(); }
+      if (tanpaRalat(d)) { const baru = {}; d.hasil.forEach(r => { baru[r.i] = r; }); simpanHasil('tulis', { asal: tl.teks, perenggan: pr, baru, terima: {}, struktur: d.struktur, nada: d.nada }); render(); keHasil(); }
     },
     'tl-terima-semua': () => { const h = H.tulis; h.perenggan.forEach((p, i) => { if (h.baru[i] && !h.baru[i].sitasi_hilang.length) h.terima[i] = true; }); simpanHasil('tulis', h); render(); if (h.perenggan.some((p, i) => h.baru[i] && h.baru[i].sitasi_hilang.length)) toast('Perenggan yang kehilangan petikan atau angka tidak diterima secara automatik. Semak dahulu.', 4500); },
-    'tl-salin': () => { const h = H.tulis; salin(h.perenggan.map((p, i) => h.terima[i] && h.baru[i] ? h.baru[i].baru : p).join('\n\n'), 'Teks akhir disalin.'); },
-    'tl-guna': () => { const h = H.tulis; tl.teks = h.perenggan.map((p, i) => h.terima[i] && h.baru[i] ? h.baru[i].baru : p).join('\n\n'); save('alat_tulis', tl); delete H.tulis; save('alat_hasil', H); render(); toast('Teks dikemas kini.'); },
-    'tl-semak': () => { const h = H.tulis, el = $('#paper'); if (el) { el.value = h.perenggan.map((p, i) => h.terima[i] && h.baru[i] ? h.baru[i].baru : p).join('\n\n'); el.dispatchEvent(new Event('input', { bubbles: true })); } location.hash = '#semak'; }
+    'tl-salin': () => { const h = H.tulis; salin(teksAkhir(h), 'Teks akhir disalin.'); },
+    'tl-guna': () => { const h = H.tulis; tl.teks = teksAkhir(h); save('alat_tulis', tl); delete H.tulis; save('alat_hasil', H); render(); toast('Teks dikemas kini.'); },
+    'tl-semak': () => { const h = H.tulis, el = $('#paper'); if (el) { el.value = teksAkhir(h); el.dispatchEvent(new Event('input', { bubbles: true })); } location.hash = '#semak'; }
   };
 
   root.addEventListener('click', async e => {
     const t = e.target;
+    // Kad "kad perlu diulang kaji" di hab membuka tab dek, bukan tab uji diri
+    if (t.closest('.al-ulang')) S.tab.ingat = 'dek';
     const act = t.closest('[data-act]'); if (act && ACT[act.dataset.act]) { ACT[act.dataset.act](); return; }
     const tb = t.closest('[data-tab]'); if (tb) { const [id, k] = tb.dataset.tab.split(':'); S.tab[id] = k; if (id === 'ingat' && k === 'uji') ulang = null; render(); return; }
     const bk = t.closest('[data-buang-kertas]'); if (bk) { kertas.splice(+bk.dataset.buangKertas, 1); render(); return; }
@@ -799,9 +833,10 @@ Rujukan APA 7 dan format (15 markah).`]
     const fx = t.closest('[data-rb-fix]');
     if (fx) {
       const [ki, bi] = fx.dataset.rbFix.split(':').map(Number), b = H.rubrik.kriteria[ki].baiki[bi];
-      const i = rb.draf.indexOf(b.asal);
-      if (i < 0) { toast('Ayat asal tidak dijumpai lagi dalam draf.'); return; }
-      rb.draf = rb.draf.slice(0, i) + b.baru + rb.draf.slice(i + b.asal.length); simpanRb();
+      // Ruang dan baris baharu dalam draf (cth. teks PDF) mungkin berbeza daripada ayat asal yang disemak pelayan
+      const m = new RegExp(b.asal.trim().split(/\s+/).map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('\\s+')).exec(rb.draf);
+      if (!m) { toast('Ayat asal tidak dijumpai lagi dalam draf.'); return; }
+      rb.draf = rb.draf.slice(0, m.index) + b.baru + rb.draf.slice(m.index + m[0].length); simpanRb();
       H.rubrik.kriteria[ki].baiki.splice(bi, 1); simpanHasil('rubrik', H.rubrik); render(); toast('Draf dikemas kini.'); return;
     }
     const mic = t.closest('[data-mic]'); if (mic) { const i = +mic.dataset.mic; if (rakam && rakam.qi === i) berhentiRakam(); else mulaRakam(i); return; }

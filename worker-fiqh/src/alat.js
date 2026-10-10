@@ -352,6 +352,19 @@ export function sitasiHilang(asal, baru) {
   return [...new Set(ambil(asal))].filter(x => !b.includes(x));
 }
 
+// Jawapan tanpa kandungan utama selepas dibersihkan (cth. JSON kosong daripada model sandaran, atau id kertas yang tidak
+// sepadan) dianggap gagal: pengguna melihat ralat dan boleh mencuba semula, dan kuota percuma tidak dihabiskan
+const KOSONG = {
+  rujukan: h => !h.kertas.length,
+  pek: h => !h.ringkasan && !h.konsep.length && !h.mcq.length,
+  rubrik: h => !h.kriteria.length,
+  coach_soalan: h => !h.soalan.length,
+  coach_nilai: h => !h.kekuatan.length && !h.baiki.length && !h.jawapan_model,
+  ingat_soalan: h => !h.soalan.length,
+  kuliah: h => !h.nota.length && !h.rumusan,
+  tulis: h => !h.hasil.length && !h.struktur.length && !h.nada
+};
+
 export async function alat(env, input) {
   const d = await geminiGenerate(env, bodyFor(input.tugas, input));
   const c = d.candidates && d.candidates[0];
@@ -359,7 +372,9 @@ export async function alat(env, input) {
   let ans = null;
   try { ans = JSON.parse(geminiText(d)); } catch {}
   if (!ans) throw Object.assign(new Error('jawapan tidak sah'), { status: 502 });
-  return { tugas: input.tugas, ...clean(input.tugas, ans, input), ...(d.penghala ? { penghala: d.penghala } : {}) };
+  const hasil = clean(input.tugas, ans, input);
+  if (KOSONG[input.tugas] && KOSONG[input.tugas](hasil)) throw Object.assign(new Error('jawapan kosong'), { status: 502 });
+  return { tugas: input.tugas, ...hasil, ...(d.penghala ? { penghala: d.penghala } : {}) };
 }
 
 /* ---------- Transkrip rakaman kuliah ---------- */

@@ -142,7 +142,10 @@
     const ids = syms.map(s => GECKO_IDS[s]).filter(Boolean);
     if (!ids.length) return;
     try {
-      const r = await (await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids.join(',')}&vs_currencies=usd&include_24hr_change=true`)).json();
+      const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids.join(',')}&vs_currencies=usd&include_24hr_change=true`);
+      // Had kadar (429) atau ralat pelayan: badan JSON tanpa harga, jadi jangan tanda "Setiap 30 saat"
+      if (!res.ok) throw new Error(res.status);
+      const r = await res.json();
       syms.forEach(s => {
         const g = r[GECKO_IDS[s]]; if (!g) return;
         const prev = data[s] && data[s].price;

@@ -85,7 +85,7 @@
           : '<p class="muted pf-empty">Belum ada dagangan direkod.</p>';
         $('#jnCsv').disabled = !done.length;
       };
-      $('#jnDate').value = new Date().toISOString().slice(0, 10);
+      $('#jnDate').value = new Date().toLocaleDateString('en-CA');   // tarikh tempatan (toISOString memberi tarikh UTC, iaitu semalam sebelum 8 pagi di Malaysia)
       $('#jnForm').addEventListener('submit', e => {
         e.preventDefault();
         const t = { date: $('#jnDate').value, sym: $('#jnSym').value.trim().toUpperCase(), side: $('#jnSide').value, qty: v('jnQty'), inP: v('jnIn'), outP: v('jnOut'), fee: v('jnFee'), note: $('#jnNote').value.trim() };

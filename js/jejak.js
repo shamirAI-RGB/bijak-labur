@@ -286,7 +286,8 @@
     buang(true);
   }
   function buang(kept) {
-    stopWatch(); stopBg(); if (lock) { lock.release().catch(() => {}); lock = null; }
+    // GPS halaman diteruskan selagi Jejak dibuka supaya kedudukan dan ketepatan terus dikemas kini
+    stopWatch(); stopBg().then(() => { if (root.offsetParent) startWatch(); }); if (lock) { lock.release().catch(() => {}); lock = null; }
     const jenis = T.jenis; T = blank(jenis); persist();
     segar();
     paintAll(); if (viewing) lihat(viewing);

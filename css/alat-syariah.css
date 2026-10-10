@@ -72,7 +72,7 @@
 .ah-ncr-row.tutup { opacity: .65; }
 .ah-ncr-top { display: flex; gap: 8px; align-items: center; }
 .ah-ncr-top select { margin-left: auto; font-size: .8rem; padding: 4px 6px; }
-.ah-ncr-top .q-del { position: static; opacity: .7; }
+.ah-ncr-top .q-del { display: block; position: static; opacity: .7; }
 .ah-kat { font-size: .72rem; font-weight: 600; border-radius: 99px; padding: 2px 8px; background: var(--surface-2); }
 .ah-kat.major { background: color-mix(in srgb, var(--down) 16%, transparent); color: var(--down); }
 .ah-late { color: var(--down); }
@@ -89,3 +89,7 @@
 .ah-rj { padding: 8px 0; border-top: 1px solid var(--border); }
 .ah-rj p { margin: 2px 0; overflow-wrap: anywhere; }
 .ah-meta > .field { margin-bottom: 10px; }
+
+/* Blok alat Premium (termasuk Portfolio patuh Syariah): tajuk alat dan butang "Semua alat" tidak terlindung
+   di bawah bar atas yang melekat apabila alat dibuka atau butang pelan ditekan */
+#toolsBlock, #plansBlock { scroll-margin-top: calc(72px + env(safe-area-inset-top, 0px)); }
