@@ -15,7 +15,7 @@
  */
 import Anthropic from '@anthropic-ai/sdk';
 import { BY_ID, CORPUS_TEXT } from './corpus.js';
-import { DOC, KITAB, search, expand, pagesText, pageUrl, cetakan, cetakPdf, muatCetakan, assetTag, gambarAset } from './rujukan.js';
+import { DOC, KITAB, MUFTI, search, expand, pagesText, pageUrl, cetakan, cetakPdf, muatCetakan, assetTag, gambarAset } from './rujukan.js';
 import { GEMINI_MODEL, GEMINI_FALLBACKS, geminiModels, geminiGenerate, geminiText, aiSedia } from './gemini.js';
 import { senaraiAktif, combo, PENYEDIA_GAMBAR } from './penghala.js';
 import { semak, MIN_CHARS, MAX_CHARS } from './semak.js';
@@ -30,7 +30,9 @@ import { audit, check as checkAudit } from './audit.js';
 export { GEMINI_MODEL, GEMINI_FALLBACKS, geminiModels };
 
 export const MODEL = 'claude-opus-5-5';
-export const DOMAINS = ['shamela.ws', 'quran.com', 'sunnah.com', 'muftiwp.gov.my', 'muftiselangor.gov.my', 'islam.gov.my', 'sc.com.my', 'iifa-aifi.org', 'zakat.com.my'];
+// Termasuk laman web rasmi Jabatan Mufti setiap negeri (FiqhData.MUFTI)
+export const DOMAINS = [...new Set(['shamela.ws', 'quran.com', 'sunnah.com', 'muftiwp.gov.my', 'muftiselangor.gov.my', 'islam.gov.my', 'sc.com.my', 'iifa-aifi.org', 'zakat.com.my',
+  ...MUFTI.flatMap(m => m.laman.map(u => new URL(u).hostname.replace(/^www\./, '')))])];
 const MAX_Q = 500;
 const CACHE_DAYS = 7;
 
@@ -46,6 +48,7 @@ Peraturan integriti (wajib):
    b. Ayat Al-Quran dengan id "quran:SURAH:AYAT" (cth. "quran:2:275"). Teks ayat dimuat oleh app daripada sumber asal, jadi jangan petik teks ayat.
    c. Halaman yang anda buka dengan web_fetch atau temui dengan web_search dalam domain yang dibenarkan, dengan URL tepat seperti yang dipulangkan alat. Untuk kitab, buka halaman Shamela (https://shamela.ws/book/ID/HALAMAN) supaya pengguna boleh membuka muka surat yang sama.
    d. Muka surat dokumen rasmi moden yang diberi dalam blok "Dokumen rujukan rasmi moden", dengan id "pdf:KOD:MUKASURAT" tepat seperti tertera (cth. "pdf:jakim:57"). Petik ayat tepat daripada teks muka surat itu supaya pengguna boleh membuka muka surat PDF yang sama. Dokumen ini ialah keputusan rasmi (Muzakarah Fatwa Kebangsaan, Majlis Penasihat Syariah SC dan BNM, Akademi Fiqh Islam Antarabangsa); utamakannya untuk isu semasa seperti kewangan, pelaburan, perubatan dan teknologi. Blok yang sama juga mengandungi teks halaman kitab muktabar dari Shamela dengan id "kitab:KOD:HALAMAN" (cth. "kitab:fathqarib:142"); petik teks Arab tepat daripadanya dan berikan maksudnya dalam Bahasa Melayu. Kitab bertanda "perbandingan mazhab" (cth. Bidayah al-Mujtahid, Al-Fiqh al-Islami wa Adillatuh) menghuraikan pendapat pelbagai mazhab: gunakannya untuk menerangkan khilaf, tetapi nyatakan pendapat muktamad mazhab Syafie daripada kitab Syafie jika ada. Jika muka surat yang diberi tidak berkaitan dengan soalan, jangan gunakannya.
+   e. Artikel daripada laman web rasmi Jabatan Mufti negeri dan portal fatwa kebangsaan e-SMAF yang diberi dalam blok yang sama, dengan id "mufti:NEGERI:N" tepat seperti tertera (cth. "mufti:wp:12"). Ini fatwa, irsyad dan soal jawab hukum terkini; utamakannya untuk isu yang baru timbul. Petik ayat tepat daripada teks artikel itu. Dalam huraian, sebut negeri dan jabatan yang mengeluarkannya (cth. "Menurut Pejabat Mufti Wilayah Persekutuan"), kerana fatwa negeri hanya terpakai di negeri itu dan negeri lain mungkin berbeza pendapat. Jika dua negeri berbeza, nyatakan kedua-duanya dalam "khilaf".
 3. "petikan" mesti disalin tepat huruf demi huruf daripada teks halaman yang anda buka atau daripada teks korpus. Jangan ubah, ringkaskan atau tambah baris (harakat). Jika anda tidak membuka halaman itu, biarkan "petikan" kosong. Petikan diperiksa secara automatik; petikan yang tidak sepadan akan dibuang.
 4. Utamakan mazhab Syafie dan keputusan rasmi Malaysia (Muzakarah Fatwa Kebangsaan, Jabatan Mufti negeri, MPS Suruhanjaya Sekuriti). Jika ulama berbeza pendapat, nyatakan khilaf dengan adil beserta sumber setiap pendapat.
 5. Jika tiada sumber yang benar-benar menjawab soalan, pulangkan status "tidak_pasti" dan cadangkan pengguna merujuk Jabatan Mufti negeri atau guru bertauliah. Lebih baik berkata tidak pasti daripada meneka.
@@ -58,7 +61,7 @@ Peraturan integriti (wajib):
 Cara bekerja: semak korpus dahulu. Jika perlu huraian kitab, gunakan web_search (cth. nama kitab dan kata kunci dalam bahasa Arab di shamela.ws) dan web_fetch untuk membuka muka surat yang tepat, kemudian petik ayat kitab itu. Paling banyak beberapa carian sahaja.
 
 Jawapan akhir: HANYA satu objek JSON (tiada teks lain, tiada markdown) dengan bentuk:
-{"status":"jawab"|"tidak_pasti"|"luar_skop","ringkasan":"1-2 ayat jawapan dalam Bahasa Melayu","huraian":["perenggan pendek", "..."],"khilaf":"perbezaan pendapat jika ada, atau kosong","nasihat":"cadangan rujukan lanjut jika perlu, atau kosong","sumber":[{"id":"id korpus, quran:S:A atau pdf:KOD:MUKASURAT, atau kosong","url":"URL halaman yang dibuka, atau kosong","jenis":"kitab"|"quran"|"hadis"|"fatwa"|"lain","tajuk":"nama kitab/dokumen","jilid":"juz jika tertera pada halaman, atau kosong","halaman":"nombor halaman cetakan jika tertera, atau kosong","petikan":"teks tepat dari sumber, atau kosong","maksud":"terjemahan atau maksud petikan dalam Bahasa Melayu, atau kosong","untuk":"kenyataan dalam huraian yang disokong sumber ini"}]}`;
+{"status":"jawab"|"tidak_pasti"|"luar_skop","ringkasan":"1-2 ayat jawapan dalam Bahasa Melayu","huraian":["perenggan pendek", "..."],"khilaf":"perbezaan pendapat jika ada, atau kosong","nasihat":"cadangan rujukan lanjut jika perlu, atau kosong","sumber":[{"id":"id korpus, quran:S:A, pdf:KOD:MUKASURAT, kitab:KOD:HALAMAN atau mufti:NEGERI:N, atau kosong","url":"URL halaman yang dibuka, atau kosong","jenis":"kitab"|"quran"|"hadis"|"fatwa"|"lain","tajuk":"nama kitab/dokumen","jilid":"juz jika tertera pada halaman, atau kosong","halaman":"nombor halaman cetakan jika tertera, atau kosong","petikan":"teks tepat dari sumber, atau kosong","maksud":"terjemahan atau maksud petikan dalam Bahasa Melayu, atau kosong","untuk":"kenyataan dalam huraian yang disokong sumber ini"}]}`;
 
 const json = (data, status, headers) => new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json', 'x-content-type-options': 'nosniff', 'referrer-policy': 'no-referrer', ...headers } });
 
@@ -142,6 +145,8 @@ const quoteIn = (q, text) => { const nq = norm(q); return nq.length >= 12 && nor
  * cetak = rujukan/cetakan.json: jika diberi, sumber kitab dilampirkan gambar muka surat cetakan yang disahkan (archive.org,
  * dipadankan dengan OCR). Jika halaman itu belum mempunyai gambar, teks halaman Shamela dipaparkan sebagai ganti (nota_pdf).
  */
+const BULAN_MS = ['Januari', 'Februari', 'Mac', 'April', 'Mei', 'Jun', 'Julai', 'Ogos', 'September', 'Oktober', 'November', 'Disember'];
+export const tarikhMs = t => { const m = String(t || '').match(/^(\d{4})-(\d{2})-(\d{2})$/); return m && BULAN_MS[+m[2] - 1] ? `${+m[3]} ${BULAN_MS[+m[2] - 1]} ${m[1]}` : ''; };
 const KITAB_SHAMELA = new Map(KITAB.map(b => [String(b.id), b.k]));
 export function verify(ans, pages, docs = [], cetak = null) {
   const sumber = [], seen = new Set(), pdf = new Map(docs.map(d => [d.id, d]));
@@ -155,7 +160,10 @@ export function verify(ans, pages, docs = [], cetak = null) {
       const d = pdf.get(id), ok = !!(petikan && quoteIn(petikan, d.teks)), doc = DOC[d.k];
       // Teks muka surat itu sahaja dipulangkan (bukan dokumen penuh), supaya app boleh memaparkannya jika tiada gambar muka surat
       const halaman = str(d.teks, TEKS_HALAMAN);
-      out = doc.jenis === 'kitab'
+      out = doc.jenis === 'mufti'
+        // Artikel laman Mufti: pautan ke halaman asal, dengan nama jabatan, negeri dan tarikh terbit
+        ? { ...base, id, jenis: 'fatwa', tajuk: str(d.tajuk, 300) || doc.by, oleh: [doc.by, tarikhMs(d.tarikh)].filter(Boolean).join(', '), negeri: doc.negeri, url: d.url, teks_halaman: halaman, petikan: ok ? petikan : '', disahkan: ok }
+        : doc.jenis === 'kitab'
         ? { ...base, id, jenis: 'kitab', tajuk: doc.name, ar: doc.ar, oleh: doc.by, url: pageUrl(d.k, d.n), shamela: String(d.n), ...cetakan(d.teks), ...(d.cetak || {}), teks_halaman: halaman, petikan: ok ? petikan : '', disahkan: ok }
         : { ...base, id, jenis: 'dokumen', tajuk: doc.name, oleh: `${doc.by}, ${doc.tahun}`, url: pageUrl(d.k, d.n), pdf: d.n, ...(d.gambar ? { gambar: d.gambar } : { teks_halaman: halaman }), petikan: ok ? petikan : '', disahkan: ok };
     } else if (q) {
@@ -221,13 +229,13 @@ export function verify(ans, pages, docs = [], cetak = null) {
 // Gemini tidak mempunyai alat web_search/web_fetch dalam pelayan ini, jadi hanya korpus dan ayat Al-Quran dibenarkan
 export const SYSTEM_KORPUS = SYSTEM + `
 
-Mod korpus: alat web_search dan web_fetch TIDAK tersedia. Gunakan hanya sumber 2a (id korpus), 2b (quran:SURAH:AYAT) dan 2d (pdf:KOD:MUKASURAT atau kitab:KOD:HALAMAN yang diberi), dan biarkan "url" kosong. Jika korpus tidak menjawab soalan, pulangkan status "tidak_pasti".`;
+Mod korpus: alat web_search dan web_fetch TIDAK tersedia. Gunakan hanya sumber 2a (id korpus), 2b (quran:SURAH:AYAT), 2d (pdf:KOD:MUKASURAT atau kitab:KOD:HALAMAN yang diberi) dan 2e (mufti:NEGERI:N yang diberi), dan biarkan "url" kosong. Jika korpus tidak menjawab soalan, pulangkan status "tidak_pasti".`;
 
 /* ---------- Model ---------- */
 const provider = env => env.ANTHROPIC_API_KEY ? 'claude' : aiSedia(env) ? 'gemini' : '';
 const NO_ANSWER = { status: 'luar_skop', ringkasan: 'Soalan ini tidak dapat dijawab.', huraian: [], khilaf: '', nasihat: '', sumber: [] };
 
-const DOCS_HEAD = 'Dokumen rujukan rasmi moden dan teks kitab (teks muka surat yang paling berkaitan dengan soalan, hasil carian automatik):\n\n';
+const DOCS_HEAD = 'Dokumen rujukan rasmi moden, teks kitab dan artikel laman Jabatan Mufti (teks muka surat yang paling berkaitan dengan soalan, hasil carian automatik):\n\n';
 
 export const geminiBody = (question, docs = []) => JSON.stringify({
   systemInstruction: { parts: [{ text: SYSTEM_KORPUS }] },
@@ -308,8 +316,10 @@ async function tanya(req, env, url, h) {
   if (q.length < 5 || q.length > MAX_Q) return json({ error: `Soalan mesti antara 5 hingga ${MAX_Q} aksara.` }, 400, h);
 
   const cache = typeof caches !== 'undefined' ? caches.default : null;
-  // Kunci cache mengandungi cap peta PDF kitab, supaya jawapan yang disimpan sebelum pemasangan baharu tidak dipaparkan lagi
-  const key = new Request(`${url.origin}/tanya-cache-5?q=${encodeURIComponent(norm(q))}&r=${await assetTag(env)}`);
+  // Kunci cache mengandungi cap peta PDF kitab dan indeks rujukan (berubah apabila fatwa baharu dari laman Mufti masuk),
+  // supaya jawapan yang disimpan sebelum pemasangan baharu tidak dipaparkan lagi
+  const [tCetak, tIndeks] = await Promise.all([assetTag(env), assetTag(env, 'rujukan/meta.json')]);
+  const key = new Request(`${url.origin}/tanya-cache-5?q=${encodeURIComponent(norm(q))}&r=${tCetak}&i=${tIndeks}`);
   const hit = cache && await cache.match(key);
   if (hit) return json(await hit.json(), 200, h);
 

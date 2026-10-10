@@ -1,6 +1,6 @@
 /*
- * Carian teks penuh setiap muka surat: dokumen rasmi moden (PDF, FiqhData.MODEN) dan kitab muktabar
- * mazhab Syafie di Shamela (FiqhData.KITAB). Nombor muka surat kitab ialah nombor halaman Shamela,
+ * Carian teks penuh setiap muka surat: dokumen rasmi moden (PDF, FiqhData.MODEN), kitab muktabar
+ * mazhab Syafie di Shamela (FiqhData.KITAB) dan artikel fatwa daripada laman web Jabatan Mufti (FiqhData.MUFTI). Nombor muka surat kitab ialah nombor halaman Shamela,
  * jadi pautan https://shamela.ws/book/ID/N membuka muka surat yang sama.
  *
  * Teks dan indeks dibina semasa pemasangan (scripts/muat-rujukan.mjs) ke dalam folder aset worker:
@@ -9,6 +9,7 @@
  *   rujukan/p/<k>/<c>.json     teks muka surat c*PAGES+1 .. (c+1)*PAGES (PDF: n bermula dari 1, sama seperti #page=n;
  *                              kitab: halaman Shamela). Muka surat dikumpul supaya puluhan ribu halaman kitab kekal di bawah
  *                              had bilangan fail aset Cloudflare.
+ *   rujukan/m/<k>/<c>.json     laman Mufti sahaja: [url, tajuk, tarikh] artikel bagi setiap muka surat dalam rujukan/p/<k>/<c>.json
  * Aset ini tidak dihidangkan terus kepada umum (run_worker_first); pelayan hanya memetik muka surat yang relevan.
  */
 import '../../js/fiqh-data.js';
@@ -16,10 +17,15 @@ import '../../js/fiqh-data.js';
 const D = globalThis.FiqhData;
 export const MODEN = D.MODEN;
 export const KITAB = Object.entries(D.KITAB).map(([k, b]) => ({ ...b, k, jenis: 'kitab', url: D.shamela(b.id) }));
-export const DOC = Object.fromEntries([...MODEN.map(d => [d.k, { ...d, jenis: 'dokumen' }]), ...KITAB.map(d => [d.k, d])]);
+// Laman web rasmi Jabatan Mufti negeri dan portal fatwa kebangsaan (FiqhData.MUFTI); setiap laman ialah satu "dokumen"
+// yang muka suratnya ialah bahagian artikel fatwa, irsyad atau soal jawab (scripts/muat-mufti.mjs)
+export const MUFTI = (D.MUFTI || []).map(m => ({ ...m, jenis: 'mufti', name: m.by, url: m.laman[0] }));
+export const DOC = Object.fromEntries([...MODEN.map(d => [d.k, { ...d, jenis: 'dokumen' }]), ...KITAB.map(d => [d.k, d]), ...MUFTI.map(d => [d.k, d])]);
 export const BUCKETS = 512;
 export const PAGES = 50;
 export const chunkPath = (k, n) => `rujukan/p/${k}/${Math.floor((n - 1) / PAGES)}.json`;
+// Maklumat artikel bagi setiap muka surat laman Mufti: [[url, tajuk, tarikh], ...] sejajar dengan rujukan/p/<k>/<c>.json
+export const muftiPath = (k, n) => `rujukan/m/${k}/${Math.floor((n - 1) / PAGES)}.json`;
 const K1 = 1.2, B = 0.75;
 
 const STOP = new Set(('dan yang untuk dengan dalam ini itu atau pada oleh dari daripada kepada ialah adalah tidak boleh akan juga bagi telah serta jika maka secara tersebut sebagai iaitu lebih kerana hendaklah ' +
@@ -69,6 +75,43 @@ export function buildIndex(docs) {
   files.set('rujukan/meta.json', JSON.stringify(meta));
   post.forEach((p, b) => files.set(`rujukan/i/${b}.json`, JSON.stringify(p)));
   return files;
+}
+
+/*
+ * Artikel laman Mufti -> muka surat indeks. Artikel panjang dipecah kepada bahagian kira-kira SEG aksara di sempadan
+ * perenggan, dan setiap bahagian bermula dengan tajuk artikel supaya carian dan model tahu konteksnya.
+ * laman = { k: [[url, tajuk, tarikh, teks], ...] } -> { docs: { k: [teks muka surat] }, files: Map(rujukan/m/... -> JSON) }
+ */
+export const SEG = 3000;
+export function potong(teks, max = SEG) {
+  const out = [];
+  let t = String(teks || '').trim();
+  while (t.length > max) {
+    let i = t.lastIndexOf('\n', max);
+    if (i < max / 2) i = t.lastIndexOf('. ', max) + 1;
+    if (i < max / 2) i = max;
+    out.push(t.slice(0, i).trim());
+    t = t.slice(i).trim();
+  }
+  if (t) out.push(t);
+  return out;
+}
+export function muftiDocs(laman) {
+  const docs = {}, files = new Map();
+  for (const [k, artikel] of Object.entries(laman)) {
+    const pages = [], info = [], ada = new Set();
+    for (const [url, tajuk, tarikh, teks] of artikel) {
+      // Artikel yang sama di beberapa URL (cth. dengan dan tanpa parameter) diindeks sekali sahaja
+      const cap = normText(String(teks).slice(0, 600));
+      if (!url || !teks || ada.has(cap)) continue;
+      ada.add(cap);
+      for (const b of potong(teks)) { pages.push(b.startsWith(tajuk) ? b : `${tajuk}\n${b}`); info.push([url, tajuk, tarikh || '']); }
+    }
+    if (!pages.length) continue;
+    docs[k] = pages;
+    for (let c = 0; c * PAGES < info.length; c++) files.set(`rujukan/m/${k}/${c}.json`, JSON.stringify(info.slice(c * PAGES, (c + 1) * PAGES)));
+  }
+  return { docs, files };
 }
 
 const asset = async (env, path) => {
@@ -127,7 +170,7 @@ export async function search(env, query, limit = 6) {
   const ranked = [...score.values()].map(x => ({ ...x, skor: x.skor * (1 + 0.3 * (x.padan - 1)) })).sort((a, b) => b.skor - a.skor);
   // Kitab Arab dan dokumen moden disaring berasingan (skor teks Melayu lebih tinggi daripada teks Arab), supaya kedua-duanya diberi kepada model
   const pick = (list, n) => list.filter(x => x.skor >= list[0].skor * 0.4).slice(0, n);
-  const moden = ranked.filter(x => !(DOC[x.k] && DOC[x.k].jenis === 'kitab'));
+  const moden = ranked.filter(x => jenisDoc(x.k) === 'dokumen');
   let kitab = ranked.filter(x => DOC[x.k] && DOC[x.k].jenis === 'kitab');
   // Halaman kitab yang mempunyai gambar muka surat cetakan yang disahkan (OCR) diutamakan sedikit; halaman lain tetap diberi
   // dan dipaparkan dengan teks halaman Shamela, dengan nota bahawa gambar cetakannya belum tersedia
@@ -139,19 +182,42 @@ export async function search(env, query, limit = 6) {
     for (const x of ok) (ada.has(x.k) ? kemudian : (ada.add(x.k), dulu)).push(x);
     return [...dulu, ...kemudian].slice(0, n);
   };
-  const nk = kitab.length ? Math.min(4, Math.ceil(limit / 2)) : 0;
-  const top = [...(moden.length ? pick(moden, limit - Math.min(nk, kitab.length)) : []), ...(kitab.length ? pelbagai(kitab, nk) : [])];
+  // Laman Mufti: artikel berbeza dahulu, dan negeri yang berbeza sebelum artikel kedua dari negeri yang sama.
+  // Skor dibandingkan dengan dokumen moden (kedua-duanya teks Melayu), supaya artikel yang lemah kaitannya tidak diberi.
+  const mufti = await pilihMufti(env, ranked.filter(x => jenisDoc(x.k) === 'mufti'), moden[0] ? moden[0].skor : 0);
+  const nk = kitab.length ? Math.min(mufti.length ? 3 : 4, Math.ceil(limit / 2)) : 0;
+  const top = [...(moden.length ? pick(moden, limit - Math.min(nk, kitab.length) - mufti.length) : []), ...mufti, ...(kitab.length ? pelbagai(kitab, nk) : [])];
   const chunks = new Map(top.map(x => [chunkPath(x.k, x.n), null]));
   await Promise.all([...chunks.keys()].map(async p => chunks.set(p, await assetJson(env, p))));
   const texts = top.map(x => { const l = chunks.get(chunkPath(x.k, x.n)); const t = l && l[(x.n - 1) % PAGES]; return typeof t === 'string' ? t : null; });
-  const adaModen = top.some(x => !(DOC[x.k] && DOC[x.k].jenis === 'kitab'));
+  const adaModen = top.some(x => jenisDoc(x.k) === 'dokumen');
   const gambar = adaModen ? await assetJson(env, 'rujukan/gambar.json') : null;
   return top.map((x, i) => {
-    const isK = DOC[x.k] && DOC[x.k].jenis === 'kitab', teks = texts[i] || '';
+    const jenis = jenisDoc(x.k), isK = jenis === 'kitab', teks = texts[i] || '';
+    if (jenis === 'mufti') return { id: `mufti:${x.k}:${x.n}`, k: x.k, n: x.n, skor: +x.skor.toFixed(2), teks, url: x.url, tajuk: x.tajuk, tarikh: x.tarikh };
     // Dokumen moden: gambar satu muka surat (rujukan/g/<k>/<n>.jpg) jika telah dijana semasa pemasangan
     const g = !isK && gambar && x.n <= (gambar[x.k] || 0);
     return { id: `${isK ? 'kitab' : 'pdf'}:${x.k}:${x.n}`, k: x.k, n: x.n, skor: +x.skor.toFixed(2), teks, ...(isK ? { cetak: cetakPdf(cetak && cetak[x.k], x.n) } : g ? { gambar: gambarPath(x.k, x.n) } : {}) };
   }).filter(x => x.teks);
+}
+
+const jenisDoc = k => DOC[k] ? DOC[k].jenis : '';
+export const MUFTI_MAKS = 3;
+/* Pilih paling banyak MUFTI_MAKS bahagian artikel Mufti: satu bahagian bagi setiap artikel, negeri berbeza didahulukan */
+async function pilihMufti(env, list, skorModen) {
+  if (!list.length) return [];
+  const had = Math.max(list[0].skor, skorModen) * 0.4, calon = list.filter(x => x.skor >= had).slice(0, 12);
+  const info = new Map(calon.map(x => [muftiPath(x.k, x.n), null]));
+  await Promise.all([...info.keys()].map(async p => info.set(p, await assetJson(env, p))));
+  const dulu = [], kemudian = [], url = new Set(), negeri = new Set();
+  for (const x of calon) {
+    const a = (info.get(muftiPath(x.k, x.n)) || [])[(x.n - 1) % PAGES];
+    if (!a || url.has(a[0])) continue;
+    url.add(a[0]);
+    const y = { ...x, url: a[0], tajuk: a[1], tarikh: a[2] };
+    (negeri.has(x.k) ? kemudian : (negeri.add(x.k), dulu)).push(y);
+  }
+  return [...dulu, ...kemudian].slice(0, MUFTI_MAKS);
 }
 
 /** Laluan pelayan bagi gambar satu muka surat dokumen moden (lihat /halaman dalam app.js) */
@@ -164,7 +230,7 @@ export const muatCetakan = env => env.RUJUKAN ? assetJson(env, 'rujukan/cetakan.
 export const adaGambar = (cetak, k, n) => !!(cetak && cetakPdf(cetak[k], n)?.gambar_url);
 
 /** Pautan yang membuka PDF asal pada muka surat itu */
-export const pageUrl = (k, n) => DOC[k].jenis === 'kitab' ? D.shamela(DOC[k].id, n) : `${DOC[k].url}#page=${n}`;
+export const pageUrl = (k, n) => DOC[k].jenis === 'kitab' ? D.shamela(DOC[k].id, n) : DOC[k].jenis === 'mufti' ? DOC[k].url : `${DOC[k].url}#page=${n}`;
 
 /*
  * Edisi cetakan dan PDF bergambar bagi setiap kitab (rujukan/cetakan.json, dibina oleh scripts/padan-pdf.mjs):
@@ -231,10 +297,11 @@ export function expand(q) {
   return extra.length ? `${q} ${extra.join(' ')}` : q;
 }
 
-/* Blok teks untuk model: setiap muka surat dengan id pdf:k:n atau kitab:k:n */
+/* Blok teks untuk model: setiap muka surat dengan id pdf:k:n, kitab:k:n atau mufti:k:n */
 export const PDF_MAX = 3500;
 export const pagesText = hits => hits.map(h => {
   const d = DOC[h.k];
+  if (d.jenis === 'mufti') return `[${h.id}] (laman rasmi Jabatan Mufti, negeri: ${d.negeri}) ${d.by}: "${h.tajuk}"${h.tarikh ? `, ${h.tarikh}` : ''}. ${h.url}\n${h.teks.slice(0, PDF_MAX)}`;
   return d.jenis === 'kitab'
     ? `[${h.id}] (kitab${d.banding ? ', perbandingan mazhab' : ', mazhab Syafie'}) ${d.name} (${d.ar}), ${d.by}. Halaman Shamela ${h.n}.\n${h.teks.slice(0, PDF_MAX)}`
     : `[${h.id}] (dokumen) ${d.name}, ${d.by}. Muka surat PDF ${h.n}.\n${h.teks.slice(0, PDF_MAX)}`;
