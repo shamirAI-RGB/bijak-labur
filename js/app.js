@@ -32,7 +32,7 @@ function loadScript(src) {
   return scriptCache[src];
 }
 
-/* Baca teks daripada fail .pdf, .docx atau teks biasa (dikongsi oleh Semak Kertas, Buku Nota dan Kerjaya) */
+/* Baca teks daripada fail .pdf, .docx, .pptx atau teks biasa (dikongsi oleh Semak Kertas, Buku Nota dan Kerjaya) */
 async function fileText(f) {
   const name = f.name.toLowerCase();
   if (name.endsWith('.docx')) {
@@ -50,7 +50,37 @@ async function fileText(f) {
     }
     return out.join('\n\n').replace(/[ \t]+/g, ' ').trim();
   }
+  if (name.endsWith('.pptx')) return pptxText(await f.arrayBuffer());
   return (await f.text()).trim();
+}
+
+/* Teks slaid PowerPoint (.pptx) tanpa pustaka: baca direktori pusat ZIP dan nyahmampat setiap slaid
+   dengan DecompressionStream('deflate-raw') pelayar */
+async function pptxText(buf) {
+  const v = new DataView(buf), u8 = new Uint8Array(buf), dec = new TextDecoder();
+  let e = -1;
+  for (let i = buf.byteLength - 22; i >= Math.max(0, buf.byteLength - 66000); i--) if (v.getUint32(i, true) === 0x06054b50) { e = i; break; }
+  if (e < 0) throw new Error('Bukan fail PPTX');
+  const n = v.getUint16(e + 10, true); let p = v.getUint32(e + 16, true);
+  const slaid = [];
+  for (let k = 0; k < n; k++) {
+    const kaedah = v.getUint16(p + 10, true), saiz = v.getUint32(p + 20, true), nl = v.getUint16(p + 28, true), xl = v.getUint16(p + 30, true), cl = v.getUint16(p + 32, true), off = v.getUint32(p + 42, true);
+    const nama = dec.decode(u8.subarray(p + 46, p + 46 + nl));
+    const m = nama.match(/^ppt\/slides\/slide(\d+)\.xml$/);
+    if (m) slaid.push({ no: +m[1], kaedah, saiz, off });
+    p += 46 + nl + xl + cl;
+  }
+  slaid.sort((a, b) => a.no - b.no);
+  const out = [];
+  for (const s of slaid) {
+    const mula = s.off + 30 + v.getUint16(s.off + 26, true) + v.getUint16(s.off + 28, true);
+    const data = u8.subarray(mula, mula + s.saiz);
+    const xml = s.kaedah === 0 ? dec.decode(data) : await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text();
+    const doc = new DOMParser().parseFromString(xml, 'application/xml');
+    const perenggan = [...doc.getElementsByTagNameNS('*', 'p')].map(pp => [...pp.getElementsByTagNameNS('*', 't')].map(t => t.textContent).join('')).filter(t => t.trim());
+    if (perenggan.length) out.push(`Slaid ${s.no}\n` + perenggan.join('\n'));
+  }
+  return out.join('\n\n').trim();
 }
 
 /* Notifikasi: plugin asli dalam app, Notification API dalam pelayar */
@@ -107,7 +137,7 @@ function paintThemeIcon() {
 })();
 
 /* Navigasi berasaskan hash */
-const VIEWS = ['utama', 'belajar', 'pasaran', 'solat', 'ibadah', 'semak', 'jadual', 'nota', 'sihat', 'studio', 'buku', 'kerja', 'jejak', 'komuniti', 'premium', 'soalan', 'halal'];
+const VIEWS = ['utama', 'belajar', 'pasaran', 'solat', 'ibadah', 'semak', 'jadual', 'nota', 'sihat', 'studio', 'buku', 'kerja', 'jejak', 'komuniti', 'premium', 'soalan', 'halal', 'alat'];
 let currentView = null, currentHash = null;
 function route() {
   // Hash boleh mempunyai sub-laluan, cth. #ibadah/quran/36

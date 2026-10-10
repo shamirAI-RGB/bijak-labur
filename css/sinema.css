@@ -66,6 +66,7 @@
 .view#view-belajar > .page-head, .view#view-nota > .page-head { --sn-img: url("../images/jelajah/belajar.svg"); }
 .view#view-semak > .page-head, .view#view-studio > .page-head { --sn-img: url("../images/jelajah/semak.svg"); }
 .view#view-buku > .page-head { --sn-img: url("../images/jelajah/fiqh.svg"); }
+.view#view-alat > .page-head { --sn-img: url("../images/jelajah/semak.svg"); }
 .view#view-ibadah > .page-head, .view#view-soalan > .page-head { --sn-img: url("../images/jelajah/ibadah.svg"); }
 .view#view-halal > .page-head, .view#view-sihat > .page-head { --sn-img: url("../images/jelajah/halal.svg"); }
 .view#view-jadual > .page-head, .view#view-kerja > .page-head, .view#view-komuniti > .page-head { --sn-img: url("../images/jelajah/jadual.svg"); }

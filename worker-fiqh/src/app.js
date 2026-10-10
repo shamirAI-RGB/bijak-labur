@@ -27,6 +27,7 @@ import { manusia, check as checkManusia } from './manusia.js';
 import { coach, check as checkCoach } from './coach.js';
 import { mulaGuna, catatGuna, hantarGuna } from './guna.js';
 import { audit, check as checkAudit } from './audit.js';
+import { alat, check as checkAlat, transkrip, checkTranskrip } from './alat.js';
 export { GEMINI_MODEL, GEMINI_FALLBACKS, geminiModels };
 
 export const MODEL = 'claude-opus-5-5';
@@ -413,7 +414,9 @@ const AI_ROUTES = {
   '/kerja': { nama: 'Kerjaya AI', limit: 'KERJA_LIMIT', check: checkKerja, run: kerja, maxBytes: 150_000 },
   '/manusia': { nama: 'Semakan gaya AI', limit: 'MANUSIA_LIMIT', check: checkManusia, run: manusia, maxBytes: 200_000 },
   '/audit': { nama: 'Audit lanjutan', limit: 'AUDIT_LIMIT', check: checkAudit, run: audit, maxBytes: 400_000 },
-  '/coach': { nama: 'AI Coach', limit: 'COACH_LIMIT', check: checkCoach, run: coach, maxBytes: 30_000 }
+  '/coach': { nama: 'AI Coach', limit: 'COACH_LIMIT', check: checkCoach, run: coach, maxBytes: 30_000 },
+  '/alat': { nama: 'Alat Pelajar', limit: 'ALAT_LIMIT', check: checkAlat, run: alat, maxBytes: 800_000 },
+  '/transkrip': { nama: 'Transkrip kuliah', limit: 'TRANSKRIP_LIMIT', check: checkTranskrip, run: transkrip, maxBytes: 20_000_000 }
 };
 
 async function aiRoute(req, env, h, r) {
