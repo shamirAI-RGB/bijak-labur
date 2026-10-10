@@ -1,4 +1,4 @@
-// Pejabat AI Agent Bijak Labur: pejabat animasi 8 AI agent (hanya untuk pemilik).
+// Pejabat AI Agent SiswaCap: pejabat animasi 8 AI agent (hanya untuk pemilik).
 // Satu fail. Perlu react, framer-motion dan Tailwind CSS. Tiada gambar luar: setiap watak ialah SVG sebaris.
 // Dibina oleh scripts/bina-pejabat-agen.mjs kepada js/pejabat-agen.js dan css/pejabat-agen.css.
 import React, { useEffect, useMemo, useState } from "react";
@@ -857,7 +857,7 @@ export default function PejabatAgen() {
         {state === "semak" && <p className="mt-2 text-sm text-slate-500">Menyemak kunci pemilik...</p>}
         {state !== "semak" && (
           <>
-            <p className="mt-2 text-sm text-slate-500">Halaman ini hanya untuk pemilik Bijak Labur. Masukkan kunci pemilik (sama seperti Mod Pemilik).</p>
+            <p className="mt-2 text-sm text-slate-500">Halaman ini hanya untuk pemilik SiswaCap. Masukkan kunci pemilik (sama seperti Mod Pemilik).</p>
             <form onSubmit={login} className="mt-4 space-y-3 text-left">
               <label htmlFor="pmKey" className="block text-xs font-bold text-slate-500">Kunci pemilik</label>
               <input id="pmKey" type="password" autoComplete="current-password" required minLength={12} value={val} onChange={(e) => setVal(e.target.value)}
@@ -865,7 +865,7 @@ export default function PejabatAgen() {
               {(err || state === "luar") && <p role="alert" className="text-sm font-semibold text-red-600">{err || "Tidak dapat menghubungi pelayan. Semak sambungan internet."}</p>}
               <button type="submit" className="w-full rounded-2xl bg-[#ffd23f] px-4 py-3 text-sm font-black shadow-[0_4px_0_#c99a00] active:translate-y-1 active:shadow-none">Masuk</button>
             </form>
-            <a href="./" className="mt-4 inline-block text-sm font-bold text-violet-600 underline">Kembali ke Bijak Labur</a>
+            <a href="./" className="mt-4 inline-block text-sm font-bold text-violet-600 underline">Kembali ke SiswaCap</a>
           </>
         )}
       </div>

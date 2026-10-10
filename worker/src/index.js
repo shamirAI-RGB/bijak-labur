@@ -1,5 +1,5 @@
 /*
- * Bijak Labur: pelayan pembayaran Premium (Cloudflare Worker, pelan percuma)
+ * SiswaCap: pelayan pembayaran Premium (Cloudflare Worker, pelan percuma)
  *
  * POST /checkout  { plan, period, name, email, phone }  -> { url }   cipta bil ToyyibPay (perlu log masuk)
  * GET  /return    (ToyyibPay hantar pembeli ke sini)    -> 302 ke laman web dengan kod bil
@@ -71,8 +71,8 @@ async function checkout(req, env, url) {
   try { res = await toyyib(env, 'createBill', {
     userSecretKey: env.TOYYIBPAY_SECRET,
     categoryCode: env.TOYYIBPAY_CATEGORY,
-    billName: tpText(`Bijak Labur ${plan.name} ${period.label}`, 30),
-    billDescription: tpText(`Akses Premium Bijak Labur pelan ${plan.name} selama ${period.days} hari ${b.plan}_${b.period}`, 100),
+    billName: tpText(`SiswaCap ${plan.name} ${period.label}`, 30),
+    billDescription: tpText(`Akses Premium SiswaCap pelan ${plan.name} selama ${period.days} hari ${b.plan}_${b.period}`, 100),
     billPriceSetting: '1',
     billPayorInfo: '1',
     billAmount: String(plan[b.period]),
@@ -85,7 +85,7 @@ async function checkout(req, env, url) {
     billSplitPayment: '0',
     billSplitPaymentArgs: '',
     billPaymentChannel: env.PAYMENT_CHANNEL || '2',
-    billContentEmail: 'Terima kasih kerana melanggan Bijak Labur Premium. Simpan e-mel ini: kod bil diperlukan untuk memulihkan Premium pada peranti lain.',
+    billContentEmail: 'Terima kasih kerana melanggan SiswaCap Premium. Simpan e-mel ini: kod bil diperlukan untuk memulihkan Premium pada peranti lain.',
     billChargeToCustomer: '',
     billExpiryDays: '3'
   }); } catch (e) {
@@ -125,7 +125,7 @@ async function claim(req, env) {
   const device = String(b.device || '');
   if (!code) return { status: 400, data: { error: 'Kod bil tidak sah.' } };
   if (!email) return { status: 400, data: { error: 'Sila isi e-mel yang digunakan semasa membayar.' } };
-  // Bil mesti dicipta oleh /checkout Bijak Labur, bukan bil ToyyibPay lain (termasuk bil akaun ToyyibPay orang lain)
+  // Bil mesti dicipta oleh /checkout SiswaCap, bukan bil ToyyibPay lain (termasuk bil akaun ToyyibPay orang lain)
   const rec = await callDO(env, `b:${code}`, { op: 'lihat' });
   if (rec.status !== 200) return rec;
   // Hanya akaun yang mencipta bil boleh menuntutnya (kod bil boleh terdedah dalam pautan /return)
@@ -168,7 +168,7 @@ const xml = s => s.replace(/[<>&'"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&
 
 async function tts(req, env, url, h) {
   if (!env.AZURE_SPEECH_KEY) return json({ error: 'Suara HD belum disediakan.' }, 503, h);
-  // Hanya laman dan app Bijak Labur (elak orang lain menghabiskan kuota)
+  // Hanya laman dan app SiswaCap (elak orang lain menghabiskan kuota)
   if (!h['access-control-allow-origin']) return json({ error: 'Tidak dibenarkan.' }, 403, h);
   const text = String(url.searchParams.get('t') || '').replace(/\s+/g, ' ').trim();
   const v = TTS_VOICES[url.searchParams.get('v')], rate = TTS_RATES[url.searchParams.get('r') || '1'];
@@ -217,7 +217,7 @@ export default {
       }
       if (req.method === 'GET' && url.pathname === '/tts') return await tts(req, env, url, h);
       if (url.pathname.startsWith('/komuniti/')) {
-        // Hanya laman dan app Bijak Labur (kecuali gambar, yang dipaparkan dalam <img>)
+        // Hanya laman dan app SiswaCap (kecuali gambar, yang dipaparkan dalam <img>)
         if (!h['access-control-allow-origin'] && !url.pathname.startsWith('/komuniti/gambar/')) return json({ error: 'Tidak dibenarkan.' }, 403, h);
         const r = await handleKomuniti(req, env, url.pathname, authed);
         return r.response || json(r.data, r.status, h);

@@ -1,4 +1,4 @@
-/* Bijak Labur Premium: alat pelajar (PNGK, muka depan tugasan, bandingkan draf, sejarah semakan) */
+/* SiswaCap Premium: alat pelajar (PNGK, muka depan tugasan, bandingkan draf, sejarah semakan) */
 (function () {
   const { numIn, field, persist } = ProTools.kit;
 

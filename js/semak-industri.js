@@ -1,4 +1,4 @@
-/* Bijak Labur: Semak Kertas, audit lanjutan universal (worker-fiqh /audit)
+/* SiswaCap: Semak Kertas, audit lanjutan universal (worker-fiqh /audit)
    1. Profil pemeriksa ikut fakulti dan subjek, rubrik 5 kriteria (0-20, literatur dan metodologi boleh tidak berkaitan)
       dengan unjuran gred A+ hingga F.
    2. Matriks pembaikan struktur hujah (hujah tanpa sokongan, ralat logik, fakta bercanggah, lari tajuk).
@@ -165,7 +165,7 @@
     return `#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Anotasi semakan Bijak Labur ke dalam PDF tugasan asal.
+Anotasi semakan SiswaCap ke dalam PDF tugasan asal.
 
 Skrip ini membaca PDF tugasan anda, mencari setiap petikan berstatus NC (Non-Conformance) dan setiap
 isu struktur hujah dan kesalahan bahasa yang dikesan oleh Semak Kertas di bijaklabur.my, kemudian:
@@ -227,12 +227,12 @@ def main():
                 continue
             serlah = page.add_highlight_annot(kuad)  # satu serlahan bagi semua kemunculan pada muka surat ini
             serlah.set_colors(stroke=MERAH)
-            serlah.set_info(title="Bijak Labur: " + isu["tajuk"], content=isu["komen"])
+            serlah.set_info(title="SiswaCap: " + isu["tajuk"], content=isu["komen"])
             serlah.update()
             r = kuad[0].rect
             titik = fitz.Point(min(r.x1 + 4, page.rect.width - 24), max(r.y0 - 4, 4))
             nota = page.add_text_annot(titik, isu["komen"], icon="Comment")
-            nota.set_info(title="Bijak Labur: " + isu["tajuk"])
+            nota.set_info(title="SiswaCap: " + isu["tajuk"])
             nota.set_colors(stroke=MERAH)
             nota.update()
             jumpa = True
@@ -243,7 +243,7 @@ def main():
     if len(doc) and tiada:
         ringkasan = "Isu yang tidak dijumpai dalam PDF (teks mungkin berbeza):\\n" + "\\n".join("- " + i["komen"] for i in tiada[:40])
         nota = doc[0].add_text_annot(fitz.Point(12, 12), ringkasan, icon="Note")
-        nota.set_info(title="Bijak Labur: ringkasan")
+        nota.set_info(title="SiswaCap: ringkasan")
         nota.set_colors(stroke=MERAH)
         nota.update()
     doc.save(hasil, garbage=3, deflate=True)

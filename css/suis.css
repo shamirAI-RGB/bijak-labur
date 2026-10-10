@@ -1,4 +1,4 @@
-/* Bijak Labur: suis Hitam/Putih dan suis bahasa BM/EN/العربية (js/bahasa.js, js/app.js).
+/* SiswaCap: suis Hitam/Putih dan suis bahasa BM/EN/العربية (js/bahasa.js, js/app.js).
    Lapisan paling akhir. Hitam = seluruh laman gelap (pentas dan jalur pameran juga gelap);
    Putih = seluruh laman cerah (pentas utama dan sepanduk halaman turut cerah). */
 
@@ -163,3 +163,18 @@
   .topbar .desk-nav a, .topbar .nav-more > summary, :root:not([data-theme="light"]) .topbar .desk-nav > a { padding: 7px 5px; font-size: .8rem; }
   .topbar #arahanBtn ~ .icon-btn, .topbar #akaunBtn, .bh-wrap, .topbar .tm-suis { margin-left: 4px; }
 }
+
+/* Penafian utama di kaki laman (arahan pemilik, 10 Oktober 2026) */
+.site-footer .kaki-amaran { color: var(--text); font-size: .92rem; }
+.site-footer .kaki-amaran b { font-weight: 700; }
+
+/* Logo SiswaCap (konsep "Tanda Kata"): tanda kata sahaja dengan anak panah; monogram SC pada telefon */
+.logo span { display: inline-flex; align-items: center; gap: 2px; font-family: "Schibsted Grotesk", var(--font); font-weight: 800; font-size: 1.3rem; letter-spacing: -0.03em; color: #1e3a8a; }
+.logo span b { font-weight: inherit; color: #7c3aed; }
+.logo .logo-panah { width: .62em; height: .62em; margin-left: 2px; fill: none; stroke: #7c3aed; stroke-width: 22; stroke-linecap: round; stroke-linejoin: round; }
+:root:not([data-theme="light"]) .logo span { color: #fff; }
+:root:not([data-theme="light"]) .logo span b, :root:not([data-theme="light"]) .logo .logo-panah { color: #a78bfa; stroke: #a78bfa; }
+.topbar .logo img { border-radius: 7px; }
+@media (min-width: 560px) { .topbar .logo img { display: none; } }
+@media (min-width: 900px) and (max-width: 1239px) { .topbar .logo span { display: inline-flex; font-size: 1.02rem; } .topbar-inner { gap: 8px; } }
+@media (min-width: 900px) and (max-width: 999px) { .topbar .desk-nav a, .topbar .nav-more > summary, :root:not([data-theme="light"]) .topbar .desk-nav > a { padding: 7px 4px; font-size: .78rem; } .topbar .logo span { font-size: .95rem; } }

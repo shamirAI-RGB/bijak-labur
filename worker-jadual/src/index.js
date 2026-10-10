@@ -1,5 +1,5 @@
 /*
- * Bijak Labur: pelayan jadual kelas UiTM (Cloudflare Worker, pelan percuma)
+ * SiswaCap: pelayan jadual kelas UiTM (Cloudflare Worker, pelan percuma)
  *
  * Membaca halaman awam iCress UiTM (jadual kelas mengikut kampus, kod kursus dan kumpulan)
  * dan memulangkannya sebagai JSON. Tiada log masuk, tiada kata laluan, tiada data peribadi:
@@ -23,7 +23,7 @@
 export const BASE = 'https://simsweb4.uitm.edu.my/estudent/class_timetable/';
 const HOST = new URL(BASE).hostname;
 export const STUDENT_URL = 'https://cdn.uitm.link/jadual/baru/';
-const UA = 'Mozilla/5.0 (compatible; BijakLabur/1.0; +https://bijaklabur.my)';
+const UA = 'Mozilla/5.0 (compatible; SiswaCap/1.0; +https://bijaklabur.my)';
 const TTL = { session: 3600, campuses: 21600, faculties: 21600, courses: 3600, groups: 1200, timetable: 1200 };
 const MAX_PICKS = 15;
 
@@ -362,7 +362,7 @@ export default {
 
     // Simpan jawapan dalam cache Cloudflare supaya pelayan UiTM tidak dibebankan
     const cache = deps.cache ?? (typeof caches !== 'undefined' ? caches.default : null);
-    // Jadual pelajar mengikut No. Pelajar: hanya dari laman/app Bijak Labur, dengan had ketat (elak pengumpulan beramai-ramai)
+    // Jadual pelajar mengikut No. Pelajar: hanya dari laman/app SiswaCap, dengan had ketat (elak pengumpulan beramai-ramai)
     if (url.pathname === '/pelajar') {
       if (!h['access-control-allow-origin']) return json({ error: 'Tidak dibenarkan.' }, 403, h);
       if (await limited(env, 'PELAJAR_LIMIT', req)) return json({ error: 'Terlalu banyak carian. Cuba lagi sebentar.' }, 429, h);

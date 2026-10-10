@@ -1,4 +1,4 @@
-/* Bijak Labur: Studio Gambar AI. Model FLUX (sama seperti yang dijalankan dalam ComfyUI) di pelayan Bijak Labur.
+/* SiswaCap: Studio Gambar AI. Model FLUX (sama seperti yang dijalankan dalam ComfyUI) di pelayan SiswaCap.
    Penerangan Bahasa Melayu ditukar kepada prompt terperinci dan disemak keselamatannya sebelum gambar dijana.
    Galeri disimpan dalam peranti ini sahaja. */
 (function () {
@@ -69,7 +69,7 @@
       ${galeri.length ? `<div class="card"><div class="row-between"><h2>Galeri anda</h2><button class="link-btn" type="button" data-act="padam">${icon('trash')}Padam semua</button></div>
         <div class="st-gal">${galeri.map(g => `<button type="button" class="st-thumb" data-id="${esc(g.id)}" aria-label="Buka: ${esc(g.prompt)}"><img src="${src(g)}" alt="" loading="lazy" width="160" height="160"></button>`).join('')}</div>
         <p class="muted small">Disimpan dalam peranti ini sahaja (${galeri.length} gambar terkini).</p></div>` : ''}
-      <p class="note">${icon('alert')}<span>Gambar dijana oleh AI dan mungkin tidak tepat. Permintaan kandungan lucah, ganas, kebencian, orang sebenar yang dikenali, dokumen palsu atau gambaran para nabi akan ditolak. Penerangan anda dihantar kepada penyedia AI untuk menjana gambar, dan tidak disimpan di pelayan Bijak Labur. Jangan gunakan gambar AI untuk menipu atau menyamar.</span></p>`;
+      <p class="note">${icon('alert')}<span>Gambar dijana oleh AI dan mungkin tidak tepat. Permintaan kandungan lucah, ganas, kebencian, orang sebenar yang dikenali, dokumen palsu atau gambaran para nabi akan ditolak. Penerangan anda dihantar kepada penyedia AI untuk menjana gambar, dan tidak disimpan di pelayan SiswaCap. Jangan gunakan gambar AI untuk menipu atau menyamar.</span></p>`;
   }
   const paintResult = () => { const r = $('#stRes', root); if (r) r.innerHTML = resultHTML(); };
 
@@ -123,7 +123,7 @@
         for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
         const blob = new Blob([buf], { type: S.cur.mime || 'image/jpeg' });
         const file = new File([blob], `bijak-labur-${S.cur.seed}.jpg`, { type: blob.type });
-        await navigator.share({ files: [file], title: 'Gambar AI daripada Bijak Labur', text: S.cur.prompt });
+        await navigator.share({ files: [file], title: 'Gambar AI daripada SiswaCap', text: S.cur.prompt });
       } catch (err) { if (err && err.name !== 'AbortError') toast('Gambar tidak dapat dikongsi pada peranti ini.'); }
     }
   });

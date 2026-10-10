@@ -1,4 +1,4 @@
-/* Bijak Labur: kedai nota IC220. Orang awam melihat senarai, pratonton dan harga; pembelian melalui QR dan WhatsApp.
+/* SiswaCap: kedai nota IC220. Orang awam melihat senarai, pratonton dan harga; pembelian melalui QR dan WhatsApp.
    Pemilik log masuk dengan kunci pemilik untuk menambah, menyunting dan memadam nota bila-bila masa.
    Fail penuh hanya boleh dimuat turun oleh pemilik atau melalui pautan pembeli yang dijana pemilik. */
 (function () {
@@ -60,7 +60,7 @@
         <div>
           <p class="eyebrow">Untuk pelajar IC220, UiTM</p>
           <h1 id="h-nota">Nota IC220</h1>
-          <p class="lead">Nota Ijazah Sarjana Muda Pengurusan Industri Halal yang disusun oleh pengasas Bijak Labur. Lihat pratonton dan harga, bayar melalui QR, dan terima nota melalui WhatsApp.</p>
+          <p class="lead">Nota Ijazah Sarjana Muda Pengurusan Industri Halal yang disusun oleh pengasas SiswaCap. Lihat pratonton dan harga, bayar melalui QR, dan terima nota melalui WhatsApp.</p>
         </div>
         ${owner() ? `<div class="nt-head-acts"><span class="nt-badge">${icon('lock')}Mod pemilik</span><button class="btn sm ghost" data-act="logout">Log keluar</button></div>` : ''}
       </div>
@@ -236,7 +236,7 @@
     let j;
     try { j = await api(`/admin/notes/${n.id}/link`, { method: 'POST' }); } catch (e) { toast(e.message, 4000); return; }
     const exp = new Date(j.expires).toLocaleDateString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric' });
-    const text = `Terima kasih kerana membeli nota "${n.title}" daripada Bijak Labur. Muat turun di sini (sah hingga ${exp}):\n${j.url}`;
+    const text = `Terima kasih kerana membeli nota "${n.title}" daripada SiswaCap. Muat turun di sini (sah hingga ${exp}):\n${j.url}`;
     dialog(`<h2>Pautan untuk pembeli</h2>
       <p class="nt-hint">Hantar pautan ini kepada pembeli selepas bayaran diterima. Pautan sah hingga <b>${esc(exp)}</b> dan hanya memuat turun nota ini.</p>
       <input readonly value="${esc(j.url)}" id="ntLinkUrl" aria-label="Pautan muat turun">

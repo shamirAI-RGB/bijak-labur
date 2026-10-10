@@ -1,10 +1,10 @@
-/* Bijak Labur: Suara. Bacakan kandungan halaman semasa (semua tab) dengan suara peranti.
+/* SiswaCap: Suara. Bacakan kandungan halaman semasa (semua tab) dengan suara peranti.
    Pelayar: Web Speech API. App Android/iOS: plugin TextToSpeech asli. Teks Arab, Cina dan Tamil dibaca dengan suara bahasa itu jika ada. */
 (function () {
   const NATIVE_TTS = plugin('TextToSpeech');
   const synth = 'speechSynthesis' in window ? window.speechSynthesis : null;
   const btn = $('#sayBtn');
-  // Suara HD (neural Azure, natural): pelayan Bijak Labur (worker/) dengan laluan /tts.
+  // Suara HD (neural Azure, natural): pelayan SiswaCap (worker/) dengan laluan /tts.
   // Hanya digunakan selepas pelayan melaporkan kunci Azure sudah ditetapkan (GET / -> { tts: true }).
   const HD_API = 'https://bijak-labur-premium.khanz-amir.workers.dev';
   if (!NATIVE_TTS && !synth && !HD_API) { btn.remove(); return; }
@@ -81,9 +81,9 @@
   /* ---------- Enjin suara: setiap bahasa ada senarai ganti. Bahasa Melayu tidak sekali-kali
      beralih ke suara Bahasa Indonesia (sebutan dan perkataan berbeza). ---------- */
   const LANGS = [
-    { k: 'ms', name: 'Bahasa Melayu', chain: ['ms-MY', 'ms', 'ms-SG', 'ms-BN'], sample: 'Selamat datang ke Bijak Labur. Mari belajar melabur dengan bijak.', soft: true },
-    { k: 'en', name: 'English', chain: ['en-GB', 'en-MY', 'en-US', 'en-AU', 'en-IN', 'en'], sample: 'Welcome to Bijak Labur. Let us learn to invest wisely.', soft: true },
-    { k: 'zh', name: '中文 (华语)', chain: ['zh-CN', 'cmn-CN', 'zh-SG', 'cmn-Hans-CN', 'zh-TW', 'cmn-TW', 'zh-HK', 'yue-HK', 'zh'], sample: '欢迎来到 Bijak Labur。我们一起学习投资。' },
+    { k: 'ms', name: 'Bahasa Melayu', chain: ['ms-MY', 'ms', 'ms-SG', 'ms-BN'], sample: 'Selamat datang ke SiswaCap. Mari belajar melabur dengan bijak.', soft: true },
+    { k: 'en', name: 'English', chain: ['en-GB', 'en-MY', 'en-US', 'en-AU', 'en-IN', 'en'], sample: 'Welcome to SiswaCap. Let us learn to invest wisely.', soft: true },
+    { k: 'zh', name: '中文 (华语)', chain: ['zh-CN', 'cmn-CN', 'zh-SG', 'cmn-Hans-CN', 'zh-TW', 'cmn-TW', 'zh-HK', 'yue-HK', 'zh'], sample: '欢迎来到 SiswaCap。我们一起学习投资。' },
     { k: 'ta', name: 'தமிழ்', chain: ['ta-IN', 'ta-MY', 'ta-SG', 'ta-LK', 'ta'], sample: 'பிஜாக் லாபூருக்கு வரவேற்கிறோம். முதலீடு செய்யக் கற்போம்.' },
     { k: 'ar', name: 'العربية', chain: ['ar-SA', 'ar-001', 'ar-AE', 'ar-EG', 'ar-XA', 'ar'], sample: 'بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ' }
   ];
@@ -323,7 +323,7 @@
   const OS = Native ? Native.getPlatform() : /android/i.test(UA) ? 'android' : /iphone|ipad|ipod/i.test(UA) || (/macintosh/i.test(UA) && navigator.maxTouchPoints > 1) ? 'ios' : /windows/i.test(UA) ? 'windows' : /macintosh/i.test(UA) ? 'mac' : 'other';
   const HELP = {
     android: 'Android: buka Tetapan, kemudian Sistem, Bahasa & input, Output teks-ke-pertuturan. Pilih enjin Speech Services by Google, tekan ikon tetapan dan Pasang data suara. Muat turun Bahasa Melayu (atau Indonesia), Cina (Mandarin), Tamil dan Arab.',
-    ios: 'iPhone dan iPad: buka Tetapan, kemudian Kebolehcapaian, Kandungan Dituturkan, Suara. Pilih bahasa (Melayu, Cina, Tamil, Arab) dan muat turun suara yang tersedia. Kemudian buka semula Bijak Labur.',
+    ios: 'iPhone dan iPad: buka Tetapan, kemudian Kebolehcapaian, Kandungan Dituturkan, Suara. Pilih bahasa (Melayu, Cina, Tamil, Arab) dan muat turun suara yang tersedia. Kemudian buka semula SiswaCap.',
     windows: 'Windows: buka Tetapan, kemudian Masa & bahasa, Pertuturan, Tambah suara. Pilih bahasa yang anda perlukan. Chrome dan Edge juga ada suara dalam talian.',
     mac: 'Mac: buka Tetapan Sistem, kemudian Kebolehcapaian, Kandungan Dituturkan, Suara Sistem, Urus Suara. Tandakan bahasa yang anda perlukan.',
     other: 'Pasang suara bahasa itu dalam tetapan teks-ke-pertuturan peranti anda, kemudian buka semula laman ini.'

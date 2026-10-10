@@ -1,5 +1,5 @@
 /*
- * Bijak Labur: No AI Slop. Tulis semula ayat yang berbunyi seperti AI atau penuh klise supaya lebih jelas dan semula jadi.
+ * SiswaCap: No AI Slop. Tulis semula ayat yang berbunyi seperti AI atau penuh klise supaya lebih jelas dan semula jadi.
  *
  * POST /manusia { text, lang, tanda?: [frasa yang dikesan oleh pelayar] }
  *   -> { cadangan: [{ asal, baru, sebab }] }   setiap "asal" unik dan wujud tepat dalam teks

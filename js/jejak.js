@@ -1,4 +1,4 @@
-/* Bijak Labur: Jejak Aktiviti. Penjejak GPS masa nyata untuk jalan, lari dan berbasikal: peta laluan langsung
+/* SiswaCap: Jejak Aktiviti. Penjejak GPS masa nyata untuk jalan, lari dan berbasikal: peta laluan langsung
    (peta 3D MapLibre, data OpenStreetMap), jarak, masa bergerak, rentak/kelajuan, langkah, kalori, pendakian, catatan setiap km
    dengan pengumuman suara, jeda/sambung, sejarah, dan eksport GPX. Semua data disimpan dalam peranti ini sahaja.
    Dalam pelayar, penjejakan hanya berjalan semasa halaman dibuka dan skrin hidup (kunci skrin diminta).
@@ -177,11 +177,11 @@
     try {
       bgId = await BG.start({
         backgroundTitle: 'Jejak Aktiviti sedang merekod',
-        backgroundMessage: 'Bijak Labur merekod laluan anda. Buka app untuk jeda atau tamat.',
+        backgroundMessage: 'SiswaCap merekod laluan anda. Buka app untuk jeda atau tamat.',
         requestPermissions: true, stale: false, distanceFilter: 0
       }, (loc, err) => {
         if (err) {
-          if (err.code === 'NOT_AUTHORIZED') { acc = -1; paintCtl(); if (confirm('Bijak Labur memerlukan kebenaran lokasi untuk menjejak aktiviti. Buka tetapan sekarang?')) BG.openSettings(); }
+          if (err.code === 'NOT_AUTHORIZED') { acc = -1; paintCtl(); if (confirm('SiswaCap memerlukan kebenaran lokasi untuk menjejak aktiviti. Buka tetapan sekarang?')) BG.openSettings(); }
           return;
         }
         if (loc) onPos({ coords: { latitude: loc.latitude, longitude: loc.longitude, accuracy: loc.accuracy, altitude: loc.altitude, altitudeAccuracy: loc.altitudeAccuracy }, timestamp: loc.time || Date.now() });
@@ -314,7 +314,7 @@
     let trk = '<trkseg>';
     for (const p of rec.pts) { if (p[3]) trk += '</trkseg><trkseg>'; trk += `<trkpt lat="${p[0]}" lon="${p[1]}"><time>${new Date(t0 + p[2] * 1000).toISOString()}</time></trkpt>`; }
     trk += '</trkseg>';
-    const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Bijak Labur" xmlns="http://www.topografix.com/GPX/1/1"><metadata><time>${new Date(t0).toISOString()}</time></metadata><trk><name>${x(JENIS[rec.jenis].nama)} ${new Date(t0).toLocaleDateString('ms-MY')}</name><type>${rec.jenis === 'basikal' ? 'cycling' : rec.jenis === 'lari' ? 'running' : 'walking'}</type>${trk}</trk></gpx>\n`;
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="SiswaCap" xmlns="http://www.topografix.com/GPX/1/1"><metadata><time>${new Date(t0).toISOString()}</time></metadata><trk><name>${x(JENIS[rec.jenis].nama)} ${new Date(t0).toLocaleDateString('ms-MY')}</name><type>${rec.jenis === 'basikal' ? 'cycling' : rec.jenis === 'lari' ? 'running' : 'walking'}</type>${trk}</trk></gpx>\n`;
     const url = URL.createObjectURL(new Blob([xml], { type: 'application/gpx+xml' }));
     Object.assign(document.createElement('a'), { href: url, download: `bijak-labur-${rec.jenis}-${day(new Date(t0))}.gpx` }).click();
     setTimeout(() => URL.revokeObjectURL(url), 2000);
@@ -377,7 +377,7 @@
         <div class="card jk-ctl" id="jkCtl"></div>
         <div class="card" id="jkHist"></div>
       </div>
-      <p class="note">${icon('alert')}<span>${BG ? 'Dalam app ini, penjejakan diteruskan walaupun skrin dikunci atau anda membuka app lain (notifikasi "Jejak Aktiviti" dipaparkan). Tekan Tamat apabila selesai untuk menjimatkan bateri.' : 'Dalam pelayar, pastikan skrin kekal hidup semasa menjejak: pelayar menghentikan GPS apabila skrin dikunci atau halaman ditutup. Untuk menjejak dengan skrin dikunci, gunakan app Bijak Labur (Android/iOS).'} Lokasi dan laluan anda disimpan dalam peranti ini sahaja dan tidak dihantar ke pelayan Bijak Labur. Peta dimuatkan daripada OpenFreeMap (data OpenStreetMap). Utamakan keselamatan: perhatikan jalan raya, bukan skrin.</span></p>`;
+      <p class="note">${icon('alert')}<span>${BG ? 'Dalam app ini, penjejakan diteruskan walaupun skrin dikunci atau anda membuka app lain (notifikasi "Jejak Aktiviti" dipaparkan). Tekan Tamat apabila selesai untuk menjimatkan bateri.' : 'Dalam pelayar, pastikan skrin kekal hidup semasa menjejak: pelayar menghentikan GPS apabila skrin dikunci atau halaman ditutup. Untuk menjejak dengan skrin dikunci, gunakan app SiswaCap (Android/iOS).'} Lokasi dan laluan anda disimpan dalam peranti ini sahaja dan tidak dihantar ke pelayan SiswaCap. Peta dimuatkan daripada OpenFreeMap (data OpenStreetMap). Utamakan keselamatan: perhatikan jalan raya, bukan skrin.</span></p>`;
     terbangId = 0;
     if (peta) peta.buang();
     peta = null;

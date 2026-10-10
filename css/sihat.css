@@ -1,4 +1,4 @@
-/* Bijak Labur: Sihat (kalori dan langkah) */
+/* SiswaCap: Sihat (kalori dan langkah) */
 .sh-grid { display: grid; gap: 0 14px; }
 @media (min-width: 900px) { .sh-grid { grid-template-columns: 1fr 1fr; } .sh-today { grid-column: 1 / -1; } }
 .sh-grid h2 { margin-bottom: 12px; }

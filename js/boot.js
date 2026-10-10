@@ -1,4 +1,4 @@
-/* Bijak Labur: kerja awal sebelum skrip utama dimuatkan, supaya kandungan dilukis serta-merta
+/* SiswaCap: kerja awal sebelum skrip utama dimuatkan, supaya kandungan dilukis serta-merta
    (bukan selepas semua skrip selesai). Senarai halaman sama dengan VIEWS dalam app.js. */
 (function () {
   var V = ['utama', 'belajar', 'pasaran', 'solat', 'ibadah', 'semak', 'jadual', 'nota', 'sihat', 'studio', 'buku', 'kerja', 'jejak', 'komuniti', 'premium', 'soalan', 'halal'];

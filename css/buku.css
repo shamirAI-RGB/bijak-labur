@@ -1,4 +1,4 @@
-/* Bijak Labur: Buku Nota AI, Kerjaya AI dan semakan gaya AI (dikongsi) */
+/* SiswaCap: Buku Nota AI, Kerjaya AI dan semakan gaya AI (dikongsi) */
 .error { color: var(--down); font-weight: 600; }
 .row-gap { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .bk-grid { display: grid; gap: 0 14px; }

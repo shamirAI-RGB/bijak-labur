@@ -1,4 +1,4 @@
-/* Bijak Labur: Semak Kertas peringkat pakar
+/* SiswaCap: Semak Kertas peringkat pakar
    1. Ulasan pakar (Gemini melalui worker-fiqh /semak): markah rubrik, kekuatan, penambahbaikan
       dan pembetulan bahasa (BM baku DBP, bukan Bahasa Indonesia) yang boleh diterima satu demi satu.
    2. Pemeriksa rujukan: setiap rujukan disahkan dengan Crossref dan OpenAlex (mengesan rujukan rekaan),

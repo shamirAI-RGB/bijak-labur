@@ -1,4 +1,4 @@
-# Keselamatan dan prestasi Bijak Labur:
+# Keselamatan dan prestasi SiswaCap:
 #   Gitleaks   : imbas setiap push dan PR (dan seluruh sejarah, mingguan) untuk kunci API atau kata laluan yang tertulis dalam kod
 #   Lighthouse : ukur prestasi, aksesibiliti, amalan terbaik dan SEO laman pada setiap PR yang mengubah laman
 #   OWASP ZAP  : imbasan keselamatan pasif (tidak menyerang) terhadap bijaklabur.my seminggu sekali; dapatan dicatat dalam issue

@@ -1,4 +1,4 @@
-/* Bijak Labur Premium: portfolio patuh Syariah (status setiap pegangan, pembersihan dividen, tarikh haul zakat)
+/* SiswaCap Premium: portfolio patuh Syariah (status setiap pegangan, pembersihan dividen, tarikh haul zakat)
    dan peringatan (haul, senarai Syariah SC Mei dan November). Data disimpan dalam peranti ini sahaja. */
 (function () {
   const { fmtRM, field, FX, portfolio, valueOf, refreshPrices } = ProTools.kit;
@@ -100,7 +100,7 @@
     const id = 7300001;
     LN.cancel({ notifications: [{ id }] }).catch(() => {}).then(() => {
       if (!isPro() || !cfg.ingatHaul || at.getTime() < Date.now()) return;
-      LN.schedule({ notifications: [{ id, title: 'Haul zakat pelaburan minggu depan', body: `Haul anda jatuh pada ${hStr(hijri(d))} (${gFmt.format(d)}). Semak nilai portfolio dan nisab dalam Bijak Labur.`, schedule: { at } }] }).catch(() => {});
+      LN.schedule({ notifications: [{ id, title: 'Haul zakat pelaburan minggu depan', body: `Haul anda jatuh pada ${hStr(hijri(d))} (${gFmt.format(d)}). Semak nilai portfolio dan nisab dalam SiswaCap.`, schedule: { at } }] }).catch(() => {});
     });
   }
   function remind() {
@@ -110,7 +110,7 @@
     if (d) scheduleNative(d);
     if (cfg.ingatHaul && d) {
       const left = (d.getTime() - now.getTime()) / DAY, tag = d.toISOString().slice(0, 10);
-      if (left <= 7 && seen.haul !== tag) { Notify.show('Haul zakat pelaburan hampir tiba', `${hStr(hijri(d))} (${gFmt.format(d)}). Kira zakat anda dalam Bijak Labur Premium.`); seen.haul = tag; }
+      if (left <= 7 && seen.haul !== tag) { Notify.show('Haul zakat pelaburan hampir tiba', `${hStr(hijri(d))} (${gFmt.format(d)}). Kira zakat anda dalam SiswaCap Premium.`); seen.haul = tag; }
     }
     // Senarai saham patuh Syariah SC dikemas kini pada hujung Mei dan hujung November
     if (cfg.ingatSC && portfolio().some(h => h.type === 'stock')) {

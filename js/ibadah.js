@@ -1,4 +1,4 @@
-/* Bijak Labur: Ibadah. Al-Quran, doa, tasbih, kalendar Islam, Asmaul Husna, panduan dan tetapan */
+/* SiswaCap: Ibadah. Al-Quran, doa, tasbih, kalendar Islam, Asmaul Husna, panduan dan tetapan */
 (function () {
   const D = IbadahData;
   const TZ = 'Asia/Kuala_Lumpur';
@@ -406,7 +406,7 @@
     const c = drawCard(galCache[i], i, 1080, 1350);
     const blob = await new Promise(r => c.toBlob(r, 'image/png'));
     const file = new File([blob], `bijak-labur-${i + 1}.png`, { type: 'image/png' });
-    if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file], title: 'Bijak Labur' }); return; } catch (e) { if (e.name === 'AbortError') return; } }
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file], title: 'SiswaCap' }); return; } catch (e) { if (e.name === 'AbortError') return; } }
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = file.name; document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 4000);
     toast('Kad dimuat turun');
@@ -466,7 +466,7 @@
           <div id="zhOut" class="zh-out"></div>
           <p class="muted small">Haul ialah setahun Hijrah (354 atau 355 hari), jadi ia tiba kira-kira 11 hari lebih awal setiap tahun Masihi.</p></div>
       </div>
-      <a class="card shortcut hidden" href="#premium" data-premium-entry>${tileIcon('zakat', 'sm')}<div class="sc-body"><div class="sc-title">Zakat pelaburan</div><div class="sc-sub">Saham, kripto dan portfolio dalam Bijak Labur Premium</div></div>${icon('chev', 'ic chev')}</a>
+      <a class="card shortcut hidden" href="#premium" data-premium-entry>${tileIcon('zakat', 'sm')}<div class="sc-body"><div class="sc-title">Zakat pelaburan</div><div class="sc-sub">Saham, kripto dan portfolio dalam SiswaCap Premium</div></div>${icon('chev', 'ic chev')}</a>
       <p class="source">Kiraan ringkas untuk panduan. Rujuk pusat zakat negeri anda sebelum membayar.</p>`;
     const vis = $('.desk-nav [data-premium-entry]');
     if (vis && !vis.classList.contains('hidden')) $$('[data-premium-entry]', P()).forEach(el => el.classList.remove('hidden'));

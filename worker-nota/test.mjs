@@ -174,7 +174,7 @@ const raw = mimeTanya({ ...sq, nama: 'Siti "Aisyah" <x>', teks: 'Apa itu saham p
 const [head, body] = raw.split('\r\n\r\n');
 assert.ok(!/^Bcc:/mi.test(head));
 assert.match(head, /^Reply-To: =\?UTF-8\?B\?[A-Za-z0-9+/=]+\?= <ali@contoh\.my>$/m);
-assert.match(head, /^Subject: \[Bijak Labur\] Umum: Apa itu saham patuh syariah\?$/m);
+assert.match(head, /^Subject: \[SiswaCap\] Umum: Apa itu saham patuh syariah\?$/m);
 const teksBadan = new TextDecoder().decode(Uint8Array.from(atob(body.replace(/\s/g, '')), c => c.charCodeAt(0)));
 assert.match(teksBadan, /Masa   : 2026-10-09 13:00 \(waktu Malaysia\)/);
 assert.match(teksBadan, /Apa itu saham patuh syariah\?/);

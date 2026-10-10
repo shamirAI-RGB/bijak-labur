@@ -1,4 +1,4 @@
-// Widget skrin utama dan skrin kunci untuk app Bijak Labur (iOS 17 ke atas).
+// Widget skrin utama dan skrin kunci untuk app SiswaCap (iOS 17 ke atas).
 import WidgetKit
 import SwiftUI
 

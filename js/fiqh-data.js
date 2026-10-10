@@ -1,4 +1,4 @@
-/* Bijak Labur: data Fiqh. Setiap rujukan di sini telah disemak dengan sumber asal (3 Oktober 2026; kitab tambahan 6 Oktober 2026).
+/* SiswaCap: data Fiqh. Setiap rujukan di sini telah disemak dengan sumber asal (3 Oktober 2026; kitab tambahan 6 Oktober 2026).
    Teks ayat dan hadis TIDAK disimpan di sini: ia dimuat terus daripada sumber semasa dibuka supaya tidak berlaku salah petik.
    Jangan tambah rujukan yang belum dibuka dan disemak sendiri. */
 const FiqhData = (() => {
@@ -175,7 +175,7 @@ const FiqhData = (() => {
     { bab: 'muamalat', k: 'saham-syariah', t: 'Melabur dalam saham patuh Syariah', hukum: 'harus',
       ringkas: 'Melabur dalam saham syarikat yang aktivitinya halal adalah harus. Di Malaysia, Majlis Penasihat Syariah SC menyaring saham Bursa dua kali setahun menggunakan penanda aras aktiviti (5% dan 20%) dan nisbah kewangan (33%). Semak status saham sebelum membeli di Moomoo.',
       langkah: ['Aktiviti teras halal', 'Aktiviti bercampur bawah 5% / 20%', 'Tunai konvensional bawah 33%', 'Hutang berfaedah bawah 33%'],
-      q: ['2:275', '4:29'], f: ['scSaringan', 'scSenarai'], app: ['#belajar', 'Belajar asas saham di Bijak Labur'] },
+      q: ['2:275', '4:29'], f: ['scSaringan', 'scSenarai'], app: ['#belajar', 'Belajar asas saham di SiswaCap'] },
     { bab: 'muamalat', k: 'kripto', t: 'Melabur dalam kripto', hukum: 'harus',
       ringkas: 'MPS SC memutuskan pelaburan dan dagangan aset digital yang memenuhi syarat Syariah dan didagangkan di DAX berdaftar dengan SC adalah dibenarkan. Mata wang digital dianggap harta (mal) dan \'urudh, bukan mata wang. Unsur judi, gharar dan riba tetap perlu dielakkan.',
       q: ['4:29'], h: ['m1513'], f: ['scKripto'], app: ['#pasaran', 'Lihat harga kripto masa nyata'] },

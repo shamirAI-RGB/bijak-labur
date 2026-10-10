@@ -1,5 +1,5 @@
 /*
- * Bijak Labur: kedai nota IC220 (Cloudflare Worker + Workers KV, pelan percuma)
+ * SiswaCap: kedai nota IC220 (Cloudflare Worker + Workers KV, pelan percuma)
  *
  * Orang awam hanya melihat tajuk, penerangan, harga dan gambar pratonton. Fail penuh tidak pernah
  * dihantar kepada orang awam: pembeli membayar melalui QR, menghantar resit melalui WhatsApp, dan
@@ -208,7 +208,7 @@ export function parseChart(s, j) {
 async function quote(s) {
   try {
     const r = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(s)}?range=1d&interval=5m`, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; BijakLabur/1.0; +https://bijaklabur.my)', Accept: 'application/json' },
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SiswaCap/1.0; +https://bijaklabur.my)', Accept: 'application/json' },
       cf: { cacheTtl: 60, cacheEverything: true }
     });
     return r.ok ? parseChart(s, await r.json()) : null;
@@ -250,10 +250,10 @@ export function mimeTanya(q, from, to, now = new Date()) {
     '--', 'Dihantar oleh borang "Tanya kami" di https://bijaklabur.my/#soalan'
   ].join('\r\n');
   const lines = [
-    `From: ${hdr('Ruang Soalan Bijak Labur')} <${from}>`,
+    `From: ${hdr('Ruang Soalan SiswaCap')} <${from}>`,
     `To: <${to}>`,
     ...(q.emel ? [`Reply-To: ${q.nama ? `=?UTF-8?B?${b64(q.nama)}?= ` : ''}<${q.emel}>`] : []),
-    `Subject: ${hdr(`[Bijak Labur] ${q.topik}: ${ringkas}`)}`,
+    `Subject: ${hdr(`[SiswaCap] ${q.topik}: ${ringkas}`)}`,
     `Date: ${now.toUTCString()}`,
     `Message-ID: <${rid(16)}@${from.split('@')[1]}>`,
     'MIME-Version: 1.0',

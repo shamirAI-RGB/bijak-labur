@@ -1,4 +1,4 @@
-/* Bijak Labur: Fiqh. Setiap masalah dipautkan kepada Al-Quran, hadis, kitab muktabar mazhab Syafie dan fatwa rasmi.
+/* SiswaCap: Fiqh. Setiap masalah dipautkan kepada Al-Quran, hadis, kitab muktabar mazhab Syafie dan fatwa rasmi.
    Teks ayat dan hadis dimuat terus daripada sumber, bukan ditulis semula, supaya rujukan tidak tersasar. */
 (function () {
   const D = FiqhData;
@@ -192,7 +192,7 @@
 
   /* ---------- Tanya AI ---------- */
   const CONTOH = ['Apakah hukum trading forex secara individu?', 'Bolehkah solat jamak dan qasar jika pulang hari?', 'Adakah saham perlu dizakatkan?', 'Apakah rukun wuduk dalam mazhab Syafie?'];
-  const JENIS = { kitab: ['Kitab muktabar', '#f2704d'], quran: ['Al-Quran', '#1f9d63'], hadis: ['Hadis', '#7b5cf0'], fatwa: ['Fatwa', '#1192d6'], dokumen: ['Rujukan rasmi moden', '#0f8b8d'], bijaklabur: ['Rujukan Bijak Labur', '#c9853a'], lain: ['Sumber rasmi', '#66718f'] };
+  const JENIS = { kitab: ['Kitab muktabar', '#f2704d'], quran: ['Al-Quran', '#1f9d63'], hadis: ['Hadis', '#7b5cf0'], fatwa: ['Fatwa', '#1192d6'], dokumen: ['Rujukan rasmi moden', '#0f8b8d'], bijaklabur: ['Rujukan SiswaCap', '#c9853a'], lain: ['Sumber rasmi', '#66718f'] };
   const isAr = t => /[\u0600-\u06FF]/.test(t);
   let asking = false;
 
@@ -278,7 +278,7 @@
     const out = [`Soalan: ${q}`, '', d.ringkasan || '', ...(d.huraian || []), d.khilaf ? 'Perbezaan pendapat: ' + d.khilaf : '', '', 'Rujukan:'];
     (d.sumber || []).forEach(s => out.push(`- ${s.tajuk}${s.shamela ? `, Shamela hlm. ${s.shamela}` : ''}${s.penerbit || s.edisi ? `, cetakan ${[s.penerbit, s.edisi, s.tahun].filter(Boolean).join(', ')}` : ''}${s.pdf ? `, PDF hlm. ${s.pdf}${s.pdf_url ? ` (${s.pdf_url})` : ''}` : ''}${s.halaman ? `, hlm. ${s.halaman}` : ''} (${s.url})${s.petikan ? `\n  "${s.petikan}"` : ''}`));
     if (d.nota_pdf) out.push('', d.nota_pdf);
-    out.push('', 'Dijana oleh Tanya AI Bijak Labur. Bukan fatwa; semak sumber asal.');
+    out.push('', 'Dijana oleh Tanya AI SiswaCap. Bukan fatwa; semak sumber asal.');
     return out.filter((l, i, a) => l || a[i - 1]).join('\n');
   }
 

@@ -1,4 +1,4 @@
-/* Bijak Labur: lapisan masa depan ("Bijak OS"), dimuat paling akhir.
+/* SiswaCap: lapisan masa depan ("Bijak OS"), dimuat paling akhir.
    1. Arahan: palet arahan (Ctrl/⌘ K, "/" atau butang di bar atas). Carian kabur ke setiap halaman dan alat,
       arahan suara (Web Speech API), kiraan pantas (zakat, peratus, aritmetik) dan laluan terus ke Tanya AI Fiqh.
    2. HUD: jalur maklumat hidup di atas pentas utama (tarikh Hijri, solat seterusnya dengan kiraan detik,

@@ -1,5 +1,5 @@
 /*
- * Bijak Labur: Semak Kertas, audit lanjutan universal (Gemini)
+ * SiswaCap: Semak Kertas, audit lanjutan universal (Gemini)
  *
  * POST /audit { text, lang: 'ms' | 'en' }
  *   -> { bidang, profil, soalan,

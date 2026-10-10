@@ -1,5 +1,5 @@
 /*
- * Bijak Labur: Semak Kertas, ulasan pakar (Gemini)
+ * SiswaCap: Semak Kertas, ulasan pakar (Gemini)
  *
  * POST /semak { text, lang: 'ms' | 'en' }
  *   -> { markah: { struktur, hujah, bukti, bahasa, rujukan } (0-10 + ulasan), ringkasan,

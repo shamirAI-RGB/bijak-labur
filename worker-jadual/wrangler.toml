@@ -1,4 +1,4 @@
-# Pelayan jadual kelas UiTM Bijak Labur (Cloudflare Workers, pelan percuma)
+# Pelayan jadual kelas UiTM SiswaCap (Cloudflare Workers, pelan percuma)
 # Membaca jadual awam iCress (simsweb4.uitm.edu.my) dan menghantarnya sebagai JSON dengan CORS.
 name = "bijak-labur-jadual"
 main = "src/index.js"

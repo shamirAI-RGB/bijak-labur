@@ -1,4 +1,4 @@
-# Pelayan pembayaran Premium Bijak Labur (Cloudflare Workers, pelan percuma)
+# Pelayan pembayaran Premium SiswaCap (Cloudflare Workers, pelan percuma)
 name = "bijak-labur-premium"
 main = "src/index.js"
 compatibility_date = "2026-09-01"

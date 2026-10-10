@@ -1,4 +1,4 @@
-/* Bijak Labur Premium: alat pelabur (saiz posisi, jurnal, kos Bursa, dividen, matlamat, perbandingan simpanan) */
+/* SiswaCap Premium: alat pelabur (saiz posisi, jurnal, kos Bursa, dividen, matlamat, perbandingan simpanan) */
 (function () {
   const { fmtRM, pct, sign, numIn, field, persist } = ProTools.kit;
   const v = id => { const n = numIn($('#' + id)); return isFinite(n) ? n : 0; };

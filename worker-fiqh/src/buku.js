@@ -1,5 +1,5 @@
 /*
- * Bijak Labur: Buku Nota AI (gaya Open Notebook / NotebookLM)
+ * SiswaCap: Buku Nota AI (gaya Open Notebook / NotebookLM)
  *
  * POST /buku { sumber: [{ id, tajuk, teks }], tugas, soalan?, bahasa? }
  *   tugas: tanya | ringkasan | panduan | kuiz | kad | podcast
@@ -37,7 +37,7 @@ const ARAHAN = {
 
 export function systemFor(tugas, bahasa) {
   const bm = bahasa !== 'en';
-  return `Anda ialah pembantu belajar seperti NotebookLM dalam app Bijak Labur (Malaysia). Anda bekerja HANYA dengan sumber yang diberikan oleh pengguna.
+  return `Anda ialah pembantu belajar seperti NotebookLM dalam app SiswaCap (Malaysia). Anda bekerja HANYA dengan sumber yang diberikan oleh pengguna.
 
 Peraturan:
 1. Gunakan maklumat daripada sumber sahaja. Jangan tambah fakta daripada pengetahuan anda sendiri. Jika sesuatu tiada dalam sumber, katakan begitu.
