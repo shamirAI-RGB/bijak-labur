@@ -228,6 +228,27 @@ const FiqhData = (() => {
       skop: 'Isu antarabangsa: mata wang, saham, insurans, perubatan, pemindahan organ, keluarga dan teknologi', url: 'https://iifa-aifi.org/wp-content/uploads/2024/07/IIFA-Resolutions-Ebook-2024.pdf' }
   ];
 
+  /* Laman web rasmi Jabatan Mufti setiap negeri dan portal fatwa kebangsaan. Fatwa, irsyad dan soal jawab hukum diambil
+     setiap hari oleh pelayan Tanya AI (worker-fiqh/scripts/muat-mufti.mjs) supaya isu yang baru timbul dijawab dengan
+     keputusan terkini. laman: alamat yang dicuba mengikut tertib; yang pertama berjaya digunakan. */
+  const MUFTI = [
+    { k: 'esmaf', negeri: 'Kebangsaan', by: 'Portal Rasmi Fatwa Malaysia (e-SMAF), JAKIM', laman: ['https://www.e-smaf.islam.gov.my/e-smaf/', 'https://e-smaf.islam.gov.my/'] },
+    { k: 'wp', negeri: 'Wilayah Persekutuan', by: 'Pejabat Mufti Wilayah Persekutuan', laman: ['https://www.muftiwp.gov.my/', 'https://muftiwp.gov.my/'] },
+    { k: 'selangor', negeri: 'Selangor', by: 'Jabatan Mufti Negeri Selangor', laman: ['https://www.muftiselangor.gov.my/', 'https://muftiselangor.gov.my/'] },
+    { k: 'johor', negeri: 'Johor', by: 'Jabatan Mufti Johor', laman: ['https://mufti.johor.gov.my/'] },
+    { k: 'kedah', negeri: 'Kedah', by: 'Jabatan Mufti Negeri Kedah', laman: ['https://mufti.kedah.gov.my/'] },
+    { k: 'kelantan', negeri: 'Kelantan', by: 'Jabatan Mufti Negeri Kelantan', laman: ['https://www.muftikelantan.gov.my/', 'https://muftikelantan.gov.my/', 'https://mufti.kelantan.gov.my/'] },
+    { k: 'melaka', negeri: 'Melaka', by: 'Jabatan Mufti Negeri Melaka', laman: ['https://www.muftimelaka.gov.my/', 'https://muftimelaka.gov.my/', 'https://mufti.melaka.gov.my/'] },
+    { k: 'nsembilan', negeri: 'Negeri Sembilan', by: 'Jabatan Mufti Kerajaan Negeri Sembilan', laman: ['https://www.muftins.gov.my/', 'https://muftins.gov.my/'] },
+    { k: 'pahang', negeri: 'Pahang', by: 'Jabatan Mufti Negeri Pahang', laman: ['https://mufti.pahang.gov.my/'] },
+    { k: 'perak', negeri: 'Perak', by: 'Jabatan Mufti Negeri Perak', laman: ['https://mufti.perak.gov.my/'] },
+    { k: 'perlis', negeri: 'Perlis', by: 'Jabatan Mufti Negeri Perlis', laman: ['https://muftiperlis.gov.my/', 'https://www.muftiperlis.gov.my/'] },
+    { k: 'ppinang', negeri: 'Pulau Pinang', by: 'Jabatan Mufti Negeri Pulau Pinang', laman: ['https://mufti.penang.gov.my/'] },
+    { k: 'sabah', negeri: 'Sabah', by: 'Jabatan Mufti Negeri Sabah', laman: ['https://mufti.sabah.gov.my/'] },
+    { k: 'sarawak', negeri: 'Sarawak', by: 'Jabatan Mufti Negeri Sarawak', laman: ['https://muftisarawak.gov.my/', 'https://www.muftisarawak.gov.my/', 'https://mufti.sarawak.gov.my/'] },
+    { k: 'terengganu', negeri: 'Terengganu', by: 'Jabatan Mufti Negeri Terengganu', laman: ['https://mufti.terengganu.gov.my/'] }
+  ];
+
   const CARI = [
     ['sunnah.com', 'Hadis (6 kitab utama)', q => `https://sunnah.com/search?q=${encodeURIComponent(q)}`],
     ['Al-Maktabah al-Shamela', 'Kitab turath (teks Arab)', q => `https://shamela.ws/search?q=${encodeURIComponent(q)}`],
@@ -235,7 +256,7 @@ const FiqhData = (() => {
     ['Keputusan MPS SC', 'Pasaran modal Islam', () => F.scSenarai.url]
   ];
 
-  return { KITAB, shamela, H, KOLEKSI, F, HUKUM, BAB, MASALAH, CARI, ISTILAH, MODEN };
+  return { KITAB, shamela, H, KOLEKSI, F, HUKUM, BAB, MASALAH, CARI, ISTILAH, MODEN, MUFTI };
 })();
 // Pelayan Tanya AI (worker-fiqh) memuat fail yang sama sebagai korpus rujukan yang telah disemak
 if (typeof globalThis !== 'undefined') globalThis.FiqhData = FiqhData;
