@@ -370,7 +370,10 @@ assert.equal(d.status, 'tidak_pasti');
   assert.equal(tajukHtml('<meta property="og:title" content="Pengharaman Ajaran Qadiani | Jabatan Mufti Negeri Melaka">'), 'Pengharaman Ajaran Qadiani');
   assert.equal(tanpaNamaLaman('Hukum Solat - Panduan Ringkas'), 'Hukum Solat - Panduan Ringkas');
   assert.equal(tajukTeks('وعليكم السلام ورحمة الله وبركاته\nBolehkah taklik murtad dibatalkan sebelum dilanggar?\nJawapan...'), 'Bolehkah taklik murtad dibatalkan sebelum dilanggar?');
-  // Soal jawab Johor: menu di atas, soalan selepas label "PERSOALAN / SOALAN PEMOHON :"
+  // Soal jawab Johor: menu di atas, soalan selepas label "PERSOALAN / SOALAN PEMOHON :"; menu dibuang daripada teks
+  const johor = `<html><body><div>home</div><div>Laman Utama</div><div>Fatwa Negeri Johor</div><div>Soal Jawab Agama</div><div>Himpunan Soal Jawab</div><div>Permohonan Kiblat</div><div>Perincian Soal Jawab Agama</div><div>KATEGORI</div><div>Lain-lain</div><div>PERSOALAN / SOALAN PEMOHON :</div><div>Boleh ke saya namakan anak lelaki saya dengan Akbar sahaja?</div><div>${'Jawapan panjang. '.repeat(30)}</div></body></html>`;
+  assert.ok(kandungan(johor).startsWith('PERSOALAN / SOALAN PEMOHON :\nBoleh ke saya'), kandungan(johor).slice(0, 80));
+  assert.ok(kandungan(html).startsWith('Hukum Vape'));
   const menu = Array.from({ length: 20 }, (_, i) => `Menu ${i}\n`).join('\n');
   assert.equal(tajukTeks(menu + 'Perincian Soal Jawab Agama\nKATEGORI\nLain-lain\nPERSOALAN / SOALAN PEMOHON :\nAssalamualaikum WBT..\nSaya ingin minta pendapat. Boleh ke saya namakan anak lelaki saya dengan Akbar sahaja.\nTerima kasih.\nKEPUTUSAN / JAWAPAN :'), 'Saya ingin minta pendapat. Boleh ke saya namakan anak lelaki saya dengan Akbar sahaja.');
   assert.equal(tajukTeks('Soalan Lazim\nHubungi kami di pejabat setiap hari bekerja\nHukum solat jamak ketika musafir jauh?'), 'Hukum solat jamak ketika musafir jauh?');

@@ -123,7 +123,12 @@ export function kandungan(html) {
     if (t.length >= 300) return t;
   }
   const body = (bersih.match(/<body\b[\s\S]*<\/body>/i) || [bersih])[0];
-  return teksHtml(body);
+  return tanpaMenu(teksHtml(body));
+}
+/* Halaman tanpa bekas artikel (cth. soal jawab Johor): buang menu (baris pendek) sebelum label "PERSOALAN / SOALAN ... :" */
+export function tanpaMenu(teks) {
+  const b = teks.split('\n'), i = b.findIndex((x, j) => j < 120 && x.trim().length < 60 && /^(persoalan|soalan)\b[^.?!]*:$/i.test(x.trim()));
+  return i > 5 && b.slice(0, i).every(x => x.trim().length < 40) ? b.slice(i).join('\n').trim() : teks;
 }
 
 const meta = (html, nama) => {
