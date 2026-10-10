@@ -331,6 +331,8 @@ assert.equal(d.status, 'tidak_pasti');
   assert.deepEqual(rb.sitemaps, ['https://x.gov.my/peta.xml']);
   assert.deepEqual(['/wp-admin/x', '/wp-admin/admin-ajax.php', '/irsyad/1', '/a?s=b'].map(p => rb.boleh('https://x.gov.my' + p)), [false, true, true, false]);
   assert.ok(robots('').boleh('https://x.gov.my/a'));
+  assert.equal(robots('User-agent: *\nCrawl-delay: 5\nDisallow: /x').jeda, 5);
+  assert.equal(robots('').jeda, 0);
   const html = `<html><head><title>T | Mufti</title><meta property="article:published_time" content="2024-03-05T10:00:00+08:00"></head><body><header><nav><a href="/menu">Menu</a></nav></header><div class="wrap"><div class="item-page"><h1>Hukum Vape</h1><div><p>${'Teks fatwa. '.repeat(40)}</p></div><p>akhir</p></div><div>sidebar luar</div></div><footer>kaki</footer></body></html>`;
   const t = kandungan(html);
   assert.ok(t.startsWith('Hukum Vape') && t.includes('akhir') && !t.includes('sidebar') && !t.includes('Menu') && !t.includes('kaki'), t);
@@ -354,7 +356,14 @@ assert.equal(d.status, 'tidak_pasti');
   assert.ok(tajukUmum('Lihat PDF') && tajukUmum('Jabatan Mufti Negeri Selangor') && tajukUmum('Utama X', 'Utama X') && !tajukUmum('Hukum Vape'));
   assert.equal(tajukFail('https://mufti.sabah.gov.my/wp-content/uploads/2026/07/Fatwa_Zakat_Penggajian.pdf'), 'Fatwa Zakat Penggajian');
   assert.ok(tajukUmum('***') && tajukUmum('https://x.gov.my/a.pdf') && tajukUmum('\u2003 BANK SOALAN \u2003 BORANG PERTANYAAN'));
-  assert.equal(tajukTeks('BANK SOALAN BORANG PERTANYAAN\nSoalan\nAdakah sah solat memakai stokin?\nJawapan...'), 'Adakah sah solat memakai stokin?');
+  assert.equal(tajukTeks('BANK SOALAN BORANG PERTANYAAN\nKategori Subjek : IBADAH SOLAT\nSoalan: Adakah sah solat memakai stokin?\nJawapan...'), 'Adakah sah solat memakai stokin?');
+  assert.equal(tajukFail('https://mufti.penang.gov.my/index.php/doclink/buku-himpunan-keputusan-fatwa-negeri-pulau-pinang-tahun-1995-2000/***'), 'buku himpunan keputusan fatwa negeri pulau pinang tahun 1995 2000');
+  assert.equal(tajukFail('https://www.muftimelaka.gov.my/uploads/page_content/p61/FATWA23-KewajipanMembayarZakatPendapatan.pdf'), 'FATWA23 Kewajipan Membayar Zakat Pendapatan');
+  // Tajuk: <title> tanpa nama laman; tajuk yang berulang pada banyak halaman (cth. "Privacy Policy" dalam modul) dilangkau
+  const jm = t => `<html><head><title>${t} - Jabatan Mufti Negeri Kelantan</title></head><body><h1>Privacy Policy</h1><h1>${t}</h1></body></html>`;
+  assert.equal(tajukHtml(jm('Fatwa Tentang Hukum Menghisap Rokok')), 'Fatwa Tentang Hukum Menghisap Rokok');
+  assert.equal(tajukHtml('<title>Bahagian Fatwa – Portal Rasmi Jabatan Mufti Negeri Kedah</title>'), 'Bahagian Fatwa');
+  assert.equal(tajukHtml('<h1>Menu</h1><h1>Hukum Vape</h1>', t => t === 'Menu'), 'Hukum Vape');
   assert.ok(!artikelOk('https://mufti.johor.gov.my/profil/bahagian-fatwa/', 'Bahagian Fatwa', HUKUM));
   assert.ok(!artikelOk('https://mufti.kelantan.gov.my/index.php?view=category&id=52', 'Privacy Policy', HUKUM));
   // PDF: muka surat pendek digabung, setiap bahagian memaut ke muka surat pertamanya

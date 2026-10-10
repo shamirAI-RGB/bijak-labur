@@ -17,11 +17,11 @@ import '../../js/fiqh-data.js';
 
 const MUFTI = globalThis.FiqhData.MUFTI;
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..'), CACHE = join(ROOT, '.cache', 'mufti');
-const VERSI = 3;
+const VERSI = 4;
 const UA = 'Mozilla/5.0 (compatible; SiswaCap-Fatwa/1.0; +https://siswacap.my/tentang.html)';
 const DEADLINE = Date.now() + (+process.env.MUFTI_MINIT || 20) * 60000;
 const SEKATAN = +process.env.MUFTI_HAD || 0;          // had halaman bagi setiap laman dalam satu larian (0 = tiada had)
-const PEKERJA = 2, JEDA = 400, MAX_BAIT = 25e6, MAX_TEKS = 60000, MAX_TEKS_PDF = 400000, MAX_PDF = 300, MAX_GILIRAN = 40000;
+const PEKERJA = 1, JEDA = 1000, MAX_BAIT = 25e6, MAX_TEKS = 60000, MAX_TEKS_PDF = 400000, MAX_PDF = 300, MAX_GILIRAN = 40000;
 const masa = () => Date.now() < DEADLINE;
 const tidur = ms => new Promise(z => setTimeout(z, ms));
 const summary = s => process.env.GITHUB_STEP_SUMMARY ? appendFile(process.env.GITHUB_STEP_SUMMARY, s + '\n') : null;
@@ -44,11 +44,20 @@ export function artikelOk(url, tajuk, teks) {
   return istilah(teks) >= (KUNCI.test(path + ' ' + tajuk) ? 3 : 6);
 }
 // Tajuk umum (nama laman atau pautan "Lihat PDF") diganti dengan ayat pertama artikel atau nama fail
-export const tajukUmum = (t, laman = '') => !t || t === laman || !/\p{L}{3}/u.test(t) || /^(lihat|muat ?turun|download|klik|baca|papar|view|buka)\b|^pdf$|^(jabatan|pejabat) mufti|^portal|^laman web|^https?:|bank soalan|borang pertanyaan/i.test(t.trim());
-export const tajukFail = url => decodeURIComponent(String(url).split(/[?#]/)[0].split('/').pop()).replace(/\.pdf$/i, '').replace(/[-_+]+|%20/g, ' ').replace(/\s+/g, ' ').trim();
+export const tajukUmum = (t, laman = '') => !t || t === laman || /^privacy policy$|^dasar privasi:?$/i.test(t.trim()) || !/\p{L}{3}/u.test(t) || /^(lihat|muat ?turun|download|klik|baca|papar|view|buka)\b|^pdf$|^(jabatan|pejabat) mufti|^portal|^laman web|^https?:|bank soalan|borang pertanyaan/i.test(t.trim());
+// Nama fail (atau segmen URL terakhir yang bermakna, cth. .../buku-himpunan-fatwa/file), dengan huruf besar CamelCase dipisahkan
+export const tajukFail = url => {
+  const seg = String(url).split(/[?#]/)[0].split('/').map(x => { try { return decodeURIComponent(x); } catch { return x; } })
+    .filter(x => /\p{L}{3}/u.test(x) && !/^(file|download|view|index\.php|uploads)$/i.test(x));
+  return (seg.pop() || '').replace(/\.pdf$/i, '').replace(/^\d+[-_]/, '').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/[-_+]+/g, ' ').replace(/\s+/g, ' ').trim();
+};
 // Baris pertama yang kelihatan seperti tajuk atau soalan (sekurang-kurangnya 4 perkataan), selain tajuk umum laman
-export const tajukTeks = (teks, umum = '') => (String(teks).split('\n').map(x => x.trim())
-  .find(x => x.length >= 15 && x.length <= 300 && x.split(/\s+/).length >= 4 && x !== umum && !tajukUmum(x)) || '').slice(0, 160);
+// Soalan (baris yang berakhir dengan "?") didahulukan; label seperti "Kategori Subjek :" dilangkau
+export const tajukTeks = (teks, umum = '') => {
+  const baris = String(teks).split('\n').map(x => x.trim()).slice(0, 25)
+    .filter(x => x.length >= 15 && x.length <= 300 && x.split(/\s+/).length >= 4 && x !== umum && !tajukUmum(x) && !/^(kategori|tarikh|oleh|sumber|penulis|dikemas ?kini|bilangan|no\.?)\b/i.test(x));
+  return (baris.find(x => x.endsWith('?')) || baris[0] || '').replace(/^soalan\s*[:.-]\s*/i, '').slice(0, 160);
+};
 export const ABAI = /galeri|gallery|tender|sebut-?harga|jawatan-kosong|kerjaya|career|piagam|carta|organisasi|kakitangan|direktori|staff|login|wp-admin|wp-login|\/feed\/?$|\/tag\/|\/author\/|[?&](print|tmpl|format|share|replytocom)=|mailto:|javascript:|whatsapp|facebook\.com|twitter\.com|\.(jpe?g|png|gif|webp|svg|ico|css|js|zip|rar|docx?|xlsx?|pptx?|mp3|mp4|avi|mov|apk)(\?|$)/i;
 
 /* ---------- HTML ---------- */
@@ -91,10 +100,19 @@ const meta = (html, nama) => {
   const m = html.match(new RegExp(`<meta[^>]+(?:property|name|itemprop)=["']${nama}["'][^>]*>`, 'i'));
   return m ? entiti((m[0].match(/content=["']([^"']*)["']/i) || [])[1] || '').trim() : '';
 };
-export function tajukHtml(html) {
-  const h1 = (html.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/i) || [])[1];
-  const t = meta(html, 'og:title') || (h1 && teksHtml(h1)) || teksHtml((html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i) || [])[1] || '');
-  return t.replace(/\s+/g, ' ').trim().slice(0, 300);
+/* Calon tajuk halaman mengikut tertib: og:title, <title> tanpa nama laman, kemudian setiap <h1> */
+export function calonTajuk(html) {
+  const bersih = t => teksHtml(t).replace(/\s+/g, ' ').trim();
+  const title = bersih((html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i) || [])[1] || '');
+  // "Tajuk artikel | Jabatan Mufti Negeri X": buang bahagian yang ialah nama laman
+  const bahagian = title.split(/\s+[|–—-]\s+/).filter((x, i, a) => !tajukUmum(x) && !(a.length > 1 && /mufti|portal|laman web|jabatan|pejabat|muftins/i.test(x)));
+  return [...new Set([meta(html, 'og:title'), bahagian.join(' - '), ...[...html.matchAll(/<h1\b[^>]*>([\s\S]*?)<\/h1>/gi)].map(m => bersih(m[1])), title]
+    .map(t => t.replace(/\s+/g, ' ').trim()).filter(Boolean))];
+}
+/** Tajuk halaman: calon pertama yang bukan tajuk umum (umum(t) = true bagi nama laman atau tajuk yang berulang pada banyak halaman) */
+export function tajukHtml(html, umum = () => false) {
+  const calon = calonTajuk(html);
+  return (calon.find(t => !tajukUmum(t) && !umum(t)) || calon[0] || '').slice(0, 300);
 }
 const BULAN = { januari: 1, februari: 2, mac: 3, april: 4, mei: 5, jun: 6, julai: 7, ogos: 8, september: 9, oktober: 10, november: 11, disember: 12,
   january: 1, february: 2, march: 3, may: 5, june: 6, july: 7, august: 8, october: 10, december: 12, jan: 1, feb: 2, apr: 4, jul: 7, ogo: 8, aug: 8, sep: 9, okt: 10, oct: 10, nov: 11, dis: 12, dec: 12 };
@@ -114,7 +132,7 @@ export function tarikhHtml(html, teks = '') {
 
 // Sesetengah laman meletakkan tarikh hari ini pada setiap halaman; tarikh itu bukan tarikh terbit artikel
 const HARI_INI = new Date().toISOString().slice(0, 10);
-const tarikhSah = t => t && t < HARI_INI ? t : '';
+const tarikhSah = t => t && t > '1990' && t < HARI_INI ? t : '';
 
 export function pautanHtml(html, asas) {
   const out = [];
@@ -133,7 +151,7 @@ export function pautanHtml(html, asas) {
 /* ---------- robots.txt ---------- */
 export function robots(txt) {
   const peraturan = [], sitemaps = [];
-  let agen = [], dalam = false;
+  let agen = [], dalam = false, jeda = 0;
   for (const baris of String(txt || '').split(/\r?\n/)) {
     const line = baris.replace(/#.*/, '').trim(), i = line.indexOf(':');
     if (i < 0) continue;
@@ -141,10 +159,11 @@ export function robots(txt) {
     if (k === 'sitemap') sitemaps.push(v);
     else if (k === 'user-agent') { if (dalam) { agen = []; dalam = false; } agen.push(v.toLowerCase()); }
     else if (k === 'disallow' || k === 'allow') { dalam = true; if (agen.includes('*') && v) peraturan.push([k === 'allow', v]); }
+    else if (k === 'crawl-delay') { dalam = true; if (agen.includes('*')) jeda = Math.max(jeda, +v || 0); }
   }
   const padan = (path, p) => new RegExp('^' + p.replace(/[.+?^{}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*').replace(/\$(?!$)/g, '\\$')).test(path);
   return {
-    sitemaps,
+    sitemaps, jeda,
     boleh(url) {
       const u = new URL(url), path = u.pathname + u.search;
       let pilih = null;
@@ -216,7 +235,8 @@ async function laman(m) {
   // 2. robots.txt dan peta laman
   const rb = await ambil(`${asas.origin}/robots.txt`);
   const peraturan = robots(rb.status === 200 && !/html/.test(rb.ct) ? rb.buf.toString('utf8') : '');
-  log(`robots.txt: ${rb.status}; sitemap: ${peraturan.sitemaps.length}`);
+  const jeda = Math.min(10000, Math.max(JEDA, peraturan.jeda * 1000));
+  log(`robots.txt: ${rb.status}; sitemap: ${peraturan.sitemaps.length}; jeda ${jeda} ms`);
   const dilawat = c.dilawat, sudah = new Set(c.artikel.map(a => a[0]));
   const giliran = [[], []];   // [keutamaan tinggi, biasa]
   const dalamGiliran = new Set();
@@ -230,6 +250,7 @@ async function laman(m) {
   let dariSitemap = 0;
   for (let i = 0; i < sitemaps.length && i < 60 && masa(); i++) {
     const r = await ambil(sitemaps[i]);
+    await tidur(jeda);
     if (r.status !== 200) continue;
     const xml = r.buf.toString('utf8');
     if (!/<(urlset|sitemapindex)\b/i.test(xml)) continue;
@@ -243,11 +264,12 @@ async function laman(m) {
 
   // 3. API WordPress: kandungan artikel terus, tanpa membuka setiap halaman
   let dariWp = 0;
+  const tambahWp = [];
   const jenis = await ambil(`${asas.origin}/wp-json/wp/v2/types`);
   if (jenis.status === 200 && /json/.test(jenis.ct)) {
     let types = {};
     try { types = JSON.parse(jenis.buf.toString('utf8')); } catch {}
-    const bases = Object.values(types).map(t => t && t.rest_base).filter(b => b && !/^(attachment|media|wp_|nav_menu|menu-items|blocks|templates|template-parts|global-styles|font|navigation|e-floating|elementor|astra|pdfposter|staff|product|portfolio|project|direktori|senarai_mufti|gm_menu|falak)/.test(b));
+    const bases = Object.values(types).map(t => t && t.rest_base).filter(b => b && !/^(attachment|media|wp_|nav_menu|menu-items|blocks|templates|template-parts|global-styles|font|navigation|e-floating|elementor|astra|staff|product|portfolio|project|direktori|senarai_mufti|gm_menu|falak)/.test(b));
     log(`WordPress: jenis kandungan ${bases.join(', ')}`);
     for (const b of bases) {
       for (let p = 1; p <= 200 && masa(); p++) {
@@ -265,11 +287,14 @@ async function laman(m) {
           if (tajukUmum(tajuk)) tajuk = tajukTeks(teks);
           if (artikelOk(url, tajuk, teks)) {
             c.artikel.push([url, tajuk, tarikhSah(String(x.date || '').slice(0, 10)), teks.slice(0, MAX_TEKS)]); sudah.add(url); dilawat[url] = 'a'; dariWp++; lapor.baharu++;
+          } else {
+            // Bukan artikel, tetapi mungkin membenamkan PDF fatwa atau memaut ke artikel
+            for (const l of pautanHtml(String(x.content && x.content.rendered || ''), url)) tambahWp.push([l.url, 2, l.teks]);
           }
         }
         // Senarai disusun dari yang terbaharu: berhenti apabila satu halaman penuh sudah ada dalam cache
         if (lama === list.length) break;
-        await tidur(JEDA);
+        await tidur(jeda);
       }
     }
     log(`WordPress: ${dariWp} artikel baharu`);
@@ -277,14 +302,17 @@ async function laman(m) {
 
   // 4. Carian luas: halaman utama, halaman senarai yang lalu, peta laman, kemudian baki giliran larian lepas
   tambah(asas.href, 0, '', true);
+  for (const [u, aras, teks] of tambahWp) tambah(u, aras, teks);
   for (const u of c.senarai.slice(-80)) tambah(u, 1, '', true);
   for (const [u, aras, teks] of c.giliran) tambah(u, aras, teks);
   const senarai = new Set(c.senarai);
-  let dibuka = 0;
-  const ditolak = [];
+  let dibuka = 0, berhenti = false;
+  const ditolak = [], kerapTajuk = new Map();
+  const umum = t => t === tajukLaman || (kerapTajuk.get(t) || 0) >= 3;
+  let gagalBerturut = 0;
   const ambilSatu = () => giliran[0].shift() || giliran[1].shift();
   const pekerja = async () => {
-    while (masa() && (!SEKATAN || dibuka < SEKATAN)) {
+    while (masa() && !berhenti && (!SEKATAN || dibuka < SEKATAN)) {
       const item = ambilSatu();
       if (!item) break;
       const [url, aras, teksPautan] = item;
@@ -292,8 +320,18 @@ async function laman(m) {
       if (sudah.has(url)) continue;
       dibuka++;
       const r = await ambil(url);
-      await tidur(JEDA);
-      if (r.status !== 200) { dilawat[url] = r.status || 0; continue; }
+      await tidur(jeda);
+      if (r.status !== 200) {
+        dilawat[url] = r.status || 0;
+        // Laman mula menyekat (403/429) atau tidak menjawab: berhenti untuk larian ini, jangan cuba mengelak sekatan
+        if ([0, 403, 429, 503].includes(r.status) && ++gagalBerturut >= 5) {
+          lapor.catatan.push(`dihentikan selepas ${gagalBerturut} permintaan gagal berturut-turut (${r.status ? 'HTTP ' + r.status : r.error})`);
+          giliran[0].unshift([url, aras, teksPautan]); delete dilawat[url];
+          berhenti = true;
+        }
+        continue;
+      }
+      gagalBerturut = 0;
       if (r.url && r.url !== url && !dalamLaman(r.url)) { dilawat[url] = 'x'; continue; }
       if (/pdf/.test(r.ct) || /\.pdf(\?|$)/i.test(url)) {
         dilawat[url] = 'x';
@@ -309,8 +347,9 @@ async function laman(m) {
       }
       if (!/html/.test(r.ct)) { dilawat[url] = 'x'; continue; }
       const html = r.buf.toString('utf8'), teks = kandungan(html);
-      let tajuk = tajukHtml(html);
-      if (tajukUmum(tajuk, tajukLaman)) tajuk = tajukTeks(teks) || tajuk;
+      for (const t of calonTajuk(html)) kerapTajuk.set(t, (kerapTajuk.get(t) || 0) + 1);
+      let tajuk = tajukHtml(html, umum);
+      if (tajukUmum(tajuk, tajukLaman) || umum(tajuk)) tajuk = tajukTeks(teks, tajuk) || tajuk;
       const links = pautanHtml(html, r.url || url).filter(l => dalamLaman(l.url));
       const teksPautanSemua = links.reduce((n, l) => n + l.teks.length, 0);
       const berkaitan = KUNCI.test(url + ' ' + tajuk + ' ' + teks.slice(0, 400));
@@ -323,8 +362,9 @@ async function laman(m) {
         if (berkaitan && ditolak.length < 40) ditolak.push(`${url} | ${tajuk.slice(0, 80)} | ${teks.length} aksara | ${istilah(teks)} istilah | ${links.length} pautan`);
         if (berkaitan && !senarai.has(url)) { senarai.add(url); c.senarai.push(url); }
       }
-      // Pautan diikuti jika berkaitan fatwa, atau dekat dengan halaman utama
-      for (const l of links) if (aras < 2 || KUNCI.test(l.url + ' ' + l.teks)) tambah(l.url, aras + 1, l.teks);
+      // Pautan diikuti jika berkaitan fatwa, dekat dengan halaman utama, atau datang daripada halaman senarai fatwa
+      // (tajuk artikel dalam senarai tidak semestinya mengandungi perkataan "fatwa" atau "hukum")
+      for (const l of links) if (aras < 2 || KUNCI.test(l.url + ' ' + l.teks) || (berkaitan && aras < 4)) tambah(l.url, aras + 1, l.teks);
       if (dibuka % 100 === 0) { c.giliran = [...giliran[0], ...giliran[1]]; await simpan(c); log(`${dibuka} halaman dibuka, ${c.artikel.length} artikel, giliran ${giliran[0].length}+${giliran[1].length}`); }
     }
   };
