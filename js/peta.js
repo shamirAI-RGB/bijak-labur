@@ -232,10 +232,10 @@
   };
   window.addEventListener('resize', resize);
 
-  // Jimat bateri: hentikan pemaparan apabila tab tidak kelihatan
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden) world.pauseAnimation(); else world.resumeAnimation();
-  });
+  // Jimat bateri: hentikan pemaparan apabila tab tidak kelihatan atau glob ditutup sepenuhnya oleh Peta Jalan
+  let ditutup = false;
+  const segarAnimasi = () => { if (document.hidden || ditutup) world.pauseAnimation(); else world.resumeAnimation(); };
+  document.addEventListener('visibilitychange', segarAnimasi);
 
   const btnRotate = $('toggleRotation');
   const syncRotateLabel = () => { btnRotate.textContent = controls.autoRotate ? 'Hentikan Putaran' : 'Teruskan Putaran'; };
@@ -388,7 +388,9 @@
     flyTo,
     setDest: (lat, lng, name) => { dest = { lat, lng, name: name || 'Destinasi' }; paintMe(); },
     setRoute: coords => { world.pathsData(coords && coords.length ? [coords.map(c => [c.lat, c.lng])] : []); },
-    countryCodeAt: (lat, lng) => { const f = countryAt(lat, lng); return f && f.properties ? f.properties.a2 || '' : ''; }
+    countryCodeAt: (lat, lng) => { const f = countryAt(lat, lng); return f && f.properties ? f.properties.a2 || '' : ''; },
+    // Peta Jalan (skrin penuh, legap) dibuka: glob tidak kelihatan, jadi pemaparannya dihentikan
+    ditutup: on => { ditutup = !!on; segarAnimasi(); }
   };
   $('openJalan').addEventListener('click', () => { if (window.PetaJalan) window.PetaJalan.buka(); else showMsg('Peta jalan gagal dimuat. Cuba muat semula halaman.'); });
   $('gpsArah').addEventListener('click', () => { if (window.PetaJalan) window.PetaJalan.buka({ lat: me ? me.lat : undefined, lng: me ? me.lng : undefined, zoom: 15 }); });

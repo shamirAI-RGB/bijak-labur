@@ -270,6 +270,7 @@
     aktif = true;
     document.body.classList.add('mode-jalan');
     root.hidden = false; // bekas mesti kelihatan sebelum peta mengukur saiznya
+    if (glob && glob.ditutup) glob.ditutup(true);
     try { pasangPeta(); } catch (e) { $('jalan-map').innerHTML = '<p class="pj-tiada">Peta jalan memerlukan WebGL. Kemas kini pelayar atau cuba pelayar lain.</p>'; return; }
     root.dataset.lapisan = lapisanSemasa;
     tandaLapisan();
@@ -285,6 +286,7 @@
     document.body.classList.remove('mode-jalan');
     root.hidden = true;
     hasilEl.hidden = true;
+    if (glob && glob.ditutup) glob.ditutup(false);
   }
   $('pjGlob').addEventListener('click', () => {
     if (navi) { toast('Tamatkan navigasi dahulu.'); return; }

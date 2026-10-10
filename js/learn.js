@@ -490,7 +490,8 @@
     const calc = () => {
       const riskAmt = v('cCap') * v('cRisk') / 100, per = v('cEntry') - v('cStop');
       if (per > 0) {
-        const units = Math.floor(riskAmt / per);
+        // Toleransi kecil: 2.00 - 1.95 dalam titik terapung ialah 0.0500000000000000x, bukan 0.05
+        const units = Math.floor(riskAmt / per + 1e-9);
         $('#cOut1').textContent = `${units.toLocaleString()} unit`;
         $('#cOut1b').textContent = `≈ ${Math.floor(units / 100)} lot Bursa · Nilai ${rm(units * v('cEntry'))} · Risiko ${rm(riskAmt)}`;
       } else { $('#cOut1').textContent = '–'; $('#cOut1b').textContent = 'Stop loss mesti di bawah harga masuk.'; }
@@ -503,8 +504,9 @@
       $('#dChart').innerHTML = pts.map((p, i) => { const w = 300 / pts.length, h = p / mx * 84; return `<rect x="${i * w + 1}" y="${88 - h}" width="${w - 2}" height="${h}" rx="2" fill="var(--brand)" opacity="${.35 + .65 * i / pts.length}"/>`; }).join('');
       const pl = (v('pSell') - v('pBuy')) * v('pQty');
       const pct = v('pBuy') ? (v('pSell') / v('pBuy') - 1) * 100 : 0;
-      $('#cOut3').innerHTML = `<span class="${pl >= 0 ? 'up' : 'down'}">${pl >= 0 ? '+' : ''}$${pl.toFixed(2)}</span>`;
-      $('#cOut3b').textContent = `≈ ${rm(pl * v('pFx'))} · ${pct.toFixed(2)}%`;
+      // Tanda tolak sebelum simbol mata wang (-$300.00, bukan $-300.00)
+      $('#cOut3').innerHTML = `<span class="${pl >= 0 ? 'up' : 'down'}">${pl >= 0 ? '+' : '-'}$${Math.abs(pl).toFixed(2)}</span>`;
+      $('#cOut3b').textContent = `≈ ${pl < 0 ? '-' : ''}${rm(Math.abs(pl * v('pFx')))} · ${pct.toFixed(2)}%`;
     };
     box.querySelectorAll('input').forEach(i => i.addEventListener('input', calc)); calc();
   }

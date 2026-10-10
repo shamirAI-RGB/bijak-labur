@@ -110,7 +110,7 @@
   function setupHTML() {
     const picks = S.picks;
     return `<div class="jd-setup">
-      <form class="card jd-stu" id="jdStu">
+      <form class="card jd-stu" id="jdStu" novalidate>
         <h3>Cara paling cepat: No. Pelajar</h3>
         <p class="muted small">Masukkan No. Pelajar UiTM anda (10 digit). Jadual kelas anda dimuatkan terus daripada data jadual pelajar UiTM. Tiada kata laluan diperlukan.</p>
         <div class="inline-form">
@@ -438,7 +438,8 @@
   /* Fail kalendar .ics: setiap kelas berulang mingguan selama 14 minggu */
   function ics() {
     const pad = n => String(n).padStart(2, '0');
-    const n = nowMY(), today = new Date();
+    // Tarikh hari ini mengikut waktu Malaysia (UTC+8); tarikh UTC masih semalam antara 12:00 tengah malam dan 8:00 pagi
+    const n = nowMY(), today = new Date(Date.now() + 8 * 3600e3);
     const stamp = d => `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}00Z`;
     const escI = s => String(s).replace(/[\\;,]/g, m => '\\' + m).replace(/\n/g, '\\n');
     const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//SiswaCap//Jadual UiTM//MS', 'CALSCALE:GREGORIAN', 'X-WR-CALNAME:Jadual kelas UiTM'];
