@@ -4,17 +4,18 @@
 (function () {
   const home = $('#view-utama');
   if (!home) return;
+  // Waktu Solat (azan) sentiasa pertama: arahan pemilik 10 Okt 2026
   const CIRI = [
-    { id: 'pasaran', ic: 'chart', jenis: 'Pasaran langsung', tajuk: 'Pasaran', href: '#pasaran',
-      desc: 'Harga kripto dan saham bergerak secara langsung, dengan carta lilin, buku pesanan dan saringan Syariah.',
-      tab: [['Apa ia', 'Harga kripto dikemas kini setiap saat, dan saham AS setiap minit. Setiap kripto ditanda status Syariahnya.'],
-            ['Cara guna', 'Pilih Kripto atau Saham, tekan satu simbol untuk buka carta, kemudian tukar tempoh carta di atasnya.'],
-            ['Petua', 'Harga di sini untuk belajar membaca pasaran. Semak semula dalam app broker sebelum membuat pesanan.']] },
     { id: 'solat', ic: 'mosque', jenis: 'Seluruh Malaysia', tajuk: 'Waktu Solat', href: '#solat',
       desc: 'Waktu solat rasmi JAKIM untuk setiap zon, kiraan detik ke waktu seterusnya, azan dan arah kiblat.',
       tab: [['Apa ia', 'Waktu solat ikut zon JAKIM, boleh dikesan secara automatik melalui lokasi atau dipilih sendiri.'],
             ['Cara guna', 'Pilih zon sekali sahaja. Hidupkan azan dan peringatan jika mahu notifikasi setiap waktu.'],
             ['Petua', 'Waktu boleh dibaca luar talian kerana jadual sebulan disimpan dalam peranti.']] },
+    { id: 'pasaran', ic: 'chart', jenis: 'Pasaran langsung', tajuk: 'Pasaran', href: '#pasaran',
+      desc: 'Harga kripto dan saham bergerak secara langsung, dengan carta lilin, buku pesanan dan saringan Syariah.',
+      tab: [['Apa ia', 'Harga kripto dikemas kini setiap saat, dan saham AS setiap minit. Setiap kripto ditanda status Syariahnya.'],
+            ['Cara guna', 'Pilih Kripto atau Saham, tekan satu simbol untuk buka carta, kemudian tukar tempoh carta di atasnya.'],
+            ['Petua', 'Harga di sini untuk belajar membaca pasaran. Semak semula dalam app broker sebelum membuat pesanan.']] },
     { id: 'belajar', ic: 'cap', jenis: 'Modul berperingkat', tajuk: 'Belajar Melabur', href: '#belajar',
       desc: 'Belajar saham menggunakan Moomoo, asas kripto, analisis fundamental dan teknikal, langkah demi langkah.',
       tab: [['Apa ia', 'Modul dari tahap asas hingga mahir, dengan rajah, kuiz dan contoh sebenar dari Bursa dan pasaran AS.'],
