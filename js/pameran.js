@@ -94,7 +94,9 @@
         </figure>
       </div>
     </div>`;
-  home.insertBefore(sec, stage.nextSibling);
+  // Selepas kad waktu solat: bahagian azan kekal paling atas (arahan pemilik 10 Okt 2026)
+  const sauh = home.querySelector(':scope > .prayer-card') || stage;
+  home.insertBefore(sec, sauh.nextSibling);
 
   const track = $('.xb-kad-track', sec);
   sec.addEventListener('click', e => {

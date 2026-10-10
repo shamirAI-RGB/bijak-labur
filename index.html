@@ -280,6 +280,18 @@
   <main id="main" tabindex="-1">
     <!-- UTAMA -->
     <section class="view" id="view-utama" aria-labelledby="greet">
+      <a class="prayer-card sky" data-sky="day" href="#solat" aria-label="Waktu solat seterusnya">
+        <span class="sky-stars" aria-hidden="true"></span><span class="sky-orb" aria-hidden="true"></span>
+        <svg class="skyline" aria-hidden="true"><use href="#langit-bukit"/></svg>
+        <div class="sky-body">
+          <div class="pc-top"><span>Solat seterusnya</span><span class="pc-zone"><svg class="ic"><use href="#i-pin"/></svg><span id="homeZone">&nbsp;</span></span></div>
+          <div class="pc-main">
+            <div><div class="pc-name" id="homeNextName">Memuatkan</div><div class="pc-time" id="homeNextTime">&nbsp;</div></div>
+            <div class="pc-count num" id="homeCount">--:--:--</div>
+          </div>
+          <ol class="pc-row" id="homeRow"></ol>
+        </div>
+      </a>
       <header class="tk-mast" aria-label="Takwim hari ini">
         <div class="tk-mast-top"><span class="tk-kicker">Takwim Siswa</span><span class="tk-ed" id="tkEdisi">&nbsp;</span></div>
         <div class="tk-mast-row">
@@ -310,18 +322,6 @@
 
       <div class="home-grid">
         <div class="home-main">
-          <a class="prayer-card sky" data-sky="day" href="#solat" aria-label="Waktu solat seterusnya">
-            <span class="sky-stars" aria-hidden="true"></span><span class="sky-orb" aria-hidden="true"></span>
-            <svg class="skyline" aria-hidden="true"><use href="#langit-bukit"/></svg>
-            <div class="sky-body">
-              <div class="pc-top"><span>Solat seterusnya</span><span class="pc-zone"><svg class="ic"><use href="#i-pin"/></svg><span id="homeZone">&nbsp;</span></span></div>
-              <div class="pc-main">
-                <div><div class="pc-name" id="homeNextName">Memuatkan</div><div class="pc-time" id="homeNextTime">&nbsp;</div></div>
-                <div class="pc-count num" id="homeCount">--:--:--</div>
-              </div>
-              <ol class="pc-row" id="homeRow"></ol>
-            </div>
-          </a>
           <nav class="quick-row" aria-label="Ibadah pantas">
             <a href="#ibadah/quran"><span class="app-ic" style="--a:#1f9d63;--b:#0e7a4c"><svg class="ic"><use href="#i-book"/></svg></span>Al-Quran</a>
             <a href="#ibadah/doa"><span class="app-ic" style="--a:#7b5cf0;--b:#5a3fd1"><svg class="ic"><use href="#i-quote"/></svg></span>Doa</a>
