@@ -12,7 +12,7 @@ import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { MODEN, KITAB, buildIndex, search, expand, normText } from '../src/rujukan.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..'), OUT = join(ROOT, 'aset'), CACHE = join(ROOT, '.cache', 'shamela');
-const UA = 'Mozilla/5.0 (SiswaCap rujukan; +https://bijaklabur.my)';
+const UA = 'Mozilla/5.0 (SiswaCap rujukan; +https://siswacap.my)';
 // Had masa muat turun Shamela bagi satu larian; baki halaman diambil pada larian seterusnya (cache)
 const DEADLINE = Date.now() + (+process.env.RUJUKAN_MINIT || 24) * 60000;
 const summary = s => process.env.GITHUB_STEP_SUMMARY ? appendFile(process.env.GITHUB_STEP_SUMMARY, s + '\n') : null;

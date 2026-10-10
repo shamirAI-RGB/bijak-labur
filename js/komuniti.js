@@ -645,7 +645,7 @@
       else if (act === 'moderasi') moderasi();
       else if (act === 'salinkod') navigator.clipboard?.writeText(S.me.kod).then(() => toast('Kod disalin.'), () => toast(S.me.kod));
       else if (act === 'kongsikod') {
-        const url = `https://bijaklabur.my/#komuniti/kod/${S.me.kod}`;
+        const url = `https://siswacap.my/#komuniti/kod/${S.me.kod}`;
         const text = `Jom jadi rakan saya di Komuniti SiswaCap. Tekan pautan ini, atau masukkan kod ${S.me.kod}.`;
         if (navigator.share) navigator.share({ text, url }).catch(() => {}); else navigator.clipboard?.writeText(`${text} ${url}`).then(() => toast('Pautan jemputan disalin.'));
       }

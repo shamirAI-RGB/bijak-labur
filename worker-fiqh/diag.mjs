@@ -36,7 +36,7 @@ for (const m of geminiModels({})) {
   try { show('kalori teks', await kalori({ GEMINI_API_KEY: key }, { text: '1 pinggan nasi lemak ayam goreng dan teh tarik' })); }
   catch (e) { console.log('kalori teks gagal', e.status, e.message.slice(0, 200)); }
   try {
-    const ua = { 'user-agent': 'SiswaCap-diag/1.0 (https://bijaklabur.my)' };
+    const ua = { 'user-agent': 'SiswaCap-diag/1.0 (https://siswacap.my)' };
     const q = await (await fetch('https://commons.wikimedia.org/w/api.php?action=query&format=json&generator=search&gsrnamespace=6&gsrlimit=10&gsrsearch=nasi%20lemak%20filetype:bitmap&prop=imageinfo&iiprop=url|mime&iiurlwidth=640', { headers: ua })).json();
     const pick = Object.values((q.query || {}).pages || {}).map(p => (p.imageinfo || [])[0]).find(i => i && i.mime === 'image/jpeg');
     if (!pick) throw new Error('tiada gambar dijumpai');

@@ -9,5 +9,5 @@
     <string name="capacitor_background_geolocation_notification_icon">drawable/ic_stat_notify</string>
     <string name="capacitor_background_geolocation_notification_color">#0B5D4B</string>
     <!-- Dasar privasi yang dipaparkan oleh Health Connect -->
-    <string name="health_connect_privacy_policy_url">https://bijaklabur.my/privacy.html</string>
+    <string name="health_connect_privacy_policy_url">https://siswacap.my/privacy.html</string>
 </resources>

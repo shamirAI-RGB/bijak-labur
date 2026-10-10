@@ -399,7 +399,7 @@
     x.direction = 'ltr'; x.font = `${17 * s}px Geist, -apple-system, "Segoe UI", sans-serif`; x.fillStyle = 'rgba(255,255,255,.88)';
     y += 10 * s; wrap(x, it.tr, W * .8).slice(0, 5).forEach(l => { x.fillText(l, W / 2, y); y += 25 * s; });
     x.font = `600 ${13 * s}px Geist, -apple-system, sans-serif`; x.fillStyle = 'rgba(255,226,160,.95)'; x.fillText(it.ref, W / 2, y + 8 * s);
-    x.font = `600 ${12 * s}px Geist, -apple-system, sans-serif`; x.fillStyle = 'rgba(255,255,255,.6)'; x.fillText('bijaklabur.my', W / 2, H - 18 * s);
+    x.font = `600 ${12 * s}px Geist, -apple-system, sans-serif`; x.fillStyle = 'rgba(255,255,255,.6)'; x.fillText('siswacap.my', W / 2, H - 18 * s);
     return c;
   }
   async function shareCard(i) {

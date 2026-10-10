@@ -168,7 +168,7 @@
 Anotasi semakan SiswaCap ke dalam PDF tugasan asal.
 
 Skrip ini membaca PDF tugasan anda, mencari setiap petikan berstatus NC (Non-Conformance) dan setiap
-isu struktur hujah dan kesalahan bahasa yang dikesan oleh Semak Kertas di bijaklabur.my, kemudian:
+isu struktur hujah dan kesalahan bahasa yang dikesan oleh Semak Kertas di siswacap.my, kemudian:
   - menyerlah petikan itu dengan warna MERAH, dan
   - menyuntik nota komen (sticky note) berisi komen dan pembetulan di sebelahnya.
 Fail asal tidak diubah; hasilnya disimpan sebagai fail baharu.

@@ -82,7 +82,7 @@ jobs:
         run: |
           {
             if [ "$HAS_CF" != "true" ]; then echo "Rahsia Cloudflare belum ditetapkan, jadi Pusat Kawalan tidak dipasang."; exit 0; fi
-            if [ "${{ steps.domain.outcome }}" = "success" ]; then echo "Pusat Kawalan dipasang di https://pusat.bijaklabur.my (papan: https://bijaklabur.my/pusat.html)."; else echo "Domain pusat.bijaklabur.my belum boleh digunakan; dipasang ke alamat workers.dev (lihat log)."; fi
+            if [ "${{ steps.domain.outcome }}" = "success" ]; then echo "Pusat Kawalan dipasang di https://pusat.bijaklabur.my (papan: https://siswacap.my/pusat.html)."; else echo "Domain pusat.bijaklabur.my belum boleh digunakan; dipasang ke alamat workers.dev (lihat log)."; fi
             [ "$HAS_SECRET" = "true" ] || echo "- PUSAT_SECRET belum ditetapkan: kiraan token AI daripada worker-fiqh tidak akan sampai."
             [ "$HAS_TG" = "true" ] || echo "- TELEGRAM_BOT_TOKEN belum ditetapkan: agen Telegram tidak aktif."
             [ "$HAS_AI" = "true" ] || echo "- ANTHROPIC_API_KEY / GEMINI_API_KEY belum ditetapkan: agen menjawab arahan pantas (/stat, /sihat, ...) sahaja."

@@ -17,7 +17,7 @@ import { MODEN } from '../src/rujukan.js';
 
 const run = promisify(execFile);
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..'), OUT = join(ROOT, 'aset', 'rujukan'), CACHE = join(ROOT, '.cache', 'gambar');
-const UA = 'Mozilla/5.0 (SiswaCap rujukan; +https://bijaklabur.my)';
+const UA = 'Mozilla/5.0 (SiswaCap rujukan; +https://siswacap.my)';
 const summary = s => process.env.GITHUB_STEP_SUMMARY ? appendFile(process.env.GITHUB_STEP_SUMMARY, s + '\n') : null;
 
 async function download(url, file) {

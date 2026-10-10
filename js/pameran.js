@@ -45,9 +45,9 @@
   new MutationObserver(gambarSeterusnya).observe(stage, { attributes: true, attributeFilter: ['data-ciri'] });
   gambarSeterusnya();
   async function kongsi() {
-    const data = { title: 'SiswaCap', text: 'Belajar melabur, waktu solat dan alat pelajar dalam satu app percuma.', url: 'https://bijaklabur.my/' };
+    const data = { title: 'SiswaCap', text: 'Belajar melabur, waktu solat dan alat pelajar dalam satu app percuma.', url: 'https://siswacap.my/' };
     try { if (navigator.share) { await navigator.share(data); return; } } catch { return; }
-    try { await navigator.clipboard.writeText(data.url); toast('Pautan disalin'); } catch { toast('bijaklabur.my'); }
+    try { await navigator.clipboard.writeText(data.url); toast('Pautan disalin'); } catch { toast('siswacap.my'); }
   }
 
   /* ---------- Jalur putih selepas pentas ---------- */

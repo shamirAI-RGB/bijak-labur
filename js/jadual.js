@@ -527,7 +527,7 @@
     x.textAlign = 'left'; x.textBaseline = 'alphabetic'; x.fillStyle = '#14201b';
     x.font = FONT(750, 64); x.fillText('Jadual kelas', 110, 150);
     x.font = FONT(500, 30); x.fillStyle = '#646d68'; x.fillText(`${S.campusName || 'UiTM'}${S.label ? ' · ' + S.label : ''}`, 110, 200);
-    x.textAlign = 'right'; x.font = FONT(600, 26); x.fillStyle = '#0b5d4b'; x.fillText('bijaklabur.my', W - 110, 150);
+    x.textAlign = 'right'; x.font = FONT(600, 26); x.fillStyle = '#0b5d4b'; x.fillText('siswacap.my', W - 110, 150);
     const legH = 70 * Math.ceil(S.items.length / 3);
     drawGrid(x, 90, 250, W - 180, H - 250 - legH - 110, false, 1.7);
     S.items.forEach((it, i) => {

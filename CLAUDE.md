@@ -1,6 +1,6 @@
 # SiswaCap (dahulu Bijak Labur): panduan untuk Claude dan AI Agent
 
-Jenama SiswaCap (Siswa Capital) sejak 10 Oktober 2026; domain bijaklabur.my, emel @bijaklabur.my, nama pelayan dan kunci storan `bl_` kekal. Laman bijaklabur.my (GitHub Pages, cawangan `main`) dan app Android/iOS (Capacitor). Semua teks pengguna dalam
+Jenama SiswaCap (Siswa Capital) sejak 10 Oktober 2026. Alamat utama laman ialah **siswacap.my** (fail `CNAME`, GitHub Pages, cawangan `main`); bijaklabur.my melencong 301 ke siswacap.my melalui Redirect Rule Cloudflare. Emel @bijaklabur.my, subdomain pelayan (nota., fiqh., jadual., agen., pusat.bijaklabur.my) dan kunci storan `bl_` kekal. `ALLOWED_ORIGINS` setiap worker menerima kedua-dua domain. Laman siswacap.my dan app Android/iOS (Capacitor). Semua teks pengguna dalam
 **Bahasa Melayu baku Malaysia** (DBP), bukan Bahasa Indonesia: "daripada", "kerana", "wang", "boleh", "kerajaan".
 
 ## Struktur
@@ -44,7 +44,7 @@ node worker/test.mjs && node worker-nota/test.mjs && node worker-jadual/test.mjs
 npx -y http-server . -p 8099 -s -c-1   # kemudian buka setiap #view dengan Playwright dan pastikan tiada pageerror
 ```
 - Chromium untuk Playwright: `/opt/pw-browsers/chromium-*/chrome-linux/chrome`.
-- Sandbox awan menyekat bijaklabur.my dan pelayan workers. Keadaan sebenar boleh dilihat dalam:
+- Sandbox awan menyekat siswacap.my, bijaklabur.my dan pelayan workers. Keadaan sebenar boleh dilihat dalam:
   - log GitHub Actions: `Pemantau` (setiap jam, `scripts/pantau.mjs`: kesihatan, uptime 30 hari, prestasi, keselamatan seperti penolakan origin asing/CSP/fail sulit, dan penggunaan Workers melalui Cloudflare GraphQL) dan langkah "Semak Gemini" dalam `fiqh.yml`;
   - issue berlabel `pantau`.
 

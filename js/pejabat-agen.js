@@ -1516,7 +1516,7 @@ function Office() {
     className: "font-[ui-rounded,system-ui,sans-serif] text-2xl font-bold leading-none sm:text-3xl"
   }, "Pejabat AI Agent"), React.createElement("p", {
     className: "text-xs font-semibold text-white/60"
-  }, "Kerja sebenar bijaklabur.my daripada GitHub", gh.at ? ` · dikemas kini ${jam(gh.at)}` : ""))), React.createElement("div", {
+  }, "Kerja sebenar siswacap.my daripada GitHub", gh.at ? ` · dikemas kini ${jam(gh.at)}` : ""))), React.createElement("div", {
     className: "flex flex-wrap items-center gap-2"
   }, [["Sedang bekerja", `${working}/8`], ["PR menunggu anda", stats.openPRs], ["Siap hari ini", stats.doneToday], ["Kadar lulus", stats.passRate == null ? "–" : `${stats.passRate}%`]].map(([k, v]) => React.createElement("div", {
     key: k,

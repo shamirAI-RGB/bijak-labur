@@ -21,7 +21,7 @@
     bg: 'senja', color: '#3a2a5e', blur: 6, dim: 30, pos: 'atas', size: 'm', card: 'kaca', alpha: 55, radius: 22, dev: 'ip', jam: true,
     show: { bilik: true, warna: true, hijri: true, solat: false, tanda: true }
   };
-  const SHOW = [['bilik', 'Bilik atau dewan'], ['warna', 'Warna ikut kursus'], ['hijri', 'Tarikh Hijri'], ['solat', 'Waktu solat'], ['tanda', 'bijaklabur.my']];
+  const SHOW = [['bilik', 'Bilik atau dewan'], ['warna', 'Warna ikut kursus'], ['hijri', 'Tarikh Hijri'], ['solat', 'Waktu solat'], ['tanda', 'siswacap.my']];
 
   const load = () => { const s = store.get('kunci_cfg', {}) || {}; return { ...CFG0, ...s, show: { ...CFG0.show, ...(s.show || {}) } }; };
   let cfg = load(), dayIdx = 0, tab = 'bg', photo = null, dlg = null, raf = 0;
@@ -131,7 +131,7 @@
     if (left || right) {
       y += 8 * k; x.font = F(500, 9.5 * k); x.fillStyle = th.muted;
       if (left) x.fillText(D.hijri, X + p, y + 8 * k);
-      if (right) { x.textAlign = 'right'; x.fillText('bijaklabur.my', X + w - p, y + 8 * k); x.textAlign = 'left'; }
+      if (right) { x.textAlign = 'right'; x.fillText('siswacap.my', X + w - p, y + 8 * k); x.textAlign = 'left'; }
       y += 12 * k;
     }
     return y + p;

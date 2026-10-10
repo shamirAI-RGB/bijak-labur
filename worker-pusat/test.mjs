@@ -36,7 +36,7 @@ globalThis.fetch = async (u, init = {}) => {
   if (u.includes('generativelanguage.googleapis.com')) { const body = JSON.parse(init.body); return new Response(JSON.stringify(geminiJawab(body))); }
   // Perkhidmatan yang disemak kesihatannya
   if (!sihatOk) return new Response('rosak', { status: 503 });
-  if (u === 'https://bijaklabur.my/') return new Response('<title>SiswaCap (bijaklabur.my)</title>');
+  if (u === 'https://siswacap.my/') return new Response('<title>SiswaCap (siswacap.my)</title>');
   if (u.includes('/notes')) return new Response('{"notes":[]}');
   return new Response('{"ok":true}');
 };

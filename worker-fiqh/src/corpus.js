@@ -5,7 +5,7 @@
 import '../../js/fiqh-data.js';
 
 const D = globalThis.FiqhData;
-export const SITE = 'https://bijaklabur.my/';
+export const SITE = 'https://siswacap.my/';
 
 /* Setiap sumber: id tetap, jenis, tajuk, url, teks (yang boleh dipetik). */
 export function buildCorpus() {

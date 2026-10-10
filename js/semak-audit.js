@@ -103,7 +103,7 @@
   function markdown(r) {
     const m = matrix(r), x = r.expert, f = r.refs, a = r.audit, h = headline(r), L = [];
     const tarikh = new Date().toLocaleString('ms-MY', { dateStyle: 'medium', timeStyle: 'short' });
-    L.push('# Laporan Audit Akademik', '', `> Dijana oleh SiswaCap (bijaklabur.my) pada ${tarikh}. Peratus AI dan plagiarisme ialah anggaran berdasarkan ciri teks dan carian sumber terbuka, bukan keputusan Turnitin atau sistem rasmi universiti. Markah, NC dan ulasan dijana oleh AI sebagai panduan pembelajaran.`, '');
+    L.push('# Laporan Audit Akademik', '', `> Dijana oleh SiswaCap (siswacap.my) pada ${tarikh}. Peratus AI dan plagiarisme ialah anggaran berdasarkan ciri teks dan carian sumber terbuka, bukan keputusan Turnitin atau sistem rasmi universiti. Markah, NC dan ulasan dijana oleh AI sebagai panduan pembelajaran.`, '');
     if (a && (a.profil || a.bidang)) L.push(`**Pemeriksa:** ${a.profil || 'Pemeriksa universiti'}${a.bidang ? ` · **Bidang:** ${a.bidang}` : ''}${a.soalan ? `  \n**Soalan utama dikesan:** ${a.soalan}` : ''}`, '');
     L.push('| Petunjuk | Nilai |', '|---|---|');
     L.push(`| Anggaran AI | ${r.ai >= 55 ? '⚠️ ' : ''}${r.ai}% |`, `| Anggaran plagiarisme | ${r.plag == null ? 'Tiada sumber disemak' : (r.plag >= 25 ? '⚠️ ' : '') + r.plag + '%'} |`, `| Kualiti bahasa | ${r.quality}% |`);
