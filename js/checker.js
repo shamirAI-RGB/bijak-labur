@@ -386,11 +386,13 @@
     const L = $('#legend');
     if (state.view === 'fix') {
       L.innerHTML = Object.values(CATS).map(c => `<span style="--c:${c.c}">${c.name}</span>`).join('');
-      const t = state.text, inline = state.sugg.filter(s => !(s.rep === null && s.cat === 'kejelasan'));
+      // Cadangan yang diabaikan tidak lagi ditanda dalam teks
+      const t = state.text, inline = state.sugg.filter(s => !s.dismissed && !(s.rep === null && s.cat === 'kejelasan'));
       let html = '', pos = 0;
       inline.forEach(s => {
         if (s.start < pos) return;
         html += esc(t.slice(pos, s.start));
+        pos = s.start;   // frasa yang dibuang (panjang sifar) tidak boleh menyebabkan teks sebelumnya diulang
         if (s.applied && s.start === s.end) return;
         const cls = s.applied ? 'fix applied' : 'fix';
         html += `<mark class="${cls}" data-id="${s.id}" style="--c:${CATS[s.cat].c}" title="${esc(s.msg)}">${esc(t.slice(s.start, s.end)) || '&nbsp;'}</mark>`;
@@ -482,7 +484,8 @@
   function renderSources() {
     const p = state.plag, t = state.orig;
     if (!p.perSource.length) {
-      $('#sourceList').innerHTML = `<p class="muted small">${p.checked ? `Tiada padanan ketara ditemui dalam ${p.nSearched} sumber yang disemak.` : 'Aktifkan carian dalam talian atau tampal teks sumber untuk semakan plagiarisme.'} Nota: semakan ini meliputi ensiklopedia dalam talian, abstrak artikel akademik dan teks yang anda tampal, bukan pangkalan data tertutup sistem semakan universiti.</p>`;
+      const tiada = p.web ? 'Carian dalam talian tidak menemui sumber untuk dibandingkan, atau pangkalan sumber tidak dapat dihubungi. Tampal teks sumber untuk semakan plagiarisme.' : 'Aktifkan carian dalam talian atau tampal teks sumber untuk semakan plagiarisme.';
+      $('#sourceList').innerHTML = `<p class="muted small">${p.checked ? `Tiada padanan ketara ditemui dalam ${p.nSearched} sumber yang disemak.` : tiada} Nota: semakan ini meliputi ensiklopedia dalam talian, abstrak artikel akademik dan teks yang anda tampal, bukan pangkalan data tertutup sistem semakan universiti.</p>`;
       return;
     }
     $('#sourceList').innerHTML = `<p class="muted small src-sum">${p.perSource.length} daripada ${p.nSearched} sumber yang disemak mempunyai teks yang sama. Klik sumber untuk melihat petikan sebelah-menyebelah.</p>` + p.perSource.map(s => {
@@ -567,7 +570,7 @@
     try {
       const lang = $('#lang').value === 'auto' ? detectLang(text) : $('#lang').value;
       Object.assign(state, { text, orig: text, lang, sents: sentences(text), expert: null, refs: null, audit: null });
-      // Ulasan pakar (Gemini) dan pemeriksa rujukan berjalan serentak dengan semakan lain
+      // Ulasan pakar (AI) dan pemeriksa rujukan berjalan serentak dengan semakan lain
       const SP = window.SemakPakar, wantX = SP && $('#optExpert') && $('#optExpert').checked && text.length >= 200;
       const expertP = wantX ? SP.expert(text, lang).catch(e => ({ error: e.message })) : null;
       const refsP = SP && $('#optRefs') && $('#optRefs').checked ? SP.references(text).catch(() => null) : null;
@@ -599,7 +602,7 @@
         const [w, a] = await Promise.all([wikiSources(state.sents, lang, tick).catch(() => []), paperSources(state.sents, tick).catch(() => [])]);
         sources.push(...w, ...a);
       }
-      state.plag = Object.assign(plagiarism(text, state.sents, sources), { checked: sources.length > 0 });
+      state.plag = Object.assign(plagiarism(text, state.sents, sources), { checked: sources.length > 0, web: $('#optWeb').checked });
       if (refsP) { prog('Mengesahkan rujukan…'); state.refs = await refsP; }
       state.view = 'fix'; $$('#viewTabs .seg').forEach(t => t.classList.toggle('active', t.dataset.v === 'fix'));
       $('#results').classList.remove('hidden'); renderAll();

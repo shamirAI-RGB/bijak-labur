@@ -102,9 +102,10 @@
     const f = e.target.closest('[data-fix]');
     if (f && S.hasil && S.hasil.baiki_resume) {
       const b = S.hasil.baiki_resume[+f.dataset.fix];
-      const i = S.resume.indexOf(b.asal);
-      if (i < 0) { toast('Ayat asal tidak dijumpai lagi dalam resume.'); return; }
-      S.resume = S.resume.slice(0, i) + b.baru + S.resume.slice(i + b.asal.length); keep();
+      // Pelayan memadatkan ruang dalam "asal", jadi ruang berganda atau baris baharu dalam resume turut dipadankan
+      const m = new RegExp(b.asal.trim().split(/\s+/).map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('\\s+')).exec(S.resume);
+      if (!m) { toast('Ayat asal tidak dijumpai lagi dalam resume.'); return; }
+      S.resume = S.resume.slice(0, m.index) + b.baru + S.resume.slice(m.index + m[0].length); keep();
       S.hasil.baiki_resume.splice(+f.dataset.fix, 1); render(); toast('Resume dikemas kini.');
       return;
     }
