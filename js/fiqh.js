@@ -243,6 +243,8 @@
 
   function answer(d, q) {
     const box = $('#fqAns'), src = d.sumber || [], verified = src.filter(s => s.disahkan).length;
+    // Rujukan APA 7: dikira bersama supaya huruf a, b, c bagi pengarang dan tahun yang sama sepadan antara kad dan senarai
+    const apa = typeof FiqhApa !== 'undefined' ? FiqhApa.senarai(src) : { senarai: [], setiap: [] };
     const head = d.status === 'jawab' ? `<span class="fq-ai-st ok">${icon('check')}${src.length} rujukan${verified ? `, ${verified} petikan disemak` : ''}</span>`
       : d.status === 'luar_skop' ? '<span class="fq-ai-st">Luar skop</span>' : `<span class="fq-ai-st warn">${icon('alert')}Tidak pasti</span>`;
     box.innerHTML = `<article class="fq-detail fq-ai-ans">
@@ -252,20 +254,33 @@
       ${d.khilaf ? `<div class="fq-ai-khilaf"><b>Perbezaan pendapat</b><p>${esc(d.khilaf)}</p></div>` : ''}
       ${d.nasihat ? `<p class="note">${icon('alert')}<span>${esc(d.nasihat)}</span></p>` : ''}
       ${d.nota_pdf ? `<p class="note">${icon('alert')}<span>${esc(d.nota_pdf)}</span></p>` : ''}
-      ${src.length ? `<h3 class="fq-sec">Rujukan</h3><div>${src.map(sourceCard).join('')}</div>` : ''}
+      ${src.length ? `<h3 class="fq-sec">Rujukan</h3><div>${src.map((s, i) => sourceCard(s, apa.setiap[i], i)).join('')}</div>` : ''}
+      ${apa.senarai.length ? `<section class="fq-apa-list" aria-labelledby="fqApaH">
+        <div class="row-between wrap"><h3 class="fq-sec" id="fqApaH">Senarai rujukan (APA 7)</h3><button class="btn sm ghost" data-fq-apa-semua>${icon('copy')}Salin semua</button></div>
+        <div dir="ltr" lang="en">${apa.senarai.map(r => `<p class="fq-apa-ref">${r.html}</p>`).join('')}</div>
+        <p class="small muted">Disusun mengikut abjad gaya APA edisi ke-7. Sumber daripada karya yang sama digabungkan; karya pengarang yang sama dalam tahun yang sama dibezakan dengan huruf a, b dan c. Tajuk Arab ditulis dalam transliterasi rumi. Huruf condong dikekalkan apabila ditampal dalam Word atau Google Docs.</p>
+      </section>` : ''}
       <div class="actions"><button class="btn sm ghost" data-fq-copyai>${icon('copy')}Salin jawapan dan rujukan</button>${ext('https://github.com/shamirAI-RGB/bijak-labur/issues', 'Laporkan kesilapan')}</div>
     </article>`;
-    box._ans = { d, q };
+    box._ans = { d, q, apa };
     fillSources(seq);
   }
 
-  function sourceCard(s) {
+  // Rujukan APA 7 satu sumber dan petikan dalam teks (kurungan dan naratif)
+  const apaBlok = (r, i) => r ? `<div class="fq-apa">
+      <div class="fq-apa-head"><span>Rujukan APA 7</span><span class="fq-apa-btns"><button class="link-btn" data-fq-apa="${i}">${icon('copy')}Salin rujukan</button><button class="link-btn" data-fq-apa-teks="${i}">${icon('copy')}Salin petikan dalam teks</button></span></div>
+      <p class="fq-apa-ref" dir="ltr" lang="en">${r.html}</p>
+      <p class="fq-apa-teks"><span>Dalam teks</span><span dir="ltr" lang="en">${r.dalam.html.kurung}</span> atau <span dir="ltr" lang="en">${r.dalam.html.naratif}</span></p>
+      ${r.pdf ? '<p class="small muted">Nombor muka surat di atas ialah muka surat PDF. Jika nombor yang tercetak pada halaman itu berbeza, gunakan nombor yang tercetak.</p>' : ''}
+    </div>` : '';
+  function sourceCard(s, r, i) {
     const [jenis, c] = JENIS[s.jenis] || JENIS.lain;
     // Artikel laman Jabatan Mufti: negeri yang mengeluarkannya, jabatan dan tarikh terbit
     const label = s.negeri ? `${jenis} · ${esc(s.negeri)}` : jenis;
     const page = s.shamela ? `Shamela, muka surat ${esc(s.shamela)}` : s.pdf ? `${s.oleh ? esc(s.oleh) + ' · ' : ''}PDF, muka surat ${esc(s.pdf)}` : s.negeri && s.oleh ? esc(s.oleh) : '';
     const printed = [s.jilid && `juz ${esc(s.jilid)}`, s.halaman && `hlm. ${esc(s.halaman)}`].filter(Boolean).join(', ');
-    if (s.jenis === 'quran') return `<div class="fq-src fq-ai-src" style="--c:${c}" data-ayah="${esc(s.ref)}"><p class="muted small">Memuatkan ayat ${esc(s.ref)}</p></div>`;
+    // Kandungan [data-ayah] diganti oleh fillSources, jadi blok APA diletak di luarnya
+    if (s.jenis === 'quran') return `<div class="fq-src fq-ai-src" style="--c:${c}"><div data-ayah="${esc(s.ref)}"><p class="muted small">Memuatkan ayat ${esc(s.ref)}</p></div>${apaBlok(r, i)}</div>`;
     const hk = s.id && s.id.startsWith('hadis:') && D.H[s.id.slice(6)] ? s.id.slice(6) : '';
     const live = hk ? `<p class="fq-isi"><span>Isi ringkas</span>${esc(D.H[hk].isi)}</p><div class="fq-live"><p class="muted small">Memuatkan teks hadis</p></div>` : '';
     return `<div class="fq-src fq-ai-src" style="--c:${c}"${hk ? ` data-hadith="${hk}"` : ''}>
@@ -278,15 +293,27 @@
       ${s.untuk ? `<p class="small muted">Menyokong: ${esc(s.untuk)}</p>` : ''}
       ${live}
       <div class="fq-grades">${s.petikan ? `<span class="fq-grade ok">${icon('check')}Petikan sepadan dengan teks sumber</span>` : `<span class="fq-grade">Buka pautan untuk membaca teks penuh</span>`}</div>
+      ${apaBlok(r, i)}
     </div>`;
   }
 
-  function aiCite({ d, q }) {
+  function aiCite({ d, q, apa }) {
     const out = [`Soalan: ${q}`, '', d.ringkasan || '', ...(d.huraian || []), d.khilaf ? 'Perbezaan pendapat: ' + d.khilaf : '', '', 'Rujukan:'];
     (d.sumber || []).forEach(s => out.push(`- ${s.tajuk}${s.negeri && s.oleh ? `, ${s.oleh}` : ''}${s.shamela ? `, Shamela hlm. ${s.shamela}` : ''}${s.penerbit || s.edisi ? `, cetakan ${[s.penerbit, s.edisi, s.tahun].filter(Boolean).join(', ')}` : ''}${s.pdf ? `, PDF hlm. ${s.pdf}${s.pdf_url ? ` (${s.pdf_url})` : ''}` : ''}${s.halaman ? `, hlm. ${s.halaman}` : ''} (${s.url})${s.petikan ? `\n  "${s.petikan}"` : ''}`));
     if (d.nota_pdf) out.push('', d.nota_pdf);
+    if (apa && apa.senarai.length) out.push('', 'Senarai rujukan (APA 7):', ...apa.senarai.map(r => r.teks));
     out.push('', 'Dijana oleh Tanya AI SiswaCap. Bukan fatwa; semak sumber asal.');
     return out.filter((l, i, a) => l || a[i - 1]).join('\n');
+  }
+
+  async function salinKaya(html, teks, msg) {
+    try {
+      if (window.ClipboardItem && navigator.clipboard.write) await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([html], { type: 'text/html' }), 'text/plain': new Blob([teks], { type: 'text/plain' }) })]);
+      else await navigator.clipboard.writeText(teks);
+      toast(msg);
+    } catch {
+      try { await navigator.clipboard.writeText(teks); toast(msg); } catch { toast('Tidak dapat menyalin'); }
+    }
   }
 
   /* ---------- Penghala ---------- */
@@ -323,6 +350,14 @@
     if (e.target.closest('[data-fq-ask]')) return ask();
     const eg = e.target.closest('[data-fq-eg]');
     if (eg) { $('#fqAsk').value = eg.dataset.fqEg; return ask(); }
+    const apa = e.target.closest('[data-fq-apa], [data-fq-apa-teks], [data-fq-apa-semua]'), A = apa && (($('#fqAns') || {})._ans || {}).apa;
+    if (apa) {
+      if (!A) return;
+      if (apa.hasAttribute('data-fq-apa-semua')) return salinKaya(A.senarai.map(r => `<p style="padding-left:36px;text-indent:-36px">${r.html}</p>`).join(''), A.senarai.map(r => r.teks).join('\n'), 'Senarai rujukan APA 7 disalin');
+      const r = A.setiap[+(apa.dataset.fqApa || apa.dataset.fqApaTeks)];
+      if (!r) return;
+      return apa.hasAttribute('data-fq-apa') ? salinKaya(r.html, r.teks, 'Rujukan APA 7 disalin') : salinKaya(r.dalam.html.kurung, r.dalam.teks.kurung, 'Petikan dalam teks disalin');
+    }
     if (e.target.closest('[data-fq-copyai]')) { try { await navigator.clipboard.writeText(aiCite($('#fqAns')._ans)); toast('Jawapan disalin'); } catch { toast('Tidak dapat menyalin'); } return; }
     const c = e.target.closest('[data-fq-copy]');
     if (c) { const m = D.MASALAH.find(x => x.k === c.dataset.fqCopy); try { await navigator.clipboard.writeText(citeText(m)); toast('Rujukan disalin'); } catch { toast('Tidak dapat menyalin'); } }

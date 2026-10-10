@@ -456,6 +456,8 @@ assert.equal(d.status, 'tidak_pasti');
     ['fatwa', 'Wilayah Persekutuan', ART.wp[0][0], ART.wp[0][1], 'Pejabat Mufti Wilayah Persekutuan, 5 Mac 2024', true]);
   assert.ok(d.sumber[0].teks_halaman.includes('Menghisap vape adalah haram'));
   assert.deepEqual([d.sumber[1].negeri, d.sumber[1].url, d.sumber[1].oleh], ['Sabah', ART.sabah[0][0], 'Jabatan Mufti Negeri Sabah, 1 Ogos 2019']);
+  // Tarikh ISO untuk rujukan APA dalam app
+  assert.deepEqual([d.sumber[0].tarikh, d.sumber[1].tarikh], ['2024-03-05', '2019-08-01']);
   assert.equal(d.nota_pdf, undefined);
   console.log('laman Mufti OK');
 }
@@ -1070,4 +1072,93 @@ console.log('Semua ujian Tanya AI lulus');
   assert.equal((await post('/alat', { tugas: 'pek', teks: 'x' })).status, 400);
   globalThis.fetch = asal;
   console.log('Alat Pelajar OK');
+}
+
+// Rujukan APA edisi ke-7 bagi setiap sumber Tanya AI (js/fiqh-apa.js, dipaparkan dalam app)
+{
+  await import('../js/fiqh-apa.js');
+  const A = globalThis.FiqhApa, FD = globalThis.FiqhData;
+  // Setiap kitab, koleksi hadis, dokumen moden dan fatwa dalam FiqhData mempunyai butiran APA yang ditulis tangan
+  assert.deepEqual(Object.keys(A.KITAB).sort(), Object.keys(FD.KITAB).sort());
+  for (const c of Object.keys(FD.KOLEKSI)) assert.ok(A.HADIS[c], c);
+  for (const m of FD.MODEN) assert.ok(A.MODEN[m.k], m.k);
+  assert.deepEqual(Object.keys(A.FATWA).sort(), Object.keys(FD.F).sort());
+
+  const src = [
+    { jenis: 'quran', ref: '2:275', tajuk: 'Al-Quran 2:275', url: 'https://quran.com/2/275' },
+    { jenis: 'quran', ref: '2:278', tajuk: 'Al-Quran 2:278', url: 'https://quran.com/2/278' },
+    { id: 'hadis:m1587', jenis: 'hadis', tajuk: 'Sahih Muslim 1587', url: 'https://sunnah.com/muslim:1587a' },
+    { id: 'hadis:b1', jenis: 'hadis', tajuk: 'Sahih al-Bukhari 1', url: 'https://sunnah.com/bukhari:1' },
+    { id: 'kitab:minhaj:113', jenis: 'kitab', tajuk: 'Minhaj al-Talibin', url: 'https://shamela.ws/book/12096/113', shamela: '113', jilid: '1', halaman: '96' },
+    { id: 'kitab:majmu:900', jenis: 'kitab', tajuk: "Al-Majmu'", url: 'https://shamela.ws/book/2186/900', shamela: '900', jilid: '9', halaman: '391' },
+    { id: 'kitab:manhaji:10', jenis: 'kitab', tajuk: 'Al-Fiqh al-Manhaji', url: 'https://shamela.ws/book/6369/10', jilid: '', halaman: '' },
+    { id: 'pdf:jakim:45', jenis: 'dokumen', tajuk: 'Kompilasi', url: 'https://www.islam.gov.my/images/ePenerbitan/KOMPILASI_MUZAKARAH_MKI_2016.pdf#page=45', pdf: 45 },
+    { id: 'pdf:bnmsr:12', jenis: 'dokumen', tajuk: 'Shariah Resolutions', url: 'https://financialmarkets.bnm.gov.my/x.pdf#page=12', pdf: 12 },
+    { id: 'mufti:wp:1', jenis: 'fatwa', negeri: 'Wilayah Persekutuan', tajuk: 'IRSYAD AL-FATWA SIRI KE-512: HUKUM MENGHISAP VAPE <b>', tarikh: '2024-03-05', oleh: 'Pejabat Mufti Wilayah Persekutuan, 5 Mac 2024', url: 'https://muftiwp.gov.my/ms/artikel/irsyad-fatwa/123' },
+    // Jawapan lama dalam cache: tarikh hanya dalam medan oleh
+    { id: 'mufti:selangor:9', jenis: 'fatwa', negeri: 'Selangor', tajuk: 'Hukum Zakat Pelaburan Saham', oleh: 'Jabatan Mufti Negeri Selangor, 28 Oktober 2023', url: 'https://www.muftiselangor.gov.my/2023/10/28/hukum-zakat-perlaburan-saham/' },
+    { id: 'mufti:sabah:1', jenis: 'fatwa', negeri: 'Sabah', tajuk: 'Warta Fatwa Rokok Dan Vape Negeri Sabah', tarikh: '2019-08-01', url: 'https://mufti.sabah.gov.my/warta.pdf#page=3' },
+    { id: 'fatwa:mkiForex', jenis: 'fatwa', tajuk: FD.F.mkiForex.t, url: FD.F.mkiForex.url },
+    { id: 'masalah:muamalat/forex', jenis: 'bijaklabur', tajuk: 'Hukum trading forex secara individu', url: 'https://siswacap.my/#ibadah/fiqh/muamalat/forex' },
+    { jenis: 'lain', tajuk: 'Zakat Pendapatan Dan Simpanan', url: 'https://www.zakat.com.my/zakat-pendapatan/' },
+    { jenis: 'hadis', tajuk: 'Riyad al-Salihin 1', url: 'https://sunnah.com/riyadussalihin:1' },
+    { jenis: 'kitab', tajuk: 'Kitab Lain Yang Tiada Dalam Senarai', url: 'https://shamela.ws/book/9999/5' }
+  ];
+  const r = A.senarai(src), t = i => r.setiap[i].teks, k = i => r.setiap[i].dalam.teks;
+  assert.equal(r.setiap.length, src.length);
+  assert.ok(r.setiap.every(Boolean));
+  // Al-Quran: karya agama sebagai buku (tajuk condong), penterjemah Tafsir Pimpinan Ar-Rahman, surah dan ayat dalam petikan teks
+  assert.equal(t(0), 'Al-Quran al-Karim (A. M. Basmeih, Trans.). (n.d.). Quran.com. https://quran.com/');
+  assert.equal(r.setiap[0].html, '<i>Al-Quran al-Karim</i> (A. M. Basmeih, Trans.). (n.d.). Quran.com. https://quran.com/');
+  assert.deepEqual(k(0), { kurung: '(Al-Quran al-Karim, n.d., 2:275)', naratif: 'Al-Quran al-Karim (n.d., 2:275)' });
+  assert.equal(r.setiap[1].dalam.html.kurung, '(<i>Al-Quran al-Karim</i>, n.d., 2:278)');
+  // Hadis: pengumpul dan koleksi, nombor hadis dalam petikan teks
+  assert.equal(t(2), 'Muslim ibn al-Hajjaj. (n.d.). Sahih Muslim. Sunnah.com. https://sunnah.com/muslim');
+  assert.equal(k(2).kurung, '(Muslim ibn al-Hajjaj, n.d., Hadith 1587)');
+  assert.equal(t(3), 'Al-Bukhari, M. I. (n.d.). Sahih al-Bukhari. Sunnah.com. https://sunnah.com/bukhari');
+  // Kitab: edisi Shamela; juz dan halaman cetakan; tiga karya Al-Nawawi tanpa tarikh dibezakan dengan a, b, c mengikut tajuk
+  assert.equal(t(5), "Al-Nawawi, Y. S. (n.d.-a). Al-Majmu' syarh al-Muhazzab. Al-Maktabah al-Shamilah. https://shamela.ws/book/2186");
+  assert.equal(t(4), 'Al-Nawawi, Y. S. (n.d.-b). Minhaj al-talibin. Al-Maktabah al-Shamilah. https://shamela.ws/book/12096');
+  assert.equal(t(15), 'Al-Nawawi, Y. S. (n.d.-c). Riyad al-salihin. Sunnah.com. https://sunnah.com/riyadussalihin');
+  assert.deepEqual(k(4), { kurung: '(Al-Nawawi, n.d.-b, Vol. 1, p. 96)', naratif: 'Al-Nawawi (n.d.-b, Vol. 1, p. 96)' });
+  assert.equal(r.setiap[4].html, 'Al-Nawawi, Y. S. (n.d.-b). <i>Minhaj al-talibin</i>. Al-Maktabah al-Shamilah. https://shamela.ws/book/12096');
+  // Tiga pengarang: semua dalam senarai rujukan, "et al." dalam teks
+  assert.equal(t(6), "Al-Khin, M., Al-Bugha, M., & Al-Syarbaji, A. (n.d.). Al-Fiqh al-manhaji 'ala mazhab al-Imam al-Syafi'i. Al-Maktabah al-Shamilah. https://shamela.ws/book/6369");
+  assert.deepEqual(k(6), { kurung: '(Al-Khin et al., n.d.)', naratif: 'Al-Khin et al. (n.d.)' });
+  // Dokumen rasmi (PDF): pengarang berkumpulan, tahun, edisi; nombor muka surat PDF ditanda
+  assert.equal(t(7), 'Jabatan Kemajuan Islam Malaysia. (2016). Kompilasi pandangan hukum Muzakarah Jawatankuasa Fatwa Majlis Kebangsaan Bagi Hal Ehwal Ugama Islam Malaysia. https://www.islam.gov.my/images/ePenerbitan/KOMPILASI_MUZAKARAH_MKI_2016.pdf');
+  assert.deepEqual([k(7).kurung, r.setiap[7].pdf], ['(Jabatan Kemajuan Islam Malaysia, 2016, p. 45)', true]);
+  assert.match(t(8), /^Bank Negara Malaysia\. \(2010\)\. Shariah resolutions in Islamic finance \(2nd ed\.\)\. https:/);
+  // Laman Mufti: jabatan, tarikh penuh, tajuk huruf besar ayat; HTML dalam tajuk dilepaskan
+  assert.equal(t(9), 'Pejabat Mufti Wilayah Persekutuan. (2024, March 5). Irsyad al-Fatwa siri ke-512: Hukum menghisap vape <b>. https://muftiwp.gov.my/ms/artikel/irsyad-fatwa/123');
+  assert.ok(r.setiap[9].html.includes('vape &lt;b&gt;</i>'));
+  assert.equal(k(9).kurung, '(Pejabat Mufti Wilayah Persekutuan, 2024)');
+  assert.equal(t(10), 'Jabatan Mufti Negeri Selangor. (2023, October 28). Hukum zakat pelaburan saham. https://www.muftiselangor.gov.my/2023/10/28/hukum-zakat-perlaburan-saham/');
+  // PDF warta: tahun sahaja, tanpa penanda muka surat dalam URL, muka surat dalam petikan teks
+  assert.equal(t(11), 'Jabatan Mufti Negeri Sabah. (2019). Warta fatwa rokok dan vape negeri Sabah. https://mufti.sabah.gov.my/warta.pdf');
+  assert.deepEqual([k(11).kurung, r.setiap[11].pdf], ['(Jabatan Mufti Negeri Sabah, 2019, p. 3)', true]);
+  // Keputusan Muzakarah yang dibaca melalui laman lain: sumber kedua ("as cited in")
+  assert.equal(k(12).kurung, '(Muzakarah Jawatankuasa Fatwa Majlis Kebangsaan, 2012, as cited in Jabatan Mufti Negeri Selangor, n.d.)');
+  // Laman SiswaCap kekal dengan laluan # aplikasinya; laman lain mengikut pemilik
+  assert.equal(t(13), 'SiswaCap. (n.d.). Hukum trading forex secara individu. https://siswacap.my/#ibadah/fiqh/muamalat/forex');
+  assert.equal(t(14), 'Lembaga Zakat Selangor. (n.d.). Zakat pendapatan dan simpanan. https://www.zakat.com.my/zakat-pendapatan/');
+  // Kitab Shamela lain: tajuk didahulukan dan dicondongkan dalam teks
+  assert.equal(t(16), 'Kitab lain yang tiada dalam senarai. (n.d.). Al-Maktabah al-Shamilah. https://shamela.ws/book/9999');
+  assert.equal(r.setiap[16].dalam.html.kurung, '(<i>Kitab lain yang tiada dalam senarai</i>, n.d.)');
+  // Senarai: karya sama digabung (dua ayat Al-Quran = satu entri), abjad tanpa awalan al-, n.d. sebelum tahun bagi pengarang sama
+  assert.equal(r.senarai.length, src.length - 1);
+  const awal = r.senarai.map(x => x.teks.split(' (')[0].split('. (')[0]);
+  assert.deepEqual(awal.slice(0, 4), ['Bank Negara Malaysia.', 'Al-Bukhari, M. I.', 'Jabatan Kemajuan Islam Malaysia.', 'Jabatan Mufti Negeri Sabah.']);
+  const sel = r.senarai.map(x => x.teks).filter(x => x.startsWith('Jabatan Mufti Negeri Selangor'));
+  assert.deepEqual(sel.map(x => x.slice(31, 38)), ['(n.d.).', '(2023, ']);
+  assert.ok(r.senarai.findIndex(x => x.teks.startsWith('Al-Khin')) < r.senarai.findIndex(x => x.teks.startsWith('Kitab lain')));
+  assert.ok(r.senarai.findIndex(x => x.teks.startsWith('Al-Quran')) > r.senarai.findIndex(x => x.teks.startsWith('Al-Nawawi')));
+  // Sumber tanpa URL atau bukan objek tidak menghasilkan rujukan
+  assert.deepEqual(A.senarai([null, { jenis: 'lain' }]).setiap, [null, null]);
+  // Huruf besar ayat: nama khas, akronim dan frasa institusi dikekalkan; tajuk yang sudah huruf besar ayat tidak diubah
+  assert.equal(A.ayat('HUKUM PELABURAN ASB DAN KWSP MENURUT ISLAM'), 'Hukum pelaburan ASB dan KWSP menurut Islam');
+  assert.equal(A.ayat('Irsyad Al-Fatwa Siri Ke-123: Hukum Solat Jumaat Di Pulau Pinang'), 'Irsyad Al-Fatwa siri ke-123: Hukum solat Jumaat di Pulau Pinang');
+  assert.equal(A.ayat('Keputusan Muzakarah Jawatankuasa Fatwa Majlis Kebangsaan Tentang Vape'), 'Keputusan Muzakarah Jawatankuasa Fatwa Majlis Kebangsaan tentang vape');
+  assert.equal(A.ayat('Hukum memakai purdah bagi wanita Muslim'), 'Hukum memakai purdah bagi wanita Muslim');
+  console.log('rujukan APA 7 OK');
 }

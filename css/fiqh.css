@@ -137,6 +137,18 @@
 .fq-page-teks { max-height: 280px; overflow: auto; margin: 8px 0 4px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); font-size: .86rem; line-height: 1.7; white-space: pre-line; }
 .fq-page-teks.ar { font-size: 1.05rem; line-height: 2; text-align: right; }
 .fq-grade .ic { width: 12px; height: 12px; vertical-align: -2px; margin-right: 3px; }
+/* Rujukan APA 7 (Tanya AI): inden gantung seperti senarai rujukan APA */
+.fq-apa { margin-top: 10px; padding: 8px 12px 6px; border-radius: 10px; background: var(--surface-2); font-size: .84rem; line-height: 1.55; }
+.fq-apa-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 2px 12px; }
+.fq-apa-head > span:first-child, .fq-apa-teks > span:first-child { font-size: .7rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--faint); }
+.fq-apa-btns { display: inline-flex; flex-wrap: wrap; gap: 12px; }
+.fq-apa-btns .link-btn { display: inline-flex; align-items: center; gap: 4px; padding: 4px 0; font-size: .8rem; }
+.fq-apa-btns .link-btn .ic { width: 13px; height: 13px; }
+.fq-apa-ref { margin: 4px 0; padding-left: 2em; text-indent: -2em; overflow-wrap: anywhere; color: var(--text); text-align: left; }
+.fq-apa-teks { margin: 4px 0; color: var(--muted); overflow-wrap: anywhere; }
+.fq-apa-teks > span:first-child { margin-right: 6px; }
+.fq-apa-list .fq-apa-ref { font-size: .9rem; line-height: 1.6; margin: 0 0 8px; }
+.fq-apa-list .row-between { align-items: center; }
 /* Rujukan rasmi moden (PDF) */
 .fq-kitab-ar.fq-pdf { font-family: inherit; font-size: .68rem; font-weight: 700; letter-spacing: .04em; color: #0f8b8d; background: color-mix(in srgb, #0f8b8d 12%, transparent); border-radius: 6px; padding: 3px 7px; line-height: 1.2; text-align: center; }
 @media (max-width: 560px) { .fq-kitab-ar.fq-pdf { order: 0; flex-basis: auto; font-size: .68rem; } }
