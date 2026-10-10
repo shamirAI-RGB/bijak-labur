@@ -1,11 +1,11 @@
 /*
- * Bijak Labur: pelayan Tanya AI Fiqh (Cloudflare Worker)
+ * SiswaCap: pelayan Tanya AI Fiqh (Cloudflare Worker)
  *
  * POST /tanya  { q }  -> { status, ringkasan, huraian[], khilaf, nasihat, sumber[] }
  * GET  /             -> { ok, ai }
  *
  * AI (Claude, atau Gemini percuma jika hanya GEMINI_API_KEY ditetapkan) hanya boleh menjawab dengan rujukan:
- *  1. Korpus rujukan Fiqh Bijak Labur yang telah disemak (js/fiqh-data.js).
+ *  1. Korpus rujukan Fiqh SiswaCap yang telah disemak (js/fiqh-data.js).
  *  2. Halaman yang benar-benar dibuka semasa soalan itu dijawab, dari senarai domain yang dibenarkan sahaja
  *     (Shamela untuk kitab muktabar, quran.com, sunnah.com, laman mufti dan fatwa rasmi Malaysia).
  *     Hanya Claude mempunyai alat web; dengan Gemini, jawapan bersandarkan korpus dan ayat Al-Quran sahaja.
@@ -37,12 +37,12 @@ const CACHE_DAYS = 7;
 /* Bilangan ayat bagi setiap surah, untuk menolak rujukan ayat yang tidak wujud */
 const AYAT = [7, 286, 200, 176, 120, 165, 206, 75, 129, 109, 123, 111, 43, 52, 99, 128, 111, 110, 98, 135, 112, 78, 118, 64, 77, 227, 93, 88, 69, 60, 34, 30, 73, 54, 45, 83, 182, 88, 75, 85, 54, 53, 89, 59, 37, 35, 38, 29, 18, 45, 60, 49, 62, 55, 78, 96, 29, 22, 24, 13, 14, 11, 11, 18, 12, 12, 30, 52, 52, 44, 28, 28, 20, 56, 40, 31, 50, 40, 46, 42, 29, 19, 36, 25, 22, 17, 19, 26, 30, 20, 15, 21, 11, 8, 8, 19, 5, 8, 8, 11, 11, 8, 3, 9, 5, 4, 7, 3, 6, 3, 5, 4, 5, 6];
 
-export const SYSTEM = `Anda ialah pembantu rujukan fiqh dalam app Bijak Labur (Malaysia). Anda BUKAN mufti dan tidak mengeluarkan fatwa. Tugas anda ialah mencari dan menyusun apa yang dikatakan oleh sumber muktabar, dengan rujukan yang boleh dibuka dan disemak oleh pengguna.
+export const SYSTEM = `Anda ialah pembantu rujukan fiqh dalam app SiswaCap (Malaysia). Anda BUKAN mufti dan tidak mengeluarkan fatwa. Tugas anda ialah mencari dan menyusun apa yang dikatakan oleh sumber muktabar, dengan rujukan yang boleh dibuka dan disemak oleh pengguna.
 
 Peraturan integriti (wajib):
 1. Setiap kenyataan hukum mesti bersandarkan sumber dalam senarai "sumber". Jangan tulis hukum daripada ingatan anda sendiri tanpa sumber.
 2. Sumber yang dibenarkan sahaja:
-   a. Id daripada korpus rujukan Bijak Labur yang diberi (cth. "fatwa:mkiForex", "hadis:m1598", "kitab:fathqarib:142", "masalah:muamalat/riba").
+   a. Id daripada korpus rujukan SiswaCap yang diberi (cth. "fatwa:mkiForex", "hadis:m1598", "kitab:fathqarib:142", "masalah:muamalat/riba").
    b. Ayat Al-Quran dengan id "quran:SURAH:AYAT" (cth. "quran:2:275"). Teks ayat dimuat oleh app daripada sumber asal, jadi jangan petik teks ayat.
    c. Halaman yang anda buka dengan web_fetch atau temui dengan web_search dalam domain yang dibenarkan, dengan URL tepat seperti yang dipulangkan alat. Untuk kitab, buka halaman Shamela (https://shamela.ws/book/ID/HALAMAN) supaya pengguna boleh membuka muka surat yang sama.
    d. Muka surat dokumen rasmi moden yang diberi dalam blok "Dokumen rujukan rasmi moden", dengan id "pdf:KOD:MUKASURAT" tepat seperti tertera (cth. "pdf:jakim:57"). Petik ayat tepat daripada teks muka surat itu supaya pengguna boleh membuka muka surat PDF yang sama. Dokumen ini ialah keputusan rasmi (Muzakarah Fatwa Kebangsaan, Majlis Penasihat Syariah SC dan BNM, Akademi Fiqh Islam Antarabangsa); utamakannya untuk isu semasa seperti kewangan, pelaburan, perubatan dan teknologi. Blok yang sama juga mengandungi teks halaman kitab muktabar dari Shamela dengan id "kitab:KOD:HALAMAN" (cth. "kitab:fathqarib:142"); petik teks Arab tepat daripadanya dan berikan maksudnya dalam Bahasa Melayu. Kitab bertanda "perbandingan mazhab" (cth. Bidayah al-Mujtahid, Al-Fiqh al-Islami wa Adillatuh) menghuraikan pendapat pelbagai mazhab: gunakannya untuk menerangkan khilaf, tetapi nyatakan pendapat muktamad mazhab Syafie daripada kitab Syafie jika ada. Jika muka surat yang diberi tidak berkaitan dengan soalan, jangan gunakannya.
@@ -232,7 +232,7 @@ const DOCS_HEAD = 'Dokumen rujukan rasmi moden dan teks kitab (teks muka surat y
 export const geminiBody = (question, docs = []) => JSON.stringify({
   systemInstruction: { parts: [{ text: SYSTEM_KORPUS }] },
   contents: [{ role: 'user', parts: [
-    { text: `Korpus rujukan Bijak Labur (telah disemak):\n\n${CORPUS_TEXT}` },
+    { text: `Korpus rujukan SiswaCap (telah disemak):\n\n${CORPUS_TEXT}` },
     ...(docs.length ? [{ text: DOCS_HEAD + pagesText(docs) }] : []),
     { text: `Soalan pengguna:\n${question}` }
   ] }],
@@ -255,7 +255,7 @@ export async function ask(env, question, client, docs = []) {
     { type: 'web_fetch_20260209', name: 'web_fetch', max_uses: 4, allowed_domains: DOMAINS, max_content_tokens: 12000 }
   ];
   const messages = [{ role: 'user', content: [
-    { type: 'text', text: `Korpus rujukan Bijak Labur (telah disemak):\n\n${CORPUS_TEXT}`, cache_control: { type: 'ephemeral' } },
+    { type: 'text', text: `Korpus rujukan SiswaCap (telah disemak):\n\n${CORPUS_TEXT}`, cache_control: { type: 'ephemeral' } },
     ...(docs.length ? [{ type: 'text', text: DOCS_HEAD + pagesText(docs) }] : []),
     { type: 'text', text: `Soalan pengguna:\n${question}` }
   ] }];
@@ -300,7 +300,7 @@ export async function kataKunci(env, q) {
 
 async function tanya(req, env, url, h) {
   if (!provider(env)) return json({ error: 'Tanya AI belum diaktifkan.' }, 503, h);
-  // Hanya laman dan app Bijak Labur (elak orang lain menghabiskan kredit API)
+  // Hanya laman dan app SiswaCap (elak orang lain menghabiskan kredit API)
   if (!h['access-control-allow-origin']) return json({ error: 'Tidak dibenarkan.' }, 403, h);
   const got = await body(req, h, 16_000);
   if (got.res) return got.res;

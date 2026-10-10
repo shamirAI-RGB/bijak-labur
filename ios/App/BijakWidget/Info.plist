@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>ms</string>
 	<key>CFBundleDisplayName</key>
-	<string>Bijak Labur</string>
+	<string>SiswaCap</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>

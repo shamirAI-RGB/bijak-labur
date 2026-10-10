@@ -1,4 +1,4 @@
-// Bina gaya peta vektor Bijak Labur daripada gaya asas OSM Liberty (OpenFreeMap).
+// Bina gaya peta vektor SiswaCap daripada gaya asas OSM Liberty (OpenFreeMap).
 // Jalankan: node scripts/bina-gaya-peta.mjs
 // Input : scripts/peta/gaya-asas-liberty.json (salinan https://github.com/hyperknot/openfreemap-styles, styles/liberty)
 // Output: data/peta/gaya-terang.json, data/peta/gaya-gelap.json, data/peta/gaya-satelit.json
@@ -136,7 +136,7 @@ function bina(tema) {
       paint: { 'hillshade-shadow-color': P.bukitBayang, 'hillshade-highlight-color': P.bukitCerah, 'hillshade-accent-color': P.bukitAksen, 'hillshade-exaggeration': P.bukitLegap, 'hillshade-illumination-anchor': 'map' } });
   }
   const sky = { 'sky-color': P.langit, 'horizon-color': P.ufuk, 'fog-color': P.kabus, 'sky-horizon-blend': 0.6, 'horizon-fog-blend': 0.6, 'fog-ground-blend': 0.4, 'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 0, 1, 8, 0.6, 12, 0] };
-  return { version: 8, name: `Bijak Labur ${tema}`, sources: sumber(), sky, sprite: `https://${OFM}/sprites/ofm_f384/ofm`, glyphs: `https://${OFM}/fonts/{fontstack}/{range}.pbf`, layers };
+  return { version: 8, name: `SiswaCap ${tema}`, sources: sumber(), sky, sprite: `https://${OFM}/sprites/ofm_f384/ofm`, glyphs: `https://${OFM}/fonts/{fontstack}/{range}.pbf`, layers };
 }
 
 // Satelit hibrid: imej Esri di bawah, jalan utama separa lut sinar dan label berhalo gelap di atas
@@ -153,7 +153,7 @@ function binaSatelit() {
   }
   const b3 = simpan.find(l => l.id === 'building-3d');
   if (b3) b3.paint['fill-extrusion-color'] = '#d9d4c8';
-  return { version: 8, name: 'Bijak Labur satelit', sources: sumber('satelit'), sky: { 'sky-color': '#7fb0d6', 'horizon-color': '#d7e4ea', 'fog-color': '#c9d6db', 'sky-horizon-blend': 0.6, 'horizon-fog-blend': 0.5, 'fog-ground-blend': 0.3, 'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 0, 1, 8, 0.6, 12, 0] }, sprite: g.sprite, glyphs: g.glyphs,
+  return { version: 8, name: 'SiswaCap satelit', sources: sumber('satelit'), sky: { 'sky-color': '#7fb0d6', 'horizon-color': '#d7e4ea', 'fog-color': '#c9d6db', 'sky-horizon-blend': 0.6, 'horizon-fog-blend': 0.5, 'fog-ground-blend': 0.3, 'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 0, 1, 8, 0.6, 12, 0] }, sprite: g.sprite, glyphs: g.glyphs,
     layers: [{ id: 'latar', type: 'background', paint: { 'background-color': '#0b100e' } }, { id: 'satelit', type: 'raster', source: 'esri' }, ...simpan] };
 }
 

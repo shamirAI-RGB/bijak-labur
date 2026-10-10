@@ -139,7 +139,7 @@ assert.equal(r.status, 302); assert.equal(r.headers.get('location'), 'https://sh
 
 // Bil yang tidak dicipta oleh /checkout (cth. bil daripada akaun ToyyibPay lain) ditolak tanpa menghubungi ToyyibPay
 r = await call('/claim', { billcode: 'zzz99999', email: 'ali@mail.com', device: DEV_C });
-assert.equal(r.status, 404); assert.match((await r.json()).error, /bukan daripada Bijak Labur/);
+assert.equal(r.status, 404); assert.match((await r.json()).error, /bukan daripada SiswaCap/);
 // Pelan dan harga diambil daripada rekod pelayan, bukan daripada teks bil
 assert.deepEqual((({ plan, period, sen }) => ({ plan, period, sen }))(await (await env.AKAUN.get('b:abc12345').fetch('https://akaun/', { method: 'POST', body: JSON.stringify({ op: 'lihat' }) })).json()), { plan: 'lengkap', period: 'y1', sen: 4900 });
 

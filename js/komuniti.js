@@ -1,6 +1,6 @@
-/* Bijak Labur: Komuniti. Peta rakan (lokasi untuk rakan sahaja), sembang, acara dan memo kampus, servis pelajar
+/* SiswaCap: Komuniti. Peta rakan (lokasi untuk rakan sahaja), sembang, acara dan memo kampus, servis pelajar
    (tawaran dan permintaan dengan harga RM dan gambar), notifikasi dalam app dan tetapan privasi.
-   Perlu log masuk akaun. Data disimpan di pelayan Bijak Labur (worker/src/komuniti.js).
+   Perlu log masuk akaun. Data disimpan di pelayan SiswaCap (worker/src/komuniti.js).
    Lokasi dimatikan secara lalai, hanya dihantar semasa halaman Peta dibuka, dan tiada mod awam. */
 (function () {
   const root = $('#view-komuniti');
@@ -405,7 +405,7 @@
   }
 
   function lapor(target) {
-    const d = dialog(`<h2>Lapor</h2><p class="muted small">Laporan dihantar kepada pemilik Bijak Labur. Hantaran yang dilaporkan oleh 3 orang disembunyikan secara automatik.</p>
+    const d = dialog(`<h2>Lapor</h2><p class="muted small">Laporan dihantar kepada pemilik SiswaCap. Hantaran yang dilaporkan oleh 3 orang disembunyikan secara automatik.</p>
       <form id="kmLapor" class="km-form">${['Spam atau iklan palsu', 'Penipuan', 'Kandungan tidak sopan', 'Gangguan atau buli', 'Menjual tugasan atau barang terlarang', 'Lain-lain'].map((s, i) => `<label class="km-radio"><input type="radio" name="sebab" value="${esc(s)}" ${i ? '' : 'checked'}>${esc(s)}</label>`).join('')}
       <button class="btn" type="submit">${icon('alert')}Hantar laporan</button></form>`);
     $('#kmLapor', d).addEventListener('submit', async e => {
@@ -646,7 +646,7 @@
       else if (act === 'salinkod') navigator.clipboard?.writeText(S.me.kod).then(() => toast('Kod disalin.'), () => toast(S.me.kod));
       else if (act === 'kongsikod') {
         const url = `https://bijaklabur.my/#komuniti/kod/${S.me.kod}`;
-        const text = `Jom jadi rakan saya di Komuniti Bijak Labur. Tekan pautan ini, atau masukkan kod ${S.me.kod}.`;
+        const text = `Jom jadi rakan saya di Komuniti SiswaCap. Tekan pautan ini, atau masukkan kod ${S.me.kod}.`;
         if (navigator.share) navigator.share({ text, url }).catch(() => {}); else navigator.clipboard?.writeText(`${text} ${url}`).then(() => toast('Pautan jemputan disalin.'));
       }
       return;

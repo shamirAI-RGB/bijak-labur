@@ -1,4 +1,4 @@
-/* Bijak Labur: pameran gaya agensi di halaman utama (rujukan video "Web Design: Before / After").
+/* SiswaCap: pameran gaya agensi di halaman utama (rujukan video "Web Design: Before / After").
    1. Pada pentas: jenama gergasi lut sinar terpotong di tepi bawah, kad petikan dengan gambar kecil
       ciri seterusnya dan anak panah, serta ikon hubungan di kiri bawah.
    2. Jalur putih selepas pentas: bab "01" dengan tajuk besar dan butang pil, karusel kad gelap bergambar
@@ -12,7 +12,7 @@
 
   /* ---------- Pentas: jenama gergasi, ikon hubungan, kad petikan ---------- */
   const tanda = document.createElement('div');
-  tanda.className = 'xb-mark'; tanda.setAttribute('aria-hidden', 'true'); tanda.textContent = 'Bijak Labur';
+  tanda.className = 'xb-mark'; tanda.setAttribute('aria-hidden', 'true'); tanda.textContent = 'SiswaCap';
   stage.appendChild(tanda);
 
   const orang = window.Hubungi && Hubungi.ORANG && Hubungi.ORANG[0];
@@ -21,7 +21,7 @@
   sosial.innerHTML = `
     ${orang ? `<a href="${esc(Hubungi.waUrl(orang.no))}" target="_blank" rel="noopener" aria-label="WhatsApp ${esc(orang.nama)}" title="WhatsApp">${Hubungi.LOGO}</a>` : ''}
     <a href="mailto:hello@bijaklabur.my" aria-label="Emel hello@bijaklabur.my" title="Emel">${icon('mail')}</a>
-    <button type="button" data-xb-kongsi aria-label="Kongsi Bijak Labur" title="Kongsi">${icon('share')}</button>`;
+    <button type="button" data-xb-kongsi aria-label="Kongsi SiswaCap" title="Kongsi">${icon('share')}</button>`;
   stage.appendChild(sosial);
 
   const petik = document.createElement('div');
@@ -45,7 +45,7 @@
   new MutationObserver(gambarSeterusnya).observe(stage, { attributes: true, attributeFilter: ['data-ciri'] });
   gambarSeterusnya();
   async function kongsi() {
-    const data = { title: 'Bijak Labur', text: 'Belajar melabur, waktu solat dan alat pelajar dalam satu app percuma.', url: 'https://bijaklabur.my/' };
+    const data = { title: 'SiswaCap', text: 'Belajar melabur, waktu solat dan alat pelajar dalam satu app percuma.', url: 'https://bijaklabur.my/' };
     try { if (navigator.share) { await navigator.share(data); return; } } catch { return; }
     try { await navigator.clipboard.writeText(data.url); toast('Pautan disalin'); } catch { toast('bijaklabur.my'); }
   }
@@ -58,7 +58,7 @@
     { id: 'jadual', e: 'Jadual · UiTM', t: 'Jadual Kelas', s: 'Skrin kunci', d: 'Jadual kuliah dalam paparan hari dan minggu, siap dijadikan wallpaper.', h: '#jadual' }
   ];
   const sec = document.createElement('section');
-  sec.className = 'xb'; sec.setAttribute('aria-label', 'Tentang Bijak Labur');
+  sec.className = 'xb'; sec.setAttribute('aria-label', 'Tentang SiswaCap');
   sec.innerHTML = `
     <div class="xb-bab">
       <div class="xb-kiri">

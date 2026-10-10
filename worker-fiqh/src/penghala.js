@@ -1,5 +1,5 @@
 /*
- * Bijak Labur: penghala AI berbilang penyedia (diadaptasi daripada 9Router, lesen MIT dalam worker-fiqh/LICENSE-9router).
+ * SiswaCap: penghala AI berbilang penyedia (diadaptasi daripada 9Router, lesen MIT dalam worker-fiqh/LICENSE-9router).
  *
  * Susunan sandaran (combo): Gemini -> penyedia berkunci di bawah -> Cloudflare Workers AI (binding AI).
  * Setiap penyedia hanya aktif jika kuncinya ditetapkan sebagai rahsia pelayan (GitHub Secret -> wrangler secret).

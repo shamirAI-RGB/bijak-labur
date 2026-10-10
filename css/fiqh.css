@@ -1,4 +1,4 @@
-/* Bijak Labur: Fiqh (hanya kelas fq- dan hk-; tiada perubahan gaya global) */
+/* SiswaCap: Fiqh (hanya kelas fq- dan hk-; tiada perubahan gaya global) */
 .hk { display: inline-flex; align-items: center; flex: none; font-size: .74rem; font-weight: 700; padding: 4px 10px; border-radius: 99px; color: var(--hk); background: color-mix(in srgb, var(--hk) 13%, var(--surface)); border: 1px solid color-mix(in srgb, var(--hk) 30%, transparent); white-space: nowrap; }
 .hk-wajib { --hk: #0f8a5f; } .hk-fk { --hk: #2f7d6b; } .hk-sunat { --hk: #1192d6; } .hk-harus { --hk: #6a5cff; }
 .hk-makruh { --hk: #c67a00; } .hk-haram { --hk: #c8402f; } .hk-info { --hk: #66718f; }

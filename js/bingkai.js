@@ -1,4 +1,4 @@
-/* Bijak Labur: halang laman dipaparkan dalam bingkai (iframe) laman lain (serangan "clickjacking").
+/* SiswaCap: halang laman dipaparkan dalam bingkai (iframe) laman lain (serangan "clickjacking").
    GitHub Pages tidak boleh menghantar pengepala X-Frame-Options, dan frame-ancestors tidak berkesan dalam <meta> CSP. */
 (function () {
   var dibingkai;

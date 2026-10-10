@@ -1,4 +1,4 @@
-# Pelayan kedai nota IC220 Bijak Labur (Cloudflare Workers + Workers KV, pelan percuma)
+# Pelayan kedai nota IC220 SiswaCap (Cloudflare Workers + Workers KV, pelan percuma)
 name = "bijak-labur-nota"
 main = "src/index.js"
 compatibility_date = "2026-09-01"

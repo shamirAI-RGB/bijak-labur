@@ -1,4 +1,4 @@
-/* Bijak Labur: Pusat Kawalan pemilik (pusat.html). Berdiri sendiri (tanpa js/app.js).
+/* SiswaCap: Pusat Kawalan pemilik (pusat.html). Berdiri sendiri (tanpa js/app.js).
    Data daripada pusat.bijaklabur.my (worker-pusat): kunci pemilik disahkan oleh pelayan nota, WebSocket untuk kiraan langsung,
    carta SVG ditulis sendiri (palet disahkan skrip dataviz), agen AI boleh diarahkan dari sini atau Telegram. */
 (function () {
@@ -181,7 +181,7 @@
     const st = (ok, teks) => `<div class="${ok ? 'ok' : 'tunggu'}"><svg class="ic"><use href="#${ok ? 'p-ok' : 'p-wait'}"/></svg>${teks}</div>`;
     if (!s.aktif) {
       el.innerHTML = `<h3><svg class="ic"><use href="#p-plane"/></svg> Agen Telegram belum aktif</h3>
-        <ol><li>Buka Telegram, cari <code>@BotFather</code>, hantar <code>/newbot</code> dan ikut arahan (nama contoh: Bijak Labur Pusat).</li>
+        <ol><li>Buka Telegram, cari <code>@BotFather</code>, hantar <code>/newbot</code> dan ikut arahan (nama contoh: SiswaCap Pusat).</li>
         <li>Salin token bot dan tambah sebagai rahsia GitHub <code>TELEGRAM_BOT_TOKEN</code> (repo &gt; Settings &gt; Secrets and variables &gt; Actions).</li>
         <li>Jalankan semula aliran kerja "Pusat Kawalan" (Actions &gt; Run workflow). Webhook dipasang sendiri.</li>
         <li>Buka bot anda dan hantar <code>/mula &lt;kunci pemilik&gt;</code> untuk berpasangan.</li></ol>

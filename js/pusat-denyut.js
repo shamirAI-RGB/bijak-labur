@@ -1,4 +1,4 @@
-/* Bijak Labur: denyut pelawat tanpa nama untuk Pusat Kawalan pemilik (pusat.bijaklabur.my).
+/* SiswaCap: denyut pelawat tanpa nama untuk Pusat Kawalan pemilik (pusat.bijaklabur.my).
    Dihantar setiap 30 saat semasa tab kelihatan dan setiap kali halaman bertukar. Tiada kuki, tiada IP disimpan:
    hanya id rawak tab ini (sessionStorage), nama halaman, dan jenis peranti. Pelawat yang memasang "Do Not Track" tidak dikira. */
 (function () {

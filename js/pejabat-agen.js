@@ -1710,7 +1710,7 @@ function PejabatAgen() {
     className: "mt-2 text-sm text-slate-500"
   }, "Menyemak kunci pemilik..."), state !== "semak" && React.createElement(React.Fragment, null, React.createElement("p", {
     className: "mt-2 text-sm text-slate-500"
-  }, "Halaman ini hanya untuk pemilik Bijak Labur. Masukkan kunci pemilik (sama seperti Mod Pemilik)."), React.createElement("form", {
+  }, "Halaman ini hanya untuk pemilik SiswaCap. Masukkan kunci pemilik (sama seperti Mod Pemilik)."), React.createElement("form", {
     onSubmit: login,
     className: "mt-4 space-y-3 text-left"
   }, React.createElement("label", {
@@ -1734,7 +1734,7 @@ function PejabatAgen() {
   }, "Masuk")), React.createElement("a", {
     href: "./",
     className: "mt-4 inline-block text-sm font-bold text-violet-600 underline"
-  }, "Kembali ke Bijak Labur"))));
+  }, "Kembali ke SiswaCap"))));
 }
 const CSS = `
 .ao-bob{animation:ao-bob 2.6s ease-in-out infinite;transform-box:fill-box}

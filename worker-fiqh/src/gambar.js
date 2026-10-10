@@ -1,5 +1,5 @@
 /*
- * Bijak Labur: Studio Gambar AI (model FLUX, sama seperti yang dijalankan dalam ComfyUI)
+ * SiswaCap: Studio Gambar AI (model FLUX, sama seperti yang dijalankan dalam ComfyUI)
  *
  * POST /gambar { prompt, gaya?, seed? } -> { image: base64 JPEG, mime, prompt_en, seed }
  *
@@ -34,7 +34,7 @@ export function blocked(text) {
   return BLOCK.test(t) || (MINOR.test(t) && ADULT.test(t));
 }
 
-export const SYSTEM = `Anda menulis prompt untuk model penjana gambar FLUX bagi app pendidikan Bijak Labur (Malaysia, pengguna termasuk pelajar sekolah).
+export const SYSTEM = `Anda menulis prompt untuk model penjana gambar FLUX bagi app pendidikan SiswaCap (Malaysia, pengguna termasuk pelajar sekolah).
 
 Tugas:
 1. Tentukan sama ada permintaan selamat. TIDAK selamat jika meminta: kandungan seksual, bogel atau menggoda; keganasan grafik atau darah; kebencian, perkauman atau penghinaan agama; gambar orang sebenar yang dikenali (ahli politik, artis, individu tertentu) atau deepfake; dokumen palsu (IC, wang kertas, sijil); simbol pengganas; senjata untuk mencederakan; atau gambaran Nabi Muhammad SAW atau para nabi.
@@ -66,7 +66,7 @@ export async function preparePrompt(env, prompt, gaya) {
       return { selamat: false, sebab: 'Permintaan ini tidak dapat dijana.', prompt_en: '' };
     const a = JSON.parse(geminiText(d));
     const en = String(a.prompt_en || '').replace(/\s+/g, ' ').trim().slice(0, 1500);
-    if (a.selamat === false) return { selamat: false, sebab: String(a.sebab || 'Permintaan ini tidak sesuai untuk Bijak Labur.').slice(0, 200), prompt_en: '' };
+    if (a.selamat === false) return { selamat: false, sebab: String(a.sebab || 'Permintaan ini tidak sesuai untuk SiswaCap.').slice(0, 200), prompt_en: '' };
     return en ? { selamat: true, sebab: '', prompt_en: `${en} ${style}`, ai: true } : fallback;
   } catch (e) {
     console.log('gambar prompt', e && e.status, e && e.message);
@@ -85,9 +85,9 @@ export function check(input) {
 }
 
 export async function gambar(env, { prompt, gaya, seed }) {
-  if (blocked(prompt)) throw Object.assign(new Error('Permintaan ini tidak sesuai untuk Bijak Labur.'), { status: 422 });
+  if (blocked(prompt)) throw Object.assign(new Error('Permintaan ini tidak sesuai untuk SiswaCap.'), { status: 422 });
   const p = await preparePrompt(env, prompt, gaya);
-  if (!p.selamat || blocked(p.prompt_en)) throw Object.assign(new Error(p.sebab || 'Permintaan ini tidak sesuai untuk Bijak Labur.'), { status: 422 });
+  if (!p.selamat || blocked(p.prompt_en)) throw Object.assign(new Error(p.sebab || 'Permintaan ini tidak sesuai untuk SiswaCap.'), { status: 422 });
   let out;
   const sandaran = async () => {
     const g = await gambarSandaran(env, p.prompt_en.slice(0, 2048));

@@ -1,5 +1,5 @@
 /*
- * Bijak Labur: Komuniti (peta rakan, sembang, acara dan memo kampus, servis pelajar, notifikasi dalam app)
+ * SiswaCap: Komuniti (peta rakan, sembang, acara dan memo kampus, servis pelajar, notifikasi dalam app)
  *
  * Semua data dalam satu Durable Object (SQLite, pelan percuma). Setiap permintaan perlu log masuk akaun
  * (token ID disahkan oleh authed() dalam akaun.js); uid diambil daripada token, bukan daripada badan permintaan.

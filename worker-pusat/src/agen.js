@@ -1,5 +1,5 @@
 /*
- * Agen AI pemilik Bijak Labur. Dipanggil daripada Telegram (webhook) dan papan kawalan (/papan/arahan).
+ * Agen AI pemilik SiswaCap. Dipanggil daripada Telegram (webhook) dan papan kawalan (/papan/arahan).
  *
  * Tiga lapisan, supaya agen sentiasa berfungsi:
  *  1. Arahan pantas (/stat, /sihat, /pr, ...): dijawab terus daripada data, tanpa token AI.
@@ -17,7 +17,7 @@ export const namaLaluan = l => NAMA_LALUAN[l] || l;
 
 /* ---------- Perkhidmatan yang disemak ---------- */
 export const PERKHIDMATAN = [
-  { nama: 'Laman bijaklabur.my', url: 'https://bijaklabur.my/', semak: t => /Bijak Labur/.test(t) },
+  { nama: 'Laman bijaklabur.my', url: 'https://bijaklabur.my/', semak: t => /SiswaCap|Bijak Labur/.test(t) },
   { nama: 'Pelayan nota', url: 'https://nota.bijaklabur.my/notes', semak: t => /"notes"/.test(t) },
   { nama: 'Pelayan Tanya AI (fiqh)', url: 'https://fiqh.bijaklabur.my/', semak: t => /"ok":true/.test(t) },
   { nama: 'Pelayan jadual UiTM', url: 'https://jadual.bijaklabur.my/', semak: t => t.length > 0 },
@@ -56,7 +56,7 @@ export async function github(env, jenis) {
 export async function bukaIssue(env, tajuk, badan) {
   if (!env.GH_TOKEN) return { error: 'GH_TOKEN belum ditetapkan dalam GitHub Secrets, jadi agen tidak boleh membuka issue. Beritahu pemilik.' };
   await fetch(`${GH}/repos/${env.REPO}/labels`, { method: 'POST', headers: { ...ghHeaders(env), 'content-type': 'application/json' }, body: JSON.stringify({ name: 'arahan', color: '0E7C66', description: 'Arahan pemilik melalui agen Telegram Pusat Kawalan' }), signal: AbortSignal.timeout(15000) }).catch(() => {});
-  const d = await gh(env, '/issues', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ title: String(tajuk).slice(0, 200), body: `${String(badan).slice(0, 6000)}\n\n---\nDibuka oleh pemilik melalui agen Telegram Pusat Kawalan Bijak Labur. AI Agent harian: sila laksanakan melalui PR ke main.`, labels: ['arahan'] }) });
+  const d = await gh(env, '/issues', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ title: String(tajuk).slice(0, 200), body: `${String(badan).slice(0, 6000)}\n\n---\nDibuka oleh pemilik melalui agen Telegram Pusat Kawalan SiswaCap. AI Agent harian: sila laksanakan melalui PR ke main.`, labels: ['arahan'] }) });
   return { no: d.number, url: d.html_url };
 }
 
@@ -77,7 +77,7 @@ export async function penggunaanWorkers(env) {
 const HOS_OK = h => h === 'bijaklabur.my' || h.endsWith('.bijaklabur.my') || h === 'shamirai-rgb.github.io' || /^bijak-labur-[a-z-]+\.khanz-amir\.workers\.dev$/.test(h);
 export async function bacaLaman(env, url) {
   let u; try { u = new URL(url); } catch { return { error: 'URL tidak sah' }; }
-  if (u.protocol !== 'https:' || !HOS_OK(u.hostname)) return { error: 'Hanya laman dan pelayan Bijak Labur boleh dibaca.' };
+  if (u.protocol !== 'https:' || !HOS_OK(u.hostname)) return { error: 'Hanya laman dan pelayan SiswaCap boleh dibaca.' };
   const r = await fetch(u, { headers: { origin: env.SITE_URL || 'https://bijaklabur.my', 'user-agent': 'BijakLabur-pusat/1.0' }, signal: AbortSignal.timeout(15000) });
   const t = (await r.text()).replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/gi, ' ').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
   return { status: r.status, teks: t.slice(0, 3000) };
@@ -86,8 +86,8 @@ export async function bacaLaman(env, url) {
 /* ---------- Alat (satu takrifan, ditukar ke bentuk Claude dan Gemini) ---------- */
 export const ALAT = [
   { name: 'statistik', description: 'Data pusat: pelawat sedang melayari, pelawat hari ini / 7 hari / 30 hari, halaman popular, negara, token AI setiap ciri dan penyedia, anggaran kos, kesihatan terakhir.', input: {} },
-  { name: 'kesihatan', description: 'Semak SEKARANG sama ada laman dan setiap pelayan Bijak Labur hidup, dengan masa respons.', input: {} },
-  { name: 'github', description: 'Baca repo GitHub Bijak Labur: pull request terbuka, larian GitHub Actions terkini, issue terbuka, atau commit terkini.', input: { jenis: { type: 'string', enum: ['pr', 'actions', 'issues', 'commits'], description: 'Apa yang hendak dibaca' } }, perlu: ['jenis'] },
+  { name: 'kesihatan', description: 'Semak SEKARANG sama ada laman dan setiap pelayan SiswaCap hidup, dengan masa respons.', input: {} },
+  { name: 'github', description: 'Baca repo GitHub SiswaCap: pull request terbuka, larian GitHub Actions terkini, issue terbuka, atau commit terkini.', input: { jenis: { type: 'string', enum: ['pr', 'actions', 'issues', 'commits'], description: 'Apa yang hendak dibaca' } }, perlu: ['jenis'] },
   { name: 'buka_issue', description: 'Buka issue GitHub berlabel "arahan" supaya AI Agent harian membina atau membaiki sesuatu melalui PR. Gunakan apabila pemilik mengarahkan perubahan kod, ciri atau kandungan laman. Tulis tajuk dan badan yang jelas dalam Bahasa Melayu dengan kriteria siap.', input: { tajuk: { type: 'string' }, badan: { type: 'string' } }, perlu: ['tajuk', 'badan'] },
   { name: 'peristiwa', description: 'Log peristiwa terkini pusat: amaran rosak/pulih, arahan lepas, laporan.', input: {} },
   { name: 'tetapan', description: 'Hidupkan atau matikan amaran kesihatan Telegram dan laporan harian 08:00.', input: { amaran: { type: 'boolean' }, laporan: { type: 'boolean' } } },
@@ -160,7 +160,7 @@ export async function laporan(env, stub) {
   await stub.fetch('https://pusat/kesihatan', { method: 'POST', body: JSON.stringify(sihat) });
   let pr = '';
   try { const s = await github(env, 'pr'); pr = `\n\n🔧 PR terbuka: ${s.length}${s.slice(0, 5).map(p => `\n• #${p.no} ${p.tajuk}`).join('')}`; } catch {}
-  return `📊 Laporan Bijak Labur ${new Date(Date.now() + 8 * 36e5).toISOString().slice(0, 10)}\n\n${stat}\n\n${token}\n\n🩺 Kesihatan:\n${senaraiKesihatan(sihat)}${pr}`;
+  return `📊 Laporan SiswaCap ${new Date(Date.now() + 8 * 36e5).toISOString().slice(0, 10)}\n\n${stat}\n\n${token}\n\n🩺 Kesihatan:\n${senaraiKesihatan(sihat)}${pr}`;
 }
 export async function arahanPantas(env, stub, teks) {
   const m = String(teks || '').trim().match(/^\/(\w+)(?:@\w+)?\s*(.*)$/s);
@@ -168,7 +168,7 @@ export async function arahanPantas(env, stub, teks) {
   const [, cmd, arg] = m;
   const onoff = arg => /^(on|hidup|buka)$/i.test(arg) ? true : /^(off|mati|tutup)$/i.test(arg) ? false : null;
   switch (cmd.toLowerCase()) {
-    case 'start': case 'mula': case 'bantuan': case 'help': return `Salam, saya agen Pusat Kawalan Bijak Labur.\n\n${BANTUAN}`;
+    case 'start': case 'mula': case 'bantuan': case 'help': return `Salam, saya agen Pusat Kawalan SiswaCap.\n\n${BANTUAN}`;
     case 'stat': case 'pelawat': return teksStat(stub);
     case 'token': return teksToken(stub);
     case 'sihat': { const s = await semakKesihatan(env); await stub.fetch('https://pusat/kesihatan', { method: 'POST', body: JSON.stringify(s) }); return `🩺 Kesihatan sekarang:\n${senaraiKesihatan(s)}`; }
@@ -185,7 +185,7 @@ export async function arahanPantas(env, stub, teks) {
 
 /* ---------- Agen AI ---------- */
 export const penyediaAgen = env => env.ANTHROPIC_API_KEY ? 'claude' : env.GEMINI_API_KEY ? 'gemini' : '';
-const SISTEM = () => `Anda ialah agen Pusat Kawalan Bijak Labur (bijaklabur.my), pembantu peribadi pemilik laman dan app itu (pelajar UiTM). Anda berbual melalui Telegram atau papan kawalan pemilik, dan hanya pemilik yang boleh bercakap dengan anda.
+const SISTEM = () => `Anda ialah agen Pusat Kawalan SiswaCap (bijaklabur.my), pembantu peribadi pemilik laman dan app itu (pelajar UiTM). Anda berbual melalui Telegram atau papan kawalan pemilik, dan hanya pemilik yang boleh bercakap dengan anda.
 Tugas: menjawab soalan tentang pelawat langsung, penggunaan token AI dan kosnya, kesihatan pelayan, kerja di GitHub (PR, Actions, issue), dan melaksanakan arahan pemilik.
 Peraturan:
 - Gunakan alat untuk mendapatkan data sebenar; jangan reka angka. Jika alat memulangkan ralat, nyatakan ralat itu dan apa yang pemilik perlu lakukan (cth. tetapkan rahsia GitHub).

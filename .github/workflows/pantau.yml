@@ -1,4 +1,4 @@
-# Pemantau Bijak Labur: semak kesihatan, uptime, prestasi, keselamatan dan penggunaan laman, pelayan dan perkhidmatan luar setiap jam.
+# Pemantau SiswaCap: semak kesihatan, uptime, prestasi, keselamatan dan penggunaan laman, pelayan dan perkhidmatan luar setiap jam.
 # Kerosakan kritikal membuka (atau mengemas kini) satu issue berlabel "pantau"; issue ditutup sendiri apabila pulih.
 # AI Agent harian membaca issue ini dan membaikinya melalui PR.
 name: Pemantau

@@ -1,4 +1,4 @@
-/* Bijak Labur: Mod Pemilik. Pemilik log masuk dengan kunci pemilik (sama seperti Kedai Nota) dan boleh:
+/* SiswaCap: Mod Pemilik. Pemilik log masuk dengan kunci pemilik (sama seperti Kedai Nota) dan boleh:
    1. Menyunting teks laman secara langsung (tajuk, penerangan, kad halaman utama, nota, kaki laman) di semua
       halaman. Perubahan disimpan di pelayan nota (/admin/kandungan) dan dipaparkan kepada semua pengguna laman
       dan app tanpa terbitan baharu.
@@ -77,7 +77,7 @@
   }
 
   function loginDialog(then) {
-    dialog(`<h2>Mod Pemilik</h2><p class="muted small">Masukkan kunci pemilik Bijak Labur (sama seperti Kedai Nota).</p>
+    dialog(`<h2>Mod Pemilik</h2><p class="muted small">Masukkan kunci pemilik SiswaCap (sama seperti Kedai Nota).</p>
       <form id="pmLogin"><div class="field"><label for="pmKey">Kunci pemilik</label><input id="pmKey" type="password" autocomplete="current-password" required minlength="12"></div>
       <p class="error small hidden" id="pmErr"></p><button class="btn block" type="submit">Log masuk</button></form>`, d => {
       $('#pmKey', d).focus();

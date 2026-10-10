@@ -1,4 +1,4 @@
-/* Bijak Labur: Sihat. Kalori daripada gambar makanan (Gemini), langkah harian (sensor gerakan + GPS),
+/* SiswaCap: Sihat. Kalori daripada gambar makanan (Gemini), langkah harian (sensor gerakan + GPS),
    sasaran kalori (Mifflin-St Jeor) dan sejarah 7 hari. Semua log disimpan dalam peranti ini sahaja. */
 (function () {
   const root = $('#view-sihat');
@@ -166,7 +166,7 @@
       ${hs.err ? `<p class="error small">${esc(hs.err)}</p>` : ''}</div>`;
   }
   const healthHTML = () => Health ? `${healthBlock()}<p class="muted small">Atau masukkan jumlah secara manual:</p>`
-    : `<p class="muted small">Laman web tidak boleh membaca kiraan langkah telefon semasa ditutup. Gunakan app Bijak Labur (Android/iOS) untuk menyambung Health Connect atau Apple Health secara automatik, atau masukkan jumlah dari app kesihatan anda:</p>`;
+    : `<p class="muted small">Laman web tidak boleh membaca kiraan langkah telefon semasa ditutup. Gunakan app SiswaCap (Android/iOS) untuk menyambung Health Connect atau Apple Health secara automatik, atau masukkan jumlah dari app kesihatan anda:</p>`;
   const paintHealth = () => { const e = $('#shHealth', root); if (e) e.outerHTML = healthBlock(); };
 
   function weekHTML() {

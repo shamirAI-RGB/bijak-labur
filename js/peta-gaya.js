@@ -1,4 +1,4 @@
-/* Bijak Labur: teras peta bersama untuk semua peta (Peta Jalan, Jejak Aktiviti, Peta rakan).
+/* SiswaCap: teras peta bersama untuk semua peta (Peta Jalan, Jejak Aktiviti, Peta rakan).
    Peta dilukis terus oleh MapLibre GL: jubin vektor OpenFreeMap (percuma, tanpa kunci) © OpenMapTiles © OpenStreetMap,
    gaya sendiri dalam data/peta/gaya-*.json (dijana oleh scripts/bina-gaya-peta.mjs): terang, gelap, satelit hibrid.
    Label diutamakan dalam Bahasa Melayu (name:ms). Mod 3D: bangunan 3D, rupa bumi berbukit (Terrain Tiles) dan glob.

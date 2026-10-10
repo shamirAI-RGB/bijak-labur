@@ -16,7 +16,7 @@ Selepas PR ini di-merge, GitHub Actions memasang `worker-pusat` dengan rahsia Cl
 | Rahsia | Untuk apa | Cara dapat |
 |---|---|---|
 | `PUSAT_SECRET` | Kiraan token AI. Pelayan Tanya AI (worker-fiqh) melaporkan token ke pusat dengan kunci ini. | Rentetan rawak panjang (30+ aksara), cth. jana di terminal: `openssl rand -hex 24`. Satu nilai, dibaca oleh dua worker. |
-| `TELEGRAM_BOT_TOKEN` | Agen Telegram. | Telegram > cari `@BotFather` > `/newbot` > beri nama (cth. "Bijak Labur Pusat") dan username (cth. `BijakLaburPusatBot`) > salin token `123456:ABC-...`. |
+| `TELEGRAM_BOT_TOKEN` | Agen Telegram. | Telegram > cari `@BotFather` > `/newbot` > beri nama (cth. "SiswaCap Pusat") dan username (cth. `SiswaCapPusatBot`) > salin token `123456:ABC-...`. |
 | `ANTHROPIC_API_KEY` | Agen menjawab dengan Claude (lebih pintar; alat penuh). Sudah digunakan oleh worker-fiqh jika ada. | console.anthropic.com (organisasi "Bijak Labur"). |
 | `GEMINI_API_KEY` | Sandaran percuma untuk agen jika kunci Claude tiada. Sudah ada untuk worker-fiqh. | Google AI Studio. |
 | `AGEN_GITHUB_TOKEN` (pilihan) | Agen boleh **membuka issue "arahan"** (arahan anda dari Telegram menjadi kerja AI Agent harian) dan membaca Actions tanpa had kadar awam. | github.com > Settings > Developer settings > Fine-grained token > repo `bijak-labur` sahaja > Issues: Read and write, Actions: Read, Contents: Read. |

@@ -1,4 +1,4 @@
-// Pemantau Bijak Labur: semak laman, pelayan dan perkhidmatan luar. Dijalankan setiap jam oleh .github/workflows/pantau.yml
+// Pemantau SiswaCap: semak laman, pelayan dan perkhidmatan luar. Dijalankan setiap jam oleh .github/workflows/pantau.yml
 // node scripts/pantau.mjs  -> laporan Markdown di stdout (dan pantau.md); kod keluar 1 jika ada kerosakan kritikal
 //
 // Lima jenis pemantauan:
@@ -29,7 +29,7 @@ async function get(url, opt = {}) {
   let last;
   for (let i = 0; i < 2; i++) {   // satu cubaan semula untuk gangguan rangkaian sementara
     try {
-      const r = await fetch(url, { redirect: 'follow', signal: AbortSignal.timeout(20000), ...opt, headers: { 'user-agent': 'BijakLabur-pantau/1.0', ...(opt.headers || {}) } });
+      const r = await fetch(url, { redirect: 'follow', signal: AbortSignal.timeout(20000), ...opt, headers: { 'user-agent': 'SiswaCap-pantau/1.0', ...(opt.headers || {}) } });
       if (r.status >= 500 && i === 0) { last = new Error(`HTTP ${r.status}`); await new Promise(z => setTimeout(z, 3000)); continue; }
       return r;
     } catch (e) { last = e; await new Promise(z => setTimeout(z, 3000)); }
@@ -43,7 +43,7 @@ const json = async (url, opt) => (await ok(url, opt)).json();
 let html = '';
 await check('kritikal', 'Laman utama', async () => {
   html = await (await ok(SITE + '/')).text();
-  if (!/Bijak Labur/.test(html)) throw new Error('kandungan tidak dijangka');
+  if (!/SiswaCap/.test(html)) throw new Error('kandungan tidak dijangka');
   return `${Math.round(html.length / 1024)} KB`;
 });
 for (const p of ['tentang.html', 'peta.html', 'privacy.html', 'terma.html', 'padam-data.html', 'sitemap.xml', 'robots.txt', 'manifest.webmanifest', 'sw.js'])
@@ -68,7 +68,7 @@ await check('amaran', 'Sijil SSL', () => new Promise((res, rej) => {
   s.on('error', rej); s.on('timeout', () => { s.destroy(); rej(new Error('tamat masa')); });
 }));
 
-/* ---------- Pelayan Bijak Labur ---------- */
+/* ---------- Pelayan SiswaCap ---------- */
 const H = { headers: { origin: ORIGIN } };
 await check('kritikal', 'Pelayan Premium, akaun, suara', async () => {
   const d = await json(PREMIUM + '/', H);
@@ -213,7 +213,7 @@ const uptime = ['', `### Uptime dan prestasi (${sejarah.length} semakan dalam re
 const bad = results.filter(r => !r.ok), crit = bad.filter(r => r.tahap === 'kritikal');
 const row = r => `| ${r.ok ? '✅' : r.tahap === 'kritikal' ? '🔴' : '🟠'} | ${r.nama} | ${r.ok ? r.nota : `**${r.nota}**`} | ${r.ms} ms |`;
 const md = [
-  `## Pemantau Bijak Labur: ${crit.length ? `🔴 ${crit.length} kerosakan kritikal` : bad.length ? `🟠 ${bad.length} amaran` : '✅ semua sihat'}`,
+  `## Pemantau SiswaCap: ${crit.length ? `🔴 ${crit.length} kerosakan kritikal` : bad.length ? `🟠 ${bad.length} amaran` : '✅ semua sihat'}`,
   `Disemak ${new Date().toLocaleString('ms-MY', { timeZone: 'Asia/Kuala_Lumpur' })} (waktu Malaysia).`,
   '', '| | Semakan | Keputusan | Masa |', '|---|---|---|---|',
   ...[...bad, ...results.filter(r => r.ok)].map(row),

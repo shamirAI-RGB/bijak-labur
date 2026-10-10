@@ -36,7 +36,7 @@ globalThis.fetch = async (u, init = {}) => {
   if (u.includes('generativelanguage.googleapis.com')) { const body = JSON.parse(init.body); return new Response(JSON.stringify(geminiJawab(body))); }
   // Perkhidmatan yang disemak kesihatannya
   if (!sihatOk) return new Response('rosak', { status: 503 });
-  if (u === 'https://bijaklabur.my/') return new Response('<title>Bijak Labur</title>');
+  if (u === 'https://bijaklabur.my/') return new Response('<title>SiswaCap (bijaklabur.my)</title>');
   if (u.includes('/notes')) return new Response('{"notes":[]}');
   return new Response('{"ok":true}');
 };
@@ -222,7 +222,7 @@ assert.equal(k.peralihan.filter(p => p.ok).length, 5); assert.match(dihantar[dih
 // Laporan harian pada 00:0x UTC sahaja
 dihantar.length = 0;
 await kerjaBerjadual(env, new Date('2026-10-09T00:05:00Z'));
-assert.equal(dihantar.length, 1); assert.match(dihantar[0], /Laporan Bijak Labur 2026-10-09/); assert.match(dihantar[0], /Kesihatan/);
+assert.equal(dihantar.length, 1); assert.ok(dihantar[0].includes(`Laporan SiswaCap ${new Date(Date.now() + 8 * 36e5).toISOString().slice(0, 10)}`)); assert.match(dihantar[0], /Kesihatan/);
 await kerjaBerjadual(env, new Date('2026-10-09T01:05:00Z'));
 assert.equal(dihantar.length, 1);
 // Amaran dimatikan: tiada mesej

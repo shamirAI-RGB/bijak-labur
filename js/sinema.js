@@ -120,6 +120,8 @@
   function geser() { if (btns[cur]) track.style.transform = `translate3d(${kedudukan()}px,0,0)`; }
   addEventListener('resize', geser, { passive: true });
   if (document.fonts) document.fonts.ready.then(() => { ukur(); geser(); });
+  // Tukar bahasa: lebar nama ikon berubah
+  document.addEventListener('bahasachange', () => requestAnimationFrame(() => { ukur(); geser(); }));
 
   function paintTabs() {
     const c = CIRI[cur];

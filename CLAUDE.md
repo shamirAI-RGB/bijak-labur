@@ -1,6 +1,6 @@
-# Bijak Labur: panduan untuk Claude dan AI Agent
+# SiswaCap (dahulu Bijak Labur): panduan untuk Claude dan AI Agent
 
-Laman bijaklabur.my (GitHub Pages, cawangan `main`) dan app Android/iOS (Capacitor). Semua teks pengguna dalam
+Jenama SiswaCap (Siswa Capital) sejak 10 Oktober 2026; domain bijaklabur.my, emel @bijaklabur.my, nama pelayan dan kunci storan `bl_` kekal. Laman bijaklabur.my (GitHub Pages, cawangan `main`) dan app Android/iOS (Capacitor). Semua teks pengguna dalam
 **Bahasa Melayu baku Malaysia** (DBP), bukan Bahasa Indonesia: "daripada", "kerana", "wang", "boleh", "kerajaan".
 
 ## Struktur

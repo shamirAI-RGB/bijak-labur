@@ -1,5 +1,5 @@
 /*
- * Bijak Labur: Pusat Kawalan (Cloudflare Worker)
+ * SiswaCap: Pusat Kawalan (Cloudflare Worker)
  *
  * Awam (asal laman sahaja):
  *   POST /denyut {sid, laman, peranti, rujukan}   denyut pelawat tanpa nama -> { kini }
@@ -81,11 +81,11 @@ export async function prosesTelegram(env, upd) {
     if (env.TELEGRAM_CHAT_ID && pemilik !== chat) { await hantar(env, chat, 'Pemilik bot ini sudah ditetapkan melalui rahsia TELEGRAM_CHAT_ID.'); return; }
     await stub.fetch('https://pusat/tetapan', { method: 'POST', body: JSON.stringify({ chat_id: chat, mula_cubaan: null }) });
     await stub.fetch('https://pusat/peristiwa', { method: 'POST', body: JSON.stringify({ jenis: 'telegram', teks: `Pemilik berpasangan (${msg.from && msg.from.first_name ? msg.from.first_name : 'Telegram'})` }) });
-    await hantar(env, chat, `Berpasangan. Salam ${msg.from && msg.from.first_name ? msg.from.first_name : ''}, saya agen Pusat Kawalan Bijak Labur.\n\n${BANTUAN}`);
+    await hantar(env, chat, `Berpasangan. Salam ${msg.from && msg.from.first_name ? msg.from.first_name : ''}, saya agen Pusat Kawalan SiswaCap.\n\n${BANTUAN}`);
     return;
   }
   if (!pemilik || pemilik !== chat) {
-    if (/^\/(start|mula)/.test(msg.text)) await hantar(env, chat, 'Bot ini khas untuk pemilik Bijak Labur. Pemilik: hantar /mula <kunci pemilik> untuk berpasangan.');
+    if (/^\/(start|mula)/.test(msg.text)) await hantar(env, chat, 'Bot ini khas untuk pemilik SiswaCap. Pemilik: hantar /mula <kunci pemilik> untuk berpasangan.');
     return;
   }
   await menaip(env, chat);

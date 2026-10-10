@@ -1,4 +1,4 @@
-# Pelayan Tanya AI Fiqh Bijak Labur (Cloudflare Workers)
+# Pelayan Tanya AI Fiqh SiswaCap (Cloudflare Workers)
 # Menjawab soalan fiqh dengan Claude, hanya bersandarkan rujukan yang boleh dibuka dan disemak.
 name = "bijak-labur-fiqh"
 main = "src/index.js"

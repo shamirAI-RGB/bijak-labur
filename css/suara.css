@@ -1,4 +1,4 @@
-/* Bijak Labur: Suara (butang bacakan halaman, bar kawalan, sorotan bahagian yang sedang dibaca) */
+/* SiswaCap: Suara (butang bacakan halaman, bar kawalan, sorotan bahagian yang sedang dibaca) */
 #sayBtn + #themeBtn { margin-left: 8px; }
 #sayBtn.on { background: var(--brand); border-color: var(--brand); color: var(--brand-ink, #fff); }
 .tts-now { background: color-mix(in srgb, var(--gold) 18%, transparent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--gold) 18%, transparent); border-radius: 6px; transition: background .2s, box-shadow .2s; }

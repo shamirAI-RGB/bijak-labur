@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-        <string>Bijak Labur</string>
+        <string>SiswaCap</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -31,9 +31,9 @@
 		<string>location</string>
 	</array>
 	<key>NSHealthShareUsageDescription</key>
-	<string>Bijak Labur membaca jumlah langkah dan jarak harian daripada Apple Health untuk dipaparkan di halaman Sihat. Data tidak dihantar ke pelayan.</string>
+	<string>SiswaCap membaca jumlah langkah dan jarak harian daripada Apple Health untuk dipaparkan di halaman Sihat. Data tidak dihantar ke pelayan.</string>
 	<key>NSHealthUpdateUsageDescription</key>
-	<string>Bijak Labur tidak menulis data ke Apple Health; ia hanya membaca langkah dan jarak.</string>
+	<string>SiswaCap tidak menulis data ke Apple Health; ia hanya membaca langkah dan jarak.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>LSRequiresIPhoneOS</key>

@@ -1,4 +1,4 @@
-/* Bijak Labur Premium: pelan, percubaan 1 hari (web) atau 3 hari (kedai app), bayaran web (ToyyibPay) dan langganan app (Google Play / App Store).
+/* SiswaCap Premium: pelan, percubaan 1 hari (web) atau 3 hari (kedai app), bayaran web (ToyyibPay) dan langganan app (Google Play / App Store).
    Premium terikat pada akaun dan peranti aktif (js/akaun.js). Tetamu tidak mendapat Premium. */
 const Premium = (function () {
   // true selepas ToyyibPay disediakan pada pelayan. URL pelayan ditetapkan dalam js/akaun.js (API).
@@ -84,7 +84,7 @@ const Premium = (function () {
     has(feature) { const p = this.plan; return !!p && (p === 'lengkap' || p === feature); },
     require(feature) {
       if (this.has(feature)) return true;
-      toast(Akaun.active ? 'Ciri ini sebahagian daripada Bijak Labur Premium.' : 'Premium memerlukan akaun. Log masuk atau daftar dahulu.', 3200);
+      toast(Akaun.active ? 'Ciri ini sebahagian daripada SiswaCap Premium.' : 'Premium memerlukan akaun. Log masuk atau daftar dahulu.', 3200);
       location.hash = '#premium';
       return false;
     },
@@ -254,7 +254,7 @@ const Premium = (function () {
     if (!Akaun.active) { Akaun.open(); return; }
     const pl = PLANS[plan], dlg = $('#payDlg'), saved = store.get('payer', {});
     dlg.dataset.plan = plan;
-    $('#payTitle').textContent = `Bijak Labur ${pl.name}, ${PERIOD[period]}`;
+    $('#payTitle').textContent = `SiswaCap ${pl.name}, ${PERIOD[period]}`;
     $('#payAmount').textContent = `RM${pl[period].toFixed(2)}`;
     $('#payName').value = saved.name || ''; $('#payEmail').value = saved.email || ''; $('#payPhone').value = saved.phone || '';
     $('#payErr').textContent = '';

@@ -1,4 +1,4 @@
-# Pusat Kawalan Bijak Labur (Cloudflare Workers + Durable Object SQLite, pelan percuma)
+# Pusat Kawalan SiswaCap (Cloudflare Workers + Durable Object SQLite, pelan percuma)
 # Pelawat langsung, penggunaan token AI setiap ciri, kesihatan perkhidmatan dan agen AI pemilik melalui Telegram.
 name = "bijak-labur-pusat"
 main = "src/index.js"
