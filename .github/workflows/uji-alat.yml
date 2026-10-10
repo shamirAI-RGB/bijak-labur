@@ -1,0 +1,51 @@
+name: Uji semua alat
+
+# Ujian hujung ke hujung bagi setiap alat dan halaman SiswaCap dalam pelayar (scripts/uji-alat).
+# Laman dihidangkan dalam runner; pelayan Tanya AI/Alat Pelajar (worker-fiqh) dijalankan dengan kod sebenar tetapi model AI
+# digantikan dengan penjana jawapan ujian, dan API luar dijawab dengan data contoh. Tiada rahsia atau kuota AI digunakan.
+on:
+  push:
+    branches: [main]
+    paths: ['*.html', 'js/**', 'css/**', 'data/**', 'icons/**', 'worker-fiqh/src/**', 'scripts/uji-alat/**', '.github/workflows/uji-alat.yml']
+  pull_request:
+    paths: ['*.html', 'js/**', 'css/**', 'data/**', 'icons/**', 'worker-fiqh/src/**', 'scripts/uji-alat/**', '.github/workflows/uji-alat.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  uji:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        kumpulan: [laman, pro, alat, pelajar, islam, umum]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+      - name: Pasang kebergantungan pelayan AI
+        working-directory: worker-fiqh
+        run: npm ci --silent
+      # Playwright dipasang di luar repo supaya kebergantungan app (Capacitor) tidak dipasang; pelayar Google Chrome sudah ada dalam runner
+      - name: Pasang Playwright
+        run: npm i --silent --no-save --prefix "$RUNNER_TEMP/pw" playwright-core@1.56.1
+      - name: Uji ${{ matrix.kumpulan }}
+        env:
+          NODE_PATH: ${{ runner.temp }}/pw/node_modules
+          CHROME: /usr/bin/google-chrome
+          UJI_JSON: ${{ runner.temp }}/hasil/${{ matrix.kumpulan }}.json
+          UJI_GAMBAR: ${{ runner.temp }}/hasil/gambar
+        run: |
+          mkdir -p "$RUNNER_TEMP/hasil"
+          node scripts/uji-alat/jalan.mjs ${{ matrix.kumpulan }}
+      - name: Simpan keputusan dan tangkapan skrin
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: uji-alat-${{ matrix.kumpulan }}
+          path: ${{ runner.temp }}/hasil
+          retention-days: 7
