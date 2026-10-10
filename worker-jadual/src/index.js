@@ -23,7 +23,7 @@
 export const BASE = 'https://simsweb4.uitm.edu.my/estudent/class_timetable/';
 const HOST = new URL(BASE).hostname;
 export const STUDENT_URL = 'https://cdn.uitm.link/jadual/baru/';
-const UA = 'Mozilla/5.0 (compatible; SiswaCap/1.0; +https://bijaklabur.my)';
+const UA = 'Mozilla/5.0 (compatible; SiswaCap/1.0; +https://siswacap.my)';
 const TTL = { session: 3600, campuses: 21600, faculties: 21600, courses: 3600, groups: 1200, timetable: 1200 };
 const MAX_PICKS = 15;
 

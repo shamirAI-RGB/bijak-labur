@@ -93,11 +93,11 @@
     }
     if (e.target.closest('#kmShare')) {
       close();
-      const data = { title: 'SiswaCap', text: 'Belajar melabur, harga pasaran masa nyata dan waktu solat seluruh Malaysia.', url: 'https://bijaklabur.my/' };
+      const data = { title: 'SiswaCap', text: 'Belajar melabur, harga pasaran masa nyata dan waktu solat seluruh Malaysia.', url: 'https://siswacap.my/' };
       try {
         if (navigator.share) await navigator.share(data);
         else { await navigator.clipboard.writeText(data.url); toast('Pautan disalin'); }
-      } catch (err) { if (err && err.name !== 'AbortError') toast('Tidak dapat berkongsi. Pautan: bijaklabur.my', 4000); }
+      } catch (err) { if (err && err.name !== 'AbortError') toast('Tidak dapat berkongsi. Pautan: siswacap.my', 4000); }
       return;
     }
     // Pautan dan butang lain (Suara bacaan, Ruang soalan, dll.) menutup menu selepas ditekan
@@ -109,7 +109,7 @@
   const FAQ = [
     ['Umum', 'Adakah SiswaCap percuma?', 'Ya. Pelajaran pelaburan, harga pasaran, waktu solat, ibadah dan penyemak kertas kerja asas adalah percuma dan kekal percuma. Semakan tugasan dan AI mempunyai had harian percuma; Premium membuang had itu dan menambah amaran harga, portfolio patuh Syariah dan alat lanjutan.'],
     ['Umum', 'Perlukah saya daftar akaun?', 'Tidak buat masa ini. Anda boleh guna sebagai tetamu. Tetapan, profil dan rekod disimpan dalam peranti anda sahaja.'],
-    ['Umum', 'Bagaimana pasang SiswaCap seperti app?', 'Di iPhone, buka bijaklabur.my dalam Safari, tekan butang Kongsi, kemudian Add to Home Screen. Di Android, buka dalam Chrome dan tekan Install app, atau guna Pasang app dalam menu ini.'],
+    ['Umum', 'Bagaimana pasang SiswaCap seperti app?', 'Di iPhone, buka siswacap.my dalam Safari, tekan butang Kongsi, kemudian Add to Home Screen. Di Android, buka dalam Chrome dan tekan Install app, atau guna Pasang app dalam menu ini.'],
     ['Umum', 'Bolehkah saya guna tanpa internet?', 'Halaman utama, pelajaran dan waktu solat yang sudah dimuat turun boleh dibuka tanpa internet. Harga pasaran, audio Al-Quran dan semakan plagiat memerlukan internet.'],
     ['Belajar & pasaran', 'Adakah ini nasihat kewangan?', 'Tidak. SiswaCap ialah bahan pendidikan. Buat kajian sendiri dan rujuk penasihat berlesen sebelum melabur. Kami tidak bergabung dengan mana-mana broker yang disebut.'],
     ['Belajar & pasaran', 'Dari mana harga kripto dan saham diambil?', 'Harga kripto dan carta saham AS daripada data pasaran awam yang dikemas kini secara masa nyata. Untuk saham Bursa Malaysia, semak kaunter dalam app broker anda.'],
@@ -178,7 +178,7 @@
   const EMEL_RE = /^[^\s@<>()",;:]{1,64}@[a-z0-9.-]{1,190}\.[a-z]{2,24}$/i;
   function message() {
     const nama = $('#sqNama').value.trim(), emel = $('#sqEmel').value.trim(), topik = $('#sqTopik').value, teks = $('#sqTeks').value.trim();
-    return { nama, emel, topik, teks, msg: `Salam SiswaCap, saya ${nama || 'pengguna'} ada soalan.\n\nTopik: ${topik}\nSoalan: ${teks}\n\n(Dihantar dari bijaklabur.my)` };
+    return { nama, emel, topik, teks, msg: `Salam SiswaCap, saya ${nama || 'pengguna'} ada soalan.\n\nTopik: ${topik}\nSoalan: ${teks}\n\n(Dihantar dari siswacap.my)` };
   }
   const saveDraft = () => store.set('soalanDraf', { nama: $('#sqNama').value, emel: $('#sqEmel').value, topik: $('#sqTopik').value, teks: $('#sqTeks').value });
   function clearQuestion() {

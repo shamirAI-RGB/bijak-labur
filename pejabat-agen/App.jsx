@@ -718,7 +718,7 @@ function Office() {
             <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-orange-400 via-pink-400 to-sky-400 shadow-inner"><Paw /></div>
             <div>
               <h1 className="font-[ui-rounded,system-ui,sans-serif] text-2xl font-bold leading-none sm:text-3xl">Pejabat AI Agent</h1>
-              <p className="text-xs font-semibold text-white/60">Kerja sebenar bijaklabur.my daripada GitHub{gh.at ? ` · dikemas kini ${jam(gh.at)}` : ""}</p>
+              <p className="text-xs font-semibold text-white/60">Kerja sebenar siswacap.my daripada GitHub{gh.at ? ` · dikemas kini ${jam(gh.at)}` : ""}</p>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">

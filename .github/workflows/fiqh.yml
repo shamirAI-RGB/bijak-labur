@@ -157,7 +157,7 @@ jobs:
           sleep 15
           # Log pelayan (wrangler tail) semasa ujian, untuk melihat punca ralat sebenar
           (timeout 60 npx --yes wrangler@3 tail --format json > tail.log 2>/dev/null &) ; sleep 8
-          F=https://fiqh.bijaklabur.my; O='origin: https://bijaklabur.my'; C='content-type: application/json'
+          F=https://fiqh.bijaklabur.my; O='origin: https://siswacap.my'; C='content-type: application/json'
           curl -sS "$F/" | jq -c .   # termasuk senarai penyedia sandaran yang aktif
           curl -sS -X POST "$F/gambar" -H "$O" -H "$C" -d '{"prompt":"kucing comel makan nasi lemak atas daun pisang","gaya":"catair","seed":7}' \
             | jq -r 'if .image then "gambar OK: \(.image | length) aksara base64, prompt: \(.prompt_en[0:120])" else "gambar GAGAL: \(.error) [kod: \(.kod // "-")]" end'

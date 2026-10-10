@@ -208,7 +208,7 @@ export function parseChart(s, j) {
 async function quote(s) {
   try {
     const r = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(s)}?range=1d&interval=5m`, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SiswaCap/1.0; +https://bijaklabur.my)', Accept: 'application/json' },
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SiswaCap/1.0; +https://siswacap.my)', Accept: 'application/json' },
       cf: { cacheTtl: 60, cacheEverything: true }
     });
     return r.ok ? parseChart(s, await r.json()) : null;
@@ -240,14 +240,14 @@ export function mimeTanya(q, from, to, now = new Date()) {
   const masa = new Date(now.getTime() + 8 * 3600e3).toISOString().replace('T', ' ').slice(0, 16);
   const ringkas = q.teks.replace(/\s+/g, ' ').slice(0, 60);
   const badan = [
-    'Soalan baharu daripada Ruang Soalan bijaklabur.my', '',
+    'Soalan baharu daripada Ruang Soalan siswacap.my', '',
     `Nama   : ${q.nama || '(tidak dinyatakan)'}`,
     `E-mel  : ${q.emel ? q.emel + ' (tekan Balas untuk menjawab terus)' : '(tidak dinyatakan, jadi soalan ini tidak boleh dibalas melalui e-mel)'}`,
     `Topik  : ${q.topik}`,
     `Dari   : ${q.sumber === 'app' ? 'app telefon' : 'laman web'}`,
     `Masa   : ${masa} (waktu Malaysia)`, '',
     'Soalan:', q.teks, '',
-    '--', 'Dihantar oleh borang "Tanya kami" di https://bijaklabur.my/#soalan'
+    '--', 'Dihantar oleh borang "Tanya kami" di https://siswacap.my/#soalan'
   ].join('\r\n');
   const lines = [
     `From: ${hdr('Ruang Soalan SiswaCap')} <${from}>`,

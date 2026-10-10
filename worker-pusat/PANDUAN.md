@@ -3,7 +3,7 @@
 Pusat Kawalan menunjukkan **pelawat yang sedang melayari laman**, **penggunaan token AI** setiap ciri, **kesihatan pelayan**,
 dan menyediakan **agen AI** yang boleh diarahkan melalui **Telegram** atau dari papan itu sendiri.
 
-Papan: <https://bijaklabur.my/pusat.html> (masuk dengan kunci Mod Pemilik yang sama). Juga dalam menu Mod Pemilik.
+Papan: <https://siswacap.my/pusat.html> (masuk dengan kunci Mod Pemilik yang sama). Juga dalam menu Mod Pemilik.
 
 ## Apa yang berfungsi tanpa apa-apa rahsia baharu
 Selepas PR ini di-merge, GitHub Actions memasang `worker-pusat` dengan rahsia Cloudflare sedia ada:

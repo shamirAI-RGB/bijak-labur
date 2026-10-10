@@ -8,7 +8,7 @@ workers_dev = true
 routes = [{ pattern = "nota.bijaklabur.my", custom_domain = true }]
 
 [vars]
-ALLOWED_ORIGINS = "https://bijaklabur.my,https://www.bijaklabur.my,https://shamirai-rgb.github.io,capacitor://localhost,https://localhost"
+ALLOWED_ORIGINS = "https://siswacap.my,https://www.siswacap.my,https://bijaklabur.my,https://www.bijaklabur.my,https://shamirai-rgb.github.io,capacitor://localhost,https://localhost"
 # Cincang SHA-256 kunci pemilik (bukan kunci itu sendiri). Kunci boleh ditukar dari ruang pemilik.
 OWNER_KEY_HASH = "ba63c8003b26e061933c6529ee7e103940ec510c1aa7aa6438f5ecf2e221d4ef"
 # Alamat pengirim soalan Ruang Soalan (domain bijaklabur.my yang menggunakan Cloudflare Email Routing)

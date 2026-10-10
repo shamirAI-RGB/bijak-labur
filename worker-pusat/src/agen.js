@@ -17,7 +17,7 @@ export const namaLaluan = l => NAMA_LALUAN[l] || l;
 
 /* ---------- Perkhidmatan yang disemak ---------- */
 export const PERKHIDMATAN = [
-  { nama: 'Laman bijaklabur.my', url: 'https://bijaklabur.my/', semak: t => /SiswaCap|Bijak Labur/.test(t) },
+  { nama: 'Laman siswacap.my', url: 'https://siswacap.my/', semak: t => /SiswaCap|Bijak Labur/.test(t) },
   { nama: 'Pelayan nota', url: 'https://nota.bijaklabur.my/notes', semak: t => /"notes"/.test(t) },
   { nama: 'Pelayan Tanya AI (fiqh)', url: 'https://fiqh.bijaklabur.my/', semak: t => /"ok":true/.test(t) },
   { nama: 'Pelayan jadual UiTM', url: 'https://jadual.bijaklabur.my/', semak: t => t.length > 0 },
@@ -27,7 +27,7 @@ export async function semakKesihatan(env, senarai = PERKHIDMATAN) {
   return Promise.all(senarai.map(async s => {
     const t0 = Date.now();
     try {
-      const r = await fetch(s.url, { headers: { origin: env.SITE_URL || 'https://bijaklabur.my', 'user-agent': 'BijakLabur-pusat/1.0' }, signal: AbortSignal.timeout(15000) });
+      const r = await fetch(s.url, { headers: { origin: env.SITE_URL || 'https://siswacap.my', 'user-agent': 'BijakLabur-pusat/1.0' }, signal: AbortSignal.timeout(15000) });
       const teks = (await r.text()).slice(0, 20000);
       if (!r.ok) return { nama: s.nama, ok: false, ms: Date.now() - t0, nota: `HTTP ${r.status}` };
       if (!s.semak(teks)) return { nama: s.nama, ok: false, ms: Date.now() - t0, nota: 'kandungan tidak dijangka' };
@@ -74,11 +74,11 @@ export async function penggunaanWorkers(env) {
 }
 
 /* ---------- Baca laman sendiri ---------- */
-const HOS_OK = h => h === 'bijaklabur.my' || h.endsWith('.bijaklabur.my') || h === 'shamirai-rgb.github.io' || /^bijak-labur-[a-z-]+\.khanz-amir\.workers\.dev$/.test(h);
+const HOS_OK = h => h === 'siswacap.my' || h === 'www.siswacap.my' || h === 'bijaklabur.my' || h.endsWith('.bijaklabur.my') || h === 'shamirai-rgb.github.io' || /^bijak-labur-[a-z-]+\.khanz-amir\.workers\.dev$/.test(h);
 export async function bacaLaman(env, url) {
   let u; try { u = new URL(url); } catch { return { error: 'URL tidak sah' }; }
   if (u.protocol !== 'https:' || !HOS_OK(u.hostname)) return { error: 'Hanya laman dan pelayan SiswaCap boleh dibaca.' };
-  const r = await fetch(u, { headers: { origin: env.SITE_URL || 'https://bijaklabur.my', 'user-agent': 'BijakLabur-pusat/1.0' }, signal: AbortSignal.timeout(15000) });
+  const r = await fetch(u, { headers: { origin: env.SITE_URL || 'https://siswacap.my', 'user-agent': 'BijakLabur-pusat/1.0' }, signal: AbortSignal.timeout(15000) });
   const t = (await r.text()).replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/gi, ' ').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
   return { status: r.status, teks: t.slice(0, 3000) };
 }
@@ -92,7 +92,7 @@ export const ALAT = [
   { name: 'peristiwa', description: 'Log peristiwa terkini pusat: amaran rosak/pulih, arahan lepas, laporan.', input: {} },
   { name: 'tetapan', description: 'Hidupkan atau matikan amaran kesihatan Telegram dan laporan harian 08:00.', input: { amaran: { type: 'boolean' }, laporan: { type: 'boolean' } } },
   { name: 'penggunaan_workers', description: 'Permintaan dan ralat setiap pelayan Cloudflare Workers dalam 24 jam lalu (jika token analitik ditetapkan).', input: {} },
-  { name: 'baca_laman', description: 'Buka satu URL bijaklabur.my atau pelayannya dan pulangkan teksnya (sehingga 3000 aksara) untuk semakan kandungan.', input: { url: { type: 'string' } }, perlu: ['url'] }
+  { name: 'baca_laman', description: 'Buka satu URL siswacap.my atau pelayannya dan pulangkan teksnya (sehingga 3000 aksara) untuk semakan kandungan.', input: { url: { type: 'string' } }, perlu: ['url'] }
 ];
 const skema = a => ({ type: 'object', properties: a.input, ...(a.perlu ? { required: a.perlu } : {}) });
 export const alatClaude = () => ALAT.map(a => ({ name: a.name, description: a.description, input_schema: skema(a) }));
@@ -185,7 +185,7 @@ export async function arahanPantas(env, stub, teks) {
 
 /* ---------- Agen AI ---------- */
 export const penyediaAgen = env => env.ANTHROPIC_API_KEY ? 'claude' : env.GEMINI_API_KEY ? 'gemini' : '';
-const SISTEM = () => `Anda ialah agen Pusat Kawalan SiswaCap (bijaklabur.my), pembantu peribadi pemilik laman dan app itu (pelajar UiTM). Anda berbual melalui Telegram atau papan kawalan pemilik, dan hanya pemilik yang boleh bercakap dengan anda.
+const SISTEM = () => `Anda ialah agen Pusat Kawalan SiswaCap (siswacap.my), pembantu peribadi pemilik laman dan app itu (pelajar UiTM). Anda berbual melalui Telegram atau papan kawalan pemilik, dan hanya pemilik yang boleh bercakap dengan anda.
 Tugas: menjawab soalan tentang pelawat langsung, penggunaan token AI dan kosnya, kesihatan pelayan, kerja di GitHub (PR, Actions, issue), dan melaksanakan arahan pemilik.
 Peraturan:
 - Gunakan alat untuk mendapatkan data sebenar; jangan reka angka. Jika alat memulangkan ralat, nyatakan ralat itu dan apa yang pemilik perlu lakukan (cth. tetapkan rahsia GitHub).

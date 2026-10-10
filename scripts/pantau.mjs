@@ -10,8 +10,8 @@
 import { writeFileSync, readFileSync } from 'node:fs';
 import tls from 'node:tls';
 
-const SITE = process.env.SITE || 'https://bijaklabur.my';
-const ORIGIN = 'https://bijaklabur.my';
+const SITE = process.env.SITE || 'https://siswacap.my';
+const ORIGIN = 'https://siswacap.my';
 const PREMIUM = 'https://bijak-labur-premium.khanz-amir.workers.dev';
 const results = [];   // { tahap: 'kritikal' | 'amaran', nama, ok, nota, ms }
 

@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://bijaklabur.my/sitemap.xml
+Sitemap: https://siswacap.my/sitemap.xml

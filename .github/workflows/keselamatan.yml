@@ -1,7 +1,7 @@
 # Keselamatan dan prestasi SiswaCap:
 #   Gitleaks   : imbas setiap push dan PR (dan seluruh sejarah, mingguan) untuk kunci API atau kata laluan yang tertulis dalam kod
 #   Lighthouse : ukur prestasi, aksesibiliti, amalan terbaik dan SEO laman pada setiap PR yang mengubah laman
-#   OWASP ZAP  : imbasan keselamatan pasif (tidak menyerang) terhadap bijaklabur.my seminggu sekali; dapatan dicatat dalam issue
+#   OWASP ZAP  : imbasan keselamatan pasif (tidak menyerang) terhadap siswacap.my seminggu sekali; dapatan dicatat dalam issue
 name: Keselamatan
 
 on:
@@ -66,7 +66,7 @@ jobs:
           " >> "$GITHUB_STEP_SUMMARY"
 
   zap:
-    name: OWASP ZAP (imbasan pasif bijaklabur.my)
+    name: OWASP ZAP (imbasan pasif siswacap.my)
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -78,7 +78,7 @@ jobs:
       - name: Imbasan asas ZAP
         uses: zaproxy/action-baseline@v0.12.0
         with:
-          target: https://bijaklabur.my/
+          target: https://siswacap.my/
           rules_file_name: .zap/rules.tsv
           issue_title: 'Laporan imbasan keselamatan ZAP'
           fail_action: false

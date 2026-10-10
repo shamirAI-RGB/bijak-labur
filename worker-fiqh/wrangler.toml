@@ -9,7 +9,7 @@ workers_dev = true
 routes = [{ pattern = "fiqh.bijaklabur.my", custom_domain = true }]
 
 [vars]
-ALLOWED_ORIGINS = "https://bijaklabur.my,https://www.bijaklabur.my,https://shamirai-rgb.github.io,capacitor://localhost,https://localhost"
+ALLOWED_ORIGINS = "https://siswacap.my,https://www.siswacap.my,https://bijaklabur.my,https://www.bijaklabur.my,https://shamirai-rgb.github.io,capacitor://localhost,https://localhost"
 # Pusat Kawalan pemilik: token setiap panggilan model dilaporkan ke sini (rahsia PUSAT_SECRET mesti sama dengan worker-pusat)
 PUSAT_URL = "https://pusat.bijaklabur.my"
 
