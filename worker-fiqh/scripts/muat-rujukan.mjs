@@ -190,7 +190,7 @@ if (!ok) console.log('Tiada dokumen berjaya dimuat; Tanya AI berjalan tanpa ruju
 // Contoh carian sebenar, supaya kualiti padanan boleh dilihat dalam log
 const env = { RUJUKAN: { fetch: async req => { const p = new URL(req.url).pathname.slice(1); return files.has(p) ? new Response(files.get(p)) : new Response('', { status: 404 }); } } };
 for (const q of ['Hukum jual beli emas secara ansuran', 'Adakah sah solat jika terkena najis?', 'Apakah hukum melabur dalam mata wang kripto seperti Bitcoin?', 'Adakah insurans konvensional halal?', 'Hukum kad kredit dan caj bayaran lewat', 'Hukum pemindahan organ', 'Bolehkah melabur dalam saham syarikat yang ada sedikit aktiviti tidak patuh syariah?', 'Apakah hukum menghisap vape?', 'Hukum menggunakan kecerdasan buatan (AI) untuk menyiapkan tugasan']) {
-  const hits = await search(env, expand(q), 6);
+  const hits = await search(env, expand(q), 6, q);
   console.log(`Carian: ${q}`);
   for (const h of hits) console.log(`  ${h.id} (${h.skor}): ${h.teks.replace(/\s+/g, ' ').slice(0, 150)}`);
 }

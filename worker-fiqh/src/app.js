@@ -331,7 +331,7 @@ async function tanya(req, env, url, h) {
   let out;
   // Cari muka surat dokumen rasmi moden yang berkaitan (tanpa model, jadi sama untuk Claude dan Gemini)
   let docs = [];
-  try { docs = await search(env, expand(q) + ' ' + await kataKunci(env, q), 8); } catch (e) { console.log('rujukan', e && e.message); }
+  try { docs = await search(env, expand(q) + ' ' + await kataKunci(env, q), 8, q); } catch (e) { console.log('rujukan', e && e.message); }
   try { out = provider(env) === 'claude' ? await ask(env, q, undefined, docs) : await askGemini(env, q, docs); }
   catch (e) {
     console.log(provider(env), e && e.status, e && e.message);

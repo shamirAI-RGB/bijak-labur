@@ -413,6 +413,11 @@ assert.equal(d.status, 'tidak_pasti');
   // Muka surat PDF yang hanya berkongsi istilah umum ("hukum") jauh lebih lemah daripada artikel Mufti: tidak diberi
   assert.ok(!mh.some(h => h.id.startsWith('pdf:')), JSON.stringify(mh.map(h => [h.id, h.skor])));
   assert.ok((await search(menv, expand('Apakah hukum melabur kripto?'))).some(h => h.id === 'pdf:jakim:2'));
+  // Soalan asal diberi: artikel Mufti mesti mengandungi istilah paling jarang soalan itu ("berpuasa"), bukan sekadar "vape"
+  const qp = 'Apakah hukum menghisap vape ketika berpuasa?';
+  const puasa = (await search(menv, expand(qp), 6, qp)).filter(h => h.id.startsWith('mufti:'));
+  assert.deepEqual(puasa.map(h => h.url), ['https://www.muftiwp.gov.my/artikel/al-kafi/6000'], JSON.stringify(puasa.map(h => [h.id, h.skor])));
+  assert.equal((await search(menv, expand('Apakah hukum menghisap vape?'), 6, 'Apakah hukum menghisap vape?')).filter(h => h.id.startsWith('mufti:')).length, mh.filter(h => h.id.startsWith('mufti:')).length);
   const mm = mh.filter(h => h.id.startsWith('mufti:'));
   assert.ok(mm.length >= 2 && mm.length <= 3, JSON.stringify(mh.map(h => h.id)));
   assert.deepEqual(new Set(mm.map(h => h.k)), new Set(['wp', 'sabah']));

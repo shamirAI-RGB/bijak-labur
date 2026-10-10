@@ -159,8 +159,11 @@ export async function page(env, k, n) {
   return typeof t === 'string' ? t : null;
 }
 
-/** Cari muka surat paling relevan (BM25). Memulangkan [{ id, k, n, skor, teks }] */
-export async function search(env, query, limit = 6) {
+const SOAL = new Set('apakah adakah bolehkah bagaimana bagaimanakah kenapa mengapa siapa bilakah dimanakah benarkah perlukah wajibkah haramkah'.split(' '));
+/** Cari muka surat paling relevan (BM25). Memulangkan [{ id, k, n, skor, teks }]
+ *  asal: soalan asal pengguna (sebelum diperluas); jika diberi, artikel Mufti mesti mengandungi sekurang-kurangnya satu
+ *  daripada istilah paling jarang dalam soalan itu (cth. "najis" bagi "Adakah sah solat jika terkena najis?") */
+export async function search(env, query, limit = 6, asal = '') {
   if (!env.RUJUKAN) return [];
   const meta = await assetJson(env, 'rujukan/meta.json');
   if (!meta || !meta.N) return [];
@@ -169,6 +172,11 @@ export async function search(env, query, limit = 6) {
   const N = meta.N, byBucket = new Map();
   for (const t of terms) { const b = bucket(t); if (!byBucket.has(b)) byBucket.set(b, []); byBucket.get(b).push(t); }
   const idx = await Promise.all([...byBucket.keys()].map(b => assetJson(env, `rujukan/i/${b}.json`)));
+  // Istilah paling jarang dalam soalan asal (separuh daripada istilahnya, sekurang-kurangnya satu); perkataan tanya diabaikan
+  const ada = new Map();
+  [...byBucket.values()].forEach((ts, i) => { for (const t of ts) if (idx[i] && idx[i][t]) ada.set(t, idx[i][t].length); });
+  const istilahAsal = [...new Set(tokens(asal))].filter(t => !AR.test(t) && !SOAL.has(t) && ada.has(t)).sort((a, b) => ada.get(a) - ada.get(b));
+  const jarang = istilahAsal.length ? new Set(istilahAsal.slice(0, Math.max(1, Math.floor(istilahAsal.length / 2)))) : null;
   const score = new Map();
   [...byBucket.values()].forEach((ts, i) => {
     const p = idx[i] || {};
@@ -178,8 +186,9 @@ export async function search(env, query, limit = 6) {
       const idf = Math.log(1 + (N - list.length + 0.5) / (list.length + 0.5));
       for (const [k, n, w] of list) {
         const id = `${k}:${n}`, s = idf * w;
-        const cur = score.get(id) || { k, n, skor: 0, padan: 0 };
+        const cur = score.get(id) || { k, n, skor: 0, padan: 0, jarang: false };
         cur.skor += s; cur.padan++;
+        if (jarang && jarang.has(t)) cur.jarang = true;
         score.set(id, cur);
       }
     }
@@ -188,7 +197,7 @@ export async function search(env, query, limit = 6) {
   // Buang muka surat yang hanya berkongsi istilah umum (cth. "hukum") dengan soalan
   const ranked = [...score.values()].map(x => ({ ...x, skor: x.skor * (1 + 0.3 * (x.padan - 1)) })).sort((a, b) => b.skor - a.skor);
   // Kitab Arab dan dokumen moden disaring berasingan (skor teks Melayu lebih tinggi daripada teks Arab), supaya kedua-duanya diberi kepada model
-  const moden = ranked.filter(x => jenisDoc(x.k) === 'dokumen'), muftiSemua = ranked.filter(x => jenisDoc(x.k) === 'mufti');
+  const moden = ranked.filter(x => jenisDoc(x.k) === 'dokumen'), muftiSemua = ranked.filter(x => jenisDoc(x.k) === 'mufti' && (!jarang || x.jarang));
   // Dokumen moden dibandingkan juga dengan artikel Mufti (kedua-duanya teks Melayu/Inggeris): muka surat PDF yang jauh lebih
   // lemah daripada artikel Mufti terbaik (cth. hanya berkongsi istilah umum) tidak diberi kepada model
   const atasModen = Math.max(moden[0] ? moden[0].skor : 0, muftiSemua[0] ? muftiSemua[0].skor * 0.6 : 0);
