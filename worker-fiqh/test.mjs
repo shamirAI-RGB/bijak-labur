@@ -2,7 +2,8 @@
 import assert from 'node:assert/strict';
 import worker, { readJson, NOTA_PDF, kataKunci, verify, collectRetrieved, norm, normUrl, parseAnswer, MODEL, GEMINI_MODEL, GEMINI_FALLBACKS, DOMAINS } from './src/app.js';
 import { BY_ID, CORPUS_TEXT } from './src/corpus.js';
-import { MODEN, KITAB, buildIndex, search, expand, pageUrl, tokens, cetakan, cetakPdf, assetTag } from './src/rujukan.js';
+import { MODEN, KITAB, MUFTI, DOC, buildIndex, muftiDocs, potong, bahagianPdf, search, expand, pageUrl, pagesText, tokens, cetakan, cetakPdf, assetTag } from './src/rujukan.js';
+import { robots, kandungan, tarikhHtml, tajukHtml, pautanHtml, artikelOk, tajukUmum, tajukFail, tajukTeks, tanpaNamaLaman, KUNCI, ABAI } from './scripts/muat-mufti.mjs';
 import { clean, semakBody, systemFor } from './src/semak.js';
 import { clean as cleanK, kaloriBody, check as checkK } from './src/kalori.js';
 import { blocked, check as checkG, promptBody, GAYA, FLUX } from './src/gambar.js';
@@ -305,7 +306,7 @@ assert.deepEqual(v.sumber.map(x => [x.shamela, x.gambar_url]), [['142', 'https:/
   await call({ q: 'Hukum jual beli emas dengan emas!' }, 'https://bijaklabur.my', bertanda('peta2'));
   delete globalThis.caches;
   assert.equal(puts.length, 2, 'jawapan disimpan dalam cache');
-  assert.ok(puts[0].includes('/tanya-cache-5?') && puts[0].endsWith('&r=peta1') && puts[1].endsWith('&r=peta2'), puts.join(' '));
+  assert.ok(puts[0].includes('/tanya-cache-5?') && puts[0].endsWith('&r=peta1&i=peta1') && puts[1].endsWith('&r=peta2&i=peta2'), puts.join(' '));
   assert.equal(await assetTag(genv), '');
   assert.equal(await assetTag(kenv), '');
 }
@@ -314,6 +315,148 @@ assert.deepEqual(v.sumber.map(x => [x.shamela, x.gambar_url]), [['142', 'https:/
 d = await (await call({ q: 'Apakah hukum melabur kripto lagi?' }, 'https://bijaklabur.my', genv)).json();
 assert.ok(!gsent.contents[0].parts.some(p => p.text.startsWith('Dokumen rujukan')));
 assert.equal(d.status, 'tidak_pasti');
+
+// Laman Jabatan Mufti: 14 negeri (termasuk Wilayah Persekutuan) dan portal fatwa kebangsaan
+{
+  assert.equal(MUFTI.length, 15);
+  assert.equal(new Set(MUFTI.map(m => m.negeri)).size, 15);
+  for (const n of ['Wilayah Persekutuan', 'Selangor', 'Sabah', 'Sarawak', 'Johor', 'Kelantan', 'Terengganu', 'Pulau Pinang', 'Negeri Sembilan']) assert.ok(MUFTI.some(m => m.negeri === n), n);
+  for (const m of MUFTI) { assert.ok(m.laman.every(u => /^https?:\/\/[^/]+\.gov\.my\//.test(u)) && /^https:/.test(m.laman[0]), m.k); assert.equal(DOC[m.k].jenis, 'mufti', m.k); }
+  // Kod laman tidak bertindih dengan kod dokumen moden atau kitab
+  assert.equal(new Set([...MODEN, ...KITAB, ...MUFTI].map(d => d.k)).size, MODEN.length + KITAB.length + MUFTI.length);
+  assert.ok(DOMAINS.includes('mufti.sabah.gov.my') && DOMAINS.includes('muftinegeri.sarawak.gov.my') && DOMAINS.includes('ifatwa.kedah.gov.my') && DOMAINS.includes('said.johor.gov.my') && DOMAINS.includes('itibyan.sarawak.gov.my'));
+
+  // Pemuat turun: robots.txt, kandungan artikel tanpa menu, tajuk, tarikh dan pautan
+  const rb = robots('User-agent: Googlebot\nDisallow: /\n\nUser-agent: *\nDisallow: /wp-admin/\nAllow: /wp-admin/admin-ajax.php\nDisallow: /*?s=\nSitemap: https://x.gov.my/peta.xml');
+  assert.deepEqual(rb.sitemaps, ['https://x.gov.my/peta.xml']);
+  assert.deepEqual(['/wp-admin/x', '/wp-admin/admin-ajax.php', '/irsyad/1', '/a?s=b'].map(p => rb.boleh('https://x.gov.my' + p)), [false, true, true, false]);
+  assert.ok(robots('').boleh('https://x.gov.my/a'));
+  assert.equal(robots('User-agent: *\nCrawl-delay: 5\nDisallow: /x').jeda, 5);
+  assert.equal(robots('').jeda, 0);
+  const html = `<html><head><title>T | Mufti</title><meta property="article:published_time" content="2024-03-05T10:00:00+08:00"></head><body><header><nav><a href="/menu">Menu</a></nav></header><div class="wrap"><div class="item-page"><h1>Hukum Vape</h1><div><p>${'Teks fatwa. '.repeat(40)}</p></div><p>akhir</p></div><div>sidebar luar</div></div><footer>kaki</footer></body></html>`;
+  const t = kandungan(html);
+  assert.ok(t.startsWith('Hukum Vape') && t.includes('akhir') && !t.includes('sidebar') && !t.includes('Menu') && !t.includes('kaki'), t);
+  assert.equal(tajukHtml(html), 'Hukum Vape');
+  assert.equal(tarikhHtml(html), '2024-03-05');
+  assert.equal(tarikhHtml('', 'Tarikh: 12 Julai 2023. Soalan'), '2023-07-12');
+  assert.equal(tarikhHtml('', 'Diterbitkan 03/11/2022'), '2022-11-03');
+  assert.equal(tarikhHtml('', 'tiada tarikh 99/99/2022'), '');
+  assert.deepEqual(pautanHtml('<a href="/irsyad-fatwa/1?utm_source=x#a">Irsyad <b>1</b></a><a href="mailto:x">m</a>', 'https://www.muftiwp.gov.my/ms/'), [{ url: 'https://www.muftiwp.gov.my/irsyad-fatwa/1', teks: 'Irsyad 1' }]);
+  assert.ok(KUNCI.test('/artikel/irsyad-hukum/123') && KUNCI.test('Keputusan Fatwa') && !KUNCI.test('/hubungi-kami'));
+  assert.ok(ABAI.test('https://x/a.jpg') && ABAI.test('https://x/tag/a') && !ABAI.test('https://x/irsyad/1'));
+  // Hanya artikel hukum: halaman profil, dasar privasi dan menu ditolak walaupun menyebut "fatwa"
+  const HUKUM = 'Soalan: Apakah hukum solat di atas kerusi? Jawapan: Hukumnya harus bagi yang uzur berdasarkan hadis dan pandangan ulama mazhab Syafie. Wallahu a\'lam. ' + 'Huraian. '.repeat(40);
+  const PROFIL = 'Jabatan Mufti ditubuhkan pada tahun 1990. Bahagian Fatwa menyediakan keputusan fatwa negeri. Visi kami menjadi peneraju. ' + 'Maklumat. '.repeat(40);
+  assert.ok(artikelOk('https://muftiperlis.gov.my/index.php/himpunan-fatwa-negeri/225-hukum-solat-di-atas-kerusi', 'Hukum Solat Di Atas Kerusi', HUKUM));
+  assert.ok(!artikelOk('https://mufti.johor.gov.my/profil/bahagian-fatwa/', 'Bahagian Fatwa', PROFIL));
+  assert.ok(!artikelOk('https://muftins.gov.my/dasar-privasi', 'Dasar Privasi', HUKUM));
+  assert.ok(!artikelOk('https://mufti.kedah.gov.my/', 'UTAMA', HUKUM));
+  assert.ok(artikelOk('https://x.gov.my/berita/123', 'Hukum Menyertai Program Hiburan', HUKUM));
+  assert.ok(!artikelOk('https://x.gov.my/a/1', 'Hukum', 'pendek'));
+  assert.ok(tajukUmum('Lihat PDF') && tajukUmum('Jabatan Mufti Negeri Selangor') && tajukUmum('Utama X', 'Utama X') && !tajukUmum('Hukum Vape'));
+  assert.equal(tajukFail('https://mufti.sabah.gov.my/wp-content/uploads/2026/07/Fatwa_Zakat_Penggajian.pdf'), 'Fatwa Zakat Penggajian');
+  assert.ok(tajukUmum('***') && tajukUmum('https://x.gov.my/a.pdf') && tajukUmum('\u2003 BANK SOALAN \u2003 BORANG PERTANYAAN'));
+  assert.equal(tajukTeks('BANK SOALAN BORANG PERTANYAAN\nKategori Subjek : IBADAH SOLAT\nSoalan: Adakah sah solat memakai stokin?\nJawapan...'), 'Adakah sah solat memakai stokin?');
+  assert.equal(tajukFail('https://mufti.penang.gov.my/index.php/doclink/buku-himpunan-keputusan-fatwa-negeri-pulau-pinang-tahun-1995-2000/***'), 'buku himpunan keputusan fatwa negeri pulau pinang tahun 1995 2000');
+  // Pautan muat turun dengan token (JWT) di hujung: tajuk daripada segmen sebelumnya
+  assert.equal(tajukFail('https://mufti.penang.gov.my/index.php/doclink/perspektif-islam-isu-mental/eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ4In0.Ab12Cd34'), 'perspektif islam isu mental');
+  assert.equal(tajukFail('https://x.gov.my/dl/hukum-zakat/aB3dE5fG7hJ9kL1mN3pQ5rS7'), 'hukum zakat');
+  // Warta fatwa di bawah /fatwa/<tajuk>: nama laman dalam tajuk tidak menolaknya, dan syarat istilahnya lebih rendah
+  const WARTA = 'Majlis Fatwa Negeri Melaka telah bersetuju bahawa penggunaan kalimah Allah adalah dilarang kepada orang bukan Islam. ' + 'Butiran warta. '.repeat(30);
+  assert.ok(artikelOk('https://www.muftimelaka.gov.my/fatwa/larangan-penggunaan-kalimah-allah-kepada-orang-bukan-islam', 'Larangan Penggunaan Kalimah Allah | Jabatan Mufti Negeri Melaka', WARTA + ' Hukumnya haram.'));
+  assert.ok(artikelOk('https://www.muftimelaka.gov.my/fatwa/pengharaman-ajaran-qadiani', 'Pengharaman Ajaran Qadiani | Jabatan Mufti Negeri Melaka', HUKUM));
+  assert.ok(!artikelOk('https://www.muftimelaka.gov.my/fatwa?cat=aqidah', 'Warta Fatwa Negeri Melaka', WARTA));
+  assert.ok(!artikelOk('https://mufti.kedah.gov.my/bahagian-fatwa/', 'Bahagian Fatwa', WARTA + ' Hukumnya haram.'));
+  assert.equal(tajukHtml('<meta property="og:title" content="Pengharaman Ajaran Qadiani | Jabatan Mufti Negeri Melaka">'), 'Pengharaman Ajaran Qadiani');
+  assert.equal(tanpaNamaLaman('Hukum Solat - Panduan Ringkas'), 'Hukum Solat - Panduan Ringkas');
+  assert.equal(tajukTeks('وعليكم السلام ورحمة الله وبركاته\nBolehkah taklik murtad dibatalkan sebelum dilanggar?\nJawapan...'), 'Bolehkah taklik murtad dibatalkan sebelum dilanggar?');
+  // Soal jawab Johor: menu di atas, soalan selepas label "PERSOALAN / SOALAN PEMOHON :"; menu dibuang daripada teks
+  const johor = `<html><body><div>home</div><div>Laman Utama</div><div>Fatwa Negeri Johor</div><div>Soal Jawab Agama</div><div>Himpunan Soal Jawab</div><div>Permohonan Kiblat</div><div>Perincian Soal Jawab Agama</div><div>KATEGORI</div><div>Lain-lain</div><div>PERSOALAN / SOALAN PEMOHON :</div><div>Boleh ke saya namakan anak lelaki saya dengan Akbar sahaja?</div><div>${'Jawapan panjang. '.repeat(30)}</div></body></html>`;
+  assert.ok(kandungan(johor).startsWith('PERSOALAN / SOALAN PEMOHON :\nBoleh ke saya'), kandungan(johor).slice(0, 80));
+  assert.ok(kandungan(html).startsWith('Hukum Vape'));
+  const menu = Array.from({ length: 20 }, (_, i) => `Menu ${i}\n`).join('\n');
+  assert.equal(tajukTeks(menu + 'Perincian Soal Jawab Agama\nKATEGORI\nLain-lain\nPERSOALAN / SOALAN PEMOHON :\nAssalamualaikum WBT..\nSaya ingin minta pendapat. Boleh ke saya namakan anak lelaki saya dengan Akbar sahaja.\nTerima kasih.\nKEPUTUSAN / JAWAPAN :'), 'Saya ingin minta pendapat. Boleh ke saya namakan anak lelaki saya dengan Akbar sahaja.');
+  assert.equal(tajukTeks('Soalan Lazim\nHubungi kami di pejabat setiap hari bekerja\nHukum solat jamak ketika musafir jauh?'), 'Hukum solat jamak ketika musafir jauh?');
+  assert.equal(tajukTeks('AJAX Error\nSorry, failed to load required information. Please contact your system administrator.\nClose\nHukum Penggunaan Cadar Sutera Atas Faktor Kesihatan'), 'Hukum Penggunaan Cadar Sutera Atas Faktor Kesihatan');
+  // Soalan panjang tanpa baris tajuk: ayat pertamanya
+  assert.equal(tajukTeks('Al Irsyad\nAssalamualaikum ustaz, saya ingin bertanya tentang hukum menggunakan duit syarikat untuk urusan peribadi kerana terdesak. ' + 'Huraian lanjut soalan. '.repeat(20)), 'Saya ingin bertanya tentang hukum menggunakan duit syarikat untuk urusan peribadi kerana terdesak.');
+  assert.equal(tajukTeks('Waalaikumussalam warahmatullahi wabarakatuh tuan.\nHukum menjual barang terpakai secara dalam talian adalah harus'), 'Hukum menjual barang terpakai secara dalam talian adalah harus');
+  assert.equal(tajukFail('https://www.muftimelaka.gov.my/uploads/page_content/p61/FATWA23-KewajipanMembayarZakatPendapatan.pdf'), 'FATWA23 Kewajipan Membayar Zakat Pendapatan');
+  // Tajuk: <title> tanpa nama laman; tajuk yang berulang pada banyak halaman (cth. "Privacy Policy" dalam modul) dilangkau
+  const jm = t => `<html><head><title>${t} - Jabatan Mufti Negeri Kelantan</title></head><body><h1>Privacy Policy</h1><h1>${t}</h1></body></html>`;
+  assert.equal(tajukHtml(jm('Fatwa Tentang Hukum Menghisap Rokok')), 'Fatwa Tentang Hukum Menghisap Rokok');
+  assert.equal(tajukHtml('<title>Bahagian Fatwa – Portal Rasmi Jabatan Mufti Negeri Kedah</title>'), 'Bahagian Fatwa');
+  assert.equal(tajukHtml('<h1>Menu</h1><h1>Hukum Vape</h1>', t => t === 'Menu'), 'Hukum Vape');
+  // Sarawak: <h1>Irsyad</h1> (nama bahagian) diikuti tajuk irsyad sebenar
+  assert.equal(tajukHtml('<title>Irsyad - Laman Web Rasmi Jabatan Mufti Sarawak</title><h1>Irsyad</h1><h1>Solat jumaat</h1>'), 'Solat jumaat');
+  assert.ok(!artikelOk('https://mufti.johor.gov.my/profil/bahagian-fatwa/', 'Bahagian Fatwa', HUKUM));
+  assert.ok(!artikelOk('https://mufti.kelantan.gov.my/index.php?view=category&id=52', 'Privacy Policy', HUKUM));
+  // PDF: muka surat pendek digabung, setiap bahagian memaut ke muka surat pertamanya
+  assert.deepEqual(bahagianPdf('a\fb\f\fc', 3), [['a\nb', 1], ['c', 4]]);
+  // Muka surat 2 lebih panjang daripada satu bahagian: dipecah dua, kedua-duanya memaut ke muka surat 2
+  const pdfMf = muftiDocs({ sabah: [['https://mufti.sabah.gov.my/f.pdf', 'Fatwa Zakat', '', 'Fatwa zakat pendapatan.\f' + 'x '.repeat(2000) + '\fMuka surat tiga']] });
+  assert.deepEqual(JSON.parse(pdfMf.files.get('rujukan/m/sabah/0.json')).map(a => a[0]), ['https://mufti.sabah.gov.my/f.pdf#page=1', 'https://mufti.sabah.gov.my/f.pdf#page=2', 'https://mufti.sabah.gov.my/f.pdf#page=2', 'https://mufti.sabah.gov.my/f.pdf#page=3']);
+
+  // Artikel dipecah di sempadan perenggan; setiap bahagian bermula dengan tajuk; artikel pendua diindeks sekali
+  const panjang = Array.from({ length: 12 }, (_, i) => `Perenggan ${i} ` + 'huraian hukum '.repeat(30)).join('\n');
+  const bahagian = potong(panjang);
+  assert.ok(bahagian.length >= 2 && bahagian.every(b => b.length <= 3000) && bahagian.join(' ').replace(/\s+/g, ' ') === panjang.replace(/\s+/g, ' ').trim());
+  assert.ok(bahagian.every(b => b.startsWith('Perenggan')), 'dipecah di sempadan perenggan');
+  const ART = {
+    wp: [
+      ['https://www.muftiwp.gov.my/artikel/irsyad-hukum/5001-hukum-vape', 'Irsyad Al-Hukum: Hukum Menghisap Vape', '2024-03-05', 'Soalan: Apakah hukum menghisap vape atau rokok elektronik? Jawapan: Menghisap vape adalah haram kerana memudaratkan kesihatan.'],
+      ['https://www.muftiwp.gov.my/artikel/irsyad-hukum/5001-hukum-vape?x=1', 'Irsyad Al-Hukum: Hukum Menghisap Vape', '2024-03-05', 'Soalan: Apakah hukum menghisap vape atau rokok elektronik? Jawapan: Menghisap vape adalah haram kerana memudaratkan kesihatan.'],
+      ['https://www.muftiwp.gov.my/artikel/al-kafi/6000', 'Al-Kafi: Vape ketika berpuasa', '', 'Menghisap vape ketika berpuasa membatalkan puasa kerana wap vape memasuki rongga.']
+    ],
+    sabah: [['https://mufti.sabah.gov.my/fatwa/rokok', 'Fatwa Hukum Rokok dan Vape', '2019-08-01', 'Jawatankuasa Fatwa Negeri Sabah memutuskan bahawa menghisap rokok dan vape adalah haram.']],
+    sarawak: [['https://muftisarawak.gov.my/a/1', 'Zakat padi', '2020-01-01', 'Zakat padi wajib apabila cukup nisab.']]
+  };
+  const mf = muftiDocs({ ...ART, perak: [] });
+  assert.deepEqual(Object.keys(mf.docs), ['wp', 'sabah', 'sarawak']);
+  assert.equal(mf.docs.wp.length, 2);
+  assert.ok(mf.docs.wp[0].startsWith('Irsyad Al-Hukum: Hukum Menghisap Vape\nSoalan:'));
+  assert.deepEqual(JSON.parse(mf.files.get('rujukan/m/wp/0.json')), [ART.wp[0].slice(0, 3), ART.wp[2].slice(0, 3)]);
+
+  // Carian: artikel Mufti yang berkaitan diberi bersama dokumen moden, artikel berbeza dan negeri berbeza didahulukan
+  const mfiles = buildIndex({ ...PDF, ...mf.docs });
+  for (const [p, c] of mf.files) mfiles.set(p, c);
+  const menv = { RUJUKAN: { fetch: async req => { const p = new URL(req.url).pathname.slice(1); return mfiles.has(p) ? new Response(mfiles.get(p)) : new Response('', { status: 404 }); } } };
+  const mh = await search(menv, expand('Apakah hukum menghisap vape?'));
+  // Muka surat PDF yang hanya berkongsi istilah umum ("hukum") jauh lebih lemah daripada artikel Mufti: tidak diberi
+  assert.ok(!mh.some(h => h.id.startsWith('pdf:')), JSON.stringify(mh.map(h => [h.id, h.skor])));
+  assert.ok((await search(menv, expand('Apakah hukum melabur kripto?'))).some(h => h.id === 'pdf:jakim:2'));
+  // Soalan asal diberi: artikel Mufti mesti mengandungi istilah paling jarang soalan itu ("berpuasa"), bukan sekadar "vape"
+  const qp = 'Apakah hukum menghisap vape ketika berpuasa?';
+  const puasa = (await search(menv, expand(qp), 6, qp)).filter(h => h.id.startsWith('mufti:'));
+  assert.deepEqual(puasa.map(h => h.url), ['https://www.muftiwp.gov.my/artikel/al-kafi/6000'], JSON.stringify(puasa.map(h => [h.id, h.skor])));
+  assert.equal((await search(menv, expand('Apakah hukum menghisap vape?'), 6, 'Apakah hukum menghisap vape?')).filter(h => h.id.startsWith('mufti:')).length, mh.filter(h => h.id.startsWith('mufti:')).length);
+  const mm = mh.filter(h => h.id.startsWith('mufti:'));
+  assert.ok(mm.length >= 2 && mm.length <= 3, JSON.stringify(mh.map(h => h.id)));
+  assert.deepEqual(new Set(mm.map(h => h.k)), new Set(['wp', 'sabah']));
+  assert.ok(!mh.some(h => h.k === 'sarawak'));
+  const vape = mm.find(h => h.id === 'mufti:wp:1');
+  assert.deepEqual([vape.url, vape.tajuk, vape.tarikh], ART.wp[0].slice(0, 3));
+  assert.match(pagesText([vape]), /^\[mufti:wp:1\] \(laman rasmi Jabatan Mufti, negeri: Wilayah Persekutuan\) Pejabat Mufti Wilayah Persekutuan: "Irsyad Al-Hukum: Hukum Menghisap Vape", 2024-03-05\. https:\/\/www\.muftiwp/);
+  assert.equal(pageUrl('wp', 1), DOC.wp.url);
+
+  // Jawapan: sumber Mufti memaut ke artikel asal, dengan nama jabatan, negeri dan tarikh; id yang tidak diberi dibuang
+  greply = () => gem({ status: 'jawab', ringkasan: 'Haram menurut Mufti WP dan Sabah.', huraian: ['Menurut Pejabat Mufti Wilayah Persekutuan, vape haram.'], sumber: [
+    { id: 'mufti:wp:1', petikan: 'Menghisap vape adalah haram kerana memudaratkan kesihatan', untuk: 'hukum vape' },
+    { id: 'mufti:sabah:1', petikan: 'menghisap rokok dan vape adalah haram' },
+    { id: 'mufti:sarawak:1', petikan: 'Zakat padi wajib apabila cukup nisab' }
+  ] });
+  d = await (await call({ q: 'Apakah hukum menghisap vape?' }, 'https://bijaklabur.my', { ...genv, ...menv })).json();
+  assert.ok(gsent.contents[0].parts.some(p => p.text.includes('[mufti:wp:1] (laman rasmi Jabatan Mufti, negeri: Wilayah Persekutuan)')));
+  assert.match(gsent.systemInstruction.parts[0].text, /mufti:NEGERI:N/);
+  assert.equal(d.status, 'jawab');
+  assert.equal(d.sumber.length, 2, JSON.stringify(d.sumber));
+  assert.deepEqual([d.sumber[0].jenis, d.sumber[0].negeri, d.sumber[0].url, d.sumber[0].tajuk, d.sumber[0].oleh, d.sumber[0].disahkan],
+    ['fatwa', 'Wilayah Persekutuan', ART.wp[0][0], ART.wp[0][1], 'Pejabat Mufti Wilayah Persekutuan, 5 Mac 2024', true]);
+  assert.ok(d.sumber[0].teks_halaman.includes('Menghisap vape adalah haram'));
+  assert.deepEqual([d.sumber[1].negeri, d.sumber[1].url, d.sumber[1].oleh], ['Sabah', ART.sabah[0][0], 'Jabatan Mufti Negeri Sabah, 1 Ogos 2019']);
+  assert.equal(d.nota_pdf, undefined);
+  console.log('laman Mufti OK');
+}
 
 // Semak Kertas: ulasan pakar
 {

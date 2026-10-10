@@ -21,14 +21,16 @@
   // Gambar satu muka surat dokumen rasmi di pelayan Tanya AI (bukan PDF penuh)
   const gambarDok = s => s.jenis !== 'kitab' && /^\/halaman\/[a-z]{2,12}\/\d{1,4}\.jpg$/.test(s.gambar || '') ? AI_API + s.gambar : '';
   const cetakPage = s => {
-    const kitab = s.jenis === 'kitab';
+    const kitab = s.jenis === 'kitab', mufti = !!s.negeri;
     const img = kitab && /^https:\/\/(iiif\.)?archive\.org\//.test(s.gambar_url || '') ? s.gambar_url
       : gambarDok(s);
-    const label = kitab ? (img ? `Muka surat ${esc(s.pdf)} dalam cetakan` : `Teks digital Shamela, halaman ${esc(s.shamela)} (gambar cetakan belum tersedia)`) : `Muka surat ${esc(s.pdf)}`;
+    const label = kitab ? (img ? `Muka surat ${esc(s.pdf)} dalam cetakan` : `Teks digital Shamela, halaman ${esc(s.shamela)} (gambar cetakan belum tersedia)`)
+      : mufti ? 'Teks artikel yang dipetik' : `Muka surat ${esc(s.pdf)}`;
     const teks = s.teks_halaman ? `<div class="fq-page-teks${isAr(s.teks_halaman) ? ' ar' : ''}"${isAr(s.teks_halaman) ? ' lang="ar" dir="rtl"' : ''}>${esc(s.teks_halaman)}</div>` : '';
     if (!img && !teks) return s.pdf_url ? `<p class="small">${ext(s.pdf_url, `Buka PDF cetakan, muka surat ${esc(s.pdf)}`)}</p>` : '';
-    const links = [kitab && img && ext(s.lihat_url, 'Buka di archive.org'), ext(s.pdf_url || (!kitab && s.url), 'PDF penuh')].filter(Boolean).join('');
-    return `<details class="fq-cetak" open><summary>${icon('book')}${label}</summary>
+    const links = [kitab && img && ext(s.lihat_url, 'Buka di archive.org'), !mufti && ext(s.pdf_url || (!kitab && s.url), 'PDF penuh')].filter(Boolean).join('');
+    // Artikel Mufti boleh panjang: teksnya dilipat, petikan tepat tetap dipaparkan di bawah
+    return `<details class="fq-cetak"${mufti ? '' : ' open'}><summary>${icon('book')}${label}</summary>
       ${img ? pageImg(img, `${label}, ${s.tajuk}`) : teks}
       ${links ? `<p class="small fq-links">${links}</p>` : ''}</details>`;
   };
@@ -83,6 +85,9 @@
       <h2 class="grid-title">Rujukan rasmi moden</h2>
       <p class="muted small">Himpunan keputusan rasmi untuk isu semasa seperti kewangan Islam, pelaburan, perubatan dan teknologi. Tanya AI mencari dalam teks dokumen ini dan memaut terus ke muka surat PDF yang dipetik.</p>
       <div class="list">${D.MODEN.map(m => `<a class="fq-kitab" href="${esc(m.url)}" target="_blank" rel="noopener"><span class="fq-kitab-ar fq-pdf">PDF</span><span class="q-main"><b>${esc(m.name)}</b><small>${esc(m.by)}, ${m.tahun} · ${esc(m.skop)}</small></span><span class="fq-lvl-tag">${m.bahasa === 'ms' ? 'BM' : 'EN'}</span>${icon('link')}</a>`).join('')}</div>
+      <h2 class="grid-title">Laman Jabatan Mufti</h2>
+      <p class="muted small">Fatwa, irsyad dan soal jawab hukum daripada laman web rasmi Jabatan Mufti setiap negeri dan portal fatwa kebangsaan, dikemas kini setiap hari supaya isu yang baru timbul turut dirujuk. Tanya AI menyebut negeri yang mengeluarkannya dan memaut terus ke halaman asal.</p>
+      <div class="list">${(D.MUFTI || []).map(m => `<a class="fq-kitab" href="${esc(m.laman[0])}" target="_blank" rel="noopener"><span class="fq-kitab-ar fq-pdf">Fatwa</span><span class="q-main"><b>${esc(m.by)}</b><small>${esc(m.negeri)}</small></span>${icon('link')}</a>`).join('')}</div>
       <p class="note">${icon('alert')}<span>Bahagian ini untuk belajar dan bukan fatwa. Untuk kes peribadi, rujuk Jabatan Mufti negeri anda atau guru yang bertauliah.</span></p>`;
   }
   function outLinks(q) {
@@ -201,7 +206,7 @@
       <div class="fq-crumb"><a href="#ibadah/fiqh">Fiqh</a>${icon('chev')}<span>Tanya AI</span></div>
       <div class="fq-hero" style="--c:#c9853a"><span lang="ar" dir="rtl">اسأل</span><div><h2>Tanya AI berasaskan rujukan</h2><p>Setiap jawapan mesti bersandarkan sumber yang boleh anda buka sendiri.</p></div></div>
       <ol class="fq-flow fq-ai-rules">
-        <li><span class="num">1</span>AI hanya boleh memetik ${Object.keys(D.KITAB).length} kitab muktabar (Shamela; mazhab Syafie dan perbandingan mazhab), Al-Quran, hadis, fatwa rasmi Malaysia dan ${D.MODEN.length} dokumen keputusan rasmi moden untuk isu semasa.</li>
+        <li><span class="num">1</span>AI hanya boleh memetik ${Object.keys(D.KITAB).length} kitab muktabar (Shamela; mazhab Syafie dan perbandingan mazhab), Al-Quran, hadis, fatwa rasmi Malaysia, ${D.MODEN.length} dokumen keputusan rasmi moden untuk isu semasa, dan fatwa serta irsyad terkini daripada laman web rasmi Jabatan Mufti setiap negeri dan portal e-SMAF.</li>
         <li><span class="num">2</span>Setiap petikan disemak dengan teks halaman sumber. Petikan yang tidak sepadan dibuang. Petikan kitab dipaparkan bersama gambar muka surat cetakannya, atau teks digital halaman itu daripada Shamela jika gambarnya belum tersedia.</li>
         <li><span class="num">3</span>Jika tiada sumber yang sah, AI menjawab "tidak pasti" dan meminta anda merujuk mufti.</li>
       </ol>
@@ -255,14 +260,16 @@
   }
 
   function sourceCard(s) {
-    const [label, c] = JENIS[s.jenis] || JENIS.lain;
-    const page = s.shamela ? `Shamela, muka surat ${esc(s.shamela)}` : s.pdf ? `${s.oleh ? esc(s.oleh) + ' · ' : ''}PDF, muka surat ${esc(s.pdf)}` : '';
+    const [jenis, c] = JENIS[s.jenis] || JENIS.lain;
+    // Artikel laman Jabatan Mufti: negeri yang mengeluarkannya, jabatan dan tarikh terbit
+    const label = s.negeri ? `${jenis} · ${esc(s.negeri)}` : jenis;
+    const page = s.shamela ? `Shamela, muka surat ${esc(s.shamela)}` : s.pdf ? `${s.oleh ? esc(s.oleh) + ' · ' : ''}PDF, muka surat ${esc(s.pdf)}` : s.negeri && s.oleh ? esc(s.oleh) : '';
     const printed = [s.jilid && `juz ${esc(s.jilid)}`, s.halaman && `hlm. ${esc(s.halaman)}`].filter(Boolean).join(', ');
     if (s.jenis === 'quran') return `<div class="fq-src fq-ai-src" style="--c:${c}" data-ayah="${esc(s.ref)}"><p class="muted small">Memuatkan ayat ${esc(s.ref)}</p></div>`;
     const hk = s.id && s.id.startsWith('hadis:') && D.H[s.id.slice(6)] ? s.id.slice(6) : '';
     const live = hk ? `<p class="fq-isi"><span>Isi ringkas</span>${esc(D.H[hk].isi)}</p><div class="fq-live"><p class="muted small">Memuatkan teks hadis</p></div>` : '';
     return `<div class="fq-src fq-ai-src" style="--c:${c}"${hk ? ` data-hadith="${hk}"` : ''}>
-      <div class="row-between"><span class="fq-ai-kind">${label}</span>${ext(gambarDok(s) || s.url, s.jenis === 'kitab' || s.pdf ? 'Buka muka surat' : 'Buka sumber')}</div>
+      <div class="row-between"><span class="fq-ai-kind">${label}</span>${ext(gambarDok(s) || s.url, s.jenis === 'kitab' || s.pdf ? 'Buka muka surat' : s.negeri ? 'Buka laman Mufti' : 'Buka sumber')}</div>
       <b>${esc(s.tajuk)}</b>${page || printed ? `<p class="small muted">${[page, printed].filter(Boolean).join(' · ')}</p>` : ''}
       ${s.penerbit || s.edisi ? `<p class="small muted">Cetakan: ${esc([s.penerbit, s.edisi && (s.penerbit ? 'cetakan ' + s.edisi : s.edisi), s.tahun].filter(Boolean).join(', '))}</p>` : ''}
       ${cetakPage(s)}
@@ -276,7 +283,7 @@
 
   function aiCite({ d, q }) {
     const out = [`Soalan: ${q}`, '', d.ringkasan || '', ...(d.huraian || []), d.khilaf ? 'Perbezaan pendapat: ' + d.khilaf : '', '', 'Rujukan:'];
-    (d.sumber || []).forEach(s => out.push(`- ${s.tajuk}${s.shamela ? `, Shamela hlm. ${s.shamela}` : ''}${s.penerbit || s.edisi ? `, cetakan ${[s.penerbit, s.edisi, s.tahun].filter(Boolean).join(', ')}` : ''}${s.pdf ? `, PDF hlm. ${s.pdf}${s.pdf_url ? ` (${s.pdf_url})` : ''}` : ''}${s.halaman ? `, hlm. ${s.halaman}` : ''} (${s.url})${s.petikan ? `\n  "${s.petikan}"` : ''}`));
+    (d.sumber || []).forEach(s => out.push(`- ${s.tajuk}${s.negeri && s.oleh ? `, ${s.oleh}` : ''}${s.shamela ? `, Shamela hlm. ${s.shamela}` : ''}${s.penerbit || s.edisi ? `, cetakan ${[s.penerbit, s.edisi, s.tahun].filter(Boolean).join(', ')}` : ''}${s.pdf ? `, PDF hlm. ${s.pdf}${s.pdf_url ? ` (${s.pdf_url})` : ''}` : ''}${s.halaman ? `, hlm. ${s.halaman}` : ''} (${s.url})${s.petikan ? `\n  "${s.petikan}"` : ''}`));
     if (d.nota_pdf) out.push('', d.nota_pdf);
     out.push('', 'Dijana oleh Tanya AI SiswaCap. Bukan fatwa; semak sumber asal.');
     return out.filter((l, i, a) => l || a[i - 1]).join('\n');

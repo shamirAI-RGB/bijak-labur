@@ -1,6 +1,7 @@
 /*
  * Muat turun PDF rujukan rasmi moden (FiqhData.MODEN) dan teks kitab muktabar dari Shamela (FiqhData.KITAB),
- * ambil teks setiap muka surat, dan bina indeks carian ke dalam folder aset/ untuk worker.
+ * ambil teks setiap muka surat, tambah artikel laman Jabatan Mufti (dimuat oleh scripts/muat-mufti.mjs ke .cache/mufti),
+ * dan bina indeks carian ke dalam folder aset/ untuk worker.
  * Dijalankan dalam GitHub Actions sebelum pemasangan; teks tidak disimpan dalam repo.
  * Teks Shamela disimpan dalam .cache/ (actions/cache) supaya setiap halaman hanya dimuat turun sekali.
  * Dokumen yang gagal dimuat turun dilangkau supaya pemasangan tetap berjalan.
@@ -9,7 +10,7 @@ import { mkdir, writeFile, readFile, rm, appendFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
-import { MODEN, KITAB, buildIndex, search, expand, normText } from '../src/rujukan.js';
+import { MODEN, KITAB, MUFTI, buildIndex, muftiDocs, search, expand, normText } from '../src/rujukan.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..'), OUT = join(ROOT, 'aset'), CACHE = join(ROOT, '.cache', 'shamela');
 const UA = 'Mozilla/5.0 (SiswaCap rujukan; +https://siswacap.my)';
@@ -156,8 +157,24 @@ for (const b of KITAB) {
   }
 }
 
+// Laman Jabatan Mufti: artikel fatwa, irsyad dan soal jawab yang telah dimuat turun (scripts/muat-mufti.mjs)
+const laman = {};
+for (const m of MUFTI) {
+  try { laman[m.k] = JSON.parse(await readFile(join(ROOT, '.cache', 'mufti', `${m.k}.json`), 'utf8')).artikel || []; }
+  catch { laman[m.k] = []; }
+}
+const mufti = muftiDocs(laman);
+Object.assign(docs, mufti.docs);
+await summary('\n### Laman Jabatan Mufti dalam indeks\n\n| Negeri | Laman | Artikel | Muka surat indeks | Tarikh terkini |\n|---|---|---|---|---|');
+for (const m of MUFTI) {
+  const a = laman[m.k], terkini = a.map(x => x[2]).filter(Boolean).sort().pop() || '-';
+  console.log(`mufti ${m.k}: ${a.length} artikel, ${(mufti.docs[m.k] || []).length} muka surat, terkini ${terkini}`);
+  await summary(`| ${m.negeri} | ${m.laman[0]} | ${a.length} | ${(mufti.docs[m.k] || []).length} | ${terkini} |`);
+}
+
 await rm(OUT, { recursive: true, force: true });
 const files = buildIndex(docs);
+for (const [path, content] of mufti.files) files.set(path, content);
 let bytes = 0;
 for (const [path, content] of files) {
   const f = join(OUT, path);
@@ -165,14 +182,15 @@ for (const [path, content] of files) {
   await writeFile(f, content);
   bytes += Buffer.byteLength(content);
 }
-console.log(`Aset ditulis: ${files.size} fail, ${(bytes / 1048576).toFixed(1)} MB`);
+const besar = [...files].filter(([p]) => p.startsWith('rujukan/i/')).map(([p, c]) => [p, Buffer.byteLength(c)]).sort((a, b) => b[1] - a[1]);
+console.log(`Aset ditulis: ${files.size} fail, ${(bytes / 1048576).toFixed(1)} MB; baldi indeks terbesar ${besar[0] && besar[0][0]} ${besar[0] && (besar[0][1] / 1048576).toFixed(2)} MB, purata ${(besar.reduce((n, x) => n + x[1], 0) / Math.max(1, besar.length) / 1048576).toFixed(2)} MB`);
 const ok = Object.keys(docs).length;
 if (!ok) console.log('Tiada dokumen berjaya dimuat; Tanya AI berjalan tanpa rujukan PDF.');
 
 // Contoh carian sebenar, supaya kualiti padanan boleh dilihat dalam log
 const env = { RUJUKAN: { fetch: async req => { const p = new URL(req.url).pathname.slice(1); return files.has(p) ? new Response(files.get(p)) : new Response('', { status: 404 }); } } };
-for (const q of ['Hukum jual beli emas secara ansuran', 'Adakah sah solat jika terkena najis?', 'Apakah hukum melabur dalam mata wang kripto seperti Bitcoin?', 'Adakah insurans konvensional halal?', 'Hukum kad kredit dan caj bayaran lewat', 'Hukum pemindahan organ', 'Bolehkah melabur dalam saham syarikat yang ada sedikit aktiviti tidak patuh syariah?']) {
-  const hits = await search(env, expand(q), 6);
+for (const q of ['Hukum jual beli emas secara ansuran', 'Adakah sah solat jika terkena najis?', 'Apakah hukum melabur dalam mata wang kripto seperti Bitcoin?', 'Adakah insurans konvensional halal?', 'Hukum kad kredit dan caj bayaran lewat', 'Hukum pemindahan organ', 'Bolehkah melabur dalam saham syarikat yang ada sedikit aktiviti tidak patuh syariah?', 'Apakah hukum menghisap vape?', 'Hukum menggunakan kecerdasan buatan (AI) untuk menyiapkan tugasan']) {
+  const hits = await search(env, expand(q), 6, q);
   console.log(`Carian: ${q}`);
   for (const h of hits) console.log(`  ${h.id} (${h.skor}): ${h.teks.replace(/\s+/g, ' ').slice(0, 150)}`);
 }

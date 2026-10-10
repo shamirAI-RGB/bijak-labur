@@ -9,11 +9,11 @@ on:
   pull_request:
     paths: ['worker-fiqh/**', 'js/fiqh-data.js', '.github/workflows/fiqh.yml']
   workflow_dispatch:
-  # Seminggu sekali: teks kitab dalam actions/cache dipadam jika tidak digunakan 7 hari. Larian mingguan
-  # mengekalkannya (dan memasang semula pelayan dengan indeks yang sama), supaya pemasangan seterusnya tidak
-  # bermula semula dengan kitab yang separuh dimuat turun.
+  # Setiap hari (03:17 waktu Malaysia): ambil fatwa baharu daripada laman web Jabatan Mufti dan pasang semula pelayan
+  # dengan indeks yang dikemas kini. Larian ini juga mengekalkan teks kitab dalam actions/cache (dipadam jika tidak
+  # digunakan 7 hari), supaya pemasangan seterusnya tidak bermula semula dengan kitab yang separuh dimuat turun.
   schedule:
-    - cron: '17 19 * * 0'
+    - cron: '17 19 * * *'
 
 # Token GitHub hanya boleh membaca repo (prinsip keistimewaan minimum)
 permissions:
@@ -45,6 +45,15 @@ jobs:
           path: worker-fiqh/.cache
           key: shamela-v1-${{ github.run_id }}
           restore-keys: shamela-v1-
+      # Fatwa, irsyad dan soal jawab hukum daripada laman web Jabatan Mufti setiap negeri dan portal e-SMAF (artikel baharu
+      # sahaja; yang lama disimpan dalam cache yang sama). Larian harian dan manual diberi masa lebih panjang; larian
+      # selepas perubahan kod hanya menyemak artikel terbaharu. Laman yang tidak dapat dicapai disenaraikan dalam ringkasan.
+      - name: Muat fatwa laman Mufti
+        timeout-minutes: 32
+        continue-on-error: true
+        env:
+          MUFTI_MINIT: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && '25' || '6' }}
+        run: node scripts/muat-mufti.mjs
       # Rujukan: muat turun 4 PDF rasmi moden dan teks kitab muktabar (Shamela), ambil teks setiap muka surat dan bina
       # indeks carian ke worker-fiqh/aset (tidak disimpan dalam repo). Dokumen yang gagal dimuat turun dilangkau.
       - name: Muat turun dan indeks rujukan
