@@ -231,7 +231,8 @@ const FiqhData = (() => {
   /* Laman web rasmi Jabatan Mufti setiap negeri dan portal fatwa kebangsaan. Fatwa, irsyad dan soal jawab hukum diambil
      setiap hari oleh pelayan Tanya AI (worker-fiqh/scripts/muat-mufti.mjs) supaya isu yang baru timbul dijawab dengan
      keputusan terkini. laman: alamat yang dicuba mengikut tertib; yang pertama berjaya digunakan. tambahan: sistem fatwa
-     atau soal jawab jabatan yang sama di hos lain (hanya halaman di bawah folder alamat itu diambil). */
+     atau soal jawab jabatan yang sama di hos lain (hanya halaman di bawah folder alamat itu diambil), atau senarai yang
+     dimuat dengan AJAX (cth. Sarawak). */
   const MUFTI = [
     { k: 'esmaf', negeri: 'Kebangsaan', by: 'Portal Rasmi Fatwa Malaysia (e-SMAF), JAKIM', laman: ['https://e-smaf.islam.gov.my/e-smaf/', 'http://e-smaf.islam.gov.my/e-smaf/', 'https://www.e-fatwa.gov.my/', 'http://www.e-fatwa.gov.my/'] },
     { k: 'wp', negeri: 'Wilayah Persekutuan', by: 'Pejabat Mufti Wilayah Persekutuan', laman: ['https://www.muftiwp.gov.my/', 'https://muftiwp.gov.my/'] },
@@ -247,7 +248,8 @@ const FiqhData = (() => {
     { k: 'perlis', negeri: 'Perlis', by: 'Jabatan Mufti Negeri Perlis', laman: ['https://muftiperlis.gov.my/', 'https://www.muftiperlis.gov.my/'] },
     { k: 'ppinang', negeri: 'Pulau Pinang', by: 'Jabatan Mufti Negeri Pulau Pinang', laman: ['https://mufti.penang.gov.my/'] },
     { k: 'sabah', negeri: 'Sabah', by: 'Jabatan Mufti Negeri Sabah', laman: ['https://mufti.sabah.gov.my/'] },
-    { k: 'sarawak', negeri: 'Sarawak', by: 'Jabatan Mufti Negeri Sarawak', laman: ['https://muftinegeri.sarawak.gov.my/', 'http://muftinegeri.sarawak.gov.my/', 'https://jmns.sarawak.gov.my/'] },
+    { k: 'sarawak', negeri: 'Sarawak', by: 'Jabatan Mufti Negeri Sarawak', laman: ['https://muftinegeri.sarawak.gov.my/', 'http://muftinegeri.sarawak.gov.my/', 'https://jmns.sarawak.gov.my/'],
+      tambahan: ['https://muftinegeri.sarawak.gov.my/web/subpage/fatwa_list_ajax/', 'https://muftinegeri.sarawak.gov.my/web/subpage/irsyad_list_ajax/'] },
     { k: 'terengganu', negeri: 'Terengganu', by: 'Jabatan Mufti Negeri Terengganu', laman: ['https://mufti.terengganu.gov.my/', 'https://www.mufti.terengganu.gov.my/'] }
   ];
 

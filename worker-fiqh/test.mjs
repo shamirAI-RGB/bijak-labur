@@ -370,6 +370,8 @@ assert.equal(d.status, 'tidak_pasti');
   assert.equal(tajukHtml('<meta property="og:title" content="Pengharaman Ajaran Qadiani | Jabatan Mufti Negeri Melaka">'), 'Pengharaman Ajaran Qadiani');
   assert.equal(tanpaNamaLaman('Hukum Solat - Panduan Ringkas'), 'Hukum Solat - Panduan Ringkas');
   assert.equal(tajukTeks('وعليكم السلام ورحمة الله وبركاته\nBolehkah taklik murtad dibatalkan sebelum dilanggar?\nJawapan...'), 'Bolehkah taklik murtad dibatalkan sebelum dilanggar?');
+  // Soalan panjang tanpa baris tajuk: ayat pertamanya
+  assert.equal(tajukTeks('Al Irsyad\nAssalamualaikum ustaz, saya ingin bertanya tentang hukum menggunakan duit syarikat untuk urusan peribadi kerana terdesak. ' + 'Huraian lanjut soalan. '.repeat(20)), 'Saya ingin bertanya tentang hukum menggunakan duit syarikat untuk urusan peribadi kerana terdesak.');
   assert.equal(tajukTeks('Waalaikumussalam warahmatullahi wabarakatuh tuan.\nHukum menjual barang terpakai secara dalam talian adalah harus'), 'Hukum menjual barang terpakai secara dalam talian adalah harus');
   assert.equal(tajukFail('https://www.muftimelaka.gov.my/uploads/page_content/p61/FATWA23-KewajipanMembayarZakatPendapatan.pdf'), 'FATWA23 Kewajipan Membayar Zakat Pendapatan');
   // Tajuk: <title> tanpa nama laman; tajuk yang berulang pada banyak halaman (cth. "Privacy Policy" dalam modul) dilangkau

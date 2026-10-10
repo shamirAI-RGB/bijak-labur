@@ -72,7 +72,16 @@ export const tajukTeks = (teks, umum = '') => {
     .filter(x => x.length >= 15 && x.length <= 300 && x.split(/\s+/).length >= 4 && x !== umum && !tajukUmum(x) && !/^(kategori|tarikh|oleh|sumber|penulis|dikemas ?kini|bilangan|no\.?)\b/i.test(x)
       // Salam dan pembuka jawapan (cth. "Waalaikumussalam ...", "وعليكم السلام ...") bukan tajuk
       && !/^(wa?['‘’]?\s?alaikum|waalaikum|assalamu|as-salamu|bismillah|alhamdulillah|segala puji|terima kasih)|^(وعليكم|السلام|بسم الله|الحمد لله)/i.test(x));
-  return (baris.find(x => x.endsWith('?')) || baris[0] || '').replace(/^soalan\s*[:.-]\s*/i, '').slice(0, 160);
+  let t = baris.find(x => x.endsWith('?')) || baris[0];
+  // Tiada baris pendek: ayat pertama perenggan pertama (cth. soalan panjang dalam sistem soal jawab)
+  if (!t) {
+    const p = String(teks).split('\n').map(x => x.trim()).slice(0, 25).find(x => x.length > 300 && x !== umum && !/^(وعليكم|السلام|بسم الله)/.test(x)) || '';
+    const ayat = p.match(/^.{20,200}?[?.!](?=\s|$)/);
+    t = ayat ? ayat[0] : p.length ? p.slice(0, 140).replace(/\s+\S*$/, '') + '…' : '';
+  }
+  // "Assalamualaikum ustaz, saya ..." -> "Saya ..."
+  t = t.replace(/^soalan\s*[:.-]\s*/i, '').replace(/^(as+alamu\s?['‘’]?\s?alaikum|salam sejahtera)[^,.!?]{0,40}[,.!]\s*/i, '');
+  return (t.charAt(0).toUpperCase() + t.slice(1)).slice(0, 200);
 };
 export const ABAI = /galeri|gallery|tender|sebut-?harga|jawatan-kosong|kerjaya|career|piagam|carta|organisasi|kakitangan|direktori|staff|login|wp-admin|wp-login|\/feed\/?$|\/tag\/|\/author\/|[?&](print|tmpl|format|share|replytocom)=|mailto:|javascript:|whatsapp|facebook\.com|twitter\.com|\.(jpe?g|png|gif|webp|svg|ico|css|js|zip|rar|docx?|xlsx?|pptx?|mp3|mp4|avi|mov|apk)(\?|$)/i;
 
@@ -256,7 +265,7 @@ async function laman(m) {
   // 2. robots.txt dan peta laman
   // robots.txt bagi setiap hos (laman utama dan hos tambahan)
   const aturan = new Map();
-  for (const o of [asas.origin, ...new Set(tambahan.map(t => t.url.origin))]) {
+  for (const o of new Set([asas.origin, ...tambahan.map(t => t.url.origin)])) {
     const rb = await ambil(`${o}/robots.txt`);
     aturan.set(o, robots(rb.status === 200 && !/html/.test(rb.ct) ? rb.buf.toString('utf8') : ''));
     log(`robots.txt ${o}: ${rb.status}; sitemap: ${aturan.get(o).sitemaps.length}; crawl-delay ${aturan.get(o).jeda}`);
