@@ -62,7 +62,7 @@ export async function geminiGenerate(env, body, routerBody = body) {
   }
 }
 
-async function geminiOnly(env, body) {
+export async function geminiOnly(env, body) {
   if (!env.GEMINI_API_KEY) throw Object.assign(new Error('tiada GEMINI_API_KEY'), { status: 503 });
   let err;
   for (const model of geminiModels(env)) {

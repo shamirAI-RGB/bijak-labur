@@ -76,6 +76,20 @@ type = "ratelimit"
 namespace_id = "2009"
 simple = { limit = 8, period = 60 }
 
+# Alat Pelajar (Pek Peperiksaan, Penyemak Rubrik, Ingat Aktif, dll.): 6 permintaan seminit bagi setiap alamat IP
+[[unsafe.bindings]]
+name = "ALAT_LIMIT"
+type = "ratelimit"
+namespace_id = "2010"
+simple = { limit = 6, period = 60 }
+
+# Transkrip rakaman kuliah (audio sehingga ~14 MB): 2 seminit bagi setiap alamat IP
+[[unsafe.bindings]]
+name = "TRANSKRIP_LIMIT"
+type = "ratelimit"
+namespace_id = "2011"
+simple = { limit = 2, period = 60 }
+
 # Workers AI: FLUX untuk Studio Gambar, dan Llama sebagai penghala sandaran apabila kuota Gemini habis. Peringkat percuma 10,000 neuron sehari; tiada caj pada pelan percuma.
 [ai]
 binding = "AI"
