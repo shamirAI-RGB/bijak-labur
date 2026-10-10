@@ -474,8 +474,10 @@
   }
   const rm = v => 'RM' + (v || 0).toLocaleString('ms-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   function calcZakat() {
-    const n = +$('#zfN').value || 0, r = +$('#zfR').value || 0, s = +$('#zsS').value || 0, g = +$('#zsG').value || 0;
-    const v = +$('#zsV').value || 0, d = +$('#zsD').value || 0, h = $('#zhS').value;
+    // Nilai negatif (boleh ditaip walaupun ada min="0") dikira sifar supaya jumlah zakat tidak menjadi negatif
+    const num = id => Math.max(0, +$('#' + id).value || 0);
+    const n = num('zfN'), r = num('zfR'), s = num('zsS'), g = num('zsG');
+    const v = num('zsV'), d = num('zsD'), h = $('#zhS').value;
     store.set('zakatIb', { n, r, s, g, v, d, h });
     $('#zfOut').textContent = rm(n * r);
     paintHaul(h);

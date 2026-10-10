@@ -69,7 +69,9 @@
   }
   function muat(k) {
     if (k === 'ringkas' || data[k]) return render();
-    root.querySelector('#hlList') && (root.querySelector('#hlList').innerHTML = '<p class="muted small">Memuatkan senarai semak...</p>');
+    // Rangka halaman dipaparkan dahulu ("Memuatkan senarai semak..."), supaya pemilih skim kekal boleh digunakan
+    // walaupun skim yang disimpan tidak dapat dimuat (cth. luar talian semasa laman dibuka)
+    render();
     fetch('data/audit-halal/' + k + '.json').then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
       .then(j => { data[k] = j; render(); })
       .catch(() => { const l = root.querySelector('#hlList'); if (l) l.innerHTML = '<p class="muted small">Senarai semak tidak dapat dimuatkan. Semak sambungan internet dan cuba lagi.</p>'; });
@@ -80,7 +82,7 @@
     const all = G.flatMap(([g, , items]) => items.map((_, i) => `${g}${i}`));
     const ans = all.map(k => d.jawab[k]).filter(Boolean), app = ans.filter(a => a !== 'na'), yes = app.filter(a => a === 'y').length;
     const score = app.length ? Math.round(yes / app.length * 100) : 0, open = d.ncr.filter(n => n.st !== 'tutup');
-    if (!buka[d.skim]) { const g = G.find(([g, , items]) => items.some((_, i) => !d.jawab[g + i])); buka[d.skim] = new Set(g ? [g[0]] : []); }
+    if (!buka[d.skim] && G.length) { const g = G.find(([g, , items]) => items.some((_, i) => !d.jawab[g + i])); buka[d.skim] = new Set(g ? [g[0]] : []); }
     root.innerHTML = `
       <div class="page-head"><p class="eyebrow">Pengurusan Industri Halal</p><h1 id="h-halal">Audit Halal</h1>
         <p class="lead">Senarai semak audit dalaman dan log ketakakuran (NCR) untuk latihan amali. Semua data disimpan dalam peranti ini sahaja.</p></div>
@@ -128,7 +130,7 @@
             <button type="button" class="q-del" data-ncr-del="${i}" aria-label="Padam NCR ${i + 1}">${icon('x')}</button></div>
           <p>${esc(n.temuan)}</p>
           ${n.punca ? `<p class="small"><b>Punca:</b> ${esc(n.punca)}</p>` : ''}${n.tindakan ? `<p class="small"><b>Tindakan:</b> ${esc(n.tindakan)}</p>` : ''}
-          <p class="small muted">${n.pic ? esc(n.pic) + ' · ' : ''}${n.due ? 'Tarikh akhir ' + esc(n.due) : 'Tiada tarikh akhir'}${n.due && n.st !== 'tutup' && n.due < new Date().toISOString().slice(0, 10) ? ' · <b class="ah-late">Lewat</b>' : ''}</p>
+          <p class="small muted">${n.pic ? esc(n.pic) + ' · ' : ''}${n.due ? 'Tarikh akhir ' + esc(n.due) : 'Tiada tarikh akhir'}${n.due && n.st !== 'tutup' && n.due < new Date().toLocaleDateString('en-CA') ? ' · <b class="ah-late">Lewat</b>' : ''}</p>
         </div>`).join('') : '<p class="muted small ah-empty">Belum ada NCR. Item bertanda "Tidak patuh" boleh terus direkod sebagai NCR.</p>'}</div>
 
       <div class="block-head"><h2>Rajah aliran</h2></div>
