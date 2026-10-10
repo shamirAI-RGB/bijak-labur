@@ -30,6 +30,10 @@
 	<array>
 		<string>location</string>
 	</array>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Mikrofon digunakan hanya apabila anda menekan rakam dalam Nota Kuliah AI atau menjawab soalan Jurulatih Pembentangan dengan suara. Rakaman disimpan dalam peranti anda.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Pengecaman suara menukar kuliah atau jawapan anda kepada teks secara langsung dalam Alat Pelajar.</string>
 	<key>NSHealthShareUsageDescription</key>
 	<string>SiswaCap membaca jumlah langkah dan jarak harian daripada Apple Health untuk dipaparkan di halaman Sihat. Data tidak dihantar ke pelayan.</string>
 	<key>NSHealthUpdateUsageDescription</key>

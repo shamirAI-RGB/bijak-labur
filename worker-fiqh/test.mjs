@@ -13,6 +13,8 @@ import { check as checkB, clean as cleanB, verifyQuotes, bukuBody, SCHEMAS as SB
 import { check as checkJ, clean as cleanJ, redact } from './src/kerja.js';
 import { check as checkM, clean as cleanM } from './src/manusia.js';
 import { check as checkC, coachBody, systemFor as sysC } from './src/coach.js';
+import { check as checkAl, clean as cleanAl, checkTranskrip, transkripBody, sitasiHilang, alatBody, SCHEMAS as SAl } from './src/alat.js';
+import '../js/apa.js';
 import { check as checkA, clean as cleanA, normalZon, auditBody, systemFor as sysA } from './src/audit.js';
 
 const env = { ANTHROPIC_API_KEY: 'sk-test', ALLOWED_ORIGINS: 'https://bijaklabur.my' };
@@ -975,6 +977,101 @@ console.log('Semua ujian Tanya AI lulus');
   await Promise.all(tunggu);
   assert.equal(catat, null);
   console.log('catatan token Pusat OK');
+}
+
+// Alat Pelajar
+{
+  assert.ok(checkAl({ tugas: 'x' }).error);
+  assert.ok(checkAl({ tugas: 'pek', teks: 'pendek' }).error);
+  assert.equal(checkAl({ tugas: 'pek', teks: 'a'.repeat(120001) }).status, 413);
+  const nota = 'Pengurusan rantaian bekalan halal melibatkan pemprosesan, penyimpanan dan pengangkutan produk halal. '.repeat(4);
+  assert.equal(checkAl({ tugas: 'pek', teks: nota }).tugas, 'pek');
+  assert.ok(JSON.parse(alatBody('pek', checkAl({ tugas: 'pek', teks: nota }))).systemInstruction.parts[0].text.includes('Bahasa Melayu baku'));
+  for (const t of Object.keys(SAl)) assert.ok(toJsonSchema(SAl[t]), t);
+
+  // Rujukan: DOI, tahun dan petikan rekaan dibuang; id kertas tidak wujud diabaikan
+  const kertas = 'Journal of Islamic Marketing Vol. 12 No. 3, 2021 pp. 455-470 https://doi.org/10.1108/JIMA-01-2020-0001 Halal supply chain integrity among SMEs. Siti Nur Ahmad. Abstract: This study examines how small and medium enterprises maintain halal integrity across logistics using a survey of 210 firms in Selangor. Findings show that traceability systems strongly predict integrity. '.repeat(2);
+  const ri = checkAl({ tugas: 'rujukan', kertas: [{ tajuk: 'a.pdf', teks: kertas }, { tajuk: 'kosong', teks: 'x' }] });
+  assert.equal(ri.kertas.length, 1);
+  const rc = cleanAl('rujukan', { kertas: [
+    { id: 'K1', jenis: 'jurnal', pengarang: [{ akhir: 'Ahmad', awal: 'Siti Nur' }, { org: '' }], tahun: '2021', tajuk: 'Halal supply chain integrity among SMEs', sumber: 'Journal of Islamic Marketing', doi: 'https://doi.org/10.1108/JIMA-01-2020-0001.', objektif: 'o', metodologi: 'm', dapatan: ['d'], petikan: ['a survey of 210 firms in Selangor. Findings show that traceability', 'petikan rekaan yang tidak wujud dalam kertas ini langsung'] },
+    { id: 'K9', jenis: 'jurnal', pengarang: [], tahun: '2020', tajuk: 'x', objektif: '', metodologi: '', dapatan: [], petikan: [] }
+  ], tema: [{ nama: 'Kebolehkesanan', huraian: 'h', kertas: ['K1', 'K7'] }], sorotan: ['Menurut (Ahmad, 2021) ...'] }, ri);
+  assert.equal(rc.kertas.length, 1);
+  assert.equal(rc.kertas[0].doi, '10.1108/JIMA-01-2020-0001');
+  assert.equal(rc.kertas[0].pengarang.length, 1);
+  assert.equal(rc.kertas[0].petikan.length, 1);
+  assert.deepEqual(rc.tema[0].kertas, ['K1']);
+  const rc2 = cleanAl('rujukan', { kertas: [{ id: 'K1', pengarang: [], tahun: '1999', doi: '10.9999/rekaan', tajuk: 't', objektif: '', metodologi: '', dapatan: [], petikan: [] }] }, ri);
+  assert.equal(rc2.kertas[0].doi, ''); assert.equal(rc2.kertas[0].tahun, '');
+
+  // APA 7
+  const apa = APA.format({ jenis: 'jurnal', pengarang: rc.kertas[0].pengarang, tahun: '2021', tajuk: rc.kertas[0].tajuk, sumber: 'Journal of Islamic Marketing', jilid: '12', isu: '3', halaman: '455-470', doi: rc.kertas[0].doi });
+  assert.equal(apa.teks, 'Ahmad, S. N. (2021). Halal supply chain integrity among SMEs. Journal of Islamic Marketing, 12(3), 455–470. https://doi.org/10.1108/JIMA-01-2020-0001');
+  assert.ok(apa.html.includes('<i>Journal of Islamic Marketing</i>, <i>12</i>(3)'));
+  assert.equal(apa.intext, '(Ahmad, 2021)');
+  assert.equal(APA.format({ pengarang: [{ akhir: 'A', awal: 'B' }, { akhir: 'C', awal: 'D' }], tahun: '2020', tajuk: 'T' }).intext, '(A & C, 2020)');
+  assert.equal(APA.format({ pengarang: [{ akhir: 'A' }, { akhir: 'B' }, { akhir: 'C' }], tajuk: 'T' }).intext, '(A et al., n.d.)');
+  assert.equal(APA.format({ jenis: 'buku', pengarang: [{ org: 'Jabatan Kemajuan Islam Malaysia' }], tahun: '2020', tajuk: 'Manual prosedur pensijilan halal Malaysia', edisi: '3', penerbit: 'Jabatan Kemajuan Islam Malaysia' }).teks, 'Jabatan Kemajuan Islam Malaysia. (2020). Manual prosedur pensijilan halal Malaysia (3rd ed.).');
+  assert.equal(APA.format({ jenis: 'web', pengarang: [], tahun: '2024', bulan: 3, hari: 5, tajuk: 'Garis panduan', sumber: 'JAKIM', url: 'https://www.halal.gov.my/x' }).teks, 'Garis panduan. (2024, March 5). JAKIM. https://www.halal.gov.my/x');
+  const ramai = Array.from({ length: 22 }, (_, i) => ({ akhir: 'P' + i, awal: 'Q' }));
+  assert.ok(APA.format({ pengarang: ramai, tahun: '2020', tajuk: 'T' }).teks.startsWith('P0, Q., P1, Q.,') && APA.format({ pengarang: ramai, tahun: '2020', tajuk: 'T' }).teks.includes('P18, Q., . . . P21, Q.'));
+  assert.equal(APA.doiUrl('doi:10.1000/abc'), 'https://doi.org/10.1000/abc');
+  assert.equal(APA.doiUrl('bukan doi'), '');
+  assert.deepEqual(APA.susun([{ pengarang: [{ akhir: 'Zul' }], tahun: '2020' }, { pengarang: [{ akhir: 'Abu' }], tahun: '2021' }]).map(m => m.pengarang[0].akhir), ['Abu', 'Zul']);
+
+  // Rubrik: bukti dan ayat asal mesti wujud dalam draf; jumlah dikira semula
+  const draf = 'Pengenalan. Kajian ini membincangkan kepentingan pensijilan halal bagi PKS di Malaysia. Kaedah tinjauan digunakan ke atas 50 responden. '.repeat(3);
+  const ru = checkAl({ tugas: 'rubrik', draf, rubrik: 'Pengenalan (10 markah): Cemerlang 9-10, Baik 7-8. Kaedah (10 markah).' });
+  assert.equal(ru.tugas, 'rubrik');
+  const rr = cleanAl('rubrik', { ringkasan: 'ok', keyakinan: 'tinggi', kriteria: [
+    { nama: 'Pengenalan', markah_penuh: 10, markah: 12, tahap: 'Cemerlang', bukti: ['Kajian ini membincangkan kepentingan pensijilan halal', 'ayat yang tiada dalam draf langsung'], kurang: [], naik_tahap: '', baiki: [{ asal: 'Kaedah tinjauan digunakan ke atas 50 responden.', baru: 'Kajian ini menggunakan kaedah tinjauan.', sebab: 's' }, { asal: 'rekaan sepenuhnya di sini', baru: 'x', sebab: 's' }] },
+    { nama: 'Kaedah', markah_penuh: 10, markah: 6.3, tahap: 'Baik', bukti: [], kurang: ['Saiz sampel tidak dijustifikasi'], naik_tahap: 'x', baiki: [] }
+  ], keutamaan: [{ tindakan: 'a', markah_tambah: 1 }, { tindakan: 'b', markah_tambah: 3 }] }, ru);
+  assert.equal(rr.kriteria[0].markah, 10);
+  assert.equal(rr.kriteria[1].markah, 6.5);
+  assert.equal(rr.jumlah, 16.5); assert.equal(rr.penuh, 20);
+  assert.equal(rr.kriteria[0].bukti.length, 1); assert.equal(rr.kriteria[0].baiki.length, 1);
+  assert.deepEqual(rr.keutamaan.map(k => k.tindakan), ['b', 'a']);
+  assert.ok(rr.julat[0] <= 16.5 && rr.julat[1] >= 16.5 && rr.julat[1] <= 20);
+
+  // Pek: MCQ tidak sah dibuang, markah esei = jumlah skema
+  const pk = cleanAl('pek', { tajuk: 't', ringkasan: 'r', konsep: [{ nama: 'a', huraian: 'b', penting: 9 }], mcq: [{ soalan: 'q', pilihan: ['a', 'b', 'c', 'd'], jawapan: 2, penerangan: 'p', aras: 'x' }, { soalan: 'q', pilihan: ['a', 'b'], jawapan: 0, penerangan: '' }], esei: [{ soalan: 'Bincangkan', markah: 99, skema: [{ isi: 'a', markah: 4 }, { isi: 'b', markah: 6 }], tip: '' }], kad: [], ramalan: [], mnemonik: [] }, {});
+  assert.equal(pk.mcq.length, 1); assert.equal(pk.mcq[0].aras, 'faham'); assert.equal(pk.konsep[0].penting, 3); assert.equal(pk.esei[0].markah, 10);
+
+  // Ingat aktif
+  const ig = cleanAl('ingat_soalan', { soalan: [{ jenis: 'betul_salah', soalan: 'q', jawapan: 'false', penerangan: 'p', topik: '' }, { jenis: 'mcq', soalan: 'q', pilihan: ['a', 'b', 'c', 'd'], jawapan: 'e', penerangan: '', topik: 't' }] }, {});
+  assert.equal(ig.soalan.length, 1); assert.equal(ig.soalan[0].jawapan, 'Salah'); assert.equal(ig.soalan[0].topik, 'Umum');
+  const isj = checkAl({ tugas: 'ingat_semak', teks: nota, jawapan: [{ soalan: 'a', betul: 'b', pengguna: 'c' }] });
+  assert.deepEqual(cleanAl('ingat_semak', { hasil: [{ i: 0, keputusan: 'separa', maklum_balas: 'm' }, { i: 0, keputusan: 'betul' }, { i: 5, keputusan: 'betul' }] }, isj).hasil, [{ i: 0, keputusan: 'separa', maklum_balas: 'm' }]);
+
+  // Penulisan: petikan dalam teks atau nombor yang hilang ditanda
+  assert.deepEqual(sitasiHilang('Menurut Ahmad (2021), 45% pelajar (Lee & Tan, 2019) setuju.', 'Ahmad (2021) mendapati 45% pelajar setuju.'), ['(Lee & Tan, 2019)']);
+  const tl = checkAl({ tugas: 'tulis', perenggan: ['Perenggan pertama yang agak panjang (Ali, 2020).', 'x'], mod: 'pelik' });
+  assert.equal(tl.perenggan.length, 1); assert.equal(tl.mod, 'akademik');
+  assert.deepEqual(cleanAl('tulis', { hasil: [{ i: 0, baru: 'Perenggan pertama yang panjang.', perubahan: [{ jenis: 'ringkas', sebab: 's' }] }, { i: 3, baru: 'x' }], struktur: [], nada: '' }, tl).hasil[0].sitasi_hilang, ['(Ali, 2020)']);
+
+  // Transkrip
+  assert.ok(checkTranskrip({ mime: 'video/mp4', audio: 'A'.repeat(2000) }).error);
+  assert.ok(checkTranskrip({ mime: 'audio/webm', audio: 'A'.repeat(10) }).error);
+  assert.equal(checkTranskrip({ mime: 'audio/webm;codecs=opus', audio: 'A'.repeat(19_500_001) }).status, 413);
+  assert.ok(checkTranskrip({ mime: 'audio/mpeg', audio: '<script>'.repeat(200) }).error);
+  const tk = checkTranskrip({ mime: 'audio/x-m4a', audio: 'QUJD'.repeat(500) });
+  assert.equal(tk.mime, 'audio/mp4');
+  assert.equal(JSON.parse(transkripBody(tk)).contents[0].parts[0].inlineData.mimeType, 'audio/mp4');
+
+  // Laluan HTTP: asal tidak dibenarkan ditolak; Gemini dipanggil dan petikan disahkan
+  const aenv = { GEMINI_API_KEY: 'g', ALLOWED_ORIGINS: env.ALLOWED_ORIGINS };
+  const asal = globalThis.fetch;
+  globalThis.fetch = async () => new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify({ soalan: [{ soalan: 'Mengapa?', jenis: 'kritikal', kenapa: 'k', petua: 'p' }] }) }] }, finishReason: 'STOP' }] }));
+  const post = (path, b, origin = 'https://bijaklabur.my') => worker.fetch(new Request(W + path, { method: 'POST', headers: { origin, 'content-type': 'application/json' }, body: JSON.stringify(b) }), aenv);
+  assert.equal((await post('/alat', { tugas: 'coach_soalan', teks: nota }, 'https://jahat.example')).status, 403);
+  const ok = await post('/alat', { tugas: 'coach_soalan', teks: nota });
+  assert.equal(ok.status, 200);
+  assert.equal((await ok.json()).soalan[0].jenis, 'kritikal');
+  assert.equal((await post('/alat', { tugas: 'pek', teks: 'x' })).status, 400);
+  globalThis.fetch = asal;
+  console.log('Alat Pelajar OK');
 }
 
 // Rujukan APA edisi ke-7 bagi setiap sumber Tanya AI (js/fiqh-apa.js, dipaparkan dalam app)

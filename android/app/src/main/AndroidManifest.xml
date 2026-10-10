@@ -46,6 +46,9 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Alat Pelajar: rakam kuliah dan jawab soalan Jurulatih Pembentangan dengan suara (hanya apabila pengguna menekan rakam) -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <!-- Kesan zon waktu solat (hanya apabila pengguna menekan butang lokasi) -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <!-- GPS tepat untuk Sihat dan Jejak Aktiviti (jarak dan laluan) -->

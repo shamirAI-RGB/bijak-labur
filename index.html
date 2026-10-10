@@ -110,6 +110,7 @@
   <link rel="stylesheet" href="css/komuniti.css">
   <link rel="stylesheet" href="css/alat-syariah.css">
   <link rel="stylesheet" href="css/akademi.css">
+  <link rel="stylesheet" href="css/alat.css">
   <link rel="stylesheet" href="css/rupa.css">
   <link rel="stylesheet" href="css/takwim.css">
   <link rel="stylesheet" href="css/skrin-kunci.css">
@@ -217,6 +218,7 @@
             <a href="#nota" data-nav="nota" class="nav-sempit">Nota</a>
             <a href="#komuniti" data-nav="komuniti">Komuniti pelajar</a>
             <a href="#studio" data-nav="studio">Studio Gambar AI</a>
+            <a href="#alat" data-nav="alat">Alat Pelajar</a>
             <a href="#buku" data-nav="buku">Buku Nota AI</a>
             <a href="#kerja" data-nav="kerja">Kerjaya AI</a>
             <a href="#sihat" data-nav="sihat">Sihat: kalori dan langkah</a>
@@ -359,6 +361,11 @@
             <a class="card shortcut" href="#studio">
               <span class="sc-ico"><svg class="ic"><use href="#i-star"/></svg></span>
               <div class="sc-body"><div class="sc-title">Studio Gambar AI</div><div class="sc-sub">Terangkan dalam Bahasa Melayu, AI melukis gambar untuk anda</div></div>
+              <svg class="ic chev"><use href="#i-chev"/></svg>
+            </a>
+            <a class="card shortcut" href="#alat">
+              <span class="sc-ico"><svg class="ic"><use href="#i-cap"/></svg></span>
+              <div class="sc-body"><div class="sc-title">Alat Pelajar</div><div class="sc-sub">Rujukan APA 7, pek peperiksaan, penyemak rubrik, nota kuliah dan jurulatih pembentangan</div></div>
               <svg class="ic chev"><use href="#i-chev"/></svg>
             </a>
             <a class="card shortcut" href="#buku">
@@ -664,6 +671,8 @@
     <section class="view" id="view-sihat" aria-labelledby="h-sihat"></section>
     <section class="view" id="view-studio" aria-labelledby="h-studio"></section>
     <section class="view" id="view-buku" aria-labelledby="h-buku"></section>
+    <!-- ALAT PELAJAR (js/alat.js) -->
+    <section class="view" id="view-alat" aria-labelledby="h-alat"></section>
     <section class="view" id="view-kerja" aria-labelledby="h-kerja"></section>
     <section class="view" id="view-jejak" aria-labelledby="h-jejak"></section>
     <section class="view" id="view-komuniti" aria-labelledby="h-komuniti"></section>
@@ -922,9 +931,31 @@
 
   <footer class="site-footer">
     <p class="kaki-amaran"><b>Hanya belajar melabur, bukan pusat untuk melabur.</b> Ini bukan nasihat kewangan. DYOR (Do Your Own Research).</p>
-    <p>SiswaCap (Siswa Capital) ialah projek pendidikan percuma oleh pelajar, bukan pengurus dana, broker atau penasihat pelaburan berlesen, dan bukan nasihat kewangan. Tidak bergabung dengan mana-mana broker, bursa atau badan rasmi yang disebut.</p>
-    <p>Hubungi kami: <a href="mailto:hello@bijaklabur.my">hello@bijaklabur.my</a></p>
-    <p><a href="privacy.html">Dasar privasi</a> · <button type="button" class="link-btn" data-say-settings>Tetapan suara</button> · <a href="terma.html">Terma</a></p>
+    <div class="kaki-lajur">
+      <div class="kaki-jenama"><b>SiswaCap</b><p>Alat pendidikan pelaburan, ibadah dan pelajar, dibina oleh pelajar untuk pelajar.</p></div>
+      <nav aria-labelledby="kaki-produk"><h2 id="kaki-produk">Produk</h2><ul>
+        <li><a href="#alat">Alat</a></li>
+        <li><a href="cara.html">Cara ia berfungsi</a></li>
+        <li><a href="#premium">Harga</a></li>
+        <li><a href="#soalan/maklum-balas">Maklum balas</a></li>
+      </ul></nav>
+      <nav aria-labelledby="kaki-sokongan"><h2 id="kaki-sokongan">Sokongan</h2><ul>
+        <li><a href="#soalan">Bantuan &amp; soalan lazim</a></li>
+        <li><a href="mailto:hello@bijaklabur.my">Hubungi</a></li>
+        <li><a href="tentang.html">Tentang kami</a></li>
+        <li><button type="button" class="link-btn" data-say-settings>Tetapan suara</button></li>
+      </ul></nav>
+      <nav aria-labelledby="kaki-undang"><h2 id="kaki-undang">Undang-undang</h2><ul>
+        <li><a href="privacy.html">Dasar privasi</a></li>
+        <li><a href="terma-guna.html">Terma perkhidmatan</a></li>
+        <li><a href="bayaran-balik.html">Polisi bayaran balik</a></li>
+        <li><a href="penafian-ai.html">Penafian AI</a></li>
+      </ul></nav>
+    </div>
+    <div class="kaki-bawah">
+      <p>SiswaCap (Siswa Capital) ialah projek pendidikan percuma oleh pelajar, bukan pengurus dana, broker atau penasihat pelaburan berlesen, dan bukan nasihat kewangan. Tidak bergabung dengan mana-mana broker, bursa atau badan rasmi yang disebut.</p>
+      <p>Hubungi kami: <a href="mailto:hello@bijaklabur.my">hello@bijaklabur.my</a></p>
+    </div>
   </footer>
 
   <nav class="tabbar" aria-label="Navigasi">
@@ -970,6 +1001,8 @@
   <script src="js/studio.js" defer></script>
   <script src="js/buku.js" defer></script>
   <script src="js/kerja.js" defer></script>
+  <script src="js/apa.js" defer></script>
+  <script src="js/alat.js" defer></script>
   <script src="js/gaya-ai.js" defer></script>
   <script src="js/jejak.js" defer></script>
   <script src="js/komuniti.js" defer></script>

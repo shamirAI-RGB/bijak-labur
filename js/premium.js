@@ -17,11 +17,11 @@ const Premium = (function () {
     lengkap: { name: 'Premium', m1: 6.9, y1: 49, blurb: 'Untuk pelajar dan pelabur. Semua ciri percuma kekal percuma.',
       feats: ['Semak Tugasan Pro: semakan AI dan plagiarisme tanpa had, laporan PDF', 'Amaran harga tanpa had, amaran naik atau turun %, dan amaran status Syariah',
         'Portfolio patuh Syariah: status setiap pegangan, tarikh haul zakat dan pembersihan dividen', 'Tanya AI Fiqh, Buku Nota AI dan Kerjaya AI tanpa had harian',
-        'Alat pelajar: rujukan APA/MLA/Harvard, PNGK, muka depan, bandingkan draf', 'Alat pelabur: DCA, saiz posisi, jurnal, kos Bursa, dividen, matlamat, zakat'] }
+        'Alat Pelajar tanpa had: Penyelidikan & Sitasi (10 kertas), Penulisan Akademik, Transkrip HD kuliah, Pek Peperiksaan, Penyemak Rubrik', 'Alat pelajar lain: rujukan APA/MLA/Harvard, PNGK, muka depan, bandingkan draf', 'Alat pelabur: DCA, saiz posisi, jurnal, kos Bursa, dividen, matlamat, zakat'] }
   };
   const FOR_SALE = Object.keys(PLANS).filter(k => !PLANS[k].old);
   // Had harian percuma (dikira dalam peranti, waktu Malaysia). Premium tiada had.
-  const KUOTA = { semak: [3, 'semakan tugasan'], tanya: [5, 'soalan Tanya AI'], buku: [10, 'permintaan Buku Nota AI'], kerja: [3, 'permintaan Kerjaya AI'] };
+  const KUOTA = { semak: [3, 'semakan tugasan'], tanya: [5, 'soalan Tanya AI'], buku: [10, 'permintaan Buku Nota AI'], kerja: [3, 'permintaan Kerjaya AI'], alat: [12, 'permintaan Alat Pelajar'], alatpro: [1, 'percubaan alat Premium'] };
   const today = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kuala_Lumpur' }).format(new Date());
   const used = () => { const u = store.get('kuota', {}); return u.d === today() ? u : { d: today() }; };
   const rmFmt = v => 'RM' + (v % 1 ? v.toFixed(2) : v);
