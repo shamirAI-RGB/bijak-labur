@@ -7,7 +7,8 @@ on:
     branches: [main]
     paths: ['worker-fiqh/**', 'js/fiqh-data.js', '.github/workflows/fiqh.yml']
   pull_request:
-    paths: ['worker-fiqh/**', 'js/fiqh-data.js', '.github/workflows/fiqh.yml']
+    # js/fiqh-apa.js (rujukan APA dalam app) diuji dalam worker-fiqh/test.mjs; ia tidak memerlukan pemasangan semula pelayan
+    paths: ['worker-fiqh/**', 'js/fiqh-data.js', 'js/fiqh-apa.js', '.github/workflows/fiqh.yml']
   workflow_dispatch:
   # Setiap hari (03:17 waktu Malaysia): ambil fatwa baharu daripada laman web Jabatan Mufti dan pasang semula pelayan
   # dengan indeks yang dikemas kini. Larian ini juga mengekalkan teks kitab dalam actions/cache (dipadam jika tidak

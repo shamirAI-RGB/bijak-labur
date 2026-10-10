@@ -161,8 +161,8 @@ export function verify(ans, pages, docs = [], cetak = null) {
       // Teks muka surat itu sahaja dipulangkan (bukan dokumen penuh), supaya app boleh memaparkannya jika tiada gambar muka surat
       const halaman = str(d.teks, TEKS_HALAMAN);
       out = doc.jenis === 'mufti'
-        // Artikel laman Mufti: pautan ke halaman asal, dengan nama jabatan, negeri dan tarikh terbit
-        ? { ...base, id, jenis: 'fatwa', tajuk: str(d.tajuk, 300) || doc.by, oleh: [doc.by, tarikhMs(d.tarikh)].filter(Boolean).join(', '), negeri: doc.negeri, url: d.url, teks_halaman: halaman, petikan: ok ? petikan : '', disahkan: ok }
+        // Artikel laman Mufti: pautan ke halaman asal, dengan nama jabatan, negeri dan tarikh terbit (tarikh ISO untuk rujukan APA dalam app)
+        ? { ...base, id, jenis: 'fatwa', tajuk: str(d.tajuk, 300) || doc.by, oleh: [doc.by, tarikhMs(d.tarikh)].filter(Boolean).join(', '), tarikh: tarikhMs(d.tarikh) ? d.tarikh : '', negeri: doc.negeri, url: d.url, teks_halaman: halaman, petikan: ok ? petikan : '', disahkan: ok }
         : doc.jenis === 'kitab'
         ? { ...base, id, jenis: 'kitab', tajuk: doc.name, ar: doc.ar, oleh: doc.by, url: pageUrl(d.k, d.n), shamela: String(d.n), ...cetakan(d.teks), ...(d.cetak || {}), teks_halaman: halaman, petikan: ok ? petikan : '', disahkan: ok }
         : { ...base, id, jenis: 'dokumen', tajuk: doc.name, oleh: `${doc.by}, ${doc.tahun}`, url: pageUrl(d.k, d.n), pdf: d.n, ...(d.gambar ? { gambar: d.gambar } : { teks_halaman: halaman }), petikan: ok ? petikan : '', disahkan: ok };
