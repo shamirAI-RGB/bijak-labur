@@ -38,17 +38,31 @@ export function artikelOk(url, tajuk, teks) {
   if (String(teks).length < 300) return false;
   let path = url;
   try { const u = new URL(url); path = decodeURIComponent(u.pathname + u.search); } catch {}
+  tajuk = tanpaNamaLaman(String(tajuk));
   // Tajuk yang jelas tentang hukum (cth. "Hukum Menyertai Program ...") tidak ditolak walaupun URL di bawah "berita" atau "program"
   if ((TOLAK.test(path + ' ' + tajuk) && !/hukum|irsyad|soal[- ]jawab|bayan|kafi|musykil|keputusan|pandangan/i.test(tajuk))
-    || /^(utama|laman utama|home|navigation|soalan lazim)$/i.test(String(tajuk).trim())) return false;
-  return istilah(teks) >= (KUNCI.test(path + ' ' + tajuk) ? 3 : 6);
+    || /^(utama|laman utama|home|navigation|soalan lazim)$/i.test(tajuk.trim())) return false;
+  // Halaman butiran di bawah laluan fatwa (cth. /fatwa/larangan-penggunaan-kalimah-allah): teks warta fatwa jarang memakai
+  // istilah seperti "hukum" atau "dalil", jadi syaratnya lebih rendah
+  const butiran = /\/(fatwa|irsyad|soal-?jawab|bayan|kafi|warta|musykil)[^/?]*\/[^/?]*\p{L}{3}[^/?]*-[^/?]*-[^/?]+\/?$/iu.test(path);
+  return istilah(teks) >= (butiran ? 2 : KUNCI.test(path + ' ' + tajuk) ? 3 : 6);
 }
+// "Tajuk artikel | Jabatan Mufti Negeri X": buang nama laman di hujung atau di awal tajuk
+const NAMA_LAMAN = /mufti|portal|laman web|jabatan|pejabat|muftins/i;
+export const tanpaNamaLaman = t => {
+  const b = String(t).split(/\s+[|–—-]\s+/);
+  while (b.length > 1 && (NAMA_LAMAN.test(b[b.length - 1]) || tajukUmum(b[b.length - 1]))) b.pop();
+  while (b.length > 1 && (NAMA_LAMAN.test(b[0]) || tajukUmum(b[0]))) b.shift();
+  return b.join(' - ').trim();
+};
 // Tajuk umum (nama laman atau pautan "Lihat PDF") diganti dengan ayat pertama artikel atau nama fail
 export const tajukUmum = (t, laman = '') => !t || t === laman || /^privacy policy$|^dasar privasi:?$/i.test(t.trim()) || !/\p{L}{3}/u.test(t) || /^(lihat|muat ?turun|download|klik|baca|papar|view|buka)\b|^pdf$|^(jabatan|pejabat) mufti|^portal|^laman web|^https?:|bank soalan|borang pertanyaan/i.test(t.trim());
 // Nama fail (atau segmen URL terakhir yang bermakna, cth. .../buku-himpunan-fatwa/file), dengan huruf besar CamelCase dipisahkan
 export const tajukFail = url => {
   const seg = String(url).split(/[?#]/)[0].split('/').map(x => { try { return decodeURIComponent(x); } catch { return x; } })
-    .filter(x => /\p{L}{3}/u.test(x) && !/^(file|download|view|index\.php|uploads)$/i.test(x));
+    // Segmen token (cth. JWT dalam pautan muat turun) bukan nama fail
+    .filter(x => /\p{L}{3}/u.test(x) && !/^(file|download|view|index\.php|uploads)$/i.test(x)
+      && !/^eyJ/.test(x) && !(x.length >= 24 && !/[-_ .]/.test(x.replace(/\.pdf$/i, '')) && /\d/.test(x) && /[A-Z]/.test(x) && /[a-z]/.test(x)));
   return (seg.pop() || '').replace(/\.pdf$/i, '').replace(/^\d+[-_]/, '').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/[-_+]+/g, ' ').replace(/\s+/g, ' ').trim();
 };
 // Baris pertama yang kelihatan seperti tajuk atau soalan (sekurang-kurangnya 4 perkataan), selain tajuk umum laman
@@ -104,9 +118,7 @@ const meta = (html, nama) => {
 export function calonTajuk(html) {
   const bersih = t => teksHtml(t).replace(/\s+/g, ' ').trim();
   const title = bersih((html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i) || [])[1] || '');
-  // "Tajuk artikel | Jabatan Mufti Negeri X": buang bahagian yang ialah nama laman
-  const bahagian = title.split(/\s+[|–—-]\s+/).filter((x, i, a) => !tajukUmum(x) && !(a.length > 1 && /mufti|portal|laman web|jabatan|pejabat|muftins/i.test(x)));
-  return [...new Set([meta(html, 'og:title'), bahagian.join(' - '), ...[...html.matchAll(/<h1\b[^>]*>([\s\S]*?)<\/h1>/gi)].map(m => bersih(m[1])), title]
+  return [...new Set([tanpaNamaLaman(meta(html, 'og:title')), tanpaNamaLaman(title), ...[...html.matchAll(/<h1\b[^>]*>([\s\S]*?)<\/h1>/gi)].map(m => bersih(m[1])), title]
     .map(t => t.replace(/\s+/g, ' ').trim()).filter(Boolean))];
 }
 /** Tajuk halaman: calon pertama yang bukan tajuk umum (umum(t) = true bagi nama laman atau tajuk yang berulang pada banyak halaman) */

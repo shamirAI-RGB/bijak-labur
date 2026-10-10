@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import worker, { readJson, NOTA_PDF, kataKunci, verify, collectRetrieved, norm, normUrl, parseAnswer, MODEL, GEMINI_MODEL, GEMINI_FALLBACKS, DOMAINS } from './src/app.js';
 import { BY_ID, CORPUS_TEXT } from './src/corpus.js';
 import { MODEN, KITAB, MUFTI, DOC, buildIndex, muftiDocs, potong, bahagianPdf, search, expand, pageUrl, pagesText, tokens, cetakan, cetakPdf, assetTag } from './src/rujukan.js';
-import { robots, kandungan, tarikhHtml, tajukHtml, pautanHtml, artikelOk, tajukUmum, tajukFail, tajukTeks, KUNCI, ABAI } from './scripts/muat-mufti.mjs';
+import { robots, kandungan, tarikhHtml, tajukHtml, pautanHtml, artikelOk, tajukUmum, tajukFail, tajukTeks, tanpaNamaLaman, KUNCI, ABAI } from './scripts/muat-mufti.mjs';
 import { clean, semakBody, systemFor } from './src/semak.js';
 import { clean as cleanK, kaloriBody, check as checkK } from './src/kalori.js';
 import { blocked, check as checkG, promptBody, GAYA, FLUX } from './src/gambar.js';
@@ -358,6 +358,17 @@ assert.equal(d.status, 'tidak_pasti');
   assert.ok(tajukUmum('***') && tajukUmum('https://x.gov.my/a.pdf') && tajukUmum('\u2003 BANK SOALAN \u2003 BORANG PERTANYAAN'));
   assert.equal(tajukTeks('BANK SOALAN BORANG PERTANYAAN\nKategori Subjek : IBADAH SOLAT\nSoalan: Adakah sah solat memakai stokin?\nJawapan...'), 'Adakah sah solat memakai stokin?');
   assert.equal(tajukFail('https://mufti.penang.gov.my/index.php/doclink/buku-himpunan-keputusan-fatwa-negeri-pulau-pinang-tahun-1995-2000/***'), 'buku himpunan keputusan fatwa negeri pulau pinang tahun 1995 2000');
+  // Pautan muat turun dengan token (JWT) di hujung: tajuk daripada segmen sebelumnya
+  assert.equal(tajukFail('https://mufti.penang.gov.my/index.php/doclink/perspektif-islam-isu-mental/eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ4In0.Ab12Cd34'), 'perspektif islam isu mental');
+  assert.equal(tajukFail('https://x.gov.my/dl/hukum-zakat/aB3dE5fG7hJ9kL1mN3pQ5rS7'), 'hukum zakat');
+  // Warta fatwa di bawah /fatwa/<tajuk>: nama laman dalam tajuk tidak menolaknya, dan syarat istilahnya lebih rendah
+  const WARTA = 'Majlis Fatwa Negeri Melaka telah bersetuju bahawa penggunaan kalimah Allah adalah dilarang kepada orang bukan Islam. ' + 'Butiran warta. '.repeat(30);
+  assert.ok(artikelOk('https://www.muftimelaka.gov.my/fatwa/larangan-penggunaan-kalimah-allah-kepada-orang-bukan-islam', 'Larangan Penggunaan Kalimah Allah | Jabatan Mufti Negeri Melaka', WARTA + ' Hukumnya haram.'));
+  assert.ok(artikelOk('https://www.muftimelaka.gov.my/fatwa/pengharaman-ajaran-qadiani', 'Pengharaman Ajaran Qadiani | Jabatan Mufti Negeri Melaka', HUKUM));
+  assert.ok(!artikelOk('https://www.muftimelaka.gov.my/fatwa?cat=aqidah', 'Warta Fatwa Negeri Melaka', WARTA));
+  assert.ok(!artikelOk('https://mufti.kedah.gov.my/bahagian-fatwa/', 'Bahagian Fatwa', WARTA + ' Hukumnya haram.'));
+  assert.equal(tajukHtml('<meta property="og:title" content="Pengharaman Ajaran Qadiani | Jabatan Mufti Negeri Melaka">'), 'Pengharaman Ajaran Qadiani');
+  assert.equal(tanpaNamaLaman('Hukum Solat - Panduan Ringkas'), 'Hukum Solat - Panduan Ringkas');
   assert.equal(tajukFail('https://www.muftimelaka.gov.my/uploads/page_content/p61/FATWA23-KewajipanMembayarZakatPendapatan.pdf'), 'FATWA23 Kewajipan Membayar Zakat Pendapatan');
   // Tajuk: <title> tanpa nama laman; tajuk yang berulang pada banyak halaman (cth. "Privacy Policy" dalam modul) dilangkau
   const jm = t => `<html><head><title>${t} - Jabatan Mufti Negeri Kelantan</title></head><body><h1>Privacy Policy</h1><h1>${t}</h1></body></html>`;

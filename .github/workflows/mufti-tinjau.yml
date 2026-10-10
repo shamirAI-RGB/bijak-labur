@@ -4,7 +4,7 @@ name: Tinjau laman Mufti (sementara)
 on:
   push:
     branches: [claude/fatwa-laman-mufti]
-    paths: ['worker-fiqh/scripts/muat-mufti.mjs', 'js/fiqh-data.js', '.github/workflows/mufti-tinjau.yml']
+    paths: ['worker-fiqh/scripts/muat-mufti.mjs', 'worker-fiqh/scripts/tinjau-sementara.mjs', 'js/fiqh-data.js', '.github/workflows/mufti-tinjau.yml']
 
 permissions:
   contents: read
@@ -27,6 +27,10 @@ jobs:
           path: worker-fiqh/.cache/mufti
           key: mufti-tinjau-v1-${{ github.run_id }}
           restore-keys: mufti-tinjau-v1-
+      - name: Struktur halaman fatwa
+        timeout-minutes: 5
+        continue-on-error: true
+        run: node scripts/tinjau-sementara.mjs
       - name: Muat fatwa laman Mufti
         timeout-minutes: 20
         env:
