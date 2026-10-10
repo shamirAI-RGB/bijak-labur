@@ -25,6 +25,7 @@ import { buku, check as checkBuku } from './buku.js';
 import { kerja, check as checkKerja } from './kerja.js';
 import { manusia, check as checkManusia } from './manusia.js';
 import { coach, check as checkCoach } from './coach.js';
+import { mulaGuna, catatGuna, hantarGuna } from './guna.js';
 import { audit, check as checkAudit } from './audit.js';
 export { GEMINI_MODEL, GEMINI_FALLBACKS, geminiModels };
 
@@ -266,6 +267,7 @@ export async function ask(env, question, client, docs = []) {
       output_config: { effort: 'medium' },
       betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default'
     });
+    catatGuna(env, { penyedia: 'claude', model: res.model || MODEL, usage: res.usage });
     blocks.push(...res.content);
     if (res.stop_reason !== 'pause_turn') break;
     messages.push({ role: 'assistant', content: res.content });
@@ -435,9 +437,11 @@ async function halaman(env, url) {
 }
 
 export default {
-  async fetch(req, env) {
+  async fetch(req, env, ctx) {
     const url = new URL(req.url), h = cors(req, env);
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: h });
+    // Salinan env bagi permintaan ini mencatat token setiap panggilan model; dihantar ke Pusat Kawalan selepas jawapan (guna.js)
+    env = mulaGuna(env, url.pathname);
     try {
       if (req.method === 'POST' && url.pathname === '/tanya') return await tanya(req, env, url, h);
       if (req.method === 'POST' && url.pathname === '/semak') return await semakRoute(req, env, h);
@@ -450,6 +454,8 @@ export default {
     } catch (e) {
       console.log('ralat', e && e.stack || e);
       return json({ error: 'Ralat pelayan. Cuba lagi sebentar.' }, 500, h);
+    } finally {
+      if (env.GUNA && env.GUNA.rekod.length) { const kerja = hantarGuna(env); if (ctx && ctx.waitUntil) ctx.waitUntil(kerja); }
     }
   }
 };

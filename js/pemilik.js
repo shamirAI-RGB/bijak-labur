@@ -99,6 +99,7 @@
         <button class="km-item" type="button" data-pm="iklan">${icon('star')}<span><b>Urus iklan (4 ruang)</b><small class="muted">Gambar, tajuk, pautan, tempoh dan kiraan klik</small></span></button>
         <a class="km-item" href="#nota" data-close>${icon('bookmark')}<span><b>Kedai nota</b><small class="muted">Tambah nota, QR bayaran dan WhatsApp</small></span></a>
         <a class="km-item" href="pejabat-agen.html">${icon('grid')}<span><b>Pejabat AI Agent</b><small class="muted">8 agen animasi dan status langsung, hanya untuk pemilik</small></span></a>
+        <a class="km-item" href="pusat.html">${icon('chart')}<span><b>Pusat Kawalan</b><small class="muted">Pelawat langsung, token AI, kesihatan pelayan dan agen Telegram</small></span></a>
         <button class="km-item" type="button" data-pm="reset">${icon('refresh')}<span><b>Kembalikan semua teks asal</b><small class="muted">Buang semua perubahan teks</small></span></button>
         <button class="km-item" type="button" data-pm="keluar">${icon('door')}<span><b>Log keluar pemilik</b><small class="muted">Kunci dibuang daripada peranti ini</small></span></button>
       </div>`, d => d.addEventListener('click', async e => {

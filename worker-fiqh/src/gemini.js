@@ -1,4 +1,5 @@
 import { toJsonSchema, potongJson, penghalaGenerate, combo } from './penghala.js';
+import { catatGuna } from './guna.js';
 
 // Panggilan Gemini (peringkat percuma) dengan model sandaran, dikongsi oleh Tanya AI dan Semak Kertas.
 // Diagnosis: Flash penuh kerap memulangkan 503 "high demand"; Flash-Lite menjawab dalam ~2 saat.
@@ -31,7 +32,9 @@ export async function routerGenerate(env, body) {
   ];
   const input = { messages, max_tokens: Math.min(g.maxOutputTokens || 2048, 4096), temperature: g.temperature ?? 0.3 };
   if (g.responseSchema) input.response_format = { type: 'json_schema', json_schema: toJsonSchema(g.responseSchema) };
+  const t0 = Date.now();
   const out = await env.AI.run(env.ROUTER_MODEL || ROUTER_MODEL, input);
+  catatGuna(env, { penyedia: 'workers-ai', model: env.ROUTER_MODEL || ROUTER_MODEL, usage: out && out.usage, ms: Date.now() - t0 });
   let text = out && out.response;
   if (text && typeof text === 'object') text = JSON.stringify(text);
   text = String(text || '');
@@ -63,10 +66,11 @@ async function geminiOnly(env, body) {
   if (!env.GEMINI_API_KEY) throw Object.assign(new Error('tiada GEMINI_API_KEY'), { status: 503 });
   let err;
   for (const model of geminiModels(env)) {
+    const t0 = Date.now();
     const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
       method: 'POST', headers: { 'content-type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY }, body
     });
-    if (r.ok) return r.json();
+    if (r.ok) { const d = await r.json(); catatGuna(env, { penyedia: 'gemini', model, usage: d.usageMetadata, ms: Date.now() - t0 }); return d; }
     err = new Error(`Gemini ${model} ${r.status} ${(await r.text()).slice(0, 300)}`);
     err.status = r.status === 503 ? 529 : r.status;
     console.log(err.message);

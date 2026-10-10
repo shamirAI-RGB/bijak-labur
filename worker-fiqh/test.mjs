@@ -796,3 +796,38 @@ console.log('Semua ujian Tanya AI lulus');
   assert.deepEqual(cetakPdf(C, 6), { penerbit: 'A', edisi: '1' });
   console.log('naskhah berbilang OK');
 }
+
+// Pusat Kawalan: token setiap panggilan model dicatat dan dihantar sekali selepas jawapan (guna.js)
+{
+  const { mulaGuna, catatGuna, hantarGuna } = await import('./src/guna.js');
+  const e0 = mulaGuna({ A: 1 }, '/tanya');
+  assert.equal(e0.A, 1, 'env asal masih boleh dibaca');
+  catatGuna(e0, { penyedia: 'gemini', model: 'm', usage: { promptTokenCount: 10, candidatesTokenCount: 4, cachedContentTokenCount: 2 } });
+  catatGuna(e0, { penyedia: 'claude', model: 'c', usage: { input_tokens: 7, output_tokens: 3, cache_read_input_tokens: 100 }, ok: false });
+  catatGuna(e0, { penyedia: 'groq', model: 'q', usage: { prompt_tokens: 1, completion_tokens: 2 } });
+  assert.deepEqual(e0.GUNA.rekod.map(r => [r.laluan, r.penyedia, r.masuk, r.keluar, r.cache, r.ok]), [['/tanya', 'gemini', 10, 4, 2, true], ['/tanya', 'claude', 7, 3, 100, false], ['/tanya', 'groq', 1, 2, 0, true]]);
+  catatGuna({}, { penyedia: 'x' });   // tanpa GUNA: diabaikan
+  assert.equal(await hantarGuna(e0), false, 'tanpa PUSAT_URL tiada penghantaran');
+
+  // Semak Kertas dengan Gemini: usageMetadata sampai ke /catat dengan rahsia kongsi, melalui ctx.waitUntil
+  const senv = { GEMINI_API_KEY: 'g', ALLOWED_ORIGINS: env.ALLOWED_ORIGINS, PUSAT_URL: 'https://pusat.bijaklabur.my/', PUSAT_SECRET: 'rahsia-kongsi' };
+  const raw = { skor: 61, pembetulan: [], jumlah: 47, penambahbaikan: [] };
+  let catat = null, auth = '';
+  const tunggu = [];
+  globalThis.fetch = async (u, init) => {
+    if (String(u) === 'https://pusat.bijaklabur.my/catat') { catat = JSON.parse(init.body); auth = init.headers.authorization; return new Response('{"ok":true}'); }
+    return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify(raw) }] }, finishReason: 'STOP' }], usageMetadata: { promptTokenCount: 321, candidatesTokenCount: 45, totalTokenCount: 366 } }));
+  };
+  const r = await worker.fetch(new Request(W + '/semak', { method: 'POST', headers: { origin: 'https://bijaklabur.my', 'content-type': 'application/json' }, body: JSON.stringify({ text: 'Kajian ini menunjukan bahawa pelajar yang mengulangkaji secara berjadual mendapat markah lebih tinggi daripada mereka yang tidak. '.repeat(3), lang: 'ms' }) }), senv, { waitUntil: p => tunggu.push(p) });
+  assert.equal(r.status, 200);
+  await Promise.all(tunggu);
+  assert.equal(auth, 'Bearer rahsia-kongsi');
+  assert.equal(catat.length, 1); assert.equal(catat[0].laluan, '/semak'); assert.equal(catat[0].penyedia, 'gemini'); assert.equal(catat[0].masuk, 321); assert.equal(catat[0].keluar, 45); assert.equal(catat[0].ok, true);
+  assert.ok(catat[0].ms >= 0);
+  // Tanpa panggilan AI (GET /), tiada penghantaran
+  catat = null; tunggu.length = 0;
+  await worker.fetch(new Request(W + '/', { headers: { origin: 'https://bijaklabur.my' } }), senv, { waitUntil: p => tunggu.push(p) });
+  await Promise.all(tunggu);
+  assert.equal(catat, null);
+  console.log('catatan token Pusat OK');
+}

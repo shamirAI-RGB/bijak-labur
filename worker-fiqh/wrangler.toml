@@ -10,6 +10,8 @@ routes = [{ pattern = "fiqh.bijaklabur.my", custom_domain = true }]
 
 [vars]
 ALLOWED_ORIGINS = "https://bijaklabur.my,https://www.bijaklabur.my,https://shamirai-rgb.github.io,capacitor://localhost,https://localhost"
+# Pusat Kawalan pemilik: token setiap panggilan model dilaporkan ke sini (rahsia PUSAT_SECRET mesti sama dengan worker-pusat)
+PUSAT_URL = "https://pusat.bijaklabur.my"
 
 # Had kadar percuma Cloudflare: 5 soalan seminit bagi setiap alamat IP, supaya kredit API tidak dihabiskan.
 [[unsafe.bindings]]
@@ -85,5 +87,5 @@ directory = "./aset"
 binding = "RUJUKAN"
 run_worker_first = true
 
-# Rahsia (ditetapkan oleh GitHub Actions, jangan tulis di sini): ANTHROPIC_API_KEY (Claude) atau GEMINI_API_KEY (Gemini percuma)
+# Rahsia (ditetapkan oleh GitHub Actions, jangan tulis di sini): ANTHROPIC_API_KEY (Claude) atau GEMINI_API_KEY (Gemini percuma), PUSAT_SECRET (kiraan token)
 # Pilihan: GEMINI_MODEL (lalai gemini-flash-lite-latest)
