@@ -169,7 +169,9 @@
       render();
       await refreshPrices();
       render();
-    }
+    },
+    // Dipanggil setiap kali alat dibuka: pegangan mungkin baru ditambah dalam Portfolio
+    show() { render(); }
   });
 
   document.addEventListener('premiumchange', remind);

@@ -40,7 +40,7 @@
         const need = (t * (cr + nx) - cg * cr) / nx;
         $('#cgNeed').innerHTML = need > 4 ? `<p class="down">Sasaran ${t.toFixed(2)} tidak dapat dicapai dalam satu semester (perlu PNG ${need.toFixed(2)}). Cuba sasaran dua semester.</p>`
           : need <= 0 ? `<p class="up">PNGK anda kekal di atas ${t.toFixed(2)} walaupun dengan PNG terendah.</p>`
-          : `<div class="zk-due"><span>PNG diperlukan semester depan</span><b class="num">${need.toFixed(2)}</b></div><p class="small muted">Lebih kurang purata gred ${GRADES.find(([, p]) => p <= need + 0.001 && p >= need - 0.34)?.[0] || 'A'} untuk setiap kursus.</p>`;
+          : `<div class="zk-due"><span>PNG diperlukan semester depan</span><b class="num">${need.toFixed(2)}</b></div><p class="small muted">Lebih kurang purata gred ${GRADES.slice().reverse().find(([, p]) => p >= need - 0.001)?.[0] || 'A'} untuk setiap kursus.</p>`;
       };
       $('#cgSems').addEventListener('input', e => {
         const el = e.target, sem = el.closest('.sem'); if (!sem) return;
@@ -120,8 +120,8 @@
     }
     const ops = []; let x = n, y = m;
     for (let d = trace.length - 2; d > 0; d--) {
-      const Vp = trace[d], k = x - y, dd = d - 1;
-      const pk = k === -dd || (k !== dd && Vp[off + k - 1] < Vp[off + k + 1]) ? k + 1 : k - 1;
+      const Vp = trace[d], k = x - y;
+      const pk = k === -d || (k !== d && Vp[off + k - 1] < Vp[off + k + 1]) ? k + 1 : k - 1;
       const px = Vp[off + pk], py = px - pk;
       while (x > px && y > py) { ops.push([0, a[--x]]); y--; }
       if (x === px) ops.push([1, b[--y]]); else ops.push([-1, a[--x]]);

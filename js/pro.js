@@ -55,7 +55,7 @@
       lock.innerHTML = `<span class="sc-ico">${icon('lock')}</span><div class="sc-body"><p class="sc-sub">${m.pitch}</p>
         <button class="btn sm" data-goplans>${Premium.native ? 'Lihat pelan' : 'Cuba percuma 1 hari atau langgan Premium'}</button></div>`;
     }
-    if (ok) m.init();
+    if (ok) { m.init(); if (m.show) m.show(); }
   }
   $('#toolGrid').addEventListener('click', e => { const b = e.target.closest('[data-tool]'); if (b) { open(b.dataset.tool); $('#toolsBlock').scrollIntoView({ block: 'start' }); } });
   $('#toolBack').addEventListener('click', () => open(null));
@@ -282,7 +282,8 @@
   const plain = html => { const d = document.createElement('div'); d.innerHTML = html; return d.textContent; };
   const readRef = () => {
     const r = { type: $('#rfType').value };
-    ['authors', 'year', 'title', 'container', 'publisher', 'volume', 'issue', 'pages', 'url', 'doi', 'site', 'accessed'].forEach(k => { const el = $('#rf-' + k); r[k] = el ? el.value.trim() : ''; });
+    // Medan yang disembunyikan untuk jenis sumber ini (cth. DOI bagi buku) tidak dimasukkan walaupun masih berisi
+    ['authors', 'year', 'title', 'container', 'publisher', 'volume', 'issue', 'pages', 'url', 'doi', 'site', 'accessed'].forEach(k => { const el = $('#rf-' + k); r[k] = el && !el.closest('[data-f].hidden') ? el.value.trim() : ''; });
     return r;
   };
   function renderRefs() {
@@ -340,8 +341,10 @@
   const field = (id, label, attrs = '', wide = false) => `<div class="field${wide ? ' wide' : ''}"><label for="${id}">${label}</label><input id="${id}" ${attrs || 'type="number" step="any" min="0" inputmode="decimal"'}></div>`;
   function persist(form, key, onChange) {
     const saved = store.get('t_' + key, {});
-    $$('input, select, textarea', form).forEach(el => { if (el.id && saved[el.id] != null) el.type === 'checkbox' ? el.checked = saved[el.id] : el.value = saved[el.id]; });
-    const save = () => { const o = {}; $$('input, select, textarea', form).forEach(el => { if (el.id && !el.dataset.nosave) o[el.id] = el.type === 'checkbox' ? el.checked : el.value; }); store.set('t_' + key, o); };
+    // data-nosave (atribut tanpa nilai) dan input fail tidak disimpan atau dipulihkan: nilai input fail tidak boleh ditetapkan semula
+    const keep = el => el.id && el.dataset.nosave == null && el.type !== 'file';
+    $$('input, select, textarea', form).forEach(el => { if (keep(el) && saved[el.id] != null) el.type === 'checkbox' ? el.checked = saved[el.id] : el.value = saved[el.id]; });
+    const save = () => { const o = {}; $$('input, select, textarea', form).forEach(el => { if (keep(el)) o[el.id] = el.type === 'checkbox' ? el.checked : el.value; }); store.set('t_' + key, o); };
     form.addEventListener('input', () => { save(); onChange && onChange(); });
     form.addEventListener('change', () => { save(); onChange && onChange(); });
     form.addEventListener('submit', e => e.preventDefault());
@@ -364,9 +367,10 @@
       <h2>Sumber yang sepadan</h2>${r.sources.length ? `<table>${r.sources.map(s => `<tr><td>${esc(s.name)}${s.url ? `<br><small>${esc(s.url)}</small>` : ''}</td><td class="num">${s.pct}%</td></tr>`).join('')}</table>` : `<p>${r.plag == null ? 'Semakan sumber tidak dijalankan.' : 'Tiada padanan ketara.'}</p>`}
       <h2>Teks yang disemak</h2><div class="rp-text">${esc(r.text).replace(/\n/g, '<br>')}</div>
       <p class="rp-foot">Peratus AI dan plagiarisme ialah anggaran berdasarkan ciri statistik teks dan carian sumber terbuka dan teks yang diberikan. Ia bukan bukti muktamad dan tidak setara dengan sistem semakan rasmi universiti.</p>`;
+    const title = document.title;
     document.title = 'Laporan semakan - SiswaCap';
     document.body.classList.add('printing');
-    setTimeout(() => { window.print(); document.title = 'SiswaCap'; }, 60);
+    setTimeout(() => { window.print(); document.title = title; }, 60);
   });
 
   window.addEventListener('afterprint', () => document.body.classList.remove('printing'));
