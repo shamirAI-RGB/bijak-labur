@@ -397,6 +397,9 @@ assert.equal(d.status, 'tidak_pasti');
   for (const [p, c] of mf.files) mfiles.set(p, c);
   const menv = { RUJUKAN: { fetch: async req => { const p = new URL(req.url).pathname.slice(1); return mfiles.has(p) ? new Response(mfiles.get(p)) : new Response('', { status: 404 }); } } };
   const mh = await search(menv, expand('Apakah hukum menghisap vape?'));
+  // Muka surat PDF yang hanya berkongsi istilah umum ("hukum") jauh lebih lemah daripada artikel Mufti: tidak diberi
+  assert.ok(!mh.some(h => h.id.startsWith('pdf:')), JSON.stringify(mh.map(h => [h.id, h.skor])));
+  assert.ok((await search(menv, expand('Apakah hukum melabur kripto?'))).some(h => h.id === 'pdf:jakim:2'));
   const mm = mh.filter(h => h.id.startsWith('mufti:'));
   assert.ok(mm.length >= 2 && mm.length <= 3, JSON.stringify(mh.map(h => h.id)));
   assert.deepEqual(new Set(mm.map(h => h.k)), new Set(['wp', 'sabah']));

@@ -5,7 +5,7 @@
  *
  * Teks dan indeks dibina semasa pemasangan (scripts/muat-rujukan.mjs) ke dalam folder aset worker:
  *   rujukan/meta.json          { docs: { k: bilangan muka surat }, N: jumlah muka surat, avgdl }
- *   rujukan/i/<baldi>.json     { istilah: [[k, n, berat], ...] }  berat = bahagian BM25 bagi kekerapan dan panjang muka surat
+ *   rujukan/i/<baldi>.json     (BUCKETS fail) { istilah: [[k, n, berat], ...] }  berat = bahagian BM25 bagi kekerapan dan panjang muka surat
  *   rujukan/p/<k>/<c>.json     teks muka surat c*PAGES+1 .. (c+1)*PAGES (PDF: n bermula dari 1, sama seperti #page=n;
  *                              kitab: halaman Shamela). Muka surat dikumpul supaya puluhan ribu halaman kitab kekal di bawah
  *                              had bilangan fail aset Cloudflare.
@@ -21,7 +21,8 @@ export const KITAB = Object.entries(D.KITAB).map(([k, b]) => ({ ...b, k, jenis: 
 // yang muka suratnya ialah bahagian artikel fatwa, irsyad atau soal jawab (scripts/muat-mufti.mjs)
 export const MUFTI = (D.MUFTI || []).map(m => ({ ...m, jenis: 'mufti', name: m.by, url: m.laman[0] }));
 export const DOC = Object.fromEntries([...MODEN.map(d => [d.k, { ...d, jenis: 'dokumen' }]), ...KITAB.map(d => [d.k, d]), ...MUFTI.map(d => [d.k, d])]);
-export const BUCKETS = 512;
+// Lebih banyak baldi = fail indeks yang lebih kecil, jadi setiap carian membaca lebih sedikit data (indeks membesar dengan artikel Mufti)
+export const BUCKETS = 2048;
 export const PAGES = 50;
 export const chunkPath = (k, n) => `rujukan/p/${k}/${Math.floor((n - 1) / PAGES)}.json`;
 // Maklumat artikel bagi setiap muka surat laman Mufti: [[url, tajuk, tarikh], ...] sejajar dengan rujukan/p/<k>/<c>.json
@@ -187,8 +188,11 @@ export async function search(env, query, limit = 6) {
   // Buang muka surat yang hanya berkongsi istilah umum (cth. "hukum") dengan soalan
   const ranked = [...score.values()].map(x => ({ ...x, skor: x.skor * (1 + 0.3 * (x.padan - 1)) })).sort((a, b) => b.skor - a.skor);
   // Kitab Arab dan dokumen moden disaring berasingan (skor teks Melayu lebih tinggi daripada teks Arab), supaya kedua-duanya diberi kepada model
-  const pick = (list, n) => list.filter(x => x.skor >= list[0].skor * 0.4).slice(0, n);
-  const moden = ranked.filter(x => jenisDoc(x.k) === 'dokumen');
+  const moden = ranked.filter(x => jenisDoc(x.k) === 'dokumen'), muftiSemua = ranked.filter(x => jenisDoc(x.k) === 'mufti');
+  // Dokumen moden dibandingkan juga dengan artikel Mufti (kedua-duanya teks Melayu/Inggeris): muka surat PDF yang jauh lebih
+  // lemah daripada artikel Mufti terbaik (cth. hanya berkongsi istilah umum) tidak diberi kepada model
+  const atasModen = Math.max(moden[0] ? moden[0].skor : 0, muftiSemua[0] ? muftiSemua[0].skor * 0.6 : 0);
+  const pick = (list, n) => list.filter(x => x.skor >= atasModen * 0.4).slice(0, n);
   let kitab = ranked.filter(x => DOC[x.k] && DOC[x.k].jenis === 'kitab');
   // Halaman kitab yang mempunyai gambar muka surat cetakan yang disahkan (OCR) diutamakan sedikit; halaman lain tetap diberi
   // dan dipaparkan dengan teks halaman Shamela, dengan nota bahawa gambar cetakannya belum tersedia
@@ -202,7 +206,7 @@ export async function search(env, query, limit = 6) {
   };
   // Laman Mufti: artikel berbeza dahulu, dan negeri yang berbeza sebelum artikel kedua dari negeri yang sama.
   // Skor dibandingkan dengan dokumen moden (kedua-duanya teks Melayu), supaya artikel yang lemah kaitannya tidak diberi.
-  const mufti = await pilihMufti(env, ranked.filter(x => jenisDoc(x.k) === 'mufti'), moden[0] ? moden[0].skor : 0);
+  const mufti = await pilihMufti(env, muftiSemua, moden[0] ? moden[0].skor : 0);
   const nk = kitab.length ? Math.min(mufti.length ? 3 : 4, Math.ceil(limit / 2)) : 0;
   const top = [...(moden.length ? pick(moden, limit - Math.min(nk, kitab.length) - mufti.length) : []), ...mufti, ...(kitab.length ? pelbagai(kitab, nk) : [])];
   const chunks = new Map(top.map(x => [chunkPath(x.k, x.n), null]));
