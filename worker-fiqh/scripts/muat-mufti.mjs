@@ -17,7 +17,7 @@ import '../../js/fiqh-data.js';
 
 const MUFTI = globalThis.FiqhData.MUFTI;
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..'), CACHE = join(ROOT, '.cache', 'mufti');
-const VERSI = 2;
+const VERSI = 3;
 const UA = 'Mozilla/5.0 (compatible; SiswaCap-Fatwa/1.0; +https://siswacap.my/tentang.html)';
 const DEADLINE = Date.now() + (+process.env.MUFTI_MINIT || 20) * 60000;
 const SEKATAN = +process.env.MUFTI_HAD || 0;          // had halaman bagi setiap laman dalam satu larian (0 = tiada had)
@@ -29,7 +29,7 @@ const summary = s => process.env.GITHUB_STEP_SUMMARY ? appendFile(process.env.GI
 // URL, tajuk atau teks pautan yang berkaitan fatwa dan hukum didahulukan dan diikuti lebih jauh
 export const KUNCI = /fatwa|irsyad|bayan|kafi|tashih|musykil|soal|jawab|tanya|hukum|keputusan|muzakarah|warta|fiq[h]?|feqah|ibadah|ibadat|muamalat|munakahat|zakat|halal|haram|faraid|akidah|aqidah|syariah|risalah|isu|soalan|penjelasan|pandangan|bayanat|ijtihad|e-?smaf|q-?a\b/i;
 // Halaman korporat dan berita (bukan keputusan atau penjelasan hukum), dikenal pasti melalui URL atau tajuk
-export const TOLAK = /dasar[- ]?(privasi|keselamatan|web)|penafian|hak[- ]?cipta|notis|data[- ]?terbuka|sejarah[- ](jabatan|penubuhan|bangunan|ringkas|institusi|pejabat)|visi|misi|objektif|piagam|carta|organisasi|struktur|perkhidmatan|hubungi|lokasi|profil|pengurusan|bahagian[- ]|unit[- ]|kakitangan|direktori|navigation|soalan[- ]?lazim|\bfaq\b|tender|sebut[- ]?harga|jawatan|galeri|berita|pengumuman|aktiviti|program|lawatan|kursus|seminar|tauliah|takwim|pelan[- ]strategik|maklum[- ]?balas|aduan|peta[- ]laman|sitemap|mufti[- ](pertama|kedua|ketiga|keempat|kelima|keenam|ketujuh|kelapan)|senarai[- ]mufti|arkib[- ]berita|log[- ]?masuk/i;
+export const TOLAK = /dasar[- ]?(privasi|keselamatan|web)|penafian|hak[- ]?cipta|notis|data[- ]?terbuka|sejarah[- ](jabatan|penubuhan|bangunan|ringkas|institusi|pejabat)|visi|misi|objektif|piagam|carta|organisasi|struktur|perkhidmatan|hubungi|lokasi|profil|latar[- ]belakang|privacy|policy|disclaimer|copyright|contact[- ]us|about[- ]us|mufti[- ](negeri|kerajaan)[- ]|^\/?mufti$|pengurusan|bahagian[- ]|unit[- ]|kakitangan|direktori|navigation|soalan[- ]?lazim|\bfaq\b|tender|sebut[- ]?harga|jawatan|galeri|berita|pengumuman|aktiviti|program|lawatan|kursus|seminar|tauliah|takwim|pelan[- ]strategik|maklum[- ]?balas|aduan|peta[- ]laman|sitemap|mufti[- ](pertama|kedua|ketiga|keempat|kelima|keenam|ketujuh|kelapan)|senarai[- ]mufti|arkib[- ]berita|log[- ]?masuk/i;
 // Istilah hukum: artikel mesti mengandungi beberapa istilah berbeza (halaman profil hanya menyebut "fatwa" sekali-sekala)
 const ISTILAH = /\b(hukum|hukumnya|fatwa|haram|harus|wajib|sunat|sunnah|makruh|halal|sah|batal|dalil|al-?quran|hadis|hadith|ulama|mazhab|syarak|syariat|jawapan|soalan|wallahu|imam|firman|sabda|rasulullah|ijmak|qiyas|nas)\b/gi;
 export const istilah = t => new Set((String(t).slice(0, 6000).match(ISTILAH) || []).map(x => x.toLowerCase())).size;
@@ -39,18 +39,20 @@ export function artikelOk(url, tajuk, teks) {
   let path = url;
   try { const u = new URL(url); path = decodeURIComponent(u.pathname + u.search); } catch {}
   // Tajuk yang jelas tentang hukum (cth. "Hukum Menyertai Program ...") tidak ditolak walaupun URL di bawah "berita" atau "program"
-  if ((TOLAK.test(path + ' ' + tajuk) && !/hukum|fatwa|irsyad|soal|jawab|bayan|kafi|musykil|keputusan|pandangan/i.test(tajuk))
+  if ((TOLAK.test(path + ' ' + tajuk) && !/hukum|irsyad|soal[- ]jawab|bayan|kafi|musykil|keputusan|pandangan/i.test(tajuk))
     || /^(utama|laman utama|home|navigation|soalan lazim)$/i.test(String(tajuk).trim())) return false;
   return istilah(teks) >= (KUNCI.test(path + ' ' + tajuk) ? 3 : 6);
 }
 // Tajuk umum (nama laman atau pautan "Lihat PDF") diganti dengan ayat pertama artikel atau nama fail
-export const tajukUmum = (t, laman = '') => !t || t === laman || /^(lihat|muat ?turun|download|klik|baca|papar|view|buka)\b|^pdf$|^(jabatan|pejabat) mufti|^portal|^laman web/i.test(t.trim());
+export const tajukUmum = (t, laman = '') => !t || t === laman || !/\p{L}{3}/u.test(t) || /^(lihat|muat ?turun|download|klik|baca|papar|view|buka)\b|^pdf$|^(jabatan|pejabat) mufti|^portal|^laman web|^https?:|bank soalan|borang pertanyaan/i.test(t.trim());
 export const tajukFail = url => decodeURIComponent(String(url).split(/[?#]/)[0].split('/').pop()).replace(/\.pdf$/i, '').replace(/[-_+]+|%20/g, ' ').replace(/\s+/g, ' ').trim();
-const tajukTeks = teks => (String(teks).split('\n').map(x => x.trim()).find(x => x.length >= 15) || '').slice(0, 160);
+// Baris pertama yang kelihatan seperti tajuk atau soalan (sekurang-kurangnya 4 perkataan), selain tajuk umum laman
+export const tajukTeks = (teks, umum = '') => (String(teks).split('\n').map(x => x.trim())
+  .find(x => x.length >= 15 && x.length <= 300 && x.split(/\s+/).length >= 4 && x !== umum && !tajukUmum(x)) || '').slice(0, 160);
 export const ABAI = /galeri|gallery|tender|sebut-?harga|jawatan-kosong|kerjaya|career|piagam|carta|organisasi|kakitangan|direktori|staff|login|wp-admin|wp-login|\/feed\/?$|\/tag\/|\/author\/|[?&](print|tmpl|format|share|replytocom)=|mailto:|javascript:|whatsapp|facebook\.com|twitter\.com|\.(jpe?g|png|gif|webp|svg|ico|css|js|zip|rar|docx?|xlsx?|pptx?|mp3|mp4|avi|mov|apk)(\?|$)/i;
 
 /* ---------- HTML ---------- */
-const ENT = { amp: '&', lt: '<', gt: '>', quot: '"', nbsp: ' ', apos: "'", '#39': "'", rsquo: '’', lsquo: '‘', rdquo: '”', ldquo: '“', ndash: '–', mdash: '—', hellip: '…' };
+const ENT = { amp: '&', lt: '<', gt: '>', quot: '"', nbsp: ' ', apos: "'", '#39': "'", rsquo: '’', lsquo: '‘', rdquo: '”', ldquo: '“', ndash: '–', mdash: '—', hellip: '…', emsp: ' ', ensp: ' ', thinsp: ' ', raquo: '»', laquo: '«', middot: '·', bull: '•' };
 export const entiti = s => s.replace(/&(#\d+|#x[\da-f]+|\w+);/gi, (m, e) => e[0] === '#' ? String.fromCodePoint(e[1] === 'x' || e[1] === 'X' ? parseInt(e.slice(2), 16) : +e.slice(1)) : ENT[e.toLowerCase()] ?? m);
 export const teksHtml = h => entiti(String(h || '').replace(/<(script|style|noscript|svg|template)\b[\s\S]*?<\/\1>/gi, ' ').replace(/<!--[\s\S]*?-->/g, ' ')
   .replace(/<br\s*\/?>|<\/(p|div|li|h[1-6]|tr|blockquote|section|article)>/gi, '\n').replace(/<[^>]+>/g, ' '))
@@ -279,6 +281,7 @@ async function laman(m) {
   for (const [u, aras, teks] of c.giliran) tambah(u, aras, teks);
   const senarai = new Set(c.senarai);
   let dibuka = 0;
+  const ditolak = [];
   const ambilSatu = () => giliran[0].shift() || giliran[1].shift();
   const pekerja = async () => {
     while (masa() && (!SEKATAN || dibuka < SEKATAN)) {
@@ -317,6 +320,7 @@ async function laman(m) {
         c.artikel.push([url, tajuk, tarikhSah(tarikhHtml(html, teks)), teks.slice(0, MAX_TEKS)]); sudah.add(url); dilawat[url] = 'a'; lapor.baharu++;
       } else {
         dilawat[url] = 's';
+        if (berkaitan && ditolak.length < 40) ditolak.push(`${url} | ${tajuk.slice(0, 80)} | ${teks.length} aksara | ${istilah(teks)} istilah | ${links.length} pautan`);
         if (berkaitan && !senarai.has(url)) { senarai.add(url); c.senarai.push(url); }
       }
       // Pautan diikuti jika berkaitan fatwa, atau dekat dengan halaman utama
@@ -325,6 +329,12 @@ async function laman(m) {
     }
   };
   await Promise.all(Array.from({ length: PEKERJA }, pekerja));
+  // Tajuk yang sama pada banyak artikel (cth. nama sistem soal jawab) bukan tajuk artikel: guna baris pertama teksnya
+  const kira = new Map();
+  for (const a of c.artikel) kira.set(a[1], (kira.get(a[1]) || 0) + 1);
+  for (const a of c.artikel) if (kira.get(a[1]) >= 3) a[1] = tajukTeks(a[3].split('\f')[0], a[1]) || a[1];
+  // Diagnosis: laman dengan sedikit artikel, senaraikan halaman berkaitan yang ditolak supaya penapis boleh diperbaiki
+  if (c.artikel.length < 10 && ditolak.length) for (const d of ditolak.slice(0, 25)) log(`  ditolak: ${d}`);
   c.giliran = [...giliran[0], ...giliran[1]];
   c.dikemas = new Date().toISOString();
   await simpan(c);

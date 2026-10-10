@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import worker, { readJson, NOTA_PDF, kataKunci, verify, collectRetrieved, norm, normUrl, parseAnswer, MODEL, GEMINI_MODEL, GEMINI_FALLBACKS, DOMAINS } from './src/app.js';
 import { BY_ID, CORPUS_TEXT } from './src/corpus.js';
 import { MODEN, KITAB, MUFTI, DOC, buildIndex, muftiDocs, potong, bahagianPdf, search, expand, pageUrl, pagesText, tokens, cetakan, cetakPdf, assetTag } from './src/rujukan.js';
-import { robots, kandungan, tarikhHtml, tajukHtml, pautanHtml, artikelOk, tajukUmum, tajukFail, KUNCI, ABAI } from './scripts/muat-mufti.mjs';
+import { robots, kandungan, tarikhHtml, tajukHtml, pautanHtml, artikelOk, tajukUmum, tajukFail, tajukTeks, KUNCI, ABAI } from './scripts/muat-mufti.mjs';
 import { clean, semakBody, systemFor } from './src/semak.js';
 import { clean as cleanK, kaloriBody, check as checkK } from './src/kalori.js';
 import { blocked, check as checkG, promptBody, GAYA, FLUX } from './src/gambar.js';
@@ -353,6 +353,10 @@ assert.equal(d.status, 'tidak_pasti');
   assert.ok(!artikelOk('https://x.gov.my/a/1', 'Hukum', 'pendek'));
   assert.ok(tajukUmum('Lihat PDF') && tajukUmum('Jabatan Mufti Negeri Selangor') && tajukUmum('Utama X', 'Utama X') && !tajukUmum('Hukum Vape'));
   assert.equal(tajukFail('https://mufti.sabah.gov.my/wp-content/uploads/2026/07/Fatwa_Zakat_Penggajian.pdf'), 'Fatwa Zakat Penggajian');
+  assert.ok(tajukUmum('***') && tajukUmum('https://x.gov.my/a.pdf') && tajukUmum('\u2003 BANK SOALAN \u2003 BORANG PERTANYAAN'));
+  assert.equal(tajukTeks('BANK SOALAN BORANG PERTANYAAN\nSoalan\nAdakah sah solat memakai stokin?\nJawapan...'), 'Adakah sah solat memakai stokin?');
+  assert.ok(!artikelOk('https://mufti.johor.gov.my/profil/bahagian-fatwa/', 'Bahagian Fatwa', HUKUM));
+  assert.ok(!artikelOk('https://mufti.kelantan.gov.my/index.php?view=category&id=52', 'Privacy Policy', HUKUM));
   // PDF: muka surat pendek digabung, setiap bahagian memaut ke muka surat pertamanya
   assert.deepEqual(bahagianPdf('a\fb\f\fc', 3), [['a\nb', 1], ['c', 4]]);
   // Muka surat 2 lebih panjang daripada satu bahagian: dipecah dua, kedua-duanya memaut ke muka surat 2
