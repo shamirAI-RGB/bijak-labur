@@ -994,13 +994,13 @@ const KES = [
     await masa(page);
     await t.buka('#sihat');
     // Lalai: lelaki 21 tahun, 165 cm, 60 kg, aktiviti ringan => BMR 1,531, TDEE 2,105
-    await t.ada('#shProf .field:last-child span', /^Kalori asas \(BMR\) 1,531 kcal · keperluan harian 2,105 kcal/);
+    await t.ada('#shProf .sh-bmr', /^Kalori asas \(BMR\) 1,531 kcal · keperluan harian 2,105 kcal/);
     await t.pilih('#pJ', 'p'); await t.isi('#pU', '25'); await t.isi('#pT', '160'); await t.isi('#pB', '55');
     await t.pilih('#pA', '1.55'); await t.pilih('#pM', 'turun');
     await t.klik('#shProf button[type=submit]');
     await t.ada('.toast', /^Profil disimpan$/);
     // BMR = 10(55) + 6.25(160) - 5(25) - 161 = 1,264; TDEE = 1,264 x 1.55 = 1,959; sasaran turun berat = 1,459; BMI = 21.5
-    await t.ada('#shProf .field:last-child span', /^Kalori asas \(BMR\) 1,264 kcal · keperluan harian 1,959 kcal/);
+    await t.ada('#shProf .sh-bmr', /^Kalori asas \(BMR\) 1,264 kcal · keperluan harian 1,959 kcal/);
     await t.ada('.sh-prof summary span', /^BMI 21\.5 · Normal \(piawaian Asia\)$/);
     await t.ada('.sh-today .sh-ring:first-child p', /^Sasaran 1,459 · baki 1,459 \(termasuk 0 dibakar\)$/);
     // Langkah manual: 5,000 langkah x 0.664 m = 3.3 km; dibakar 5,000 x 0.04 x 55/70 = 157 kcal

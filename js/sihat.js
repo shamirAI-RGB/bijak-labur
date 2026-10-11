@@ -5,7 +5,7 @@
   if (!root) return;
   const API = (store.get('fiqh_api', '') || 'https://fiqh.bijaklabur.my').replace(/\/$/, '');
   const MEALS = [['sarapan', 'Sarapan'], ['tengahari', 'Makan tengah hari'], ['petang', 'Minum petang'], ['malam', 'Makan malam'], ['snek', 'Snek']];
-  const AKTIF = [[1.2, 'Jarang bersenam'], [1.375, 'Ringan (1 hingga 3 hari seminggu)'], [1.55, 'Sederhana (3 hingga 5 hari)'], [1.725, 'Aktif (6 hingga 7 hari)']];
+  const AKTIF = [[1.2, 'Jarang bersenam'], [1.375, 'Ringan (1 hingga 3 hari)'], [1.55, 'Sederhana (3 hingga 5 hari)'], [1.725, 'Aktif (6 hingga 7 hari)']];
 
   const day = (d = new Date()) => d.toLocaleDateString('en-CA');
   let P = Object.assign({ jantina: 'l', umur: 21, tinggi: 165, berat: 60, aktif: 1.375, matlamat: 'kekal', sasaranLangkah: 8000 }, store.get('sihat_profil', {}));
@@ -228,7 +228,8 @@
             <div class="field"><label for="pA">Tahap aktiviti</label><select id="pA">${AKTIF.map(([v, n]) => `<option value="${v}" ${v === P.aktif ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
             <div class="field"><label for="pM">Matlamat</label><select id="pM"><option value="turun" ${P.matlamat === 'turun' ? 'selected' : ''}>Turunkan berat (−0.5 kg seminggu)</option><option value="kekal" ${P.matlamat === 'kekal' ? 'selected' : ''}>Kekalkan berat</option><option value="naik" ${P.matlamat === 'naik' ? 'selected' : ''}>Naikkan berat</option></select></div>
             <div class="field"><label for="pS">Sasaran langkah sehari</label><input id="pS" type="number" min="1000" max="40000" step="500" value="${P.sasaranLangkah}"></div>
-            <div class="field"><span class="muted small">Kalori asas (BMR) ${fmt(T.bmr)} kcal · keperluan harian ${fmt(T.tdee)} kcal (formula Mifflin-St Jeor)</span><button class="btn" type="submit">Simpan profil</button></div>
+            <button class="btn" type="submit">Simpan profil</button>
+            <p class="muted small sh-bmr">Kalori asas (BMR) ${fmt(T.bmr)} kcal · keperluan harian ${fmt(T.tdee)} kcal (formula Mifflin-St Jeor)</p>
           </form>
         </details>
       </div>

@@ -135,8 +135,8 @@
 
       <div class="block-head"><h2>Rajah aliran</h2></div>
       <div class="two-col">
-        <figure class="card rajah"><figcaption>Proses pensijilan halal Malaysia</figcaption><img src="images/rajah/pensijilan-halal.svg" alt="Rajah aliran pensijilan halal: sediakan dokumen, mohon melalui MYeHALAL, bayar fi, semakan dokumen, audit premis, Panel Pengesahan Halal, sijil dikeluarkan, kemudian pemantauan dan pembaharuan" loading="lazy" decoding="async"></figure>
-        <figure class="card rajah"><figcaption>Kitaran tindakan NCR</figcaption><img src="images/rajah/aliran-ncr.svg" alt="Rajah kitaran NCR: penemuan audit, rekod NCR, analisis punca, tindakan pembetulan, semak keberkesanan, tutup NCR dan tindakan pencegahan" loading="lazy" decoding="async"></figure>
+        <figure class="card rajah"><figcaption>Proses pensijilan halal Malaysia</figcaption><a class="rajah-buka" href="images/rajah/pensijilan-halal.svg" target="_blank" rel="noopener"><img src="images/rajah/pensijilan-halal.svg" alt="Rajah aliran pensijilan halal: sediakan dokumen, mohon melalui MYeHALAL, bayar fi, semakan dokumen, audit premis, Panel Pengesahan Halal, sijil dikeluarkan, kemudian pemantauan dan pembaharuan" loading="lazy" decoding="async"></a></figure>
+        <figure class="card rajah"><figcaption>Kitaran tindakan NCR</figcaption><a class="rajah-buka" href="images/rajah/aliran-ncr.svg" target="_blank" rel="noopener"><img src="images/rajah/aliran-ncr.svg" alt="Rajah kitaran NCR: penemuan audit, rekod NCR, analisis punca, tindakan pembetulan, semak keberkesanan, tutup NCR dan tindakan pencegahan" loading="lazy" decoding="async"></a></figure>
       </div>
       <p class="source">Senarai semak ringkas disusun berdasarkan MS 1500:2019 dan Manual Prosedur Pensijilan Halal Malaysia (Domestik) 2020. Senarai semak penuh setiap skim merujuk MPPHM 2020, MHMS 2020, standard MS bagi skim itu dan undang-undang berkaitan, dengan rujukan bagi setiap item. Semuanya untuk tujuan pembelajaran. Ia bukan pengganti audit rasmi JAKIM atau JAIN. Rujuk <a href="https://myehalal.halal.gov.my" target="_blank" rel="noopener">MYeHALAL</a> untuk keperluan terkini.</p>`;
   }
