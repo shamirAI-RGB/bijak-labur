@@ -36,7 +36,7 @@
 
 /* ---------- Jalur putih ---------- */
 .xb {
-  --xb-ink: #121212; --xb-muted: #8a8a86; --xb-paper: #f5f4f0;
+  --xb-ink: #121212; --xb-muted: #686864; --xb-paper: #f5f4f0;
   position: relative; width: 100vw; margin: -28px calc(50% - 50vw) 34px; padding: clamp(44px, 7vw, 96px) max(16px, calc(50vw - 544px));
   background: var(--xb-paper); color: var(--xb-ink); font-family: "Schibsted Grotesk", var(--font);
 }

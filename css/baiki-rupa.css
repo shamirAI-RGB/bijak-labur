@@ -1,0 +1,61 @@
+/* SiswaCap: pembaikan rupa selepas audit setiap halaman (telefon dan desktop, tema Putih/Hitam, Arab RTL).
+   Dimuat paling akhir. Hanya membaiki kecacatan; rupa asal tidak diubah. */
+
+/* Kad "Belajar Melabur / Pasaran" di halaman utama: kad genap diturunkan 22px, jadi bahagian bawahnya terpotong oleh trek */
+.xb-kad-track { padding-bottom: 34px; }
+.xb-arah { margin-top: -10px; }
+
+/* Grid alat di halaman utama (desktop, tema Hitam): kad bersentuhan antara baris */
+@media (min-width: 900px) {
+  :root:not([data-theme="light"]) .home-main > .shortcut-row { row-gap: 12px; border-top: 0; }
+}
+
+/* "Dalam edisi ini": huruf besar kecil perlu jarak huruf positif, bukan jarak tajuk paparan tema Hitam */
+:root .tk-index h2 { font-family: var(--font); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.16em; }
+
+/* Jadual waktu solat bulanan: lajur tarikh kekal kelihatan semasa jadual dileret, tarikh Hijri di baris sendiri */
+table.month th:first-child, table.month td:first-child { position: sticky; inset-inline-start: 0; z-index: 1; background-color: var(--surface); box-shadow: inset -1px 0 0 var(--border); }
+:root[dir="rtl"] table.month th:first-child, :root[dir="rtl"] table.month td:first-child { box-shadow: inset 1px 0 0 var(--border); }
+table.month tr.today td:first-child { background: linear-gradient(var(--brand-soft), var(--brand-soft)) var(--surface); }
+table.month td:first-child .muted { display: block; font-size: 0.72rem; line-height: 1.2; }
+table.month td:first-child { line-height: 1.25; }
+
+/* Rajah aliran Audit Halal: terlalu kecil untuk dibaca (teks kira-kira 6px); kini selebar kad dan boleh dibuka saiz penuh */
+.card.rajah .rajah-buka { display: block; cursor: zoom-in; border-radius: 10px; }
+.card.rajah img { width: auto; height: auto; max-width: 100%; max-height: 900px; }
+:root:not([data-theme="light"]) .rajah img { background: #ecebe6; }
+
+/* Ikon yang melekat pada teks butang pautan (cth. "Mengikut lokasi anda", "Muat naik PDF/DOCX") */
+.link-btn:has(> svg.ic) { display: inline-flex; align-items: center; gap: 6px; }
+.link-btn > svg.ic { flex: none; width: 16px; height: 16px; }
+
+/* Kerjaya AI: label "Bahasa hasil" terlipat dua baris di sebelah pilihan */
+#view-kerja .row-between > .muted { white-space: nowrap; }
+
+/* Pilihan (select) yang terlalu panjang: tamatkan dengan elipsis, bukan dipotong di tengah perkataan */
+select { text-overflow: ellipsis; }
+
+/* Sihat: nota BMR di baris sendiri supaya medan borang sejajar */
+#shProf .sh-bmr { grid-column: 1 / -1; margin: 0 0 12px; }
+
+/* Senarai semak Audit Halal (telefon): tiga butang status memenuhi kotak, tiada ruang kosong di hujung */
+@media (max-width: 640px) { .ah-item .segmented .seg { flex: 1 1 auto; } }
+.ah-item.ah-y p::before, .ah-item.ah-n p::before { margin-right: 0; margin-inline-end: 8px; }
+
+/* Baris tab yang boleh dileret: hujung pudar sebagai tanda ada lagi tab, dan tab terakhir masih jelas apabila dileret habis */
+.bk-tabs { padding-inline-end: 28px; -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); }
+@media (min-width: 720px) {
+  #learnTabs { margin-inline: 0; padding-inline: 0 40px; -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent); }
+}
+:root[dir="rtl"] .bk-tabs { -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(to left, #000 calc(100% - 28px), transparent); }
+@media (min-width: 720px) { :root[dir="rtl"] #learnTabs { -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(to left, #000 calc(100% - 40px), transparent); } }
+
+/* Waktu Solat (telefon): matahari/bulan menindih digit kiraan detik; dialih ke ruang di atas tajuk */
+@media (max-width: 600px) {
+  .solat-hero.sky[data-sky="morning"], .solat-hero.sky[data-sky="night"] { --orb-x: 8%; --orb-y: 21%; }
+  .solat-hero.sky[data-sky="day"], .solat-hero.sky[data-sky="afternoon"] { --orb-x: 92%; --orb-y: 21%; }
+  .solat-hero.sky .sky-orb { --orb-size: 30px; }
+}
+
+/* Arab (RTL): nombor telefon dan peratus kekal kiri ke kanan (bukan "6720 010-254" atau "1.25%+") */
+:root[dir="rtl"] .nt-wa-btn small, :root[dir="rtl"] .q-chg, :root[dir="rtl"] .q-price { direction: ltr; unicode-bidi: isolate; }
