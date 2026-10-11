@@ -33,11 +33,15 @@ const FiqhData = (() => {
     b1503: { c: 'bukhari', n: '1503', i: 1503, by: 'Ibn Umar', isi: 'Zakat fitrah satu gantang (sa\') diwajibkan ke atas setiap Muslim dan dibayar sebelum solat hari raya.' },
     b1923: { c: 'bukhari', n: '1923', i: 1923, by: 'Anas bin Malik', isi: 'Bersahurlah kerana pada sahur ada keberkatan.' },
     b1933: { c: 'bukhari', n: '1933', i: 1933, by: 'Abu Hurairah', isi: 'Orang yang makan atau minum kerana terlupa hendaklah meneruskan puasanya.' },
+    // Tambahan 11 Oktober 2026 (bahagian pelaburan haram di halaman utama): nombor disemak dengan sunnah.com
+    b2142: { c: 'bukhari', n: '2142', i: 2142, by: 'Ibn Umar', isi: 'Nabi SAW melarang najasy, iaitu menaikkan tawaran harga tanpa niat membeli untuk memperdaya pembeli lain.' },
+    b2766: { c: 'bukhari', n: '2766', i: 2766, by: 'Abu Hurairah', isi: 'Jauhilah tujuh dosa yang membinasakan; antaranya memakan riba.' },
     m1513: { c: 'muslim', n: '1513', i: 3808, by: 'Abu Hurairah', isi: 'Nabi SAW melarang jual beli hasah dan jual beli gharar (tidak pasti).' },
     m1587: { c: 'muslim', n: '1587a', i: 4061, by: 'Ubadah bin al-Samit', isi: 'Emas dengan emas, perak dengan perak dan seterusnya mesti sama banyak dan secara tunai.' },
     m1598: { c: 'muslim', n: '1598', i: 4093, by: 'Jabir bin Abdullah', isi: 'Rasulullah SAW melaknat pemakan riba, pemberinya, penulisnya dan dua saksinya.' },
     d83: { c: 'abudawud', n: '83', i: 83, by: 'Abu Hurairah', isi: 'Air laut suci lagi menyucikan dan bangkainya halal.' },
     d3503: { c: 'abudawud', n: '3503', i: 3503, by: 'Hakim bin Hizam', isi: 'Jangan jual apa yang tiada dalam milikmu.' },
+    d3674: { c: 'abudawud', n: '3674', i: 3674, by: 'Ibn Umar', isi: 'Allah melaknat arak, peminumnya, penuangnya, penjualnya, pembelinya, pemerahnya, yang meminta diperah, pembawanya dan orang yang dibawakan kepadanya.' },
     t730: { c: 'tirmidhi', n: '730', i: 730, by: 'Hafsah', isi: 'Sesiapa yang tidak berniat puasa sebelum fajar, tiada puasa baginya.' }
   };
   const KOLEKSI = { bukhari: 'Sahih al-Bukhari', muslim: 'Sahih Muslim', abudawud: 'Sunan Abi Dawud', tirmidhi: 'Jami\' al-Tirmizi' };

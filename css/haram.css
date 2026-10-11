@@ -1,0 +1,110 @@
+/* SiswaCap: bahagian "Pelaburan dan dagangan yang haram" di halaman utama (js/haram.js).
+   Rupa mengikut token tema (Hitam/Putih); merah takwim (--ink-red) menanda hukum haram. */
+.hr-blok { margin: 34px 0 10px; padding-top: 18px; border-top: 3px double var(--rule); scroll-margin-top: 70px; }
+.hr-kepala { max-width: 760px; margin-bottom: 18px; }
+.hr-kepala h2 { font-family: var(--display); font-size: clamp(1.6rem, 4.4vw, 2.3rem); line-height: 1.1; letter-spacing: -0.02em; margin: 4px 0 10px; }
+.hr-kepala .lead { margin: 0; }
+
+/* Empat punca */
+.hr-asas-wrap { margin: 0 0 18px; }
+.hr-asas-t { font-size: .72rem; letter-spacing: .14em; text-transform: uppercase; font-weight: 700; color: var(--muted); margin: 0 0 8px; }
+.hr-asas { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.hr-asas li { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 12px; align-items: center; padding: 12px 14px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.hr-asas li:nth-child(2n) { border-right: 0; }
+.hr-asas li:nth-child(n+3) { border-bottom: 0; }
+.hr-asas-ar { grid-row: 1 / 3; font-family: var(--ar-font, "Amiri Quran", serif); font-size: 1.55rem; line-height: 1; color: var(--ink-red); min-width: 3.2em; text-align: center; }
+.hr-asas b { font-size: .98rem; }
+.hr-asas small { color: var(--muted); font-size: .8rem; }
+@media (min-width: 760px) {
+  .hr-asas { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .hr-asas li, .hr-asas li:nth-child(2n) { border-right: 1px solid var(--border); border-bottom: 0; }
+  .hr-asas li:last-child { border-right: 0; }
+}
+
+/* Senarai jenis */
+.hr-senarai { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--rule); }
+.hr-senarai > li { border-bottom: 1px solid var(--border); }
+.hr-item > summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: 2.4rem minmax(0, 1fr) auto auto; align-items: center; gap: 4px 12px; padding: 14px 4px; }
+.hr-item > summary::-webkit-details-marker { display: none; }
+.hr-item > summary:hover .hr-tt b { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.hr-item > summary:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.hr-n { font-family: var(--display); font-size: 1.35rem; color: var(--ink-red); font-weight: 600; }
+.hr-tt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.hr-tt b { font-size: 1.02rem; line-height: 1.3; }
+.hr-tt small { color: var(--muted); font-size: .82rem; line-height: 1.4; }
+.hr-ar { display: none; font-family: var(--ar-font, "Amiri Quran", serif); font-size: 1.2rem; color: var(--muted); white-space: nowrap; }
+.hr-tag { grid-column: 3; font-size: .7rem; font-weight: 700; letter-spacing: .04em; padding: 4px 9px; border-radius: 99px; color: var(--ink-red); border: 1px solid color-mix(in srgb, var(--ink-red) 45%, transparent); background: color-mix(in srgb, var(--ink-red) 9%, transparent); white-space: nowrap; }
+.hr-tag-d { border-style: dashed; }
+.hr-chev { grid-column: 4; width: 18px; height: 18px; color: var(--muted); transition: transform .2s ease; }
+.hr-item[open] .hr-chev { transform: rotate(180deg); }
+@media (max-width: 520px) {
+  .hr-item > summary { grid-template-columns: 2rem minmax(0, 1fr) auto; }
+  .hr-tag { grid-column: 2; grid-row: 2; justify-self: start; }
+  .hr-chev { grid-column: 3; grid-row: 1; }
+}
+@media (min-width: 900px) {
+  .hr-item > summary { grid-template-columns: 3rem minmax(0, 1fr) auto auto auto; }
+  .hr-ar { display: block; }
+  .hr-tag { grid-column: 4; } .hr-chev { grid-column: 5; }
+}
+
+.hr-badan { padding: 2px 4px 20px 2.4rem; }
+@media (max-width: 520px) { .hr-badan { padding-left: 0; } }
+.hr-why { font-family: var(--display); font-size: 1.08rem; line-height: 1.6; margin: 0 0 14px; max-width: 72ch; }
+.hr-badan .note { margin: 0 0 14px; }
+.hr-dalil { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 900px) { .hr-dalil { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); } }
+.hr-col { border-top: 3px solid var(--c); padding-top: 8px; min-width: 0; }
+.hr-col h4 { margin: 0 0 8px; font-size: .74rem; letter-spacing: .12em; text-transform: uppercase; color: var(--c); }
+.hr-src { padding: 10px 0; border-bottom: 1px solid var(--border); }
+.hr-src:last-child { border-bottom: 0; }
+.hr-src-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.hr-src-top b, .hr-src > b { font-size: .92rem; }
+.hr-src p { margin: 4px 0; }
+.hr-links { display: inline-flex; gap: 6px; }
+.hr-isi { font-size: .9rem; line-height: 1.5; }
+.hr-isi span { display: block; font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 700; color: var(--muted); margin-bottom: 2px; }
+.hr-arab { font-family: var(--ar-font, "Amiri Quran", serif); font-size: 1.28rem; line-height: 2.1; text-align: right; margin: 8px 0 4px; color: var(--text); }
+.hr-hadis { font-size: 1.12rem; }
+.hr-tr { font-size: .88rem; line-height: 1.55; color: var(--muted); }
+.hr-sumber { font-size: .72rem; color: var(--faint); }
+.hr-src .link-btn { font-size: .8rem; }
+
+.hr-akibat { margin-top: 16px; padding: 12px 14px; border-left: 3px solid var(--ink-red); background: color-mix(in srgb, var(--ink-red) 6%, transparent); }
+.hr-akibat h4 { display: flex; align-items: center; gap: 6px; margin: 0 0 6px; font-size: .74rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-red); }
+.hr-akibat h4 .ic { width: 15px; height: 15px; }
+.hr-akibat ul { list-style: none; margin: 0; padding: 0; }
+.hr-akibat li { display: flex; justify-content: space-between; align-items: baseline; gap: 4px 12px; flex-wrap: wrap; padding: 6px 0; border-bottom: 1px dashed color-mix(in srgb, var(--ink-red) 25%, transparent); }
+.hr-akibat li:last-child { border-bottom: 0; }
+.hr-akibat li span { font-size: .93rem; }
+.hr-akibat li small { color: var(--muted); font-size: .76rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.hr-lanjut { display: inline-flex; align-items: center; gap: 4px; margin-top: 12px; font-weight: 600; font-size: .9rem; color: var(--brand); }
+.hr-lanjut .ic { width: 15px; height: 15px; }
+
+/* Bawah: taubat dan yang tidak haram */
+.hr-bawah { display: grid; gap: 14px; margin-top: 20px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 900px) { .hr-bawah { grid-template-columns: 1.3fr 1fr; } }
+.hr-kotak { border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
+.hr-kotak h3 { font-family: var(--display); font-size: 1.15rem; margin: 0 0 8px; }
+.hr-kotak p { margin: 0; color: var(--muted); line-height: 1.6; font-size: .94rem; }
+.hr-taubat { border-left: 3px solid var(--brand); }
+.hr-halal { list-style: none; margin: 0; padding: 0; }
+.hr-halal li a { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--border); color: var(--text); text-decoration: none; font-size: .93rem; }
+.hr-halal li:last-child a { border-bottom: 0; }
+.hr-halal li a:hover span { text-decoration: underline; }
+.hr-halal small { color: var(--brand); font-weight: 600; white-space: nowrap; }
+.hr-nota { margin: 14px 0 0; font-size: .8rem; color: var(--faint); max-width: 80ch; }
+
+/* Tema Hitam (lalai): garisan kaca seperti lapisan sinema */
+:root:not([data-theme="light"]) .hr-blok { border-top-color: var(--sn-line, var(--border)); }
+:root:not([data-theme="light"]) .hr-senarai { border-top-color: rgba(255,255,255,.3); }
+:root:not([data-theme="light"]) .hr-senarai > li, :root:not([data-theme="light"]) .hr-src, :root:not([data-theme="light"]) .hr-halal li a { border-color: var(--sn-line, var(--border)); }
+:root:not([data-theme="light"]) .hr-asas, :root:not([data-theme="light"]) .hr-asas li, :root:not([data-theme="light"]) .hr-kotak { border-color: var(--sn-line, var(--border)); }
+:root:not([data-theme="light"]) .hr-kotak, :root:not([data-theme="light"]) .hr-asas { background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.015)); }
+
+/* Arab: susun dari kanan */
+[dir="rtl"] .hr-badan { padding: 2px 2.4rem 20px 4px; }
+[dir="rtl"] .hr-akibat { border-left: 0; border-right: 3px solid var(--ink-red); }
+[dir="rtl"] .hr-taubat { border-left: 1px solid var(--border); border-right: 3px solid var(--brand); }
+@media (max-width: 520px) { [dir="rtl"] .hr-badan { padding-right: 0; } }
+@media (prefers-reduced-motion: reduce) { .hr-chev { transition: none; } }

@@ -409,6 +409,32 @@ const KES = [
     pastikan(await page.$('.tk-date.jumaat'), 'Jumaat tidak ditanda');
   } },
 
+  { kumpulan: K, nama: 'Utama: pelaburan haram, 11 jenis dengan dalil yang dimuat apabila dibuka dan pautan Fiqh', langkah: async (t, page) => {
+    await masa(page);
+    await t.buka('#utama');
+    // Bahagian ini terletak tepat sebelum surat pengasas "Daripada pelajar, untuk semua bangsa"
+    pastikan(await page.$eval('.hr-blok', s => s.nextElementSibling && s.nextElementSibling.matches('.founders')), 'Bahagian haram tidak terletak sebelum pengasas');
+    sama(await page.$$eval('.hr-item', x => x.length), 11, 'Bilangan jenis haram');
+    sama(await page.$$eval('#hrAsas li b', x => x.map(b => b.textContent)), ['Riba', 'Maisir', 'Gharar', 'Batil'], 'Empat punca');
+    // Teks ayat dan hadis belum dimuat sebelum dibuka
+    sama(await page.$eval('.hr-item[data-hr="riba"] .hr-live', b => b.innerHTML), '', 'Ayat dimuat terlalu awal');
+    await page.locator('.hr-item[data-hr="riba"] > summary').scrollIntoViewIfNeeded();
+    await t.klik('.hr-item[data-hr="riba"] > summary');
+    await t.ada('.hr-item[data-hr="riba"] [data-hr-ayah="2:275"] .hr-tr', /dirasuk Syaitan/);
+    await t.ada('.hr-item[data-hr="riba"] [data-hr-ayah="2:275"] .hr-src-top b', /^Surah Al-Baqarah \(2:275\)$/);
+    await t.ada('.hr-item[data-hr="riba"] [data-hr-hadis="m1598"] .hr-tr', /cursed the accepter of interest/);
+    sama(await page.$eval('.hr-item[data-hr="riba"] [data-hr-hadis="m1598"] .link-btn', a => a.href), 'https://sunnah.com/muslim:1598', 'Pautan hadis');
+    sama(await page.$eval('.hr-item[data-hr="riba"] .hr-lanjut', a => a.getAttribute('href')), '#ibadah/fiqh/muamalat/riba', 'Pautan Fiqh');
+    // Fatwa forex dipaparkan dengan pautan sumber asal
+    await t.klik('.hr-item[data-hr="forex"] > summary');
+    await t.ada('.hr-item[data-hr="forex"] .hr-col:last-child', /kali ke-98/);
+    // Setiap pautan Fiqh menuju masalah yang wujud
+    const masalah = await page.evaluate(() => FiqhData.MASALAH.filter(m => m.bab === 'muamalat').map(m => m.k));
+    const pautan = await page.$$eval('.hr-lanjut', x => x.map(a => a.getAttribute('href').split('/').pop()));
+    pautan.forEach(k => pastikan(masalah.includes(k), `Pautan Fiqh tidak wujud: ${k}`));
+    await tiadaLimpahan(page);
+  } },
+
   /* ====================== Ibadah ====================== */
   { kumpulan: K, nama: 'Ibadah: hab 16 jubin dengan tarikh Hijri, jubin Kiblat dan laluan tidak sah', lebar: 1280, langkah: async (t, page) => {
     await masa(page);
