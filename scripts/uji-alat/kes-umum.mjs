@@ -1207,8 +1207,8 @@ export default [
     await t.isi('#sqTeks', 'Soalan ujian HADUJI'); await t.klik('#sqHantar');
     await t.ada('#sqErr', /^Terlalu banyak soalan dalam masa singkat\./);
     await t.isi('#sqTeks', 'Soalan ujian PELAYANUJI'); await t.klik('#sqHantar');
-    await t.ada('#sqErr', /^Soalan tidak dapat dihantar sekarang\. Hantar melalui aplikasi e-mel ke hello@bijaklabur\.my/);
-    padan(await page.$eval('#sqErr a', a => a.href), /^mailto:hello@bijaklabur\.my\?subject=%5BSiswaCap%5D%20Umum&body=Salam%20SiswaCap/, 'Pautan mailto');
+    await t.ada('#sqErr', /^Soalan tidak dapat dihantar sekarang\. Hantar melalui aplikasi e-mel ke hello@siswacap\.my/);
+    padan(await page.$eval('#sqErr a', a => a.href), /^mailto:hello@siswacap\.my\?subject=%5BSiswaCap%5D%20Umum&body=Salam%20SiswaCap/, 'Pautan mailto');
     await t.ada('#sqHantar', /Hantar ke e-mel kami/);
   } },
 
