@@ -1,6 +1,6 @@
 // Ujian pelayan Tanya AI Fiqh tanpa rangkaian: node worker-fiqh/test.mjs
 import assert from 'node:assert/strict';
-import worker, { readJson, NOTA_PDF, kataKunci, verify, collectRetrieved, norm, normUrl, parseAnswer, MODEL, GEMINI_MODEL, GEMINI_FALLBACKS, DOMAINS } from './src/app.js';
+import worker, { readJson, NOTA_PDF, kataKunci, verify, collectRetrieved, norm, normUrl, parseAnswer, MODEL, GEMINI_MODEL, GEMINI_FALLBACKS, DOMAINS, DEEPSEEK_EFFORT } from './src/app.js';
 import { BY_ID, CORPUS_TEXT } from './src/corpus.js';
 import { MODEN, KITAB, MUFTI, DOC, buildIndex, muftiDocs, potong, bahagianPdf, search, expand, pageUrl, pagesText, tokens, cetakan, cetakPdf, assetTag } from './src/rujukan.js';
 import { robots, kandungan, tarikhHtml, tajukHtml, pautanHtml, artikelOk, tajukUmum, tajukFail, tajukTeks, tanpaNamaLaman, KUNCI, ABAI } from './scripts/muat-mufti.mjs';
@@ -184,6 +184,85 @@ assert.deepEqual(d, { ok: true, service: 'bijak-labur-fiqh', ai: true, penyedia:
 d = await (await worker.fetch(new Request(W + '/'), { ...genv, ...env })).json();
 assert.equal(d.penyedia, 'claude');
 
+// DeepSeek (berbayar, pilihan pemilik): jika DEEPSEEK_API_KEY ada, Tanya AI menggunakan DeepSeek sahaja, tanpa Gemini
+{
+  const denv = { ...genv, DEEPSEEK_API_KEY: 'd-test' };
+  let dsent = null, dauth = '', dreply = null, google = 0;
+  globalThis.fetch = async (u, init) => {
+    if (String(u).includes('googleapis.com')) { google++; return gem({ status: 'jawab', ringkasan: 'Gemini', sumber: [{ id: 'quran:2:275' }] }); }
+    assert.equal(String(u), 'https://api.deepseek.com/chat/completions');
+    dauth = init.headers.authorization; dsent = JSON.parse(init.body);
+    return dreply();
+  };
+  const ds = (obj, extra = {}) => new Response(JSON.stringify({ model: 'deepseek-flash', choices: [{ message: { role: 'assistant', reasoning_content: 'fikir dahulu', content: typeof obj === 'string' ? obj : JSON.stringify(obj) }, finish_reason: 'stop', ...extra }],
+    usage: { prompt_tokens: 12000, completion_tokens: 900, prompt_cache_hit_tokens: 10000, prompt_cache_miss_tokens: 2000 } }), { headers: { 'content-type': 'application/json' } });
+  dreply = () => ds({ status: 'jawab', ringkasan: 'Forex runcit haram.', huraian: ['Muzakarah memutuskan haram.'], sumber: [{ id: 'fatwa:mkiForex', petikan: 'riba melalui pengenaan rollover interest' }, { id: 'quran:2:275' }] });
+  r = await call({ q: 'Apakah hukum forex runcit menurut fatwa?' }, 'https://bijaklabur.my', denv);
+  d = await r.json();
+  assert.equal(r.status, 200, JSON.stringify(d));
+  assert.equal(google, 0, 'Gemini tidak dipanggil apabila kunci DeepSeek ada');
+  assert.equal(dauth, 'Bearer d-test');
+  assert.equal(dsent.model, 'deepseek-flash');
+  assert.deepEqual([dsent.thinking, dsent.reasoning_effort, dsent.max_tokens, dsent.response_format], [{ type: 'enabled' }, DEEPSEEK_EFFORT, 16000, { type: 'json_object' }]);
+  assert.equal(dsent.messages[0].role, 'system'); assert.match(dsent.messages[0].content, /Mod korpus/); assert.match(dsent.messages[0].content, /objek JSON/);
+  // Korpus mendahului soalan supaya awalan permintaan sama untuk setiap soalan (cache konteks DeepSeek lebih murah)
+  const isi = dsent.messages[1].content;
+  assert.ok(isi.indexOf('fatwa:mkiForex') >= 0 && isi.indexOf('fatwa:mkiForex') < isi.indexOf('Apakah hukum forex runcit'));
+  assert.equal(d.status, 'jawab'); assert.equal(d.sumber.length, 2); assert.equal(d.sumber[0].disahkan, true);
+  // Status pelayan: penyedia deepseek; Claude masih diutamakan jika kuncinya ditetapkan
+  d = await (await worker.fetch(new Request(W + '/'), denv)).json();
+  assert.equal(d.penyedia, 'deepseek'); assert.ok(d.sandaran.includes('deepseek'));
+  d = await (await worker.fetch(new Request(W + '/'), { ...denv, ...env })).json();
+  assert.equal(d.penyedia, 'claude');
+  // Tanpa Gemini pun berfungsi
+  d = await (await call({ q: 'Apakah hukum forex runcit menurut fatwa??' }, 'https://bijaklabur.my', { DEEPSEEK_API_KEY: 'd', ALLOWED_ORIGINS: env.ALLOWED_ORIGINS })).json();
+  assert.equal(d.status, 'jawab');
+
+  // Model dan tahap berfikir boleh ditukar melalui [vars]
+  await call({ q: 'Hukum forex runcit ikut fatwa?' }, 'https://bijaklabur.my', { ...denv, DEEPSEEK_MODEL: 'deepseek-v4-pro', DEEPSEEK_EFFORT: 'high' });
+  assert.deepEqual([dsent.model, dsent.reasoning_effort], ['deepseek-v4-pro', 'high']);
+  await call({ q: 'Hukum forex runcit ikut fatwa??' }, 'https://bijaklabur.my', { ...denv, DEEPSEEK_EFFORT: 'none' });
+  assert.deepEqual([dsent.thinking, dsent.reasoning_effort], [{ type: 'disabled' }, undefined]);
+
+  // Sibuk, baki habis atau kunci salah: tiada peralihan ke Gemini
+  for (const [st, jangka] of [[429, 429], [503, 429], [402, 502], [401, 502], [500, 502]]) {
+    dreply = () => new Response(JSON.stringify({ error: { message: 'x' } }), { status: st });
+    assert.equal((await call({ q: 'Hukum emas digital fizikal?' }, 'https://bijaklabur.my', denv)).status, jangka, `DeepSeek ${st}`);
+  }
+  assert.equal(google, 0);
+  // Tamat masa atau rangkaian: sibuk
+  globalThis.fetch = async () => { throw new DOMException('The operation was aborted due to timeout', 'TimeoutError'); };
+  assert.equal((await call({ q: 'Hukum emas digital fizikal?' }, 'https://bijaklabur.my', denv)).status, 429);
+  globalThis.fetch = async (u, init) => { if (String(u).includes('googleapis.com')) { google++; return gem({}); } dsent = JSON.parse(init.body); return dreply(); };
+  // Disekat oleh penapis kandungan: luar skop
+  dreply = () => ds('', { finish_reason: 'content_filter' });
+  d = await (await call({ q: 'Soalan yang disekat DeepSeek' }, 'https://bijaklabur.my', denv)).json();
+  assert.equal(d.status, 'luar_skop');
+  // Jawapan terpotong (JSON tidak lengkap): tidak pasti; jawapan kosong: ralat
+  dreply = () => ds('{"status":"jawab","ringkasan":"Ha', { finish_reason: 'length' });
+  d = await (await call({ q: 'Soalan panjang tentang zakat?' }, 'https://bijaklabur.my', denv)).json();
+  assert.equal(d.status, 'tidak_pasti');
+  dreply = () => ds('', { finish_reason: 'length' });
+  assert.equal((await call({ q: 'Soalan panjang tentang zakat??' }, 'https://bijaklabur.my', denv)).status, 502);
+  // Model tidak menyokong response_format: cuba semula tanpanya
+  let n = 0;
+  dreply = () => ++n === 1 ? new Response('response_format json_object not supported', { status: 400 }) : ds({ status: 'jawab', ringkasan: 'Ok.', huraian: ['x'], sumber: [{ id: 'quran:2:275' }] });
+  d = await (await call({ q: 'Hukum emas digital fizikal??' }, 'https://bijaklabur.my', denv)).json();
+  assert.equal(n, 2); assert.equal(dsent.response_format, undefined); assert.equal(d.status, 'jawab');
+
+  // Istilah carian juga daripada DeepSeek, tanpa mod berfikir
+  dreply = () => ds({ ar: ['طهارة'], en: ['purification'], ms: ['bersuci'] });
+  assert.equal(await kataKunci({ ...denv, RUJUKAN: {} }, 'Air apa yang boleh digunakan untuk mengangkat hadas?'), 'طهارة purification bersuci');
+  assert.deepEqual([dsent.thinking, dsent.max_tokens], [{ type: 'disabled' }, 300]);
+  assert.equal(google, 0);
+
+  // Sebagai penyedia sandaran ciri lain (penghala): model semasa, tanpa mod berfikir
+  resetPenghala();
+  const pd = await penghalaGenerate({ DEEPSEEK_API_KEY: 'd' }, JSON.stringify({ contents: [{ parts: [{ text: 'hai' }] }], generationConfig: { responseMimeType: 'application/json' } }));
+  assert.equal(pd.penghala, 'deepseek'); assert.deepEqual([dsent.model, dsent.thinking], ['deepseek-flash', { type: 'disabled' }]);
+  resetPenghala();
+}
+
 
 // Rujukan rasmi moden (PDF): carian muka surat, petikan disemak, pautan ke muka surat PDF yang sama
 assert.equal(MODEN.length, 4);
@@ -308,7 +387,8 @@ assert.deepEqual(v.sumber.map(x => [x.shamela, x.gambar_url]), [['142', 'https:/
   await call({ q: 'Hukum jual beli emas dengan emas!' }, 'https://bijaklabur.my', bertanda('peta2'));
   delete globalThis.caches;
   assert.equal(puts.length, 2, 'jawapan disimpan dalam cache');
-  assert.ok(puts[0].includes('/tanya-cache-5?') && puts[0].endsWith('&r=peta1&i=peta1') && puts[1].endsWith('&r=peta2&i=peta2'), puts.join(' '));
+  // Penyedia juga dalam kunci: jawapan Gemini lama tidak dipaparkan selepas pemilik beralih ke DeepSeek
+  assert.ok(puts[0].includes('/tanya-cache-5?') && puts[0].endsWith('&r=peta1&i=peta1&p=gemini') && puts[1].endsWith('&r=peta2&i=peta2&p=gemini'), puts.join(' '));
   assert.equal(await assetTag(genv), '');
   assert.equal(await assetTag(kenv), '');
 }
@@ -952,7 +1032,8 @@ console.log('Semua ujian Tanya AI lulus');
   catatGuna(e0, { penyedia: 'gemini', model: 'm', usage: { promptTokenCount: 10, candidatesTokenCount: 4, cachedContentTokenCount: 2 } });
   catatGuna(e0, { penyedia: 'claude', model: 'c', usage: { input_tokens: 7, output_tokens: 3, cache_read_input_tokens: 100 }, ok: false });
   catatGuna(e0, { penyedia: 'groq', model: 'q', usage: { prompt_tokens: 1, completion_tokens: 2 } });
-  assert.deepEqual(e0.GUNA.rekod.map(r => [r.laluan, r.penyedia, r.masuk, r.keluar, r.cache, r.ok]), [['/tanya', 'gemini', 10, 4, 2, true], ['/tanya', 'claude', 7, 3, 100, false], ['/tanya', 'groq', 1, 2, 0, true]]);
+  catatGuna(e0, { penyedia: 'deepseek', model: 'd', usage: { prompt_tokens: 50, completion_tokens: 6, prompt_cache_hit_tokens: 40, prompt_cache_miss_tokens: 10 } });
+  assert.deepEqual(e0.GUNA.rekod.map(r => [r.laluan, r.penyedia, r.masuk, r.keluar, r.cache, r.ok]), [['/tanya', 'gemini', 10, 4, 2, true], ['/tanya', 'claude', 7, 3, 100, false], ['/tanya', 'groq', 1, 2, 0, true], ['/tanya', 'deepseek', 50, 6, 40, true]]);
   catatGuna({}, { penyedia: 'x' });   // tanpa GUNA: diabaikan
   assert.equal(await hantarGuna(e0), false, 'tanpa PUSAT_URL tiada penghantaran');
 

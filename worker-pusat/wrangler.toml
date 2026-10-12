@@ -12,10 +12,15 @@ routes = [{ pattern = "pusat.bijaklabur.my", custom_domain = true }]
 ALLOWED_ORIGINS = "https://siswacap.my,https://www.siswacap.my,https://bijaklabur.my,https://www.bijaklabur.my,https://shamirai-rgb.github.io,capacitor://localhost,https://localhost"
 SITE_URL = "https://siswacap.my"
 REPO = "shamirAI-RGB/bijak-labur"
-# Anggaran kos (USD bagi setiap sejuta token) untuk penyedia berbayar sahaja. Gemini, penghala percuma dan Workers AI dikira RM0 (kuota percuma).
+# Anggaran kos (USD bagi setiap sejuta token) untuk penyedia berbayar sahaja (Claude, DeepSeek). Gemini, penghala percuma dan Workers AI dikira RM0 (kuota percuma).
 # Ubah angka ini mengikut harga semasa model yang digunakan dalam worker-fiqh.
 KOS_CLAUDE_MASUK = "5"
 KOS_CLAUDE_KELUAR = "25"
+# DeepSeek (Tanya AI jika DEEPSEEK_API_KEY ditetapkan): harga waktu puncak deepseek-flash, jadi anggaran ini had atas.
+# Di luar waktu puncak harganya separuh. MASUK = token tanpa cache, CACHE = token yang terkena cache konteks.
+KOS_DEEPSEEK_MASUK = "0.30"
+KOS_DEEPSEEK_CACHE = "0.006"
+KOS_DEEPSEEK_KELUAR = "1.20"
 KADAR_MYR = "4.3"
 # Model agen Telegram jika ANTHROPIC_API_KEY ditetapkan (jika tidak, Gemini percuma digunakan)
 AGEN_MODEL = "claude-opus-5-5"

@@ -11,14 +11,15 @@ export function mulaGuna(env, laluan) {
   return e;
 }
 
-/** Catat satu panggilan model. usage boleh berbentuk Gemini (usageMetadata), OpenAI (usage) atau Claude (usage). */
+/** Catat satu panggilan model. usage boleh berbentuk Gemini (usageMetadata), OpenAI (usage) atau Claude (usage).
+    Bagi DeepSeek, masuk (prompt_tokens) termasuk token cache (prompt_cache_hit_tokens). */
 export function catatGuna(env, { penyedia, model, usage, ok = true, ms }) {
   const g = env && env.GUNA;
   if (!g || g.rekod.length >= 20) return;
   const u = usage || {};
   const masuk = u.promptTokenCount ?? u.prompt_tokens ?? u.input_tokens ?? 0;
   const keluar = u.candidatesTokenCount ?? u.completion_tokens ?? u.output_tokens ?? 0;
-  const cache = (u.cachedContentTokenCount ?? 0) + (u.cache_read_input_tokens ?? 0) + (u.cache_creation_input_tokens ?? 0);
+  const cache = (u.cachedContentTokenCount ?? 0) + (u.cache_read_input_tokens ?? 0) + (u.cache_creation_input_tokens ?? 0) + (u.prompt_cache_hit_tokens ?? 0);
   g.rekod.push({ laluan: g.laluan, penyedia: String(penyedia || 'lain').slice(0, 24), model: String(model || '').slice(0, 60), masuk: +masuk || 0, keluar: +keluar || 0, cache: +cache || 0, ms: Math.max(0, Math.round(ms ?? (Date.now() - g.t))), ok: ok !== false });
 }
 

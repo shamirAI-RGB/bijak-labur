@@ -36,7 +36,9 @@ export const PENYEDIA = [
   { id: 'kilo', nama: 'Kilo Gateway', key: 'KILO_API_KEY', url: 'https://api.kilo.ai/api/gateway/chat/completions', model: 'kilo-auto/free', percuma: true },
   { id: 'huggingface', nama: 'Hugging Face', key: 'HF_TOKEN', url: 'https://router.huggingface.co/v1/chat/completions', model: 'meta-llama/Llama-3.3-70B-Instruct', percuma: true },
   // Kredit atau berbayar
-  { id: 'deepseek', nama: 'DeepSeek', key: 'DEEPSEEK_API_KEY', url: 'https://api.deepseek.com/chat/completions', model: 'deepseek-v4-flash' },
+  // Mod berfikir DeepSeek aktif secara lalai dan boleh menghabiskan had token: sebagai sandaran, jawab terus tanpa berfikir.
+  // Tanya AI Fiqh memanggil DeepSeek secara terus (penyediaGenerate) dengan mod berfikirnya sendiri.
+  { id: 'deepseek', nama: 'DeepSeek', key: 'DEEPSEEK_API_KEY', url: 'https://api.deepseek.com/chat/completions', model: 'deepseek-flash', badan: { thinking: { type: 'disabled' } } },
   { id: 'together', nama: 'Together AI', key: 'TOGETHER_API_KEY', url: 'https://api.together.xyz/v1/chat/completions', model: 'meta-llama/Llama-3.3-70B-Instruct-Turbo' },
   { id: 'fireworks', nama: 'Fireworks', key: 'FIREWORKS_API_KEY', url: 'https://api.fireworks.ai/inference/v1/chat/completions', model: 'accounts/fireworks/models/llama-v3p3-70b-instruct' },
   { id: 'nebius', nama: 'Nebius', key: 'NEBIUS_API_KEY', url: 'https://api.studio.nebius.ai/v1/chat/completions', model: 'meta-llama/Llama-3.3-70B-Instruct' },
@@ -144,16 +146,26 @@ export function potongJson(text) {
   return a >= 0 && z > a ? text.slice(a, z + 1) : text;
 }
 
-const bentukGemini = (text, id) => ({ candidates: [{ content: { parts: [{ text }] }, finishReason: 'STOP' }], penghala: id });
+const bentukGemini = (text, id, finishReason = 'STOP') => ({ candidates: [{ content: { parts: [{ text }] }, finishReason }], penghala: id });
 
-async function panggil(p, env, input) {
+async function panggil(p, env, input, timeout) {
   const r = await fetch(p.url, {
     method: 'POST',
     headers: { 'content-type': 'application/json', authorization: `Bearer ${env[p.key]}` },
     body: JSON.stringify(input),
-    signal: AbortSignal.timeout(Number(env.AI_TIMEOUT_MS) || 45000)
+    signal: AbortSignal.timeout(timeout || Number(env.AI_TIMEOUT_MS) || 45000)
   });
   return { status: r.status, ok: r.ok, text: await r.text() };
+}
+
+// Sesetengah model tidak menyokong response_format: cuba sekali lagi tanpanya
+async function panggilJson(p, env, input, timeout) {
+  let r = await panggil(p, env, input, timeout);
+  if (r.status === 400 && input.response_format && /response_format|json_object|json mode/i.test(r.text)) {
+    delete input.response_format;
+    r = await panggil(p, env, input, timeout);
+  }
+  return r;
 }
 
 /**
@@ -170,14 +182,9 @@ export async function penghalaGenerate(env, body) {
     if (!model) continue;
     const input = keOpenAI(b, { vision: ada });
     if (!input) continue;
-    input.model = model;
+    Object.assign(input, p.badan, { model });
     try {
-      let r = await panggil(p, env, input);
-      // Sesetengah model tidak menyokong response_format: cuba sekali lagi tanpanya
-      if (r.status === 400 && input.response_format && /response_format|json_object|json mode/i.test(r.text)) {
-        delete input.response_format;
-        r = await panggil(p, env, input);
-      }
+      const r = await panggilJson(p, env, input);
       if (!r.ok) { console.log(`penghala ${p.id} ${r.status} ${r.text.slice(0, 200)}`); gagal(p.id, r.status, r.text); continue; }
       const d = JSON.parse(r.text);
       catatGuna(env, { penyedia: p.id, model, usage: d.usage });
@@ -194,6 +201,37 @@ export async function penghalaGenerate(env, body) {
     }
   }
   return null;
+}
+
+/**
+ * Satu penyedia sahaja, tanpa sandaran: untuk ciri yang memilih penyedianya sendiri (Tanya AI Fiqh dengan DeepSeek).
+ * badan = medan tambahan permintaan (cth. mod berfikir), maxTokens dan timeout untuk jawapan yang panjang.
+ * Pulangkan jawapan dalam bentuk Gemini. Ralat dilontar dengan status (429 atau 529 = sibuk) supaya pemanggil
+ * boleh memaparkan mesej yang betul.
+ */
+export async function penyediaGenerate(env, id, body, { badan, maxTokens, timeout } = {}) {
+  const p = PENYEDIA.find(x => x.id === id);
+  if (!p || !env[p.key]) throw Object.assign(new Error(`tiada kunci ${id}`), { status: 503 });
+  const b = JSON.parse(body);
+  const json = (b.generationConfig || {}).responseMimeType === 'application/json';
+  const input = keOpenAI(b);
+  if (!input) throw Object.assign(new Error(`${p.nama}: gambar tidak disokong`), { status: 400 });
+  const model = env[`${p.id.toUpperCase()}_MODEL`] || p.model;
+  Object.assign(input, p.badan, badan, { model }, maxTokens ? { max_tokens: maxTokens } : {});
+  const t0 = Date.now();
+  let r;
+  try { r = await panggilJson(p, env, input, timeout); }
+  catch (e) { throw Object.assign(new Error(`${p.nama} ${String(e && e.message || e).slice(0, 160)}`), { status: 529 }); }   // tamat masa atau rangkaian: sibuk
+  if (!r.ok) throw Object.assign(new Error(`${p.nama} ${r.status} ${r.text.slice(0, 300)}`), { status: r.status === 503 ? 529 : r.status });
+  const d = JSON.parse(r.text), c = (d.choices && d.choices[0]) || {};
+  catatGuna(env, { penyedia: p.id, model, usage: d.usage, ms: Date.now() - t0 });
+  // Kandungan disekat oleh penapis penyedia: sama seperti SAFETY Gemini
+  if (c.finish_reason === 'content_filter') return bentukGemini('', p.id, 'SAFETY');
+  let text = String((c.message && c.message.content) || '');
+  if (json) text = potongJson(text);
+  if (!text.trim()) throw Object.assign(new Error(`${p.nama} jawapan kosong (${c.finish_reason || '-'})`), { status: 502 });
+  if (c.finish_reason === 'length') console.log(`${p.id}: jawapan terpotong pada had ${input.max_tokens} token`);
+  return bentukGemini(text, p.id);
 }
 
 /** Gambar sandaran (FLUX schnell) apabila Workers AI tidak tersedia. Pulangkan { image, mime, penyedia } atau null. */

@@ -40,4 +40,4 @@ Bot juga menghantar **amaran** apabila mana-mana pelayan rosak dua semakan bertu
 Laman menghantar denyut setiap 30 saat: id rawak tab (sessionStorage), nama halaman, dan jenis peranti; negara diambil daripada Cloudflare. Tiada kuki, tiada alamat IP disimpan, pelawat dengan "Do Not Track" tidak dikira. Baris sesi dibuang selepas 2 hari; jumlah harian disimpan 90 hari.
 
 ## Anggaran kos
-Kos ditunjukkan hanya untuk penyedia berbayar (Claude) berdasarkan kadar dalam `worker-pusat/wrangler.toml` (`KOS_CLAUDE_MASUK`, `KOS_CLAUDE_KELUAR`, USD bagi setiap sejuta token; `KADAR_MYR`). Kemas kini angka itu mengikut harga semasa model. Gemini, penghala percuma dan Workers AI dikira RM0 (kuota percuma).
+Kos ditunjukkan hanya untuk penyedia berbayar (Claude dan DeepSeek) berdasarkan kadar dalam `worker-pusat/wrangler.toml` (`KOS_CLAUDE_MASUK`, `KOS_CLAUDE_KELUAR`, `KOS_DEEPSEEK_MASUK`, `KOS_DEEPSEEK_CACHE`, `KOS_DEEPSEEK_KELUAR`, USD bagi setiap sejuta token; `KADAR_MYR`). Kadar DeepSeek ialah harga waktu puncak, jadi kos sebenar boleh lebih rendah. Kemas kini angka itu mengikut harga semasa model. Gemini, penghala percuma dan Workers AI dikira RM0 (kuota percuma).

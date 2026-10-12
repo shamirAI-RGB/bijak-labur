@@ -26,6 +26,7 @@ jobs:
     env:
       HAS_CF: ${{ secrets.CLOUDFLARE_API_TOKEN != '' && secrets.CLOUDFLARE_ACCOUNT_ID != '' }}
       HAS_GEMINI: ${{ secrets.GEMINI_API_KEY != '' }}
+      HAS_DEEPSEEK: ${{ secrets.DEEPSEEK_API_KEY != '' }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
     defaults:
@@ -87,6 +88,20 @@ jobs:
           echo "Model Flash yang tersedia:"
           curl -sS "$G?pageSize=200" -H "x-goog-api-key: $GEMINI_API_KEY" | jq -r '.models[]?.name | select(test("flash"))' | head -30
           node diag.mjs
+      # Tanya AI dengan DeepSeek (berbayar): semak kunci dan baki akaun tanpa mendedahkan kunci
+      - name: Semak DeepSeek
+        if: env.HAS_DEEPSEEK == 'true'
+        continue-on-error: true
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        run: |
+          kod=$(curl -sS -o baki.json -w '%{http_code}' https://api.deepseek.com/user/balance -H "Authorization: Bearer $DEEPSEEK_API_KEY")
+          if [ "$kod" = "200" ]; then
+            jq -r '"Kunci DeepSeek sah. Baki mencukupi: \(if .is_available then "ya" else "TIDAK, sila tambah baki" end). Baki: \([.balance_infos[] | "\(.total_balance) \(.currency)"] | join(", "))"' baki.json | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Kunci DeepSeek ditolak (HTTP $kod). Semak rahsia DEEPSEEK_API_KEY." | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
+          rm -f baki.json
       # Studio Gambar: uji FLUX sebenar di Workers AI dengan akaun Cloudflare (satu gambar kecil, ~60 neuron)
       - name: Semak Workers AI (FLUX)
         if: env.HAS_CF == 'true'
@@ -107,14 +122,16 @@ jobs:
         run: |
           sed -i '/^routes = /d' wrangler.toml
           npx --yes wrangler@3 deploy
-      # Kunci API dimuat naik hanya jika ia ditetapkan. Tanpa ANTHROPIC_API_KEY dan GEMINI_API_KEY, Tanya AI memaparkan "belum diaktifkan".
+      # Kunci API dimuat naik hanya jika ia ditetapkan. Tanpa ANTHROPIC_API_KEY, DEEPSEEK_API_KEY dan GEMINI_API_KEY, Tanya AI memaparkan "belum diaktifkan".
+      # Tanya AI memilih Claude jika ada, kemudian DeepSeek (berbayar, dimuat naik dalam langkah penyedia AI di bawah), kemudian Gemini.
       - name: Rahsia ANTHROPIC_API_KEY
         if: github.ref == 'refs/heads/main' && env.HAS_CF == 'true'
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           if [ -n "$ANTHROPIC_API_KEY" ]; then printf '%s' "$ANTHROPIC_API_KEY" | npx --yes wrangler@3 secret put ANTHROPIC_API_KEY; fi
-      # Pilihan percuma: kunci Gemini (Google AI Studio). Digunakan jika ANTHROPIC_API_KEY tiada.
+      # Pilihan percuma: kunci Gemini (Google AI Studio). Digunakan oleh Tanya AI jika ANTHROPIC_API_KEY dan DEEPSEEK_API_KEY tiada,
+      # dan oleh ciri AI lain.
       - name: Rahsia GEMINI_API_KEY
         if: github.ref == 'refs/heads/main' && env.HAS_CF == 'true'
         env:
@@ -184,10 +201,10 @@ jobs:
       - name: Ringkasan
         if: github.ref == 'refs/heads/main'
         env:
-          HAS_AI: ${{ secrets.ANTHROPIC_API_KEY != '' || secrets.GEMINI_API_KEY != '' }}
+          HAS_AI: ${{ secrets.ANTHROPIC_API_KEY != '' || secrets.DEEPSEEK_API_KEY != '' || secrets.GEMINI_API_KEY != '' }}
         run: |
           if [ "$HAS_AI" != "true" ]; then
-            echo "Tiada ANTHROPIC_API_KEY atau GEMINI_API_KEY, jadi Tanya AI memaparkan \"belum diaktifkan\"." >> "$GITHUB_STEP_SUMMARY"
+            echo "Tiada ANTHROPIC_API_KEY, DEEPSEEK_API_KEY atau GEMINI_API_KEY, jadi Tanya AI memaparkan \"belum diaktifkan\"." >> "$GITHUB_STEP_SUMMARY"
           fi
           if [ "$HAS_CF" != "true" ]; then
             echo "Rahsia Cloudflare belum ditetapkan, jadi pelayan Tanya AI tidak dipasang." >> "$GITHUB_STEP_SUMMARY"
