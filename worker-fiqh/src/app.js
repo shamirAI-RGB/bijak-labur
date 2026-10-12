@@ -4,12 +4,12 @@
  * POST /tanya  { q }  -> { status, ringkasan, huraian[], khilaf, nasihat, sumber[] }
  * GET  /             -> { ok, ai }
  *
- * AI (Claude jika ANTHROPIC_API_KEY ditetapkan, jika tidak DeepSeek berbayar jika DEEPSEEK_API_KEY ditetapkan, jika tidak
- * Gemini percuma) hanya boleh menjawab dengan rujukan:
+ * AI (Claude jika ANTHROPIC_API_KEY ditetapkan, jika tidak model percuma OpenRouter (lihat TANYA di bawah), dan jika tiada
+ * kunci OpenRouter, Gemini percuma) hanya boleh menjawab dengan rujukan:
  *  1. Korpus rujukan Fiqh SiswaCap yang telah disemak (js/fiqh-data.js).
  *  2. Halaman yang benar-benar dibuka semasa soalan itu dijawab, dari senarai domain yang dibenarkan sahaja
  *     (Shamela untuk kitab muktabar, quran.com, sunnah.com, laman mufti dan fatwa rasmi Malaysia).
- *     Hanya Claude mempunyai alat web; dengan DeepSeek atau Gemini, jawapan bersandarkan korpus, muka surat yang diberi
+ *     Hanya Claude mempunyai alat web; dengan model lain, jawapan bersandarkan korpus, muka surat yang diberi
  *     dan ayat Al-Quran sahaja.
  * Setiap sumber yang dipulangkan model disemak di sini: id mesti wujud dalam korpus, atau URL mesti
  * halaman yang benar-benar dibuka atau ditemui dalam carian. Petikan disemak perkataan demi perkataan
@@ -18,8 +18,8 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { BY_ID, CORPUS_TEXT } from './corpus.js';
 import { DOC, KITAB, MUFTI, search, expand, pagesText, pageUrl, cetakan, cetakPdf, muatCetakan, assetTag, gambarAset } from './rujukan.js';
-import { GEMINI_MODEL, GEMINI_FALLBACKS, geminiModels, geminiGenerate, geminiText, aiSedia } from './gemini.js';
-import { senaraiAktif, combo, PENYEDIA_GAMBAR, penyediaGenerate } from './penghala.js';
+import { GEMINI_MODEL, GEMINI_FALLBACKS, geminiModels, geminiGenerate, geminiText, aiSedia, routerGenerate } from './gemini.js';
+import { senaraiAktif, combo, PENYEDIA_GAMBAR, penyediaGenerate, penghalaGenerate } from './penghala.js';
 import { semak, MIN_CHARS, MAX_CHARS } from './semak.js';
 import { kalori, check as checkKalori } from './kalori.js';
 import { gambar, check as checkGambar } from './gambar.js';
@@ -229,26 +229,54 @@ export function verify(ans, pages, docs = [], cetak = null) {
   return res;
 }
 
-// DeepSeek dan Gemini tidak mempunyai alat web_search/web_fetch dalam pelayan ini, jadi hanya korpus, muka surat yang diberi dan ayat Al-Quran dibenarkan
+// Selain Claude, model tidak mempunyai alat web_search/web_fetch dalam pelayan ini, jadi hanya korpus, muka surat yang diberi dan ayat Al-Quran dibenarkan
 export const SYSTEM_KORPUS = SYSTEM + `
 
 Mod korpus: alat web_search dan web_fetch TIDAK tersedia. Gunakan hanya sumber 2a (id korpus), 2b (quran:SURAH:AYAT), 2d (pdf:KOD:MUKASURAT atau kitab:KOD:HALAMAN yang diberi) dan 2e (mufti:NEGERI:N yang diberi), dan biarkan "url" kosong. Jika korpus tidak menjawab soalan, pulangkan status "tidak_pasti".`;
 
 /* ---------- Model ---------- */
-const provider = env => env.ANTHROPIC_API_KEY ? 'claude' : env.DEEPSEEK_API_KEY ? 'deepseek' : aiSedia(env) ? 'gemini' : '';
-
 /*
- * Model mod korpus untuk Tanya AI. Jika DEEPSEEK_API_KEY ditetapkan (pilihan pemilik, berbayar), DeepSeek sahaja digunakan,
- * tanpa Gemini; jika DeepSeek gagal, pengguna diminta mencuba lagi. Tanpa kunci itu, rantaian percuma biasa
- * (Gemini, penyedia sandaran, Workers AI).
- * DEEPSEEK_EFFORT (pilihan, [vars]): tahap berfikir sebelum menjawab, "low" (lalai), "high" atau "none" (jawab terus).
+ * Model mod korpus untuk Tanya AI (arahan pemilik, 12 Oktober 2026: bukan Gemini percuma, tetapi model percuma yang bagus).
+ * TANYA_AI ([vars], pilihan) = penyedia penghala yang dicuba mengikut susunan; lalai "openrouter,deepseek".
+ * Penyedia tanpa kunci dilangkau, jadi DeepSeek (berbayar) hanya digunakan jika DEEPSEEK_API_KEY ditetapkan.
+ * Setiap penyedia mencuba model Tanya AI-nya mengikut susunan (TANYA di bawah, atau TANYA_<ID>_MODEL dengan beberapa
+ * model dipisahkan koma). Jika semuanya gagal, pengguna diminta mencuba lagi; Gemini tidak digunakan.
+ * Jika tiada penyedia Tanya AI yang berkunci, rantaian percuma biasa (Gemini, penghala, Workers AI) digunakan.
+ * TANYA_EFFORT ([vars], pilihan): tahap berfikir sebelum menjawab, "low" (lalai), "high" atau "none".
  */
-export const DEEPSEEK_EFFORT = 'low';
-const deepseekBadan = (env, effort = env.DEEPSEEK_EFFORT || DEEPSEEK_EFFORT) =>
-  effort === 'none' ? { thinking: { type: 'disabled' } } : { thinking: { type: 'enabled' }, reasoning_effort: effort };
-const korpusGenerate = (env, body, { ringkas = false } = {}) => !env.DEEPSEEK_API_KEY ? geminiGenerate(env, body)
-  // Jawapan penuh: mod berfikir memerlukan lebih banyak token dan masa; istilah carian: jawab terus
-  : penyediaGenerate(env, 'deepseek', body, ringkas ? { badan: deepseekBadan(env, 'none'), timeout: 30000 } : { badan: deepseekBadan(env), maxTokens: 16000, timeout: 150000 });
+export const TANYA = {
+  // Model percuma OpenRouter (had: 20 permintaan seminit; 50 sehari, atau 1,000 sehari selepas akaun pernah membeli kredit 10 USD)
+  openrouter: {
+    model: ['thinkingmachines/inkling:free', 'nvidia/nemotron-3-ultra-550b-a55b:free', 'google/gemma-4-31b-it:free'],
+    badan: e => e === 'none' ? { reasoning: { enabled: false } } : { reasoning: { effort: e } }
+  },
+  deepseek: {
+    model: ['deepseek-flash'],
+    badan: e => e === 'none' ? { thinking: { type: 'disabled' } } : { thinking: { type: 'enabled' }, reasoning_effort: e }
+  }
+};
+export const TANYA_EFFORT = 'low';
+const tanyaRantai = env => String(env.TANYA_AI || 'openrouter,deepseek').split(',').map(s => s.trim().toLowerCase())
+  .filter(id => TANYA[id] && combo(env).some(p => p.id === id));
+const tanyaModel = (env, id) => {
+  const v = env[`TANYA_${id.toUpperCase()}_MODEL`];
+  return v ? String(v).split(',').map(s => s.trim()).filter(Boolean) : TANYA[id].model;
+};
+const provider = env => env.ANTHROPIC_API_KEY ? 'claude' : tanyaRantai(env)[0] || (aiSedia(env) ? 'gemini' : '');
+
+/** Jawapan Tanya AI daripada rantaian penyedia dan model Tanya AI. Ralat terakhir dilontar jika semuanya gagal. */
+export async function tanyaGenerate(env, body) {
+  const effort = env.TANYA_EFFORT || TANYA_EFFORT;
+  let err;
+  for (const id of tanyaRantai(env)) {
+    for (const model of tanyaModel(env, id)) {
+      try { return await penyediaGenerate(env, id, body, { model, badan: TANYA[id].badan(effort), maxTokens: 16000, timeout: 90000 }); }
+      catch (e) { console.log('tanya', id, model, e && e.status, String(e && e.message || e).slice(0, 200)); err = e; }
+    }
+  }
+  throw err || Object.assign(new Error('tiada penyedia Tanya AI'), { status: 503 });
+}
+const korpusGenerate = (env, body) => tanyaRantai(env).length ? tanyaGenerate(env, body) : geminiGenerate(env, body);
 const NO_ANSWER = { status: 'luar_skop', ringkasan: 'Soalan ini tidak dapat dijawab.', huraian: [], khilaf: '', nasihat: '', sumber: [] };
 
 const DOCS_HEAD = 'Dokumen rujukan rasmi moden, teks kitab dan artikel laman Jabatan Mufti (teks muka surat yang paling berkaitan dengan soalan, hasil carian automatik):\n\n';
@@ -312,11 +340,15 @@ JSON: {"ar":["..."],"en":["..."],"ms":["..."]}, paling banyak 8 istilah setiap b
 export async function kataKunci(env, q) {
   if (!env.RUJUKAN || !(aiSedia(env) || env.AI)) return '';
   try {
-    const d = await korpusGenerate(env, JSON.stringify({
+    const body = JSON.stringify({
       systemInstruction: { parts: [{ text: KATA_KUNCI }] },
       contents: [{ role: 'user', parts: [{ text: q }] }],
       generationConfig: { responseMimeType: 'application/json', temperature: 0, maxOutputTokens: 300 }
-    }), { ringkas: true });
+    });
+    // Dengan penyedia Tanya AI: istilah carian daripada penghala percuma (tanpa Gemini) atau Workers AI, supaya
+    // had harian model Tanya AI digunakan untuk jawapan sahaja
+    const d = tanyaRantai(env).length ? (await penghalaGenerate(env, body) || await routerGenerate(env, body)) : await geminiGenerate(env, body);
+    if (!d) return '';
     const o = parseAnswer(geminiText(d)) || {};
     return ['ar', 'en', 'ms'].flatMap(k => Array.isArray(o[k]) ? o[k].slice(0, 8) : []).map(t => String(t).slice(0, 40)).join(' ');
   } catch (e) { console.log('kata kunci', e && e.message); return ''; }
@@ -334,7 +366,7 @@ async function tanya(req, env, url, h) {
   const cache = typeof caches !== 'undefined' ? caches.default : null;
   // Kunci cache mengandungi cap peta PDF kitab dan indeks rujukan (berubah apabila fatwa baharu dari laman Mufti masuk),
   // supaya jawapan yang disimpan sebelum pemasangan baharu tidak dipaparkan lagi. Penyedia model juga dalam kunci,
-  // supaya jawapan model lama tidak dipaparkan selepas pemilik menukar penyedia (cth. Gemini ke DeepSeek).
+  // supaya jawapan model lama tidak dipaparkan selepas pemilik menukar penyedia (cth. Gemini ke OpenRouter).
   const [tCetak, tIndeks] = await Promise.all([assetTag(env), assetTag(env, 'rujukan/meta.json')]);
   const key = new Request(`${url.origin}/tanya-cache-5?q=${encodeURIComponent(norm(q))}&r=${tCetak}&i=${tIndeks}&p=${provider(env)}`);
   const hit = cache && await cache.match(key);
@@ -346,7 +378,7 @@ async function tanya(req, env, url, h) {
     if (!success) return json({ error: 'Terlalu banyak soalan. Cuba lagi sebentar.' }, 429, h);
   }
   let out;
-  // Cari muka surat dokumen rasmi moden yang berkaitan (tanpa model, jadi sama untuk Claude, DeepSeek dan Gemini)
+  // Cari muka surat dokumen rasmi moden yang berkaitan (tanpa model, jadi sama untuk semua penyedia)
   let docs = [];
   try { docs = await search(env, expand(q) + ' ' + await kataKunci(env, q), 8, q); } catch (e) { console.log('rujukan', e && e.message); }
   try { out = provider(env) === 'claude' ? await ask(env, q, undefined, docs) : await askKorpus(env, q, docs); }
