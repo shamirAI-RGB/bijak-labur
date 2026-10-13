@@ -247,7 +247,7 @@ Mod korpus: alat web_search dan web_fetch TIDAK tersedia. Gunakan hanya sumber 2
 export const TANYA = {
   // Model percuma OpenRouter (had: 20 permintaan seminit; 50 sehari, atau 1,000 sehari selepas akaun pernah membeli kredit 10 USD)
   openrouter: {
-    model: ['thinkingmachines/inkling:free', 'nvidia/nemotron-3-ultra-550b-a55b:free', 'google/gemma-4-31b-it:free'],
+    model: ['nvidia/nemotron-3-ultra-550b-a55b:free', 'google/gemma-4-31b-it:free'],
     badan: e => e === 'none' ? { reasoning: { enabled: false } } : { reasoning: { effort: e } }
   },
   deepseek: {
@@ -256,6 +256,7 @@ export const TANYA = {
   }
 };
 export const TANYA_EFFORT = 'low';
+const TANYA_MASA = 120000;
 const tanyaRantai = env => String(env.TANYA_AI || 'openrouter,deepseek').split(',').map(s => s.trim().toLowerCase())
   .filter(id => TANYA[id] && combo(env).some(p => p.id === id));
 const tanyaModel = (env, id) => {
@@ -266,10 +267,12 @@ const provider = env => env.ANTHROPIC_API_KEY ? 'claude' : tanyaRantai(env)[0] |
 
 /** Jawapan Tanya AI daripada rantaian penyedia dan model Tanya AI. Ralat terakhir dilontar jika semuanya gagal. */
 export async function tanyaGenerate(env, body) {
-  const effort = env.TANYA_EFFORT || TANYA_EFFORT;
+  const effort = env.TANYA_EFFORT || TANYA_EFFORT, mula = Date.now();
   let err;
   for (const id of tanyaRantai(env)) {
     for (const model of tanyaModel(env, id)) {
+      // Jangan biarkan pengguna menunggu terlalu lama apabila model percuma lambat atau sibuk
+      if (err && Date.now() - mula > TANYA_MASA) break;
       try { return await penyediaGenerate(env, id, body, { model, badan: TANYA[id].badan(effort), maxTokens: 16000, timeout: 90000 }); }
       catch (e) { console.log('tanya', id, model, e && e.status, String(e && e.message || e).slice(0, 200)); err = e; }
     }

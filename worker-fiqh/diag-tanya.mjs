@@ -1,6 +1,6 @@
 // Bandingkan model percuma untuk Tanya AI dengan soalan sebenar, indeks rujukan sebenar dan semakan sumber pelayan.
-// Digunakan oleh fiqh.yml pada PR dan larian manual sahaja: setiap model menggunakan satu permintaan bagi setiap soalan
-// daripada had harian model percuma OpenRouter.
+// Digunakan oleh .github/workflows/banding-tanya.yml (PR yang mengubah skrip ini, dan larian manual sahaja): setiap model
+// menggunakan satu permintaan bagi setiap soalan daripada had harian model percuma OpenRouter.
 // OPENROUTER_API_KEY=... node worker-fiqh/diag-tanya.mjs [model ...]
 import { readFile } from 'node:fs/promises';
 import { askKorpus, TANYA } from './src/app.js';
@@ -16,8 +16,11 @@ const RUJUKAN = { fetch: async req => {
   catch { return new Response('', { status: 404 }); }
 } };
 const SOALAN = ['Apakah hukum melabur dalam mata wang kripto seperti Bitcoin?', 'Air apa yang boleh digunakan untuk mengangkat hadas?'];
-// Model Tanya AI semasa dan calon lain yang mungkin lebih baik
-const MODEL = process.argv.length > 2 ? process.argv.slice(2) : [...new Set([...TANYA.openrouter.model, 'thinkingmachines/inkling-small:free'])];
+// Model Tanya AI semasa dan calon lain. Ujian 13 Oktober 2026: Inkling dan Inkling Small ditolak (403, hanya untuk
+// "agentic harness"); Gemma 4 31B dihadkan oleh penyedia hulu (429).
+const CALON = ['nvidia/nemotron-3-super-120b-a12b:free', 'inclusionai/ling-3.1-flash', 'google/gemma-4-26b-a4b-it:free',
+  'dots-studio/dots-3-note-preview:free', 'apodex/apodex-1.1-mini:free', 'nvidia/nemotron-3.5-lightning:free'];
+const MODEL = process.argv.length > 2 ? process.argv.slice(2) : [...new Set([...TANYA.openrouter.model, ...CALON])];
 const AR = /[؀-ۿ]/;
 const satu = s => String(s || '').replace(/\s+/g, ' ').slice(0, 300);
 

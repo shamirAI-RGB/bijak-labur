@@ -1,0 +1,55 @@
+name: Banding model Tanya AI
+
+# Bandingkan model percuma OpenRouter untuk Tanya AI Fiqh dengan soalan sebenar, indeks rujukan sebenar dan semakan
+# sumber pelayan (worker-fiqh/diag-tanya.mjs). Setiap model menggunakan satu permintaan bagi setiap soalan daripada had
+# harian model percuma (50 sehari tanpa kredit), jadi aliran kerja ini hanya berjalan apabila skrip itu berubah atau
+# dijalankan secara manual (Actions > Banding model Tanya AI > Run workflow, pilihan: senarai model dipisahkan ruang).
+on:
+  pull_request:
+    paths: ['worker-fiqh/diag-tanya.mjs', '.github/workflows/banding-tanya.yml']
+  workflow_dispatch:
+    inputs:
+      model:
+        description: 'Model OpenRouter (dipisahkan ruang); kosong = senarai calon dalam diag-tanya.mjs'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  banding:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      HAS_OPENROUTER: ${{ secrets.OPENROUTER_API_KEY != '' }}
+    defaults:
+      run:
+        working-directory: worker-fiqh
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+      - run: npm ci
+      # Teks kitab dan artikel laman Mufti daripada larian "Pelayan Tanya AI Fiqh" (baca sahaja)
+      - name: Pulihkan cache teks kitab
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: worker-fiqh/.cache
+          key: shamela-v1-${{ github.run_id }}
+          restore-keys: shamela-v1-
+      - name: Bina indeks rujukan
+        timeout-minutes: 15
+        continue-on-error: true
+        env:
+          RUJUKAN_MINIT: '5'
+        run: node scripts/muat-rujukan.mjs > /dev/null
+      - name: Bandingkan model
+        if: env.HAS_OPENROUTER == 'true'
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          MODEL: ${{ inputs.model }}
+        run: |
+          read -ra senarai <<< "$MODEL"
+          node diag-tanya.mjs "${senarai[@]}" | tee -a "$GITHUB_STEP_SUMMARY"

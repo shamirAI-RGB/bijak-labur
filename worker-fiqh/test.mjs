@@ -187,7 +187,7 @@ assert.equal(d.penyedia, 'claude');
 // Model percuma OpenRouter (arahan pemilik): jika OPENROUTER_API_KEY ada, Tanya AI menggunakan model Tanya AI sahaja, tanpa Gemini
 {
   const oenv = { ...genv, OPENROUTER_API_KEY: 'or-test' };
-  const [m1, m2, m3] = TANYA.openrouter.model;
+  const [m1] = TANYA.openrouter.model;
   let sent = [], google = 0, jawab = null;
   globalThis.fetch = async (u, init) => {
     u = String(u);
@@ -220,17 +220,18 @@ assert.equal(d.penyedia, 'claude');
   d = await (await worker.fetch(new Request(W + '/'), { ...oenv, ...env })).json();
   assert.equal(d.penyedia, 'claude');
 
-  // Model pertama dihadkan, model kedua ditarik balik, model ketiga menjawab
+  // Model pertama dihadkan, model kedua ditarik balik atau hanya untuk app tertentu, model ketiga menjawab
+  const tiga = { ...oenv, TANYA_OPENROUTER_MODEL: 'a/satu:free,b/dua:free,c/tiga:free' };
   sent = [];
-  jawab = b => b.model === m1 ? new Response('{"error":{"message":"Rate limit exceeded","code":429}}', { status: 429 })
-    : b.model === m2 ? new Response('{"error":{"message":"No endpoints found","code":404}}', { status: 404 }) : oa(FOREX);
-  d = await (await call({ q: 'Apakah hukum forex runcit menurut fatwa??' }, 'https://bijaklabur.my', oenv)).json();
-  assert.deepEqual(sent.map(x => x.b.model), [m1, m2, m3]); assert.equal(d.status, 'jawab');
+  jawab = b => b.model === 'a/satu:free' ? new Response('{"error":{"message":"Rate limit exceeded","code":429}}', { status: 429 })
+    : b.model === 'b/dua:free' ? new Response('{"error":{"message":"only available on agentic harnesses","code":403}}', { status: 403 }) : oa(FOREX);
+  d = await (await call({ q: 'Apakah hukum forex runcit menurut fatwa??' }, 'https://bijaklabur.my', tiga)).json();
+  assert.deepEqual(sent.map(x => x.b.model), ['a/satu:free', 'b/dua:free', 'c/tiga:free']); assert.equal(d.status, 'jawab');
   // Ralat penyedia hulu dengan HTTP 200: model seterusnya
   sent = [];
-  jawab = b => b.model === m1 ? oa('', {}, { error: { message: 'Provider returned error', code: 502 } }) : oa(FOREX);
-  d = await (await call({ q: 'Hukum forex runcit menurut fatwa?' }, 'https://bijaklabur.my', oenv)).json();
-  assert.deepEqual(sent.map(x => x.b.model), [m1, m2]); assert.equal(d.status, 'jawab');
+  jawab = b => b.model === 'a/satu:free' ? oa('', {}, { error: { message: 'Provider returned error', code: 502 } }) : oa(FOREX);
+  d = await (await call({ q: 'Hukum forex runcit menurut fatwa?' }, 'https://bijaklabur.my', tiga)).json();
+  assert.deepEqual(sent.map(x => x.b.model), ['a/satu:free', 'b/dua:free']); assert.equal(d.status, 'jawab');
   // Semua model dihadkan: "sibuk", tanpa peralihan ke Gemini; ralat lain: "tidak tersedia"
   jawab = () => new Response('{"error":{"message":"Rate limit exceeded","code":429}}', { status: 429 });
   assert.equal((await call({ q: 'Hukum emas digital fizikal?' }, 'https://bijaklabur.my', oenv)).status, 429);
@@ -251,7 +252,7 @@ assert.equal(d.penyedia, 'claude');
   jawab = (b, u) => u.includes('openrouter') ? new Response('{}', { status: 429 }) : oa(FOREX);
   d = await (await call({ q: 'Apakah hukum forex menurut fatwa kebangsaan?' }, 'https://bijaklabur.my', { ...oenv, DEEPSEEK_API_KEY: 'd-test' })).json();
   const ds = sent.at(-1);
-  assert.equal(sent.length, 4); assert.equal(ds.u, 'https://api.deepseek.com/chat/completions'); assert.equal(ds.h.authorization, 'Bearer d-test');
+  assert.equal(sent.length, TANYA.openrouter.model.length + 1); assert.equal(ds.u, 'https://api.deepseek.com/chat/completions'); assert.equal(ds.h.authorization, 'Bearer d-test');
   assert.deepEqual([ds.b.model, ds.b.thinking, ds.b.reasoning_effort, ds.b.reasoning], ['deepseek-flash', { type: 'enabled' }, TANYA_EFFORT, undefined]);
   assert.equal(d.status, 'jawab');
   // TANYA_AI menukar susunan: DeepSeek dahulu
