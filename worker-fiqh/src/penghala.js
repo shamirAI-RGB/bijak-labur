@@ -162,7 +162,7 @@ async function panggil(p, env, input, timeout) {
 // Sesetengah model tidak menyokong response_format: cuba sekali lagi tanpanya
 async function panggilJson(p, env, input, timeout) {
   let r = await panggil(p, env, input, timeout);
-  if (r.status === 400 && input.response_format && /response_format|json_object|json mode/i.test(r.text)) {
+  if (r.status === 400 && input.response_format && /response_format|json_object|json mode|structured/i.test(r.text)) {
     delete input.response_format;
     r = await panggil(p, env, input, timeout);
   }

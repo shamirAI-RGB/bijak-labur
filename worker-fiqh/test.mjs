@@ -274,6 +274,20 @@ assert.equal(d.penyedia, 'claude');
   jawab = () => ++n === 1 ? new Response('response_format json_object not supported', { status: 400 }) : oa({ status: 'jawab', ringkasan: 'Ok.', huraian: ['x'], sumber: [{ id: 'quran:2:275' }] });
   d = await (await call({ q: 'Hukum emas digital fizikal??' }, 'https://bijaklabur.my', oenv)).json();
   assert.equal(n, 2); assert.equal(sent[1].b.response_format, undefined); assert.equal(d.status, 'jawab');
+  // Ralat OpenRouter untuk model tanpa "structured outputs": juga cuba semula tanpa response_format
+  sent = []; n = 0;
+  jawab = () => ++n === 1 ? new Response('{"error":{"message":"Provider returned error","code":400,"metadata":{"raw":"model does not support feature: structured-outputs"}}}', { status: 400 })
+    : oa({ status: 'jawab', ringkasan: 'Ok.', huraian: ['x'], sumber: [{ id: 'quran:2:275' }] });
+  d = await (await call({ q: 'Hukum emas digital fizikal menurut fatwa?' }, 'https://bijaklabur.my', oenv)).json();
+  assert.equal(n, 2); assert.equal(sent[1].b.response_format, undefined); assert.equal(d.status, 'jawab');
+  // Had masa keseluruhan: selepas model pertama menghabiskan hampir semua masa, model lain tidak dicuba
+  const jam = Date.now; let lompat = 0;
+  Date.now = () => jam() + lompat;
+  sent = [];
+  jawab = () => { lompat += 140000; return new Response('{"error":{"message":"Rate limit exceeded","code":429}}', { status: 429 }); };
+  const lambat = await call({ q: 'Hukum emas digital fizikal menurut fatwa??' }, 'https://bijaklabur.my', tiga);
+  Date.now = jam;
+  assert.equal(lambat.status, 429); assert.deepEqual(sent.map(x => x.b.model), ['a/satu:free']);
 
   // Istilah carian daripada penghala percuma (bukan model Tanya AI dan bukan Gemini), supaya had harian model Tanya AI
   // digunakan untuk jawapan sahaja

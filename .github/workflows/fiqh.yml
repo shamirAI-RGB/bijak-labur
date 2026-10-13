@@ -122,7 +122,7 @@ jobs:
         run: |
           sed -i '/^routes = /d' wrangler.toml
           npx --yes wrangler@3 deploy
-      # Kunci API dimuat naik hanya jika ia ditetapkan. Tanpa ANTHROPIC_API_KEY, DEEPSEEK_API_KEY dan GEMINI_API_KEY, Tanya AI memaparkan "belum diaktifkan".
+      # Kunci API dimuat naik hanya jika ia ditetapkan. Tanpa ANTHROPIC_API_KEY, OPENROUTER_API_KEY, DEEPSEEK_API_KEY dan GEMINI_API_KEY, Tanya AI memaparkan "belum diaktifkan".
       # Tanya AI memilih Claude jika ada, kemudian model percuma OpenRouter dan DeepSeek (dimuat naik dalam langkah penyedia AI
       # di bawah), dan Gemini hanya jika kedua-dua kunci itu tiada.
       - name: Rahsia ANTHROPIC_API_KEY
