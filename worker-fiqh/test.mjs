@@ -1,6 +1,6 @@
 // Ujian pelayan Tanya AI Fiqh tanpa rangkaian: node worker-fiqh/test.mjs
 import assert from 'node:assert/strict';
-import worker, { readJson, NOTA_PDF, kataKunci, verify, collectRetrieved, norm, normUrl, parseAnswer, MODEL, GEMINI_MODEL, GEMINI_FALLBACKS, DOMAINS } from './src/app.js';
+import worker, { readJson, NOTA_PDF, kataKunci, verify, collectRetrieved, norm, normUrl, parseAnswer, MODEL, GEMINI_MODEL, GEMINI_FALLBACKS, DOMAINS, TANYA, TANYA_EFFORT } from './src/app.js';
 import { BY_ID, CORPUS_TEXT } from './src/corpus.js';
 import { MODEN, KITAB, MUFTI, DOC, buildIndex, muftiDocs, potong, bahagianPdf, search, expand, pageUrl, pagesText, tokens, cetakan, cetakPdf, assetTag } from './src/rujukan.js';
 import { robots, kandungan, tarikhHtml, tajukHtml, pautanHtml, artikelOk, tajukUmum, tajukFail, tajukTeks, tanpaNamaLaman, KUNCI, ABAI } from './scripts/muat-mufti.mjs';
@@ -184,6 +184,138 @@ assert.deepEqual(d, { ok: true, service: 'bijak-labur-fiqh', ai: true, penyedia:
 d = await (await worker.fetch(new Request(W + '/'), { ...genv, ...env })).json();
 assert.equal(d.penyedia, 'claude');
 
+// Model percuma OpenRouter (arahan pemilik): jika OPENROUTER_API_KEY ada, Tanya AI menggunakan model Tanya AI sahaja, tanpa Gemini
+{
+  const oenv = { ...genv, OPENROUTER_API_KEY: 'or-test' };
+  const [m1] = TANYA.openrouter.model;
+  let sent = [], google = 0, jawab = null;
+  globalThis.fetch = async (u, init) => {
+    u = String(u);
+    if (u.includes('googleapis.com')) { google++; return gem({ status: 'jawab', ringkasan: 'Gemini', sumber: [{ id: 'quran:2:275' }] }); }
+    const b = JSON.parse(init.body);
+    sent.push({ u, b, h: init.headers });
+    return jawab(b, u);
+  };
+  const oa = (obj, extra = {}, top = {}) => new Response(JSON.stringify({ choices: [{ message: { role: 'assistant', reasoning: 'fikir dahulu', content: typeof obj === 'string' ? obj : JSON.stringify(obj) }, finish_reason: 'stop', ...extra }],
+    usage: { prompt_tokens: 12000, completion_tokens: 900 }, ...top }), { headers: { 'content-type': 'application/json' } });
+  const FOREX = { status: 'jawab', ringkasan: 'Forex runcit haram.', huraian: ['Muzakarah memutuskan haram.'], sumber: [{ id: 'fatwa:mkiForex', petikan: 'riba melalui pengenaan rollover interest' }, { id: 'quran:2:275' }] };
+  jawab = () => oa(FOREX);
+  r = await call({ q: 'Apakah hukum forex runcit menurut fatwa?' }, 'https://bijaklabur.my', oenv);
+  d = await r.json();
+  assert.equal(r.status, 200, JSON.stringify(d));
+  assert.equal(google, 0, 'Gemini tidak dipanggil apabila kunci OpenRouter ada');
+  assert.equal(sent.length, 1);
+  const s0 = sent[0];
+  assert.equal(s0.u, 'https://openrouter.ai/api/v1/chat/completions');
+  assert.equal(s0.h.authorization, 'Bearer or-test'); assert.equal(s0.h['X-Title'], 'SiswaCap');
+  assert.deepEqual([s0.b.model, s0.b.reasoning, s0.b.max_tokens, s0.b.response_format], [m1, { effort: TANYA_EFFORT }, 16000, { type: 'json_object' }]);
+  assert.equal(s0.b.messages[0].role, 'system'); assert.match(s0.b.messages[0].content, /Mod korpus/); assert.match(s0.b.messages[0].content, /objek JSON/);
+  // Korpus mendahului soalan supaya awalan permintaan sama bagi setiap soalan (cache konteks penyedia)
+  const isi = s0.b.messages[1].content;
+  assert.ok(isi.indexOf('fatwa:mkiForex') >= 0 && isi.indexOf('fatwa:mkiForex') < isi.indexOf('Apakah hukum forex runcit'));
+  assert.equal(d.status, 'jawab'); assert.equal(d.sumber.length, 2); assert.equal(d.sumber[0].disahkan, true);
+  // Status pelayan: penyedia openrouter; Claude masih diutamakan jika kuncinya ditetapkan
+  d = await (await worker.fetch(new Request(W + '/'), oenv)).json();
+  assert.equal(d.penyedia, 'openrouter');
+  d = await (await worker.fetch(new Request(W + '/'), { ...oenv, ...env })).json();
+  assert.equal(d.penyedia, 'claude');
+
+  // Model pertama dihadkan, model kedua ditarik balik atau hanya untuk app tertentu, model ketiga menjawab
+  const tiga = { ...oenv, TANYA_OPENROUTER_MODEL: 'a/satu:free,b/dua:free,c/tiga:free' };
+  sent = [];
+  jawab = b => b.model === 'a/satu:free' ? new Response('{"error":{"message":"Rate limit exceeded","code":429}}', { status: 429 })
+    : b.model === 'b/dua:free' ? new Response('{"error":{"message":"only available on agentic harnesses","code":403}}', { status: 403 }) : oa(FOREX);
+  d = await (await call({ q: 'Apakah hukum forex runcit menurut fatwa??' }, 'https://bijaklabur.my', tiga)).json();
+  assert.deepEqual(sent.map(x => x.b.model), ['a/satu:free', 'b/dua:free', 'c/tiga:free']); assert.equal(d.status, 'jawab');
+  // Ralat penyedia hulu dengan HTTP 200: model seterusnya
+  sent = [];
+  jawab = b => b.model === 'a/satu:free' ? oa('', {}, { error: { message: 'Provider returned error', code: 502 } }) : oa(FOREX);
+  d = await (await call({ q: 'Hukum forex runcit menurut fatwa?' }, 'https://bijaklabur.my', tiga)).json();
+  assert.deepEqual(sent.map(x => x.b.model), ['a/satu:free', 'b/dua:free']); assert.equal(d.status, 'jawab');
+  // Semua model dihadkan: "sibuk", tanpa peralihan ke Gemini; ralat lain: "tidak tersedia"
+  jawab = () => new Response('{"error":{"message":"Rate limit exceeded","code":429}}', { status: 429 });
+  assert.equal((await call({ q: 'Hukum emas digital fizikal?' }, 'https://bijaklabur.my', oenv)).status, 429);
+  jawab = () => new Response('{"error":{"message":"x"}}', { status: 401 });
+  assert.equal((await call({ q: 'Hukum emas digital fizikal?' }, 'https://bijaklabur.my', oenv)).status, 502);
+  assert.equal(google, 0);
+
+  // Senarai model dan tahap berfikir boleh ditukar melalui [vars]
+  sent = []; jawab = () => new Response('{}', { status: 503 });
+  await call({ q: 'Hukum forex runcit ikut fatwa?' }, 'https://bijaklabur.my', { ...oenv, TANYA_OPENROUTER_MODEL: 'a/x:free, b/y:free', TANYA_EFFORT: 'high' });
+  assert.deepEqual(sent.map(x => [x.b.model, x.b.reasoning.effort]), [['a/x:free', 'high'], ['b/y:free', 'high']]);
+  sent = []; jawab = () => oa(FOREX);
+  await call({ q: 'Hukum forex runcit ikut fatwa??' }, 'https://bijaklabur.my', { ...oenv, TANYA_EFFORT: 'none' });
+  assert.deepEqual(sent[0].b.reasoning, { enabled: false });
+
+  // DeepSeek berbayar hanya jika kuncinya ditetapkan, selepas semua model percuma gagal
+  sent = [];
+  jawab = (b, u) => u.includes('openrouter') ? new Response('{}', { status: 429 }) : oa(FOREX);
+  d = await (await call({ q: 'Apakah hukum forex menurut fatwa kebangsaan?' }, 'https://bijaklabur.my', { ...oenv, DEEPSEEK_API_KEY: 'd-test' })).json();
+  const ds = sent.at(-1);
+  assert.equal(sent.length, TANYA.openrouter.model.length + 1); assert.equal(ds.u, 'https://api.deepseek.com/chat/completions'); assert.equal(ds.h.authorization, 'Bearer d-test');
+  assert.deepEqual([ds.b.model, ds.b.thinking, ds.b.reasoning_effort, ds.b.reasoning], ['deepseek-flash', { type: 'enabled' }, TANYA_EFFORT, undefined]);
+  assert.equal(d.status, 'jawab');
+  // TANYA_AI menukar susunan: DeepSeek dahulu
+  sent = [];
+  await call({ q: 'Apakah hukum forex menurut fatwa kebangsaan??' }, 'https://bijaklabur.my', { ...oenv, DEEPSEEK_API_KEY: 'd-test', TANYA_AI: 'deepseek,openrouter' });
+  assert.equal(sent.length, 1); assert.ok(sent[0].u.includes('deepseek'));
+
+  // Disekat oleh penapis kandungan: luar skop; jawapan terpotong: tidak pasti; jawapan kosong di semua model: ralat
+  jawab = () => oa('', { finish_reason: 'content_filter' });
+  d = await (await call({ q: 'Soalan yang disekat penyedia' }, 'https://bijaklabur.my', oenv)).json();
+  assert.equal(d.status, 'luar_skop');
+  jawab = () => oa('{"status":"jawab","ringkasan":"Ha', { finish_reason: 'length' });
+  d = await (await call({ q: 'Soalan panjang tentang zakat?' }, 'https://bijaklabur.my', oenv)).json();
+  assert.equal(d.status, 'tidak_pasti');
+  jawab = () => oa('', { finish_reason: 'length' });
+  assert.equal((await call({ q: 'Soalan panjang tentang zakat??' }, 'https://bijaklabur.my', oenv)).status, 502);
+  // Model tidak menyokong response_format: cuba semula tanpanya
+  sent = []; let n = 0;
+  jawab = () => ++n === 1 ? new Response('response_format json_object not supported', { status: 400 }) : oa({ status: 'jawab', ringkasan: 'Ok.', huraian: ['x'], sumber: [{ id: 'quran:2:275' }] });
+  d = await (await call({ q: 'Hukum emas digital fizikal??' }, 'https://bijaklabur.my', oenv)).json();
+  assert.equal(n, 2); assert.equal(sent[1].b.response_format, undefined); assert.equal(d.status, 'jawab');
+  // Ralat OpenRouter untuk model tanpa "structured outputs": juga cuba semula tanpa response_format
+  sent = []; n = 0;
+  jawab = () => ++n === 1 ? new Response('{"error":{"message":"Provider returned error","code":400,"metadata":{"raw":"model does not support feature: structured-outputs"}}}', { status: 400 })
+    : oa({ status: 'jawab', ringkasan: 'Ok.', huraian: ['x'], sumber: [{ id: 'quran:2:275' }] });
+  d = await (await call({ q: 'Hukum emas digital fizikal menurut fatwa?' }, 'https://bijaklabur.my', oenv)).json();
+  assert.equal(n, 2); assert.equal(sent[1].b.response_format, undefined); assert.equal(d.status, 'jawab');
+  // Had masa keseluruhan: selepas model pertama menghabiskan hampir semua masa, model lain tidak dicuba
+  const jam = Date.now; let lompat = 0;
+  Date.now = () => jam() + lompat;
+  sent = [];
+  jawab = () => { lompat += 140000; return new Response('{"error":{"message":"Rate limit exceeded","code":429}}', { status: 429 }); };
+  const lambat = await call({ q: 'Hukum emas digital fizikal menurut fatwa??' }, 'https://bijaklabur.my', tiga);
+  Date.now = jam;
+  assert.equal(lambat.status, 429); assert.deepEqual(sent.map(x => x.b.model), ['a/satu:free']);
+  // Model pertama diberi 60 saat jika ada model lain, model seterusnya 90 saat; satu model sahaja: 90 saat
+  const tamat = AbortSignal.timeout, masa = [];
+  AbortSignal.timeout = ms => { masa.push(ms); return tamat.call(AbortSignal, ms); };
+  jawab = b => b.model === 'c/tiga:free' ? oa(FOREX) : new Response('{"error":{"message":"Rate limit exceeded","code":429}}', { status: 429 });
+  d = await (await call({ q: 'Hukum emas digital menurut fatwa kebangsaan?' }, 'https://bijaklabur.my', tiga)).json();
+  await call({ q: 'Hukum emas digital menurut fatwa negeri?' }, 'https://bijaklabur.my', { ...oenv, TANYA_OPENROUTER_MODEL: 'c/tiga:free' });
+  AbortSignal.timeout = tamat;
+  assert.equal(d.status, 'jawab'); assert.deepEqual(masa, [60000, 90000, 90000, 90000]);
+
+  // Istilah carian daripada penghala percuma (bukan model Tanya AI dan bukan Gemini), supaya had harian model Tanya AI
+  // digunakan untuk jawapan sahaja
+  resetPenghala(); sent = [];
+  jawab = () => oa({ ar: ['طهارة'], en: ['purification'], ms: ['bersuci'] });
+  assert.equal(await kataKunci({ ...oenv, GROQ_API_KEY: 'g', RUJUKAN: {} }, 'Air apa yang boleh digunakan untuk mengangkat hadas?'), 'طهارة purification bersuci');
+  assert.equal(sent.length, 1); assert.ok(sent[0].u.includes('groq.com')); assert.equal(google, 0);
+  // Penghala gagal: Workers AI
+  jawab = () => new Response('{}', { status: 500 });
+  const ai = { run: async () => ({ response: { ar: ['مياه'] } }) };
+  assert.equal(await kataKunci({ ...oenv, RUJUKAN: {}, AI: ai }, 'Air mutlak?'), 'مياه');
+  assert.equal(google, 0);
+
+  // DeepSeek sebagai penyedia sandaran ciri lain (penghala): model semasa, tanpa mod berfikir
+  resetPenghala(); sent = []; jawab = () => oa('{"ok":1}');
+  const pd = await penghalaGenerate({ DEEPSEEK_API_KEY: 'd' }, JSON.stringify({ contents: [{ parts: [{ text: 'hai' }] }], generationConfig: { responseMimeType: 'application/json' } }));
+  assert.equal(pd.penghala, 'deepseek'); assert.deepEqual([sent[0].b.model, sent[0].b.thinking], ['deepseek-flash', { type: 'disabled' }]);
+  resetPenghala();
+}
+
 
 // Rujukan rasmi moden (PDF): carian muka surat, petikan disemak, pautan ke muka surat PDF yang sama
 assert.equal(MODEN.length, 4);
@@ -308,7 +440,8 @@ assert.deepEqual(v.sumber.map(x => [x.shamela, x.gambar_url]), [['142', 'https:/
   await call({ q: 'Hukum jual beli emas dengan emas!' }, 'https://bijaklabur.my', bertanda('peta2'));
   delete globalThis.caches;
   assert.equal(puts.length, 2, 'jawapan disimpan dalam cache');
-  assert.ok(puts[0].includes('/tanya-cache-5?') && puts[0].endsWith('&r=peta1&i=peta1') && puts[1].endsWith('&r=peta2&i=peta2'), puts.join(' '));
+  // Penyedia juga dalam kunci: jawapan Gemini lama tidak dipaparkan selepas pemilik beralih ke DeepSeek
+  assert.ok(puts[0].includes('/tanya-cache-5?') && puts[0].endsWith('&r=peta1&i=peta1&p=gemini') && puts[1].endsWith('&r=peta2&i=peta2&p=gemini'), puts.join(' '));
   assert.equal(await assetTag(genv), '');
   assert.equal(await assetTag(kenv), '');
 }
@@ -952,7 +1085,8 @@ console.log('Semua ujian Tanya AI lulus');
   catatGuna(e0, { penyedia: 'gemini', model: 'm', usage: { promptTokenCount: 10, candidatesTokenCount: 4, cachedContentTokenCount: 2 } });
   catatGuna(e0, { penyedia: 'claude', model: 'c', usage: { input_tokens: 7, output_tokens: 3, cache_read_input_tokens: 100 }, ok: false });
   catatGuna(e0, { penyedia: 'groq', model: 'q', usage: { prompt_tokens: 1, completion_tokens: 2 } });
-  assert.deepEqual(e0.GUNA.rekod.map(r => [r.laluan, r.penyedia, r.masuk, r.keluar, r.cache, r.ok]), [['/tanya', 'gemini', 10, 4, 2, true], ['/tanya', 'claude', 7, 3, 100, false], ['/tanya', 'groq', 1, 2, 0, true]]);
+  catatGuna(e0, { penyedia: 'deepseek', model: 'd', usage: { prompt_tokens: 50, completion_tokens: 6, prompt_cache_hit_tokens: 40, prompt_cache_miss_tokens: 10 } });
+  assert.deepEqual(e0.GUNA.rekod.map(r => [r.laluan, r.penyedia, r.masuk, r.keluar, r.cache, r.ok]), [['/tanya', 'gemini', 10, 4, 2, true], ['/tanya', 'claude', 7, 3, 100, false], ['/tanya', 'groq', 1, 2, 0, true], ['/tanya', 'deepseek', 50, 6, 40, true]]);
   catatGuna({}, { penyedia: 'x' });   // tanpa GUNA: diabaikan
   assert.equal(await hantarGuna(e0), false, 'tanpa PUSAT_URL tiada penghantaran');
 

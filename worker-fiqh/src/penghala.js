@@ -28,7 +28,8 @@ export const PENYEDIA = [
   // Peringkat percuma (didahulukan)
   { id: 'groq', nama: 'Groq', key: 'GROQ_API_KEY', url: 'https://api.groq.com/openai/v1/chat/completions', model: 'llama-3.3-70b-versatile', vision: 'meta-llama/llama-4-maverick-17b-128e-instruct', percuma: true },
   { id: 'cerebras', nama: 'Cerebras', key: 'CEREBRAS_API_KEY', url: 'https://api.cerebras.ai/v1/chat/completions', model: 'gpt-oss-120b', percuma: true },
-  { id: 'openrouter', nama: 'OpenRouter', key: 'OPENROUTER_API_KEY', url: 'https://openrouter.ai/api/v1/chat/completions', model: 'meta-llama/llama-3.3-70b-instruct:free', vision: 'google/gemma-3-27b-it:free', percuma: true },
+  // OpenRouter: pengepala HTTP-Referer dan X-Title memaparkan SiswaCap sebagai app dalam statistik OpenRouter
+  { id: 'openrouter', nama: 'OpenRouter', key: 'OPENROUTER_API_KEY', url: 'https://openrouter.ai/api/v1/chat/completions', model: 'meta-llama/llama-3.3-70b-instruct:free', vision: 'google/gemma-3-27b-it:free', percuma: true, headers: { 'HTTP-Referer': 'https://siswacap.my', 'X-Title': 'SiswaCap' } },
   { id: 'nvidia', nama: 'NVIDIA NIM', key: 'NVIDIA_API_KEY', url: 'https://integrate.api.nvidia.com/v1/chat/completions', model: 'deepseek-ai/deepseek-v4-flash', percuma: true },
   { id: 'mistral', nama: 'Mistral', key: 'MISTRAL_API_KEY', url: 'https://api.mistral.ai/v1/chat/completions', model: 'mistral-small-latest', vision: 'mistral-small-latest', percuma: true },
   { id: 'zai', nama: 'Z.ai', key: 'ZAI_API_KEY', url: 'https://api.z.ai/api/paas/v4/chat/completions', model: 'glm-5.3-flash', percuma: true },
@@ -36,7 +37,9 @@ export const PENYEDIA = [
   { id: 'kilo', nama: 'Kilo Gateway', key: 'KILO_API_KEY', url: 'https://api.kilo.ai/api/gateway/chat/completions', model: 'kilo-auto/free', percuma: true },
   { id: 'huggingface', nama: 'Hugging Face', key: 'HF_TOKEN', url: 'https://router.huggingface.co/v1/chat/completions', model: 'meta-llama/Llama-3.3-70B-Instruct', percuma: true },
   // Kredit atau berbayar
-  { id: 'deepseek', nama: 'DeepSeek', key: 'DEEPSEEK_API_KEY', url: 'https://api.deepseek.com/chat/completions', model: 'deepseek-v4-flash' },
+  // Mod berfikir DeepSeek aktif secara lalai dan boleh menghabiskan had token: sebagai sandaran, jawab terus tanpa berfikir.
+  // Tanya AI Fiqh memanggil DeepSeek secara terus (penyediaGenerate) dengan mod berfikirnya sendiri.
+  { id: 'deepseek', nama: 'DeepSeek', key: 'DEEPSEEK_API_KEY', url: 'https://api.deepseek.com/chat/completions', model: 'deepseek-flash', badan: { thinking: { type: 'disabled' } } },
   { id: 'together', nama: 'Together AI', key: 'TOGETHER_API_KEY', url: 'https://api.together.xyz/v1/chat/completions', model: 'meta-llama/Llama-3.3-70B-Instruct-Turbo' },
   { id: 'fireworks', nama: 'Fireworks', key: 'FIREWORKS_API_KEY', url: 'https://api.fireworks.ai/inference/v1/chat/completions', model: 'accounts/fireworks/models/llama-v3p3-70b-instruct' },
   { id: 'nebius', nama: 'Nebius', key: 'NEBIUS_API_KEY', url: 'https://api.studio.nebius.ai/v1/chat/completions', model: 'meta-llama/Llama-3.3-70B-Instruct' },
@@ -144,16 +147,26 @@ export function potongJson(text) {
   return a >= 0 && z > a ? text.slice(a, z + 1) : text;
 }
 
-const bentukGemini = (text, id) => ({ candidates: [{ content: { parts: [{ text }] }, finishReason: 'STOP' }], penghala: id });
+const bentukGemini = (text, id, finishReason = 'STOP') => ({ candidates: [{ content: { parts: [{ text }] }, finishReason }], penghala: id });
 
-async function panggil(p, env, input) {
+async function panggil(p, env, input, timeout) {
   const r = await fetch(p.url, {
     method: 'POST',
-    headers: { 'content-type': 'application/json', authorization: `Bearer ${env[p.key]}` },
+    headers: { 'content-type': 'application/json', authorization: `Bearer ${env[p.key]}`, ...p.headers },
     body: JSON.stringify(input),
-    signal: AbortSignal.timeout(Number(env.AI_TIMEOUT_MS) || 45000)
+    signal: AbortSignal.timeout(timeout || Number(env.AI_TIMEOUT_MS) || 45000)
   });
   return { status: r.status, ok: r.ok, text: await r.text() };
+}
+
+// Sesetengah model tidak menyokong response_format: cuba sekali lagi tanpanya
+async function panggilJson(p, env, input, timeout) {
+  let r = await panggil(p, env, input, timeout);
+  if (r.status === 400 && input.response_format && /response_format|json_object|json mode|structured/i.test(r.text)) {
+    delete input.response_format;
+    r = await panggil(p, env, input, timeout);
+  }
+  return r;
 }
 
 /**
@@ -170,14 +183,9 @@ export async function penghalaGenerate(env, body) {
     if (!model) continue;
     const input = keOpenAI(b, { vision: ada });
     if (!input) continue;
-    input.model = model;
+    Object.assign(input, p.badan, { model });
     try {
-      let r = await panggil(p, env, input);
-      // Sesetengah model tidak menyokong response_format: cuba sekali lagi tanpanya
-      if (r.status === 400 && input.response_format && /response_format|json_object|json mode/i.test(r.text)) {
-        delete input.response_format;
-        r = await panggil(p, env, input);
-      }
+      const r = await panggilJson(p, env, input);
       if (!r.ok) { console.log(`penghala ${p.id} ${r.status} ${r.text.slice(0, 200)}`); gagal(p.id, r.status, r.text); continue; }
       const d = JSON.parse(r.text);
       catatGuna(env, { penyedia: p.id, model, usage: d.usage });
@@ -194,6 +202,40 @@ export async function penghalaGenerate(env, body) {
     }
   }
   return null;
+}
+
+/**
+ * Satu penyedia dan satu model sahaja, tanpa sandaran: untuk ciri yang memilih penyedia dan modelnya sendiri
+ * (Tanya AI Fiqh). badan = medan tambahan permintaan (cth. tahap berfikir), maxTokens dan timeout untuk jawapan
+ * yang panjang. Pulangkan jawapan dalam bentuk Gemini. Ralat dilontar dengan status (429 atau 529 = sibuk)
+ * supaya pemanggil boleh mencuba model lain atau memaparkan mesej yang betul.
+ */
+export async function penyediaGenerate(env, id, body, { model, badan, maxTokens, timeout } = {}) {
+  const p = PENYEDIA.find(x => x.id === id);
+  if (!p || !env[p.key]) throw Object.assign(new Error(`tiada kunci ${id}`), { status: 503 });
+  const b = JSON.parse(body);
+  const json = (b.generationConfig || {}).responseMimeType === 'application/json';
+  const input = keOpenAI(b);
+  if (!input) throw Object.assign(new Error(`${p.nama}: gambar tidak disokong`), { status: 400 });
+  model = model || env[`${p.id.toUpperCase()}_MODEL`] || p.model;
+  Object.assign(input, p.badan, badan, { model }, maxTokens ? { max_tokens: maxTokens } : {});
+  const t0 = Date.now();
+  let r;
+  try { r = await panggilJson(p, env, input, timeout); }
+  catch (e) { throw Object.assign(new Error(`${p.nama} ${model} ${String(e && e.message || e).slice(0, 160)}`), { status: 529 }); }   // tamat masa atau rangkaian: sibuk
+  if (!r.ok) throw Object.assign(new Error(`${p.nama} ${model} ${r.status} ${r.text.slice(0, 300)}`), { status: r.status === 503 ? 529 : r.status });
+  const d = JSON.parse(r.text), c = (d.choices && d.choices[0]) || {};
+  // OpenRouter boleh memulangkan ralat penyedia hulu dengan HTTP 200
+  const salah = d.error || c.error;
+  if (salah) { const st = +salah.code || 502; throw Object.assign(new Error(`${p.nama} ${model} ${st} ${String(salah.message || '').slice(0, 300)}`), { status: st === 503 ? 529 : st }); }
+  catatGuna(env, { penyedia: p.id, model, usage: d.usage, ms: Date.now() - t0 });
+  // Kandungan disekat oleh penapis penyedia: sama seperti SAFETY Gemini
+  if (c.finish_reason === 'content_filter') return bentukGemini('', p.id, 'SAFETY');
+  let text = String((c.message && c.message.content) || '');
+  if (json) text = potongJson(text);
+  if (!text.trim()) throw Object.assign(new Error(`${p.nama} ${model} jawapan kosong (${c.finish_reason || '-'})`), { status: 502 });
+  if (c.finish_reason === 'length') console.log(`${p.id} ${model}: jawapan terpotong pada had ${input.max_tokens} token`);
+  return { ...bentukGemini(text, p.id), model };
 }
 
 /** Gambar sandaran (FLUX schnell) apabila Workers AI tidak tersedia. Pulangkan { image, mime, penyedia } atau null. */

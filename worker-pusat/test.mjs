@@ -13,7 +13,7 @@ const KEY = 'kunci-pemilik-ujian-123456';
 const SECRET = 'rahsia-kongsi-ujian-abcdef';
 const env = {
   ALLOWED_ORIGINS: 'https://bijaklabur.my,capacitor://localhost', SITE_URL: 'https://bijaklabur.my', REPO: 'shamirAI-RGB/bijak-labur',
-  KOS_CLAUDE_MASUK: '5', KOS_CLAUDE_KELUAR: '25', KADAR_MYR: '4.3', AGEN_MODEL: 'model-ujian', AGEN_GEMINI_MODEL: 'gemini-ujian',
+  KOS_CLAUDE_MASUK: '5', KOS_CLAUDE_KELUAR: '25', KOS_DEEPSEEK_MASUK: '0.30', KOS_DEEPSEEK_CACHE: '0.006', KOS_DEEPSEEK_KELUAR: '1.20', KADAR_MYR: '4.3', AGEN_MODEL: 'model-ujian', AGEN_GEMINI_MODEL: 'gemini-ujian',
   PUSAT_SECRET: SECRET, TELEGRAM_BOT_TOKEN: '123:ABC',
   NOTA_SVC: { fetch: async (u, init) => new Response('{}', { status: (init.headers.Authorization || init.headers.authorization) === 'Bearer ' + KEY ? 200 : 401 }) }
 };
@@ -231,6 +231,12 @@ sihatOk = false; dihantar.length = 0;
 await kerjaBerjadual(env, new Date('2026-10-09T04:00:00Z')); await kerjaBerjadual(env, new Date('2026-10-09T04:15:00Z'));
 assert.equal(dihantar.length, 0);
 sihatOk = true;
+
+// Kos DeepSeek (Tanya AI berbayar): token yang terkena cache konteks dikenakan kadar cache
+r = await post('/catat', [{ laluan: '/tanya', penyedia: 'deepseek', model: 'deepseek-flash', masuk: 1_000_000, cache: 800_000, keluar: 100_000, ms: 30000, ok: true }], { headers: { authorization: 'Bearer ' + SECRET } }, null);
+assert.equal(r.status, 200);
+j = await (await call('/papan', { headers: { authorization: 'Bearer ' + KEY } })).json();
+assert.equal(+j.tokenPenyedia.find(x => x.penyedia === 'deepseek').kos.toFixed(4), 0.1848, '200k tanpa cache x USD0.30 + 800k cache x USD0.006 + 100k keluar x USD1.20');
 
 // Tanpa token Telegram, webhook 503 dan cron senyap
 const env2 = { ...env, TELEGRAM_BOT_TOKEN: '' };

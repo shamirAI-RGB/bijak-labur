@@ -126,9 +126,17 @@ export class Pusat {
 
   /* ---------- Token AI ---------- */
   kos(penyedia, masuk, keluar, cache) {
-    if (penyedia !== 'claude') return 0;
-    const m = +this.env.KOS_CLAUDE_MASUK || 0, k = +this.env.KOS_CLAUDE_KELUAR || 0;
-    return (masuk * m + cache * m * 0.1 + keluar * k) / 1e6;
+    const e = this.env;
+    if (penyedia === 'claude') {
+      const m = +e.KOS_CLAUDE_MASUK || 0, k = +e.KOS_CLAUDE_KELUAR || 0;
+      return (masuk * m + cache * m * 0.1 + keluar * k) / 1e6;
+    }
+    // DeepSeek: token masuk termasuk token cache konteks (dikenakan kadar cache yang jauh lebih murah)
+    if (penyedia === 'deepseek') {
+      const m = +e.KOS_DEEPSEEK_MASUK || 0, c = +e.KOS_DEEPSEEK_CACHE || 0, k = +e.KOS_DEEPSEEK_KELUAR || 0;
+      return (Math.max(0, masuk - cache) * m + cache * c + keluar * k) / 1e6;
+    }
+    return 0;
   }
   catat(rekod) {
     const t = nowSec(), hari = hariMY(t);
