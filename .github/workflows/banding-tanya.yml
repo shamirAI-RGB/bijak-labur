@@ -2,15 +2,14 @@ name: Banding model Tanya AI
 
 # Bandingkan model percuma OpenRouter untuk Tanya AI Fiqh dengan soalan sebenar, indeks rujukan sebenar dan semakan
 # sumber pelayan (worker-fiqh/diag-tanya.mjs). Setiap model menggunakan satu permintaan bagi setiap soalan daripada had
-# harian model percuma (50 sehari tanpa kredit), jadi aliran kerja ini hanya berjalan apabila skrip itu berubah atau
-# dijalankan secara manual (Actions > Banding model Tanya AI > Run workflow, pilihan: senarai model dipisahkan ruang).
+# harian model percuma (50 sehari tanpa kredit), jadi aliran kerja ini hanya dijalankan secara manual: Actions >
+# Banding model Tanya AI > Run workflow (pilihan: senarai model dipisahkan ruang). Jalankan semula apabila model percuma
+# dalam TANYA (worker-fiqh/src/app.js) ditarik balik atau sering sibuk.
 on:
-  pull_request:
-    paths: ['worker-fiqh/diag-tanya.mjs', '.github/workflows/banding-tanya.yml']
   workflow_dispatch:
     inputs:
       model:
-        description: 'Model OpenRouter (dipisahkan ruang); kosong = senarai calon dalam diag-tanya.mjs'
+        description: 'Model OpenRouter (dipisahkan ruang); kosong = senarai Tanya AI semasa dan calon dalam diag-tanya.mjs'
         required: false
         default: ''
 

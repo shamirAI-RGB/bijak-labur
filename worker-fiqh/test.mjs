@@ -288,6 +288,14 @@ assert.equal(d.penyedia, 'claude');
   const lambat = await call({ q: 'Hukum emas digital fizikal menurut fatwa??' }, 'https://bijaklabur.my', tiga);
   Date.now = jam;
   assert.equal(lambat.status, 429); assert.deepEqual(sent.map(x => x.b.model), ['a/satu:free']);
+  // Model pertama diberi 60 saat jika ada model lain, model seterusnya 90 saat; satu model sahaja: 90 saat
+  const tamat = AbortSignal.timeout, masa = [];
+  AbortSignal.timeout = ms => { masa.push(ms); return tamat.call(AbortSignal, ms); };
+  jawab = b => b.model === 'c/tiga:free' ? oa(FOREX) : new Response('{"error":{"message":"Rate limit exceeded","code":429}}', { status: 429 });
+  d = await (await call({ q: 'Hukum emas digital menurut fatwa kebangsaan?' }, 'https://bijaklabur.my', tiga)).json();
+  await call({ q: 'Hukum emas digital menurut fatwa negeri?' }, 'https://bijaklabur.my', { ...oenv, TANYA_OPENROUTER_MODEL: 'c/tiga:free' });
+  AbortSignal.timeout = tamat;
+  assert.equal(d.status, 'jawab'); assert.deepEqual(masa, [60000, 90000, 90000, 90000]);
 
   // Istilah carian daripada penghala percuma (bukan model Tanya AI dan bukan Gemini), supaya had harian model Tanya AI
   // digunakan untuk jawapan sahaja

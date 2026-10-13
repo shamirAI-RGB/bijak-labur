@@ -245,7 +245,9 @@ Mod korpus: alat web_search dan web_fetch TIDAK tersedia. Gunakan hanya sumber 2
  * TANYA_EFFORT ([vars], pilihan): tahap berfikir sebelum menjawab, "low" (lalai), "high" atau "none".
  */
 export const TANYA = {
-  // Model percuma OpenRouter (had: 20 permintaan seminit; 50 sehari, atau 1,000 sehari selepas akaun pernah membeli kredit 10 USD)
+  // Model percuma OpenRouter (had: 20 permintaan seminit; 50 sehari, atau 1,000 sehari selepas akaun pernah membeli kredit 10 USD).
+  // Susunan mengikut perbandingan dengan soalan sebenar (diag-tanya.mjs, 13 Oktober 2026): paling laju dahulu, kemudian
+  // model pada hos lain (model pada hos yang sama cenderung sibuk serentak), kemudian model yang paling banyak sumber.
   openrouter: {
     model: ['nvidia/nemotron-3-super-120b-a12b:free', 'apodex/apodex-1.1-mini:free', 'nvidia/nemotron-3-ultra-550b-a55b:free', 'google/gemma-4-31b-it:free'],
     badan: e => e === 'none' ? { reasoning: { enabled: false } } : { reasoning: { effort: e } }
@@ -268,15 +270,16 @@ const provider = env => env.ANTHROPIC_API_KEY ? 'claude' : tanyaRantai(env)[0] |
 /** Jawapan Tanya AI daripada rantaian penyedia dan model Tanya AI. Ralat terakhir dilontar jika semuanya gagal. */
 export async function tanyaGenerate(env, body) {
   const effort = env.TANYA_EFFORT || TANYA_EFFORT, mula = Date.now();
+  const cuba = tanyaRantai(env).flatMap(id => tanyaModel(env, id).map(model => [id, model]));
   let err;
-  for (const id of tanyaRantai(env)) {
-    for (const model of tanyaModel(env, id)) {
-      // Jangan biarkan pengguna menunggu lebih daripada TANYA_MASA apabila model percuma lambat atau sibuk
-      const baki = TANYA_MASA - (Date.now() - mula);
-      if (err && baki < 20000) break;
-      try { return await penyediaGenerate(env, id, body, { model, badan: TANYA[id].badan(effort), maxTokens: 16000, timeout: Math.min(90000, Math.max(baki, 20000)) }); }
-      catch (e) { console.log('tanya', id, model, e && e.status, String(e && e.message || e).slice(0, 200)); err = e; }
-    }
+  for (const [i, [id, model]] of cuba.entries()) {
+    // Jangan biarkan pengguna menunggu lebih daripada TANYA_MASA apabila model percuma lambat atau sibuk. Model pertama
+    // (paling laju, biasanya 15 hingga 40 saat) diberi 60 saat jika ada model lain, supaya model seterusnya sempat menjawab.
+    const baki = TANYA_MASA - (Date.now() - mula);
+    if (err && baki < 20000) break;
+    const had = Math.min(i === 0 && cuba.length > 1 ? 60000 : 90000, Math.max(baki, 20000));
+    try { return await penyediaGenerate(env, id, body, { model, badan: TANYA[id].badan(effort), maxTokens: 16000, timeout: had }); }
+    catch (e) { console.log('tanya', id, model, e && e.status, String(e && e.message || e).slice(0, 200)); err = e; }
   }
   throw err || Object.assign(new Error('tiada penyedia Tanya AI'), { status: 503 });
 }
