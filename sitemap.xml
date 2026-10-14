@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
     <loc>https://siswacap.my/</loc>
-    <lastmod>2026-10-10</lastmod>
+    <lastmod>2026-10-14</lastmod>
     <image:image><image:loc>https://siswacap.my/images/og-siswacap.png</image:loc></image:image>
   </url>
   <url>
@@ -17,9 +17,10 @@
     <image:image><image:loc>https://siswacap.my/images/og-siswacap.png</image:loc></image:image>
   </url>
   <url><loc>https://siswacap.my/peta.html</loc><lastmod>2026-10-10</lastmod></url>
-  <url><loc>https://siswacap.my/privacy.html</loc><lastmod>2026-10-10</lastmod></url>
+  <url><loc>https://siswacap.my/privacy.html</loc><lastmod>2026-10-14</lastmod></url>
   <url><loc>https://siswacap.my/padam-data.html</loc><lastmod>2026-10-10</lastmod></url>
   <url><loc>https://siswacap.my/terma.html</loc><lastmod>2026-10-10</lastmod></url>
+  <url><loc>https://siswacap.my/terma-app.html</loc><lastmod>2026-10-10</lastmod></url>
   <url><loc>https://siswacap.my/cara.html</loc><lastmod>2026-10-10</lastmod></url>
   <url><loc>https://siswacap.my/terma-guna.html</loc><lastmod>2026-10-10</lastmod></url>
   <url><loc>https://siswacap.my/bayaran-balik.html</loc><lastmod>2026-10-10</lastmod></url>

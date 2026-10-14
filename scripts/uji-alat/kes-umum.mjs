@@ -11,6 +11,7 @@ const K = 'Umum';
 
 /* ---------- Pembantu ---------- */
 const gagal = m => { throw new Error(m); };
+const pastikan = (ok, m) => { if (!ok) gagal(m); };
 const sama = (dapat, jangka, label) => { if (JSON.stringify(dapat) !== JSON.stringify(jangka)) gagal(`${label}: dijangka ${JSON.stringify(jangka)}, dapat ${JSON.stringify(dapat)}`); };
 const padan = (teks, re, label) => { if (!re.test(teks)) gagal(`${label}: "${String(teks).trim().slice(0, 200)}" tidak sepadan ${re}`); };
 const bil = (page, sel) => page.$$eval(sel, x => x.length);
@@ -214,6 +215,9 @@ export const fixture = [
   // CoinGecko (sandaran apabila Binance tidak dapat dihubungi). Simbol "had" meniru had kadar 429 sebenar (badan JSON).
   [/^https:\/\/api\.coingecko\.com\/api\/v3\/simple\/price/, () => ({ bitcoin: { usd: 64000, usd_24h_change: -2.5 }, ethereum: { usd: 3100, usd_24h_change: 1.1 }, solana: { usd: 150, usd_24h_change: 0.5 } })],
   // Harga saham halaman utama (worker-nota /saham)
+  // Kaunter Bursa (<kod>.KL, harga dalam RM): 1155.KL tiada data, meniru simbol yang gagal di Yahoo Finance
+  [/^https:\/\/nota\.bijaklabur\.my\/saham\?s=[^&]*\.KL/, u => ({ quotes: new URL(u).searchParams.get('s').split(',').filter(x => x !== '1155.KL').map((x, i) =>
+    ({ s: x, price: x === '5347.KL' ? 13.84 : 2 + i * 0.5, chg: x === '5347.KL' ? -0.72 : 0.4, spark: [], time: Date.parse('2026-10-13T08:59:00Z') / 1000 })) })],
   [/^https:\/\/nota\.bijaklabur\.my\/saham/, () => ({ quotes: [
     { s: 'AAPL', price: 230.5, chg: 0.85, spark: [228, 229, 230], time: Math.floor(Date.now() / 1000) - 30 },
     { s: 'NVDA', price: 120.25, chg: -1.4, spark: [123, 121, 120], time: Math.floor(Date.now() / 1000) - 30 },
@@ -447,7 +451,15 @@ export default [
     padan(await baris('SPY'), /Diragui.*SPUS/s, 'SPY');
     padan(await baris('TENAGA'), /Patuh Syariah.*33%/s, 'TENAGA');
     sama(await bil(page, '#bursaList .qrow'), 8, 'Kaunter Bursa');
-    padan(await t.teks('#bursaList'), /PBBANK.*Haram.*1295/s, 'Bursa dengan kod dan label');
+    padan(await t.teks('#bursaList'), /PBBANK.*Haram.*1295\.KL/s, 'Bursa dengan kod dan label');
+    // Harga Bursa dalam RM (lewat 15 minit), pautan carta TradingView; kaunter tanpa data kekal "-"
+    await t.ada('#bq-5347 .q-price', /^RM13\.84$/);
+    await t.ada('#bq-5347 .q-chg', /^-0\.72%$/);
+    await t.ada('#bq-1155 .q-price', /^-$/);
+    sama(await page.$eval('#bq-5347', a => a.href), 'https://www.tradingview.com/symbols/MYX-TENAGA/', 'Pautan carta TENAGA');
+    await t.ada('#bursaStatus', /^Harga dalam RM, lewat sekurang-kurangnya 15 minit \(Yahoo Finance\), dagangan terakhir 13 Okt.*04:59/i);
+    pastikan(await page.$('.bursa-pautan a[href="https://www.bursamarketplace.com/"]'), 'Pautan Bursa Marketplace');
+    sama((await storan(page, 'bl_bursaQuotes'))['5347.KL'].price, 13.84, 'Harga Bursa disimpan untuk luar talian');
     await t.klik('#stockTabs [data-s="NASDAQ:TSLA"]');
     sama(await page.$eval('#stockTabs .chip.active', e => e.dataset.s), 'NASDAQ:TSLA', 'Tesla dipilih');
     sama(await storan(page, 'bl_stockSym'), 'NASDAQ:TSLA', 'Pilihan saham disimpan');
@@ -881,7 +893,7 @@ export default [
     sama(await storan(page, 'bl_jejak_aktif'), null, 'Aktiviti aktif dikosongkan');
     // Eksport GPX
     const gpx = await muatTurun(page, () => t.klik('[data-act="gpx"]'));
-    sama(gpx.nama, `bijak-labur-jalan-${tarikhKL()}.gpx`, 'Nama fail GPX');
+    sama(gpx.nama, `siswacap-jalan-${tarikhKL()}.gpx`, 'Nama fail GPX');
     const xml = gpx.data.toString('utf8');
     padan(xml, /^<\?xml version="1\.0" encoding="UTF-8"\?>\n<gpx version="1\.1" creator="SiswaCap"/, 'Pengepala GPX');
     sama((xml.match(/<trkpt /g) || []).length, N + 1, 'Titik laluan GPX');
@@ -894,6 +906,40 @@ export default [
     await t.ada('#jkHist', new RegExp(`7 hari: ${(Math.round(jarak) / 1000).toFixed(2).replace('.', '\\.')} km`));
     sama(await bil(page, '.jk-hist li'), 1, 'Satu aktiviti dalam sejarah');
   } },
+
+  { kumpulan: K, nama: 'Jejak Aktiviti: tanpa WebGL, peta ringan Leaflet (jubin OSM) melukis lokasi dan laluan sejarah', lebar: 1280,
+    storan: { bl_jejak_sejarah: [{ id: '1760000000001', jenis: 'lari', start: Date.now() - 864e5, ms: 1500000, dist: 2200, kcal: 150, ascent: 0, steps: 2600, splits: [300000, 300000], pts: [[3.07, 101.49, 0], [3.08, 101.49, 600], [3.09, 101.49, 1200]] }] },
+    langkah: async (t, page) => {
+      // Pelayar tanpa WebGL: peta 3D MapLibre tidak boleh dibuka
+      await page.addInitScript(() => { const asal = HTMLCanvasElement.prototype.getContext; HTMLCanvasElement.prototype.getContext = function (k, ...a) { return /webgl/i.test(k) ? null : asal.call(this, k, ...a); }; });
+      await wsPalsu(page); await gpsPalsu(page);
+      const jubin = []; page.on('request', r => { if (/^https:\/\/tile\.openstreetmap\.org\/\d+\/\d+\/\d+\.png$/.test(r.url())) jubin.push(r.url()); });
+      await t.buka('#jejak');
+      await page.waitForSelector('#jkMap.leaflet-container', { timeout: 15000 });
+      pastikan(!(await page.$('#jkMap .jk-nomap')), 'Mesej "Peta tidak dapat dimuatkan" dipaparkan walaupun peta ringan tersedia');
+      pastikan(!(await page.$('#jkMap canvas.maplibregl-canvas')), 'Kanvas MapLibre dicipta tanpa WebGL');
+      await page.waitForFunction(() => document.querySelectorAll('#jkMap img.leaflet-tile').length > 0, null, { timeout: 5000 });
+      pastikan(jubin.length > 0 && jubin.every(u => u.startsWith('https://tile.openstreetmap.org/16/')), 'Jubin OSM zum 16: ' + jubin.slice(0, 2).join(', '));
+      await t.ada('#jkMap .leaflet-control-attribution', /OpenStreetMap/);
+      // Lokasi GPS: bulatan ketepatan dan titik lokasi
+      await page.evaluate(() => window.__gps({ lat: 3.0716, lng: 101.4902, acc: 8 }));
+      await page.waitForFunction(() => document.querySelectorAll('#jkMap .leaflet-overlay-pane path').length === 2, null, { timeout: 5000 });
+      await t.ada('[data-act="ikut"]', /Mengikut lokasi anda/);
+      // Laluan sejarah: garis (tepi dan laluan), titik mula dan akhir, dua tanda kilometer; tiada main semula 3D
+      await t.klik('[data-lihat="1760000000001"]');
+      await page.waitForFunction(() => document.querySelectorAll('#jkMap .leaflet-overlay-pane path').length === 6, null, { timeout: 5000 });
+      sama(await page.$$eval('#jkMap .pr-km span', e => e.map(x => x.textContent)), ['1', '2'], 'Tanda kilometer');
+      pastikan(!(await page.$('[data-act="terbang"]')), 'Butang Main semula 3D dipaparkan tanpa WebGL');
+      await page.waitForSelector('[data-act="gpx"]');
+      // Tukar halaman dan kembali: peta dikekalkan dan saiznya dikira semula
+      await page.evaluate(() => { location.hash = '#sihat'; });
+      await page.waitForSelector('#view-sihat.active');
+      await page.evaluate(() => { location.hash = '#jejak'; });
+      await page.waitForSelector('#view-jejak.active');
+      await t.rehat(700);
+      sama(await page.$eval('#jkMap', e => e.clientWidth > 300 && e.clientHeight >= 300), true, 'Saiz peta selepas kembali');
+      pastikan(await page.$('#jkMap.leaflet-container .leaflet-overlay-pane path'), 'Laluan hilang selepas kembali');
+    } },
 
   { kumpulan: K, nama: 'Jejak Aktiviti: aktiviti pendek tidak disimpan, GPS ditolak, basikal dan aktiviti tergendala dipulihkan', lebar: 1280,
     storan: { bl_jejak_aktif: { on: true, paused: false, jenis: 'basikal', start: Date.now() - 600000, pausedMs: 0, pauseAt: 0, pts: [[3.07, 101.49, 0], [3.0727, 101.49, 60]], dist: 300, kcal: 4, ascent: 0, steps: 0, splits: [], lastSplit: 0, skips: 0, saved: Date.now() - 60000 },

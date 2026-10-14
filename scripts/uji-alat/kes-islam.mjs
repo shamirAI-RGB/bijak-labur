@@ -635,7 +635,7 @@ const KES = [
     await lompat(page, '#ibadah/galeri');
     await page.waitForFunction(() => { const i = [...document.querySelectorAll('#galGrid img')]; return i.length > 10 && i.every(x => x.src.startsWith('data:image/jpeg')); });
     const d = await muatTurun(page, '[data-gal="0"]');
-    sama(d.suggestedFilename(), 'bijak-labur-1.png', 'Nama fail kad');
+    sama(d.suggestedFilename(), 'siswacap-1.png', 'Nama fail kad');
     await t.ada('.toast', /^Kad dimuat turun$/);
   } },
 
@@ -931,7 +931,7 @@ const KES = [
     await t.ada('.st-prompt summary', /^Prompt yang digunakan \(Anime · seed \d+\)$/);
     const seed = (await t.teks('.st-prompt summary')).match(/seed (\d+)/)[1];
     const d = await muatTurun(page, '.st-out a[download]');
-    sama(d.suggestedFilename(), `bijak-labur-${seed}.jpg`, 'Nama fail muat turun');
+    sama(d.suggestedFilename(), `siswacap-${seed}.jpg`, 'Nama fail muat turun');
     sama(await page.$$eval('.st-thumb', x => x.length), 1, 'Galeri');
     // Variasi lain: permintaan kedua dengan penerangan dan gaya yang sama
     await t.klik('[data-act="variasi"]');

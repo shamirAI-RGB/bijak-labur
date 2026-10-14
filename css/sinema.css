@@ -184,10 +184,12 @@
   .sn-body.masuk > *, .sn-guide { animation: none; }
 }
 
-/* Peralihan antara halaman: pudar dan zum kecil seperti menu konsol (View Transitions API, jika ada) */
-::view-transition-old(root) { animation: snKeluar .28s cubic-bezier(.4, 0, 1, 1) both; }
-::view-transition-new(root) { animation: snMasuk .5s cubic-bezier(.22, 1, .36, 1) both; }
-@keyframes snKeluar { to { opacity: 0; transform: scale(.985); filter: blur(3px); } }
-@keyframes snMasuk { from { opacity: 0; transform: scale(1.015); filter: blur(4px); } }
+/* Peralihan antara halaman: pudar dan zum kecil seperti menu konsol (View Transitions API, jika ada).
+   Halaman lama hilang sepenuhnya dahulu, kemudian halaman baharu muncul, supaya dua halaman tidak pernah kelihatan
+   bertindih (pudar silang dahulu memaparkan kedua-duanya separa lut sinar). Tanpa kabur, yang berat pada telefon. */
+::view-transition-old(root) { animation: snKeluar .12s cubic-bezier(.4, 0, 1, 1) both; }
+::view-transition-new(root) { animation: snMasuk .34s .12s cubic-bezier(.22, 1, .36, 1) both; }
+@keyframes snKeluar { to { opacity: 0; transform: scale(.99); } }
+@keyframes snMasuk { from { opacity: 0; transform: scale(1.01); } }
 .topbar { view-transition-name: sn-atas; } .tabbar { view-transition-name: sn-bawah; }
 @media (prefers-reduced-motion: reduce) { ::view-transition-old(root), ::view-transition-new(root) { animation: none; } }

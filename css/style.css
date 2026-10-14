@@ -573,6 +573,7 @@ a.card:active, .shortcut:active, .tool-card:active { transform: translateY(0) sc
 
 /* Semak Kertas: ulasan pakar dan semakan rujukan */
 .xp-head { display: flex; gap: 16px; align-items: center; margin-bottom: 14px; }
+.semak-tunggu { display: flex; align-items: center; gap: 10px; margin: 4px 0; }
 .xp-score { flex: none; width: 92px; height: 92px; border-radius: 50%; display: grid; place-content: center; text-align: center; background: var(--brand-soft); color: var(--brand); line-height: 1; }
 .xp-score b { font-family: var(--display, inherit); font-size: 2.1rem; font-weight: 600; }
 .xp-score span { font-size: .78rem; color: var(--muted); }
@@ -632,6 +633,18 @@ a.card:active, .shortcut:active, .tool-card:active { transform: translateY(0) sc
 .sy-row .sy-div { grid-area: div; display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: end; }
 .sy-row .sy-div label { display: grid; gap: 4px; font-size: .8rem; color: var(--muted); }
 .sy-row .sy-div input { width: 9.5rem; }
+/* Jadual perbandingan pelan Premium */
+.pr-banding-wrap h3 { margin: 0 0 10px; }
+.pr-banding-skrol { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -4px; }
+.pr-banding { width: 100%; min-width: 560px; border-collapse: collapse; font-size: 0.88rem; }
+.pr-banding th, .pr-banding td { text-align: left; vertical-align: top; padding: 9px 10px; border-bottom: 1px solid var(--border); }
+.pr-banding thead th { font-size: 0.8rem; color: var(--muted); font-weight: 650; white-space: nowrap; }
+.pr-banding tbody th { font-weight: 550; width: 34%; }
+.pr-banding td .ic { width: 16px; height: 16px; color: var(--brand); vertical-align: -3px; }
+.pr-banding .pr-harga td { font-weight: 750; font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+.pr-banding .pr-harga small { font-weight: 500; font-size: 0.78rem; color: var(--muted); }
+.pr-banding .pr-sebulan { display: block; }
+.pr-jimat { display: inline-block; margin-left: 4px; padding: 1px 7px; border-radius: 999px; background: var(--brand-soft); color: var(--brand); font-size: 0.72rem; font-weight: 700; }
 .plan-grid > .plan:only-child { grid-column: 1 / -1; width: 100%; max-width: 460px; justify-self: center; }
 
 /* Senarai status Syariah dengan sebab (kripto dan saham) */

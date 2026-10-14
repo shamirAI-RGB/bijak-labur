@@ -157,10 +157,12 @@
   }
 
   /* ---------- LanguageTool (percuma, untuk BI) ---------- */
+  // Isyarat batal selepas ms milisaat, supaya pelayan luar yang lambat tidak menggantung semakan
+  const hadMasa = ms => { const c = new AbortController(); setTimeout(() => c.abort(), ms); return c.signal; };
   async function languageTool(text, lang) {
     if (lang !== 'en') return [];
     const body = new URLSearchParams({ text: text.slice(0, 18000), language: 'en-US', level: 'default' });
-    const r = await fetch('https://api.languagetool.org/v2/check', { method: 'POST', body });
+    const r = await fetch('https://api.languagetool.org/v2/check', { method: 'POST', body, signal: hadMasa(20000) });
     if (!r.ok) throw new Error('LT ' + r.status);
     const j = await r.json();
     return j.matches.map(mt => {
@@ -226,7 +228,7 @@
     'the and of to is in that it for with as are this was be by on not or from have has which an they their can will a its were been also more than such into these other').split(' '));
   function toks(t) { const out = []; const re = new RegExp(WORD_RE.source, 'gu'); let m; while ((m = re.exec(t))) out.push({ w: norm(m[0]), s: m.index, e: m.index + m[0].length }); return out; }
   const pickSpread = (arr, n) => arr.length <= n ? arr : Array.from({ length: n }, (_, i) => arr[Math.floor(i * arr.length / n)]);
-  async function getJSON(u) { const r = await fetch(u); if (!r.ok) throw new Error(r.status); return r.json(); }
+  async function getJSON(u) { const r = await fetch(u, { signal: hadMasa(12000) }); if (!r.ok) throw new Error(r.status); return r.json(); }
 
   // Wikipedia (bahasa kertas kerja)
   async function wikiSources(sents, lang, onProgress) {
@@ -302,7 +304,7 @@
     });
     await Promise.all(hits.filter(h => h.pmcid).slice(0, 3).map(async h => {
       try {
-        const r = await fetch(`https://www.ebi.ac.uk/europepmc/webservices/rest/${encodeURIComponent(h.pmcid)}/fullTextXML`);
+        const r = await fetch(`https://www.ebi.ac.uk/europepmc/webservices/rest/${encodeURIComponent(h.pmcid)}/fullTextXML`, { signal: hadMasa(15000) });
         if (!r.ok) return;
         const body = new DOMParser().parseFromString(await r.text(), 'text/xml').querySelector('body');
         if (body) { h.text = (h.text + ' ' + body.textContent).replace(/\s+/g, ' ').trim(); h.kind += ' (teks penuh)'; }
@@ -551,14 +553,67 @@
     a.download = 'kertas-kerja-dibetulkan.txt'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   });
 
+  // Hasil pelayan yang sudah tiba (bukan yang masih menunggu atau gagal)
+  const siap = x => x && !x.error && !x.menunggu ? x : null;
   // Ringkasan untuk laporan PDF (Premium)
   window.CheckerReport = () => state.ai && {
     ai: state.ai.pct, plag: state.plag.checked ? state.plag.pct : null, quality: state.quality, text: state.text,
     stats: state.statItems || [], signals: state.ai.signals, sources: state.plag.perSource.map(s => ({ name: s.name, url: s.url, pct: s.pct })),
     matches: state.plag.perSource.flatMap(s => s.matches.slice(0, 10).map(m => ({ src: s.name, type: m.type, sim: m.sim, text: state.orig.slice(m.ds, m.de) }))),
-    expert: state.expert && !state.expert.error ? state.expert : null, refs: state.refs, audit: state.audit && !state.audit.error ? state.audit : null,
+    expert: siap(state.expert), refs: siap(state.refs), audit: siap(state.audit),
     sugg: state.sugg.filter(s => !s.dismissed).map(s => ({ cat: CATS[s.cat].name, from: s.orig, to: s.rep === null ? '(semak semula ayat)' : s.applied ? s.rep + ' (diterima)' : s.rep || '(buang)', why: s.msg }))
   };
+
+  /* Bahagian pelayan (ulasan pakar, audit lanjutan, pengesahan rujukan) dipaparkan sebaik tiba. Hasil tempatan
+     (statistik, cadangan bahasa, anggaran AI, plagiarisme) tidak menunggu pelayan. */
+  let giliran = 0;   // semakan terkini; hasil semakan lama yang tiba lewat diabaikan
+  // Cadangan daripada pelayan ditambah tanpa mengganggu cadangan yang sudah diterima atau ditolak
+  function tambahCadangan(baru) {
+    if (!baru.length) return;
+    const blok = state.sugg.filter(x => x.cat !== 'laras' && !(x.rep === null && x.cat === 'kejelasan'));
+    const bebas = baru.filter(n => n.cat === 'laras' || !blok.some(x => n.start < x.end && x.start < n.end));
+    state.sugg = state.sugg.concat(bebas).sort((x, y) => x.start - y.start).map((x, i) => Object.assign(x, { id: i }));
+  }
+  function lepasAI() {
+    if (!state.ai) return;
+    renderSugg(); renderAnnotated();
+    if (window.SemakPakar) SemakPakar.render(state);
+    if (window.SemakIndustri) SemakIndustri.render(state);
+    document.dispatchEvent(new CustomEvent('checkupdate'));
+  }
+  function mintaPakar(no) {
+    const SP = window.SemakPakar, text = state.text, lang = state.lang;
+    state.expert = { menunggu: true };
+    return SP.expert(text, lang).catch(e => ({ error: e.message, ulang: true })).then(x => {
+      if (no !== giliran) return;
+      state.expert = x;
+      if (!x.error) tambahCadangan(SP.toSuggestions(state.text, x.pembetulan));
+      lepasAI();
+    });
+  }
+  function mintaAudit(no) {
+    const SI = window.SemakIndustri, SP = window.SemakPakar, text = state.text, lang = state.lang;
+    state.audit = { menunggu: true };
+    return SI.fetch(text, lang).catch(e => ({ error: e.message, ulang: true })).then(x => {
+      if (no !== giliran) return;
+      state.audit = x;
+      if (!x.error && SP) tambahCadangan(SP.toSuggestions(state.text, (x.laras || []).map(l => ({ asal: l.asal, baru: l.baru, jenis: 'laras', sebab: l.sebab }))));
+      lepasAI();
+    });
+  }
+  function mintaRujukan(no) {
+    state.refs = { menunggu: true };
+    return window.SemakPakar.references(state.text).catch(() => null).then(x => { if (no !== giliran) return; state.refs = x; lepasAI(); });
+  }
+  // Butang "Cuba semula" dalam kad ulasan pakar dan audit lanjutan
+  document.addEventListener('click', e => {
+    const b = e.target.closest('[data-semak-ulang]');
+    if (!b || !state.ai) return;
+    const no = giliran;
+    if (b.dataset.semakUlang === 'pakar' && window.SemakPakar) mintaPakar(no);
+    if (b.dataset.semakUlang === 'audit' && window.SemakIndustri) mintaAudit(no);
+    lepasAI();
+  });
 
   async function run() {
     const text = $('#paper').value.replace(/\r\n/g, '\n').trim();
@@ -567,34 +622,22 @@
     const btn = $('#checkBtn'); btn.disabled = true;
     const prog = m => btn.innerHTML = `<span class="spinner"></span> ${m}`;
     prog('Menganalisis…');
+    const no = ++giliran;
     try {
       const lang = $('#lang').value === 'auto' ? detectLang(text) : $('#lang').value;
-      Object.assign(state, { text, orig: text, lang, sents: sentences(text), expert: null, refs: null, audit: null });
-      // Ulasan pakar (AI) dan pemeriksa rujukan berjalan serentak dengan semakan lain
-      const SP = window.SemakPakar, wantX = SP && $('#optExpert') && $('#optExpert').checked && text.length >= 200;
-      const expertP = wantX ? SP.expert(text, lang).catch(e => ({ error: e.message })) : null;
-      const refsP = SP && $('#optRefs') && $('#optRefs').checked ? SP.references(text).catch(() => null) : null;
-      // Audit lanjutan universal (rubrik ikut bidang, struktur hujah, NC industri, peta konsep) juga berjalan serentak
-      const SI = window.SemakIndustri, wantA = SI && $('#optAudit') && $('#optAudit').checked && text.length >= 200;
-      const auditP = wantA ? SI.fetch(text, lang).catch(e => ({ error: e.message })) : null;
+      Object.assign(state, { text, orig: text, lang, sents: sentences(text), ai: null, expert: null, refs: null, audit: null });
+      const SP = window.SemakPakar, SI = window.SemakIndustri;
+      const wantX = SP && $('#optExpert') && $('#optExpert').checked && text.length >= 200;
+      const wantA = SI && $('#optAudit') && $('#optAudit').checked && text.length >= 200;
+      const wantR = SP && $('#optRefs') && $('#optRefs').checked;
       let sugg = localSuggestions(text, lang);
       if ($('#optLT').checked && lang === 'en') {
         prog('Menyemak tatabahasa…');
         try { sugg = sugg.concat(await languageTool(text, lang)); } catch { toast('Semakan tatabahasa lanjutan tidak tersedia; guna semakan asas.'); }
       }
-      if (expertP) {
-        prog('Ulasan pakar sedang menilai…');
-        state.expert = await expertP;
-        if (state.expert && !state.expert.error) sugg = sugg.concat(SP.toSuggestions(text, state.expert.pembetulan));
-      }
-      if (auditP) {
-        prog('Audit lanjutan sedang berjalan…');
-        state.audit = await auditP;
-        if (state.audit && !state.audit.error && SP) sugg = sugg.concat(SP.toSuggestions(text, state.audit.laras.map(l => ({ asal: l.asal, baru: l.baru, jenis: 'laras', sebab: l.sebab }))));
-      }
       state.sugg = dedupe(sugg);
       const spellErrs = state.sugg.filter(s => s.cat === 'ejaan' || s.cat === 'tandabaca').length;
-      state.ai = aiAnalysis(text, lang, state.sents, spellErrs);
+      const ai = aiAnalysis(text, lang, state.sents, spellErrs);
       const sources = $('#sources').value.split(/\n-{3,}\n/).map((t, i) => ({ name: `Sumber anda #${i + 1}`, text: t.trim() })).filter(s => words(s.text).length >= 5);
       if ($('#optWeb').checked) {
         let done = 0; const tick = () => prog(`Mencari dalam 6 pangkalan sumber… ${++done} carian`);
@@ -603,12 +646,15 @@
         sources.push(...w, ...a);
       }
       state.plag = Object.assign(plagiarism(text, state.sents, sources), { checked: sources.length > 0, web: $('#optWeb').checked });
-      if (refsP) { prog('Mengesahkan rujukan…'); state.refs = await refsP; }
+      state.ai = ai;
+      // Bahagian pelayan bermula selepas hasil tempatan siap, supaya cadangan pelayan dipadankan dengan teks yang sama
+      const tunggu = [wantX && mintaPakar(no), wantA && mintaAudit(no), wantR && mintaRujukan(no)].filter(Boolean);
       state.view = 'fix'; $$('#viewTabs .seg').forEach(t => t.classList.toggle('active', t.dataset.v === 'fix'));
       $('#results').classList.remove('hidden'); renderAll();
       document.dispatchEvent(new CustomEvent('checkdone'));
       if (typeof Premium !== 'undefined') Premium.catat('semak');
       $('#results').scrollIntoView({ behavior: 'smooth' });
+      if (tunggu.length) toast('Hasil asas sedia. Ulasan pakar dan rujukan dipaparkan sebaik siap.');
     } catch (e) { console.error(e); toast('Ralat semasa menganalisis.'); }
     btn.disabled = false; btn.textContent = 'Semak sekarang';
   }

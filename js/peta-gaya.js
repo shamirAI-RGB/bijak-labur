@@ -221,6 +221,14 @@
       const s = map.getSource('pg-ketepatan'); if (s) s.setData(bulatan(saya.p, saya.acc));
     }
 
+    // Jubin yang gagal dimuat (luar talian, disekat atau 503) dijangka dan sudah ditangani oleh sandaran raster:
+    // jangan cetak sebagai ralat konsol. Ralat lain dicatat sebagai amaran.
+    map.on('error', e => {
+      const er = (e && e.error) || {};
+      if (e && (e.tile || e.sourceId) || er.name === 'AJAXError' || 'status' in er || /fetch|network|load/i.test(er.message || '')) return;
+      console.warn('Peta:', er.message || er);
+    });
+
     /* ---------- Gaya ---------- */
     let pertama = true;
     map.on('style.load', () => {
@@ -250,6 +258,8 @@
       get warna() { return WARNA[tema] || WARNA.terang; },
       get mod3d() { return mod3d; },
       set, set3D, pandang, muat, lokasi, resize: () => map.resize(),
+      // Zum semasa dalam skala Google/Leaflet (sama seperti argumen pandang dan muat)
+      zum: () => map.getZoom() + 1,
       buang() {
         document.removeEventListener('themechange', ikutTema);
         document.removeEventListener('fullscreenchange', padaPenuh);

@@ -22,3 +22,10 @@
 .jk-hist { list-style: none; margin: 8px 0 0; padding: 0; display: grid; }
 .jk-hist button { width: 100%; display: grid; grid-template-columns: auto 1fr auto auto; gap: 4px 12px; align-items: center; text-align: left; padding: 10px 2px; border: 0; border-bottom: 1px solid var(--border); background: none; color: var(--text); font: inherit; cursor: pointer; }
 .jk-hist .ic { width: 16px; height: 16px; color: var(--muted); }
+/* Peta ringan 2D (js/peta-ringan.js, Leaflet) apabila peta 3D tidak dapat dibuka */
+.pr-peta { font: inherit; }
+.pr-peta.pr-gelap { background: #101714; }
+.pr-peta.pr-gelap .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(.92) contrast(.9) saturate(.5); }
+.pr-peta .leaflet-control-attribution { font-size: 10px; }
+.pr-km span { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: #fff; color: #14201b; border: 1.5px solid #14201b; font: 700 11px/1 system-ui, sans-serif; }
+.pr-gelap .pr-km span { background: #101714; color: #e6ece8; border-color: #e6ece8; }

@@ -148,14 +148,22 @@ function route() {
   currentView = name; currentHash = location.hash;
   const pasang = () => {
     document.documentElement.dataset.view = name;
-    $$('.view').forEach(el => el.classList.toggle('active', el.id === 'view-' + name));
+    // Hanya satu halaman dipaparkan: yang lain disembunyikan (kelas dan atribut hidden)
+    $$('.view').forEach(el => { const on = el.id === 'view-' + name; el.classList.toggle('active', on); el.hidden = !on; });
+    // Tutup menu terbuka (Alat, bahasa, menu titik tiga) apabila halaman bertukar
+    $$('details.nav-more[open]').forEach(d => { d.open = false; });
+    $$('#bahasaPop:not([hidden]), #mainMenu:not([hidden])').forEach(m => { m.hidden = true; });
+    $$('#bahasaBtn[aria-expanded="true"], #menuBtn[aria-expanded="true"]').forEach(b => b.setAttribute('aria-expanded', 'false'));
     $$('[data-nav]').forEach(a => { const on = a.dataset.nav === name; a.classList.toggle('active', on); on ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'); });
-    window.scrollTo({ top: 0 });
+    // Terus ke atas tanpa tatal lancar (html { scroll-behavior: smooth } melambatkan dan boleh terhenti di tengah semasa peralihan)
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     document.dispatchEvent(new CustomEvent('viewchange', { detail: name }));
   };
   // Peralihan halus antara halaman (css/sinema.css) jika pelayar menyokong View Transitions
   // Navigasi pantas melangkau peralihan yang sedang berjalan ("Transition was skipped"): janji yang ditolak itu dijangka, bukan ralat
   if (tukarHalaman && document.startViewTransition && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    // Hentikan tatal lancar yang masih berjalan pada halaman lama; jika tidak, ia menyambung selepas halaman baharu dipasang
+    window.scrollTo({ top: window.scrollY, left: window.scrollX, behavior: 'instant' });
     const vt = document.startViewTransition(pasang);
     [vt.ready, vt.finished, vt.updateCallbackDone].forEach(p => p && p.catch(() => {}));
   } else pasang();

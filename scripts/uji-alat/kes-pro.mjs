@@ -89,6 +89,17 @@ export default [
     await tekan(page, '#tool-zakat .locked [data-goplans]');
     await t.tunggu('#plansBlock:not(.hidden)', 3000);
     await page.waitForFunction(() => { const r = document.querySelector('#plansBlock').getBoundingClientRect(); return r.top < innerHeight && r.bottom > 0; }, null, { timeout: 5000 });
+    // Jadual perbandingan: harga sebenar pelan (RM6.90 / RM49), jimat dikira daripada harga, had percuma daripada KUOTA
+    const jadual = await page.$$eval('#proBanding table tr', rs => rs.map(r => [...r.children].map(c => c.textContent.replace(/\s+/g, ' ').trim())));
+    pasti(JSON.stringify(jadual[0]) === JSON.stringify(['Ciri', 'Percuma', 'Bulanan', 'Tahunan Jimat 41%']), 'Kepala jadual: ' + JSON.stringify(jadual[0]));
+    pasti(JSON.stringify(jadual[1]) === JSON.stringify(['Harga', 'RM0', 'RM6.90/30 hari', 'RM49/setahunRM4.08 sebulan']), 'Baris harga: ' + JSON.stringify(jadual[1]));
+    const baris = n => jadual.find(r => r[0].startsWith(n)) || [];
+    pasti(baris('Semak Kertas')[1] === '3 semakan tugasan sehari' && baris('Semak Kertas')[2] === 'Tanpa had', 'Baris Semak: ' + JSON.stringify(baris('Semak Kertas')));
+    pasti(baris('Laporan PDF')[1] === '–Tiada' && baris('Laporan PDF')[3] === 'Ya', 'Baris Laporan PDF: ' + JSON.stringify(baris('Laporan PDF')));
+    pasti(/Percuma untuk semua/.test(baris('AI Coach')[1]), 'Baris AI Coach: ' + JSON.stringify(baris('AI Coach')));
+    pasti(baris('Buku Nota AI')[1] === '10 permintaan Buku Nota AI sehari', 'Baris Buku Nota AI: ' + JSON.stringify(baris('Buku Nota AI')));
+    pasti(/^Sehingga 3 amaran$/.test(baris('Amaran harga')[1]), 'Baris amaran: ' + JSON.stringify(baris('Amaran harga')));
+    pasti(baris('Portfolio patuh Syariah')[2] === 'Ya', 'Baris portfolio: ' + JSON.stringify(baris('Portfolio patuh Syariah')));
   } },
 
   /* ---------- 1. Portfolio ---------- */

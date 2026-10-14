@@ -138,6 +138,40 @@ const Premium = (function () {
       <div class="plan-per">${period === 'y1' ? `RM${(price / 12).toFixed(2)} sebulan, jimat ${saving}%` : 'Bayar sekali, tiada caj automatik'}</div>`;
   }
 
+  /* Jadual perbandingan Percuma, Bulanan dan Tahunan. Had percuma diambil daripada KUOTA supaya sentiasa sama dengan had sebenar. */
+  function bandingHTML() {
+    const pl = PLANS.lengkap, ya = `${icon('check')}<span class="sr-only">Ya</span>`, tiada = '<span aria-hidden="true">–</span><span class="sr-only">Tiada</span>';
+    const harga = per => {
+      if (isNative) { const pr = products.lengkap && products.lengkap[per]; return pr && pr.priceString ? esc(pr.priceString) : '–'; }
+      return `${rmFmt(pl[per])}<small>/${PERIOD[per]}</small>`;
+    };
+    const jimat = Math.round((1 - pl.y1 / (pl.m1 * 12)) * 100);
+    const had = k => `${KUOTA[k][0]} ${KUOTA[k][1]} sehari`;
+    const tanpaHad = 'Tanpa had';
+    // [ciri, percuma, premium] — Premium sama untuk bulanan dan tahunan
+    const BARIS = [
+      ['Semak Kertas: semakan AI dan plagiarisme', had('semak'), tanpaHad],
+      ['Laporan PDF Semak Kertas', tiada, ya],
+      ['AI Coach Belajar Melabur', `${ya} Percuma untuk semua`, ya],
+      ['Buku Nota AI', had('buku'), tanpaHad],
+      ['Tanya AI Fiqh', had('tanya'), tanpaHad],
+      ['Kerjaya AI', had('kerja'), tanpaHad],
+      ['Alat Pelajar', `${had('alat')}, ${had('alatpro')}`, tanpaHad],
+      // Had amaran percuma: FREE_ALERTS dalam js/market.js
+      ['Amaran harga', 'Sehingga 3 amaran', 'Tanpa had, termasuk amaran naik atau turun % dan amaran status Syariah'],
+      ['Portfolio patuh Syariah: status pegangan, haul zakat, pembersihan dividen', tiada, ya]
+    ];
+    return `<div class="card pr-banding-wrap"><h3>Bandingkan pelan</h3>
+      <div class="pr-banding-skrol"><table class="pr-banding">
+        <thead><tr><th scope="col">Ciri</th><th scope="col">Percuma</th><th scope="col">Bulanan</th><th scope="col">Tahunan${isNative ? '' : ` <span class="pr-jimat">Jimat ${jimat}%</span>`}</th></tr></thead>
+        <tbody>
+          <tr class="pr-harga"><th scope="row">Harga</th><td>RM0</td><td>${harga('m1')}</td><td>${harga('y1')}${isNative ? '' : `<small class="pr-sebulan">RM${(pl.y1 / 12).toFixed(2)} sebulan</small>`}</td></tr>
+          ${BARIS.map(([c, f, p]) => `<tr><th scope="row">${c}</th><td>${f}</td><td>${p}</td><td>${p}</td></tr>`).join('')}
+        </tbody>
+      </table></div>
+      <p class="muted small">${isNative ? 'Harga mengikut kedai app anda dan diperbaharui secara automatik.' : 'Bulanan dan Tahunan dibayar sekali, tiada caj automatik.'} Semua ciri percuma lain kekal percuma.</p></div>`;
+  }
+
   const LEAD = { normal: '', launch: 'Alat untuk melabur dengan lebih teratur dan menyiapkan tugasan dengan lebih kemas. Percuma untuk semua semasa pelancaran.' };
   function render() {
     const p = api.plan, open = salesOpen() || !!p, free = launchFree();
@@ -177,6 +211,7 @@ const Premium = (function () {
       </article>`;
     }).join('');
     if (isNative) $('#storeTerms').innerHTML = storeTermsHTML();
+    const bd = $('#proBanding'); if (bd) bd.innerHTML = bandingHTML();
   }
 
   function storeTermsHTML() {

@@ -366,6 +366,27 @@ export default [
     await t.ada('#gauges .gauge:nth-child(4) text', /^\d+%$/);
   } },
 
+  { kumpulan: K, nama: 'Semak: hasil asas dipaparkan sementara ulasan pakar berjalan; gagal, kemudian Cuba semula berjaya', langkah: async (t, page) => {
+    // Ulasan pakar ditahan: semakan asas mesti siap dan butang Semak aktif semula tanpa menunggu pelayan
+    let lepas; const tahan = new Promise(r => { lepas = r; });
+    await page.route(FIQH + '/semak', async r => { if (r.request().method() === 'OPTIONS') return r.fallback(); await tahan; return r.abort('timedout'); });
+    await sediaSemak(t, page, TUGASAN, { pakar: true, bahasa: 'ms' });
+    await semak(t, page);
+    await t.ada('#gauges .gauge:nth-child(4) text', /^\d+%$/);
+    await t.ada('#expertBox .semak-tunggu', /Ulasan pakar sedang menilai/, 5000);
+    pastikan(!(await page.$eval('#checkBtn', b => b.disabled)), 'Butang Semak masih dinyahaktifkan semasa ulasan pakar berjalan');
+    // Pelayan gagal: mesej sopan dan butang Cuba semula; hasil lain kekal
+    lepas();
+    await t.tunggu('#expertBox [data-semak-ulang="pakar"]', 10000);
+    pastikan(!(await page.$('#expertBox .semak-tunggu')), 'Pemutar ulasan pakar masih dipaparkan selepas gagal');
+    await t.ada('#gauges .gauge:nth-child(4) text', /^\d+%$/);
+    // Cuba semula: pelayan menjawab, ulasan pakar dipaparkan
+    await page.unroute(FIQH + '/semak');
+    await t.klik('#expertBox [data-semak-ulang="pakar"]');
+    await t.ada('#expertBox .xp-score', /^75\/100$/);
+    sama((await page.$$('#expertBox .xp-row')).length, 5, 'Kriteria ulasan pakar selepas cuba semula');
+  } },
+
   { kumpulan: K, nama: 'Semak: kuota percuma harian (tanpa Premium)', premium: false, storan: { bl_kuota: { d: hariIni(), semak: 2 } }, langkah: async (t, page) => {
     await sediaSemak(t, page, KERTAS_PLAG, { bahasa: 'ms' });
     await semak(t, page);
@@ -496,7 +517,7 @@ export default [
     await t.tunggu('#view-buku .bk-pod li', 15000);
     sama((await page.$$('#view-buku .bk-pod li.a')).length, 3, 'Baris podcast oleh Aina');
     const sk = await muatTurun(page, () => t.klik('#view-buku [data-act="skrip"]'));
-    sama(sk.nama, 'podcast-bijak-labur.txt', 'Nama skrip podcast');
+    sama(sk.nama, 'podcast-siswacap.txt', 'Nama skrip podcast');
     pastikan(/^.+\n\nAina: /.test(sk.isi), 'Format skrip podcast');
     // Suara HD luar talian (503): beralih ke suara pelayar. Suara pelayar ditiru supaya baris kekal "bercakap" sehingga dihentikan.
     await page.evaluate(() => {
@@ -707,11 +728,46 @@ export default [
     sama(await page.evaluate(() => JSON.parse(localStorage.getItem('bl_nota_cache')).notes.length), 5, 'Cache senarai nota');
   } },
 
+  { kumpulan: K, nama: 'Nota: katalog subjek IC220, ringkasan, pratonton nota sepadan dan tempahan WhatsApp', langkah: async (t, page) => {
+    await t.buka('#nota');
+    await t.tunggu('#view-nota .nt-card', 10000);
+    sama(JSON.stringify(await page.$$eval('#view-nota .nt-kat .nt-kat-kod', e => e.map(x => x.textContent))), JSON.stringify(['ISH402', 'IMU451', 'ISC452', 'ISC550', 'MPPHM 2020 / MHMS 2020']), 'Kod katalog');
+    await t.ada('#view-nota .nt-kat[data-kat="ISC550"] h3', /^Qawaid Fiqhiyyah$/);
+    await t.ada('#view-nota .nt-kat[data-kat="ISH402"] h3', /^Principle Food Science and Technology for Halal$/);
+    // Butang tempah: WhatsApp pertama dengan kod dan nama subjek
+    const u = new URL(await page.$eval('#view-nota .nt-kat[data-kat="IMU451"] .nt-wa-btn', a => a.href));
+    sama(u.origin + u.pathname, 'https://wa.me/60102546720', 'Nombor WhatsApp tempahan');
+    sama(u.searchParams.get('text'), 'Hi saya berminat nak beli nota untuk belajar\n\nTempah nota penuh: IMU451 Fiqh Muamalat', 'Mesej tempahan');
+    // Ringkasan: topik utama dan dua butang WhatsApp
+    await t.klik('#view-nota [data-kat-lihat="ISC550"]');
+    await t.tunggu('dialog.nt-dialog[open]', 3000);
+    await t.ada('dialog.nt-dialog h2', /^ISC550: Qawaid Fiqhiyyah$/);
+    await t.ada('dialog.nt-dialog .nt-kat-topik', /al-umur bi maqasidiha/);
+    sama((await page.$$('dialog.nt-dialog .nt-wa-btn')).length, 2, 'Butang WhatsApp ringkasan');
+    pastikan(!(await page.$('dialog.nt-dialog .nt-kat-prev')), 'Pratonton tanpa nota sepadan');
+    await page.keyboard.press('Escape');
+    await tunggu(page, () => !document.querySelector('dialog.nt-dialog'), null, 3000);
+    // Nota kedai yang sepadan dengan kod katalog: harga dan pratonton dipaparkan
+    await page.route('https://nota.bijaklabur.my/notes', r => r.fulfill({ status: 200, headers: { 'access-control-allow-origin': '*', 'content-type': 'application/json' },
+      body: JSON.stringify({ notes: [{ id: 'aaaaaa09', title: 'Nota Qawaid Fiqhiyyah', code: 'isc 550', price: 20, pages: 40, ext: 'pdf', preview: '/notes/aaaaaa09/preview?v=z' }], settings: {} }) }));
+    // Navigasi hash sahaja (tanpa muat semula): Nota memuat senarai semula setiap kali halaman dibuka
+    await t.buka('#utama');
+    await t.buka('#nota');
+    await t.ada('#view-nota .nt-kat[data-kat="ISC550"] .nt-kat-ada', /Ada dalam kedai, RM 20\.00/);
+    await t.ada('#view-nota [data-kat-lihat="ISC550"]', /Lihat pratonton/);
+    await t.klik('#view-nota [data-kat-lihat="ISC550"]');
+    await t.tunggu('dialog.nt-dialog .nt-kat-prev', 3000);
+    sama(await page.$eval('dialog.nt-dialog .nt-kat-prev', i => i.src), 'https://nota.bijaklabur.my/notes/aaaaaa09/preview?v=z', 'Pratonton nota sepadan');
+    await t.ada('dialog.nt-dialog .nt-price.big', /^RM 20\.00$/);
+  } },
+
   { kumpulan: K, nama: 'Nota: pelayan 503 tanpa cache dan dengan cache', langkah: async (t, page) => {
     await page.route('https://nota.bijaklabur.my/**', r => r.fulfill({ status: 503, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ error: 'Storan nota belum disediakan.' }) }));
     await t.buka('#nota');
     await t.ada('#view-nota .nt-msg', /Senarai nota belum dapat dimuatkan\. Storan nota belum disediakan\./);
-    await t.ada('#view-nota .nt-empty', /Nota baharu akan dimuat naik/);
+    await t.ada('#view-nota .nt-empty', /lihat katalog subjek di bawah dan tempah nota penuh melalui WhatsApp/);
+    // Katalog subjek tetap dipaparkan walaupun pelayan nota gagal
+    sama((await page.$$('#view-nota .nt-kat')).length, 5, 'Kad katalog tanpa pelayan');
     // Butang WhatsApp lalai masih tersedia untuk bertanya
     sama((await page.$$('#view-nota .nt-buy .nt-wa-btn')).length, 2, 'Butang WhatsApp lalai');
     // Dengan cache: senarai lama dipaparkan bersama amaran

@@ -103,3 +103,7 @@
 @media (min-width: 900px) and (max-width: 1239px) { .nav-more > summary { padding: 8px 7px; font-size: 0.86rem; } .desk-nav { gap: 0; } }
 @media (min-width: 900px) and (max-width: 999px) { .desk-nav a, .nav-more > summary { padding: 8px 4px; font-size: 0.8rem; } .nav-more > summary .ic { display: none; } }
 [data-font="lg"] .nav-more > summary { font-size: 0.835rem; }
+/* Menu Alat berkumpulan: tiga kumpulan berlabel */
+.nav-kump { display: grid; gap: 2px; }
+.nav-kump + .nav-kump { border-top: 1px solid var(--border); margin-top: 4px; padding-top: 4px; }
+.nav-kump-t { margin: 0; padding: 8px 12px 4px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint, var(--muted)); }

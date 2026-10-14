@@ -223,6 +223,8 @@
     try { await navigator.clipboard.writeText(markdown(r)); toast('Laporan disalin'); } catch { toast('Tidak dapat menyalin.'); }
   });
   document.addEventListener('checkdone', render);
+  // Ulasan pakar, audit lanjutan dan rujukan tiba selepas hasil asas
+  document.addEventListener('checkupdate', render);
   // Kemas kini matriks apabila pembetulan diterima atau ditolak
   $('#suggList').addEventListener('click', () => setTimeout(render, 0));
   $('#applyAll').addEventListener('click', () => setTimeout(render, 0));

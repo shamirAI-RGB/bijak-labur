@@ -11,6 +11,31 @@
     payNote: 'Imbas kod QR untuk bayar, kemudian hantar resit melalui WhatsApp. Nota akan dihantar kepada anda.',
     qr: ''
   };
+  /* Katalog subjek: kod dan nama kursus mengikut pelan pengajian rasmi IC220 (ACIS UiTM), serta dokumen pensijilan JAKIM.
+     Ringkasan ialah topik utama subjek, bukan isi nota; nota penuh ditempah melalui WhatsApp. */
+  const KATALOG = [
+    { kod: 'ISH402', nama: 'Principle Food Science and Technology for Halal', jenis: 'Kursus IC220 · 3 kredit',
+      topik: ['Komposisi makanan: karbohidrat, protein, lemak, air, vitamin dan mineral', 'Mikrobiologi makanan, kerosakan makanan dan keselamatan makanan',
+        'Kaedah pemprosesan dan pengawetan: haba, penyejukan, pengeringan dan penapaian', 'Bahan tambah makanan dan sumbernya, cth. gelatin, enzim, pengemulsi dan kod E',
+        'Titik kritikal halal dalam rantaian pemprosesan makanan'] },
+    { kod: 'IMU451', nama: 'Fiqh Muamalat', jenis: 'Kursus IC220 · 3 kredit',
+      topik: ['Konsep harta (mal) dan pemilikan (milkiyyah) dalam Islam', 'Akad: rukun, syarat dan jenis akad', 'Riba, gharar dan maisir dalam urus niaga',
+        'Akad jual beli (bai\') dan pertukaran', 'Akad perkongsian, sewaan dan sokongan: musyarakah, mudharabah, ijarah, wakalah, kafalah, rahn dan qard'] },
+    { kod: 'ISC452', nama: 'Al-Madkhal ila Usul al-Fiqh', jenis: 'Kursus IC220 · 3 kredit',
+      topik: ['Takrif, objektif dan sejarah perkembangan usul fiqh', 'Hukum syarak: hukum taklifi dan hukum wad\'i', 'Sumber hukum yang disepakati: al-Quran, Sunnah, ijmak dan qiyas',
+        'Sumber hukum yang diperselisihkan: istihsan, maslahah mursalah, \'uruf, istishab dan sadd al-zara\'i', 'Pengenalan ijtihad dan mazhab'] },
+    { kod: 'ISC550', nama: 'Qawaid Fiqhiyyah', jenis: 'Kursus IC220 · 3 kredit',
+      topik: ['Takrif kaedah fiqh dan bezanya dengan dawabit fiqhiyyah dan usul fiqh', 'Lima kaedah utama: al-umur bi maqasidiha, al-yaqin la yazulu bi al-syak, al-masyaqqah tajlib al-taysir, al-dharar yuzal dan al-\'adah muhakkamah',
+        'Kaedah cabang di bawah setiap kaedah utama', 'Aplikasi kaedah fiqh dalam isu semasa dan industri halal'] },
+    { kod: 'MPPHM 2020', alt: ['MHMS 2020', 'MPPHM', 'MHMS'], nama: 'Manual Prosedur Pensijilan Halal Malaysia (Domestik) 2020 dan Malaysian Halal Management System 2020', jenis: 'Dokumen pensijilan JAKIM',
+      topik: ['Skim pensijilan MPPHM 2020: produk makanan dan minuman, kosmetik, farmaseutikal, premis makanan, barang gunaan, logistik, rumah sembelihan, pengilangan kontrak (OEM) dan peranti perubatan',
+        'Syarat permohonan, dokumen sokongan dan proses audit pensijilan', 'MHMS 2020: Sistem Jaminan Halal, Jawatankuasa Halal Dalaman, Eksekutif Halal dan Penyelia Halal',
+        'Titik kawalan halal, kebolehkesanan dan audit halal dalaman'] }
+  ];
+  const kodSama = (a, b) => String(a || '').replace(/\s+/g, '').toUpperCase() === String(b || '').replace(/\s+/g, '').toUpperCase();
+  // Nota dalam kedai (dimuat naik pemilik) yang sepadan dengan subjek katalog
+  const notaKatalog = k => (S.notes || []).find(n => !n.hidden && [k.kod, ...(k.alt || [])].some(c => kodSama(n.code, c)));
+
   let S = { notes: null, settings: { ...DEFAULTS }, error: '', q: '', key: store.get('nota_key', ''), tab: 'tambah', loaded: false };
   const cached = store.get('nota_cache', null);
   if (cached) Object.assign(S, { notes: cached.notes, settings: { ...DEFAULTS, ...cached.settings } });
@@ -70,9 +95,41 @@
       <div class="block-head"><h2>Senarai nota</h2>${(S.notes || []).length > 4 ? `<input type="search" class="nt-search" id="ntSearch" placeholder="Cari kod atau tajuk" value="${esc(S.q)}" aria-label="Cari nota">` : ''}</div>
       ${!S.loaded && !S.notes ? '<div class="nt-grid">' + '<div class="card nt-card nt-skel"></div>'.repeat(3) + '</div>'
         : notes.length ? `<div class="nt-grid">${notes.map(cardHTML).join('')}</div>`
-        : `<div class="card nt-empty">${icon('book')}<p>${S.q ? 'Tiada nota sepadan dengan carian.' : owner() ? 'Belum ada nota. Tambah nota pertama anda di ruang pemilik di atas.' : 'Nota baharu akan dimuat naik tidak lama lagi. Hubungi kami melalui WhatsApp untuk bertanya.'}</p></div>`}
+        : `<div class="card nt-empty">${icon('book')}<p>${S.q ? 'Tiada nota sepadan dengan carian.' : owner() ? 'Belum ada nota. Tambah nota pertama anda di ruang pemilik di atas.' : 'Nota dengan pratonton akan dimuat naik di sini. Sementara itu, lihat katalog subjek di bawah dan tempah nota penuh melalui WhatsApp.'}</p></div>`}
+      ${katalogHTML()}
       ${owner() ? '' : `<p class="nt-owner-link"><button type="button" class="link-btn" data-act="login">${icon('lock')}Ruang pemilik</button></p>`}`;
     bind();
+  }
+
+  /* ---------- Katalog subjek ---------- */
+  const tempahTeks = k => `${S.settings.msg}\n\nTempah nota penuh: ${k.kod} ${k.nama}`;
+  function katalogHTML() {
+    const wa = S.settings.wa[0];
+    return `<div class="block-head"><h2>Katalog subjek</h2></div>
+      <p class="nt-hint">Subjek IC220 dan dokumen pensijilan halal yang notanya boleh ditempah. Lihat ringkasan topik, kemudian tempah nota penuh melalui WhatsApp.</p>
+      <div class="nt-grid nt-katalog">${KATALOG.map(k => {
+        const n = notaKatalog(k);
+        return `<article class="card nt-kat" data-kat="${esc(k.kod)}">
+          <span class="nt-kat-kod">${esc(k.kod)}${k.alt ? ` / ${esc(k.alt[0])}` : ''}</span>
+          <h3>${esc(k.nama)}</h3>
+          <p class="nt-meta">${esc(k.jenis)}${n ? ` · <b class="nt-kat-ada">Ada dalam kedai, ${n.price ? rm(n.price) : 'Percuma'}</b>` : ''}</p>
+          <div class="nt-kat-acts">
+            <button class="btn sm ghost" type="button" data-kat-lihat="${esc(k.kod)}">${icon('book')}${n && n.preview ? 'Lihat pratonton' : 'Lihat ringkasan'}</button>
+            ${wa ? `<a class="btn sm nt-wa-btn" href="${esc(waLink(wa.no, tempahTeks(k)))}" target="_blank" rel="noopener">${icon('chat')}Tempah nota penuh</a>` : ''}
+          </div>
+        </article>`;
+      }).join('')}</div>`;
+  }
+  function katalogDialog(k) {
+    const n = notaKatalog(k), s = S.settings, teks = tempahTeks(k);
+    dialog(`<p class="eyebrow">${esc(k.jenis)}</p>
+      <h2>${esc(k.kod)}${k.alt ? ` / ${esc(k.alt[0])}` : ''}: ${esc(k.nama)}</h2>
+      ${n && n.preview ? `<img class="nt-kat-prev" src="${esc(img(n.preview))}" alt="Pratonton ${esc(n.title)}" loading="lazy">` : ''}
+      <h3>Topik utama</h3>
+      <ul class="nt-kat-topik">${k.topik.map(t => `<li>${esc(t)}</li>`).join('')}</ul>
+      <p class="nt-hint">Ringkasan ini ialah topik utama subjek mengikut pelan pengajian IC220 UiTM${k.alt ? ' dan dokumen rasmi JAKIM' : ''}. Kandungan, bilangan muka surat dan harga nota penuh disahkan semasa anda menempah.</p>
+      ${n ? `<p class="nt-price big num">${n.price ? rm(n.price) : 'Percuma'}</p>` : ''}
+      <div class="nt-wa">${s.wa.map(w => `<a class="btn nt-wa-btn" href="${esc(waLink(w.no, teks))}" target="_blank" rel="noopener">${icon('chat')}<span>Tempah nota penuh (WhatsApp)<small>${esc(phone(w.no))}</small></span></a>`).join('')}</div>`);
   }
 
   function buyHTML(note) {
@@ -355,6 +412,9 @@
       catch (err) { toast(err.message, 4000); }
     });
 
+    root.querySelectorAll('[data-kat-lihat]').forEach(b => b.addEventListener('click', () => {
+      const k = KATALOG.find(x => x.kod === b.dataset.katLihat); if (k) katalogDialog(k);
+    }));
     root.querySelectorAll('[data-act]').forEach(b => b.addEventListener('click', async e => {
       const act = b.dataset.act, card = b.closest('.nt-card'), n = card && (S.notes || []).find(x => x.id === card.dataset.id);
       if (act === 'login') return loginDialog();

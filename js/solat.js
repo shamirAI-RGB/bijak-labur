@@ -190,15 +190,22 @@ WLY02|Wilayah Persekutuan|Labuan`.split('\n').map(l => { const [jakimCode, neger
     return { zone: 'GL', month_number: m, year: y, prayers, tz: j.data[0].meta.timezone };
   }
 
+  const hadMasa = ms => { const c = new AbortController(); setTimeout(() => c.abort(), ms); return c.signal; };
+  const terbina = (z, y, m) => `data/solat/${z}-${y}-${String(m).padStart(2, '0')}.json`;
+  // Data JAKIM terbina dalam laman (tanpa rangkaian luar): dipaparkan serta-merta sementara pelayan dihubungi
+  async function sementara(z, y, m) {
+    if (z === 'GL' || store.get(`solat_${z}_${y}_${m}`, null)) return null;
+    try { const r = await fetch(terbina(z, y, m)); const j = r.ok ? await r.json() : null; return j && j.prayers && j.prayers.length ? j : null; } catch { return null; }
+  }
   async function fetchMonth(z, y, m) {
     const key = z === 'GL' ? `solat_GL_${city.lat.toFixed(2)}_${city.lon.toFixed(2)}_${y}_${m}` : `solat_${z}_${y}_${m}`;
     const cached = store.get(key, null);
     if (cached && cached.prayers && cached.prayers.length) return cached;
     if (z === 'GL') { const j = await fetchGlobal(city, y, m); store.set(key, j); pruneCache(); return j; }
-    const urls = [`${API}/v2/solat/${z}?year=${y}&month=${m}`, `data/solat/${z}-${y}-${String(m).padStart(2, '0')}.json`];
+    const urls = [`${API}/v2/solat/${z}?year=${y}&month=${m}`, terbina(z, y, m)];
     for (const u of urls) {
       try {
-        const r = await fetch(u);
+        const r = await fetch(u, { signal: hadMasa(8000) });
         if (!r.ok) continue;
         const j = await r.json();
         if (j.prayers && j.prayers.length) { store.set(key, j); pruneCache(); return j; }
@@ -234,17 +241,23 @@ WLY02|Wilayah Persekutuan|Labuan`.split('\n').map(l => { const [jakimCode, neger
     } catch {}
   }
 
+  let muatan = 0;
   async function load() {
-    const p = partsKL(new Date());
+    const p = partsKL(new Date()), no = ++muatan, z0 = zone;
     $('#nextName').textContent = 'Memuatkan';
+    // Zon lalai atau pilihan dipaparkan serta-merta daripada data terbina (tiada "--:--:--" semasa menunggu pelayan)
+    sementara(z0, p.year, p.month).then(j => { if (j && !month && no === muatan && zone === z0) { month = j; renderToday(); renderMonth(); } });
     try {
-      month = await fetchMonth(zone, p.year, p.month);
+      const j = await fetchMonth(zone, p.year, p.month);
+      if (no !== muatan) return;
+      month = j;
       // Zon waktu sebenar bandar (daripada Aladhan) mengatasi anggaran awal
       if (isGL() && month.tz && month.tz !== city.tz) { city = { ...city, tz: month.tz }; store.set('solatCity', city); setTZ(city.tz); }
       renderToday(); renderMonth();
       const nm = p.month === 12 ? [p.year + 1, 1] : [p.year, p.month + 1];
       fetchMonth(zone, nm[0], nm[1]).then(j => { nextMonth = j; scheduleNative(); }).catch(() => scheduleNative());
     } catch {
+      if (no !== muatan || month) return;
       $('#nextName').textContent = 'Waktu solat tidak dapat dimuatkan';
       $('#countdown').textContent = '--:--:--';
       $('#homeNextName').textContent = 'Tiada sambungan';
@@ -525,13 +538,23 @@ WLY02|Wilayah Persekutuan|Labuan`.split('\n').map(l => { const [jakimCode, neger
       };
     } catch { list.innerHTML = '<li class="muted small">Carian tidak dapat dibuat. Semak sambungan internet.</li>'; }
   };
+  // Zon lalai (WLY01, Kuala Lumpur) dipaparkan dahulu. Jika pengguna belum memilih zon dan kebenaran lokasi sudah diberi
+  // sebelum ini, zon diperhalusi mengikut GPS secara senyap (tanpa meminta kebenaran baharu).
+  async function zonGPS() {
+    if (store.get('zone', null) || !navigator.geolocation || !navigator.permissions) return;
+    try { if ((await navigator.permissions.query({ name: 'geolocation' })).state !== 'granted') return; } catch { return; }
+    navigator.geolocation.getCurrentPosition(async pos => {
+      const r = await fetch(`${API}/zones/${pos.coords.latitude.toFixed(4)}/${pos.coords.longitude.toFixed(4)}`, { signal: hadMasa(8000) }).then(x => x.ok ? x.json() : {}).catch(() => ({}));
+      if (r.zone && r.zone !== zone && !store.get('zone', null) && zones.some(z => z.jakimCode === r.zone)) useZone(r.zone);
+    }, () => {}, { timeout: 15000, maximumAge: 600000 });
+  }
   $('#gpsBtn').addEventListener('click', () => {
     if (!navigator.geolocation) return toast('Lokasi tidak disokong pada peranti ini.');
     toast('Mengesan lokasi');
     navigator.geolocation.getCurrentPosition(async pos => {
       try {
         const lat = pos.coords.latitude, lon = pos.coords.longitude;
-        const r = await fetch(`${API}/zones/${lat.toFixed(4)}/${lon.toFixed(4)}`).then(x => x.ok ? x.json() : {}).catch(() => ({}));
+        const r = await fetch(`${API}/zones/${lat.toFixed(4)}/${lon.toFixed(4)}`, { signal: hadMasa(10000) }).then(x => x.ok ? x.json() : {}).catch(() => ({}));
         if (r.zone) { useZone(r.zone); toast(`Zon ditetapkan: ${zoneInfo().daerah.split(',')[0]}`); return; }
         // Luar Malaysia: waktu solat global ikut koordinat, nama tempat daripada BigDataCloud
         const g = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=ms`).then(x => x.json()).catch(() => ({}));
@@ -570,12 +593,12 @@ WLY02|Wilayah Persekutuan|Labuan`.split('\n').map(l => { const [jakimCode, neger
   (async () => {
     for (const u of [`${API}/zones`, 'data/solat/zones.json']) {
       try {
-        const z = await (await fetch(u)).json();
+        const z = await (await fetch(u, { signal: hadMasa(8000) })).json();
         if (Array.isArray(z) && z.length > 20) { zones = z; renderZones(); if (month) renderToday(); return; }
       } catch {}
     }
   })();
-  renderZones(); paintSwitch(); load();
+  renderZones(); paintSwitch(); load(); zonGPS();
   let lastDay = partsKL(new Date()).day;
   setInterval(() => {
     const p = partsKL(new Date());

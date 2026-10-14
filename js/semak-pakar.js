@@ -8,13 +8,17 @@
   const CRIT = [['struktur', 'Struktur'], ['hujah', 'Hujah dan analisis'], ['bukti', 'Bukti dan contoh'], ['bahasa', 'Bahasa'], ['rujukan', 'Rujukan dan sitasi']];
 
   /* ---------- 1. Ulasan pakar ---------- */
+  const PAKAR_MASA = 30000, RUJUKAN_MASA = 30000;
   async function expert(text, lang) {
-    let r;
-    try { r = await fetch(API + '/semak', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ text: text.slice(0, 60000), lang }) }); }
-    catch { throw new Error(navigator.onLine === false ? 'Tiada sambungan internet.' : 'Ulasan pakar tidak dapat dihubungi.'); }
-    const d = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(d.error || 'Ulasan pakar tidak tersedia buat masa ini.');
-    return d;
+    const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), PAKAR_MASA);
+    try {
+      let r;
+      try { r = await fetch(API + '/semak', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ text: text.slice(0, 60000), lang }), signal: ctl.signal }); }
+      catch { throw new Error(ctl.signal.aborted ? 'Ulasan pakar mengambil masa terlalu lama. Hasil lain di atas sudah lengkap; cuba semula sebentar lagi.' : navigator.onLine === false ? 'Tiada sambungan internet.' : 'Ulasan pakar tidak dapat dihubungi.'); }
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || 'Ulasan pakar tidak tersedia buat masa ini.');
+      return d;
+    } finally { clearTimeout(t); }
   }
 
   /** Pembetulan pakar -> cadangan dalam format penyemak ({ start, end, orig, rep, cat, msg }) */
@@ -116,11 +120,13 @@
   async function references(text, onProgress) {
     const { body, refs } = split(text);
     if (!refs.length) return { found: false, items: [], missing: [], unused: [] };
-    const items = new Array(refs.length);
+    const items = new Array(refs.length), akhir = Date.now() + RUJUKAN_MASA;
     let next = 0, done = 0;
     await Promise.all(Array.from({ length: 4 }, async () => {
-      while (next < refs.length) { const i = next++; items[i] = await verifyRef(refs[i]); onProgress && onProgress(++done, refs.length); }
+      // Selepas had masa, rujukan yang belum disemak ditanda "Tidak dapat disemak"
+      while (next < refs.length && Date.now() < akhir) { const i = next++; items[i] = await verifyRef(refs[i]); onProgress && onProgress(++done, refs.length); }
     }));
+    refs.forEach((r, i) => { if (!items[i]) items[i] = { ref: r, status: 'ralat', note: 'Masa semakan tamat sebelum rujukan ini disemak.' }; });
     const cites = citations(body), keys = refs.map(r => ({ a: firstAuthor(r), y: yearOf(r) }));
     const missing = cites.filter(c => !keys.some(k => k.a === c.author && k.y === c.year)).map(c => c.label);
     const unused = refs.filter((r, i) => keys[i].a && !cites.some(c => c.author === keys[i].a && c.year === keys[i].y));
@@ -131,9 +137,12 @@
   // Skala gred UiTM
   const GRADES = [[80, 'A'], [75, 'A-'], [70, 'B+'], [65, 'B'], [60, 'B-'], [55, 'C+'], [50, 'C'], [47, 'C-'], [44, 'D+'], [40, 'D'], [30, 'E'], [0, 'F']];
   const grade = n => GRADES.find(([m]) => n >= m)[1];
+  const menunggu = m => `<p class="muted semak-tunggu"><span class="spinner"></span> ${m}</p>`;
+  const gagal = (msg, k) => `<p class="note">${icon('alert')}<span>${esc(msg)}</span></p><div class="row-gap"><button class="btn sm" type="button" data-semak-ulang="${k}">${icon('refresh')}Cuba semula</button></div>`;
   function expertHTML(x) {
     if (!x) return '';
-    if (x.error) return `<p class="note">${icon('alert')}<span>${esc(x.error)}</span></p>`;
+    if (x.menunggu) return menunggu('Ulasan pakar sedang menilai…');
+    if (x.error) return gagal(x.error, 'pakar');
     return `<div class="xp-head"><div class="xp-score"><b class="num">${x.jumlah}</b><span>/100</span></div><div><div class="xp-grade">Gred anggaran ${grade(x.jumlah)} (skala UiTM)</div><p class="muted small">${esc(x.ringkasan)}</p></div></div>
       <div class="xp-crit">${CRIT.map(([k, n]) => { const m = x.markah[k] || { skor: 0, ulasan: '' }; return `<div class="xp-row"><div class="row-between"><b>${n}</b><span class="num">${m.skor}/10</span></div><div class="track"><div style="width:${m.skor * 10}%"></div></div>${m.ulasan ? `<p class="muted small">${esc(m.ulasan)}</p>` : ''}</div>`; }).join('')}</div>
       ${x.kekuatan.length ? `<h4>Kekuatan</h4><ul class="xp-list good">${x.kekuatan.map(k => `<li>${icon('check')}<span>${esc(k)}</span></li>`).join('')}</ul>` : ''}
@@ -143,6 +152,7 @@
   const CHIP = { sah: ['Disahkan', 'up'], mungkin: ['Hampir sepadan', 'warn'], tiada: ['⚠ AMARAN MERAH', 'down'], laman: ['Laman web', 'info'], ralat: ['Tidak dapat disemak', 'muted'] };
   function refsHTML(r) {
     if (!r) return '';
+    if (r.menunggu) return menunggu('Mengesahkan rujukan…');
     const web = u => /^https?:\/\//i.test(u || '');
     if (!r.found) return '<p class="muted small">Tiada bahagian "Rujukan" atau "References" dikesan. Letakkan senarai rujukan di hujung teks di bawah tajuk Rujukan untuk disemak.</p>';
     const n = k => r.items.filter(i => i.status === k).length;
@@ -158,5 +168,5 @@
     if (rb) { rb.closest('.card').classList.toggle('hidden', !state.refs); rb.innerHTML = refsHTML(state.refs); }
   }
 
-  window.SemakPakar = { expert, toSuggestions, references, render, _split: split, _citations: citations, _overlap: overlap };
+  window.SemakPakar = { expert, toSuggestions, references, render, gagal, menunggu, _split: split, _citations: citations, _overlap: overlap };
 })();
