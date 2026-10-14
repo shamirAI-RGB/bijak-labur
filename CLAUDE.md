@@ -1,6 +1,6 @@
 # SiswaCap (dahulu Bijak Labur): panduan untuk Claude dan AI Agent
 
-Jenama SiswaCap (Siswa Capital) sejak 10 Oktober 2026. Alamat utama laman ialah **siswacap.my** (fail `CNAME`, GitHub Pages, cawangan `main`); bijaklabur.my melencong 301 ke siswacap.my melalui Redirect Rule Cloudflare. Emel @bijaklabur.my, subdomain pelayan (nota., fiqh., jadual., agen., pusat.bijaklabur.my) dan kunci storan `bl_` kekal. `ALLOWED_ORIGINS` setiap worker menerima kedua-dua domain. Laman siswacap.my dan app Android/iOS (Capacitor). Semua teks pengguna dalam
+Jenama SiswaCap (Siswa Capital) sejak 10 Oktober 2026. Alamat utama laman ialah **siswacap.my** (fail `CNAME`, GitHub Pages, cawangan `main`); bijaklabur.my melencong 301 ke siswacap.my melalui Redirect Rule Cloudflare. Emel awam laman ialah @siswacap.my (hello@, shamir@, wabil@); alamat @bijaklabur.my lama terus menghantar ke Gmail yang sama, dan pengirim worker-nota (tanya@bijaklabur.my) serta UID kalendar jadual kekal. Subdomain pelayan (nota., fiqh., jadual., agen., pusat.bijaklabur.my) dan kunci storan `bl_` kekal. `ALLOWED_ORIGINS` setiap worker menerima kedua-dua domain. Laman siswacap.my dan app Android/iOS (Capacitor). Semua teks pengguna dalam
 **Bahasa Melayu baku Malaysia** (DBP), bukan Bahasa Indonesia: "daripada", "kerana", "wang", "boleh", "kerajaan".
 
 ## Struktur

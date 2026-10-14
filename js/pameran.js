@@ -20,7 +20,7 @@
   sosial.className = 'xb-sosial'; sosial.setAttribute('aria-label', 'Hubungi kami');
   sosial.innerHTML = `
     ${orang ? `<a href="${esc(Hubungi.waUrl(orang.no))}" target="_blank" rel="noopener" aria-label="WhatsApp ${esc(orang.nama)}" title="WhatsApp">${Hubungi.LOGO}</a>` : ''}
-    <a href="mailto:hello@bijaklabur.my" aria-label="Emel hello@bijaklabur.my" title="Emel">${icon('mail')}</a>
+    <a href="mailto:hello@siswacap.my" aria-label="Emel hello@siswacap.my" title="Emel">${icon('mail')}</a>
     <button type="button" data-xb-kongsi aria-label="Kongsi SiswaCap" title="Kongsi">${icon('share')}</button>`;
   stage.appendChild(sosial);
 
