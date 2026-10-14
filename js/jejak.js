@@ -87,6 +87,7 @@
   function segar() {
     if (!peta) return;
     const d = dataPeta();
+    if (peta.ringan) { peta.lukis(d); return; }
     for (const id in d) { const src = peta.map.getSource(id); if (src) src.setData(d[id]); }
   }
   // Lapisan laluan dipasang semula setiap kali gaya peta bertukar, di bawah label peta
@@ -114,17 +115,28 @@
     memuatPeta = true;
     const last = T.pts.length ? T.pts[T.pts.length - 1] : here;
     let p = null;
+    const pusat = last ? [last[0], last[1]] : PUSAT;
     try {
       await loadScript('js/peta-gaya.js');
-      p = await PetaGaya.cipta(el, { kunci: 'jejak', pusat: last ? [last[0], last[1]] : PUSAT, zum: 16, lapisan: pasangLapisan });
-    } catch { p = null; } finally { memuatPeta = false; }
+      p = await PetaGaya.cipta(el, { kunci: 'jejak', pusat, zum: 16, lapisan: pasangLapisan });
+    } catch { p = null; }
+    // Peta 3D tidak dapat dibuka (cth. tiada WebGL): peta ringan 2D Leaflet dengan jubin OpenStreetMap
+    if (!p && el.isConnected) {
+      el.textContent = ''; el.classList.remove('pg-peta');
+      try {
+        await loadScript('js/peta-ringan.js');
+        p = await PetaRingan.cipta(el, { pusat, zum: 16 });
+      } catch { p = null; }
+    }
+    memuatPeta = false;
     // Bekas peta diganti semasa memuat (halaman dilukis semula): cipta semula pada bekas baharu
     if (!el.isConnected) { if (p) p.buang(); return ensureMap(); }
     if (!p) { el.innerHTML = '<p class="muted jk-nomap">Peta tidak dapat dimuatkan. Penjejakan tetap berfungsi.</p>'; return; }
     peta = p;
     const m = peta.map;
     m.on('dragstart', () => { if (follow) { follow = false; paintCtl(); } });
-    for (const ev of ['mousedown', 'touchstart', 'wheel']) m.on(ev, () => { if (terbangId) henti(); });
+    if (!peta.ringan) for (const ev of ['mousedown', 'touchstart', 'wheel']) m.on(ev, () => { if (terbangId) henti(); });
+    if (peta.ringan) segar();
     setTimeout(() => peta && peta.resize(), 150);
     paintHere(); paintCtl();
     if (viewing) lihat(viewing);
@@ -132,18 +144,18 @@
   function paintHere() {
     if (!peta || !here) return;
     peta.lokasi(here, acc > 0 ? acc : 20);
-    if (follow && !viewing && !terbangId) peta.map.easeTo({ center: [here[1], here[0]], duration: 600 });
+    if (follow && !viewing && !terbangId) peta.pandang(here, null, true);
   }
 
   /* Main semula laluan dalam 3D: kamera terbang di sepanjang laluan, condong dan berpusing mengikut arah */
   function henti() {
     if (!terbangId) return;
     terbangId = 0;
-    const src = peta && peta.map.getSource('jk-main'); if (src) src.setData(fc([]));
+    const src = peta && !peta.ringan && peta.map.getSource('jk-main'); if (src) src.setData(fc([]));
     paintHist();
   }
   function terbang(rec) {
-    if (!peta || rec.pts.length < 2) return;
+    if (!peta || peta.ringan || rec.pts.length < 2) return;
     const m = peta.map, pts = rec.pts, k = kumul(pts), jumlah = k[k.length - 1];
     if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) { peta.muat(pts, 36, 17); return; }
     if (!peta.mod3d) peta.set3D(true, false);
@@ -317,7 +329,7 @@
     trk += '</trkseg>';
     const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="SiswaCap" xmlns="http://www.topografix.com/GPX/1/1"><metadata><time>${new Date(t0).toISOString()}</time></metadata><trk><name>${x(JENIS[rec.jenis].nama)} ${new Date(t0).toLocaleDateString('ms-MY')}</name><type>${rec.jenis === 'basikal' ? 'cycling' : rec.jenis === 'lari' ? 'running' : 'walking'}</type>${trk}</trk></gpx>\n`;
     const url = URL.createObjectURL(new Blob([xml], { type: 'application/gpx+xml' }));
-    Object.assign(document.createElement('a'), { href: url, download: `bijak-labur-${rec.jenis}-${day(new Date(t0))}.gpx` }).click();
+    Object.assign(document.createElement('a'), { href: url, download: `siswacap-${rec.jenis}-${day(new Date(t0))}.gpx` }).click();
     setTimeout(() => URL.revokeObjectURL(url), 2000);
   }
 
@@ -358,7 +370,7 @@
       return `<div class="row-between"><h2>${JENIS[r.jenis].nama} · ${new Date(r.start).toLocaleDateString('ms-MY', { weekday: 'short', day: 'numeric', month: 'short' })}</h2><button class="link-btn" type="button" data-act="tutup">${icon('x')}Tutup</button></div>
         <div class="jk-stats">${stat(km(r.dist), 'km')}${stat(dur(r.ms), 'masa')}${bike ? stat(kmh(r.ms, r.dist), 'purata km/j') : stat(pace(r.ms, r.dist), 'rentak /km')}${r.steps ? stat(r.steps.toLocaleString('ms-MY'), 'langkah') : ''}${stat(r.kcal, 'kcal')}${stat(r.ascent, 'm naik')}</div>
         ${r.splits.length ? `<ol class="jk-splits">${r.splits.map((s, i) => `<li><span>Km ${i + 1}</span><b class="num">${bike ? kmh(s, 1000) + ' km/j' : dur(s)}</b></li>`).join('')}</ol>` : ''}
-        <div class="row-gap">${peta && r.pts.length > 1 ? `<button class="btn" type="button" data-act="terbang">${icon('play')}${terbangId ? 'Main semula…' : 'Main semula 3D'}</button>` : ''}<button class="btn ghost" type="button" data-act="gpx">${icon('download')}Eksport GPX</button><button class="link-btn" type="button" data-act="padam">${icon('trash')}Padam</button></div>
+        <div class="row-gap">${peta && !peta.ringan && r.pts.length > 1 ? `<button class="btn" type="button" data-act="terbang">${icon('play')}${terbangId ? 'Main semula…' : 'Main semula 3D'}</button>` : ''}<button class="btn ghost" type="button" data-act="gpx">${icon('download')}Eksport GPX</button><button class="link-btn" type="button" data-act="padam">${icon('trash')}Padam</button></div>
         <p class="muted small">Fail GPX boleh diimport ke Strava, Garmin Connect atau Google Earth.</p>`;
     }
     const sum = sejarah.filter(r => Date.now() - r.start < 7 * 864e5).reduce((t, r) => t + r.dist, 0);
@@ -378,7 +390,7 @@
         <div class="card jk-ctl" id="jkCtl"></div>
         <div class="card" id="jkHist"></div>
       </div>
-      <p class="note">${icon('alert')}<span>${BG ? 'Dalam app ini, penjejakan diteruskan walaupun skrin dikunci atau anda membuka app lain (notifikasi "Jejak Aktiviti" dipaparkan). Tekan Tamat apabila selesai untuk menjimatkan bateri.' : 'Dalam pelayar, pastikan skrin kekal hidup semasa menjejak: pelayar menghentikan GPS apabila skrin dikunci atau halaman ditutup. Untuk menjejak dengan skrin dikunci, gunakan app SiswaCap (Android/iOS).'} Lokasi dan laluan anda disimpan dalam peranti ini sahaja dan tidak dihantar ke pelayan SiswaCap. Peta dimuatkan daripada OpenFreeMap (data OpenStreetMap). Utamakan keselamatan: perhatikan jalan raya, bukan skrin.</span></p>`;
+      <p class="note">${icon('alert')}<span>${BG ? 'Dalam app ini, penjejakan diteruskan walaupun skrin dikunci atau anda membuka app lain (notifikasi "Jejak Aktiviti" dipaparkan). Tekan Tamat apabila selesai untuk menjimatkan bateri.' : 'Dalam pelayar, pastikan skrin kekal hidup semasa menjejak: pelayar menghentikan GPS apabila skrin dikunci atau halaman ditutup. Untuk menjejak dengan skrin dikunci, gunakan app SiswaCap (Android/iOS).'} Lokasi dan laluan anda disimpan dalam peranti ini sahaja dan tidak dihantar ke pelayan SiswaCap. Peta dimuatkan daripada OpenFreeMap atau OpenStreetMap (data OpenStreetMap). Utamakan keselamatan: perhatikan jalan raya, bukan skrin.</span></p>`;
     terbangId = 0;
     if (peta) peta.buang();
     peta = null;
@@ -396,7 +408,7 @@
     if (act === 'jeda') jeda();
     if (act === 'sambung') sambung();
     if (act === 'tamat') tamat();
-    if (act === 'ikut') { follow = true; viewing = null; henti(); segar(); if (here && peta) peta.pandang(here, Math.max(peta.map.getZoom() + 1, 16), true); paintAll(); }
+    if (act === 'ikut') { follow = true; viewing = null; henti(); segar(); if (here && peta) peta.pandang(here, Math.max(peta.zum(), 16), true); paintAll(); }
     if (act === 'tutup') { viewing = null; henti(); segar(); follow = true; paintHere(); paintHist(); }
     if (act === 'terbang' && viewing) { if (terbangId) henti(); else { terbang(viewing); $('#jkMap', root).scrollIntoView({ behavior: 'smooth', block: 'center' }); } }
     if (act === 'gpx' && viewing) gpx(viewing);
@@ -415,6 +427,8 @@
     if (e.detail !== 'jejak') { if (!T.on) stopWatch(); return; }
     if (!$('#jkMap', root)) render();
     paintAll(); ensureMap(); startWatch();
+    // Saiz peta dikira semula selepas halaman dipaparkan sepenuhnya (peralihan halaman selesai)
+    setTimeout(() => { if (peta && document.documentElement.dataset.view === 'jejak') peta.resize(); }, 520);
   });
   render();
   if (document.documentElement.dataset.view === 'jejak') { ensureMap(); startWatch(); }

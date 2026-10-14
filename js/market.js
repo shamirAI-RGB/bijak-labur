@@ -360,10 +360,11 @@
     if (!v) return;
     stockSym = v; store.set('stockSym', v); renderStockTabs(); loadStock();
   });
-  $('#bursaList').innerHTML = BURSA.map(([t, code, n]) => `<a class="qrow" href="https://www.tradingview.com/symbols/MYX-${t}/" target="_blank" rel="noopener">
+  // Kaunter Bursa: kod Yahoo Finance (<kod>.KL), harga dalam RM; baris membuka carta TradingView
+  $('#bursaList').innerHTML = BURSA.map(([t, code, n]) => `<a class="qrow" href="https://www.tradingview.com/symbols/MYX-${t}/" target="_blank" rel="noopener" id="bq-${code}" title="Buka carta ${esc(t)} di TradingView">
       <span class="coin" style="--c:var(--brand)">${esc(t.slice(0, 1))}</span>
-      <span style="min-width:0"><div class="q-sym">${esc(t)} ${syBadgeSaham(t)} <span class="muted small num">${code}</span></div><div class="q-name">${esc(n)}</div></span>
-      <span></span><span class="q-right muted">${icon('link')}</span></a>`).join('');
+      <span style="min-width:0"><div class="q-sym">${esc(t)} ${syBadgeSaham(t)} <span class="muted small num">${code}.KL</span></div><div class="q-name">${esc(n)}</div></span>
+      <span></span><span class="q-right"><div class="q-price num">-</div><div class="q-chg">&nbsp;</div></span></a>`).join('');
   paintStockSy();
   let tvLoaded = false;
   function loadTV() {
@@ -414,6 +415,40 @@
     }
     stockStatus();
   }
+  /* Harga kaunter Bursa dalam RM (pelayan nota, Yahoo Finance: lewat sekurang-kurangnya 15 minit) */
+  const bursaData = store.get('bursaQuotes', {});
+  let bursaTimer = null;
+  const rmFmt = v => 'RM' + Number(v).toLocaleString('ms-MY', { minimumFractionDigits: 2, maximumFractionDigits: v < 1 ? 3 : 2 });
+  function paintBursa(q) {
+    const el = document.getElementById('bq-' + String(q.s).replace(/\.KL$/, '')); if (!el || !(q.price > 0)) return;
+    el.querySelector('.q-price').textContent = rmFmt(q.price);
+    const ch = el.querySelector('.q-chg'), up = q.chg >= 0;
+    ch.textContent = (up ? '+' : '') + (+q.chg).toFixed(2) + '%';
+    ch.className = 'q-chg ' + (up ? 'up' : 'down');
+  }
+  function bursaStatus(ok) {
+    const el = $('#bursaStatus'); if (!el) return;
+    const t = Object.values(bursaData).reduce((m, q) => Math.max(m, q.time || 0), 0);
+    const masa = t ? new Date(t * 1000).toLocaleString('ms-MY', { timeZone: 'Asia/Kuala_Lumpur', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+    el.textContent = ok ? `Harga dalam RM, lewat sekurang-kurangnya 15 minit (Yahoo Finance)${masa ? `, dagangan terakhir ${masa}` : ''}. Tekan kaunter untuk carta.`
+      : t ? `Harga terakhir yang disimpan (${masa}). Harga semasa tidak dapat dimuatkan.` : 'Harga Bursa tidak dapat dimuatkan sekarang. Tekan kaunter untuk melihat harga dan carta di TradingView.';
+  }
+  async function loadBursa() {
+    try {
+      const r = await fetch(`${STOCK_API}?s=${BURSA.map(b => b[1] + '.KL').join(',')}`);
+      if (!r.ok) throw 0;
+      (await r.json()).quotes.forEach(q => { if (q && typeof q.s === 'string') { bursaData[q.s] = q; paintBursa(q); } });
+      store.set('bursaQuotes', bursaData); bursaStatus(true);
+    } catch { bursaStatus(false); }
+  }
+  Object.values(bursaData).forEach(paintBursa);
+  function bursaAktif(on) {
+    clearInterval(bursaTimer); bursaTimer = null;
+    if (!on) return;
+    loadBursa();
+    bursaTimer = setInterval(() => { if (!document.hidden) loadBursa(); }, 60000);
+  }
+
   function showHomeSeg(seg) {
     homeSeg = seg; store.set('homeSeg', seg);
     $$('#homeSeg .seg').forEach(b => { const on = b.dataset.hseg === seg; b.classList.toggle('active', on); b.setAttribute('aria-selected', on); });
@@ -447,10 +482,11 @@
     store.set('marketSeg', seg);
     if (seg === 'stock' && !tvLoaded) loadTV();
     if (seg === 'crypto' && !chart) initChart();
+    bursaAktif(seg === 'stock' && document.documentElement.dataset.view === 'pasaran');
   }
   $$('.seg[data-seg]').forEach(b => b.addEventListener('click', () => showSeg(b.dataset.seg)));
 
-  document.addEventListener('viewchange', e => { if (e.detail === 'pasaran') showSeg(store.get('marketSeg', 'crypto')); });
+  document.addEventListener('viewchange', e => { if (e.detail === 'pasaran') showSeg(store.get('marketSeg', 'crypto')); else bursaAktif(false); });
   document.addEventListener('themechange', () => {
     if (tvLoaded) loadTV();
     if (chart) {

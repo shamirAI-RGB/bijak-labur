@@ -15,13 +15,18 @@
   const ZON = { mentah: ['#fde2e2', '#b42318', 'Bahan mentah'], proses: ['#fff1d6', '#a15c00', 'Pemprosesan'], sejuk: ['#dbeafe', '#1d4ed8', 'Bilik sejuk'], siap: ['#dcfce7', '#15803d', 'Barang siap'], kebersihan: ['#ede9fe', '#6d28d9', 'Kebersihan'], pejabat: ['#f1f5f9', '#475569', 'Pejabat'] };
   const LANGKAH = { mula: 'Mula', proses: 'Proses', keputusan: 'Keputusan', ccp: 'CCP', simpan: 'Simpan', tamat: 'Tamat' };
 
+  // Audit lanjutan menjana lebih banyak bahagian daripada ulasan pakar, jadi diberi masa lebih panjang
+  const AUDIT_MASA = 45000;
   async function fetchAudit(text, lang) {
-    let r;
-    try { r = await fetch(API + '/audit', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ text: text.slice(0, 60000), lang }) }); }
-    catch { throw new Error(navigator.onLine === false ? 'Tiada sambungan internet.' : 'Audit lanjutan tidak dapat dihubungi.'); }
-    const d = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(d.error || 'Audit lanjutan tidak tersedia buat masa ini.');
-    return d;
+    const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), AUDIT_MASA);
+    try {
+      let r;
+      try { r = await fetch(API + '/audit', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ text: text.slice(0, 60000), lang }), signal: ctl.signal }); }
+      catch { throw new Error(ctl.signal.aborted ? 'Audit lanjutan mengambil masa terlalu lama. Hasil lain di atas sudah lengkap; cuba semula sebentar lagi.' : navigator.onLine === false ? 'Tiada sambungan internet.' : 'Audit lanjutan tidak dapat dihubungi.'); }
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || 'Audit lanjutan tidak tersedia buat masa ini.');
+      return d;
+    } finally { clearTimeout(t); }
   }
 
   /* ---------- Kod Mermaid ---------- */
@@ -266,7 +271,8 @@ if __name__ == "__main__":
   }
 
   function html(a) {
-    if (a.error) return `<p class="note">${icon('alert')}<span>${esc(a.error)}</span></p>`;
+    if (a.menunggu) return window.SemakPakar ? SemakPakar.menunggu('Audit lanjutan sedang berjalan…') : '';
+    if (a.error) return window.SemakPakar ? SemakPakar.gagal(a.error, 'audit') : `<p class="note">${icon('alert')}<span>${esc(a.error)}</span></p>`;
     const total = a.jumlah;
     const hujahRows = a.hujah.map(h => `<tr>
         <td class="wrap"><b>${esc(h.bahagian)}</b>${h.petikan ? `<blockquote>${esc(h.petikan)}</blockquote>` : ''}</td>
@@ -320,7 +326,7 @@ if __name__ == "__main__":
   const copy = async t => { try { await navigator.clipboard.writeText(t); toast('Kod Mermaid disalin'); } catch { toast('Tidak dapat menyalin.'); } };
   box.addEventListener('click', e => {
     const b = e.target.closest('[data-ia]');
-    if (!b || !cur || cur.error) return;
+    if (!b || !cur || cur.error || cur.menunggu) return;
     const k = b.dataset.ia;
     if (k === 'mm-peta') copy(mermaidPeta(cur.peta));
     if (k === 'mm-aliran') copy(mermaidAliran(cur.aliran));

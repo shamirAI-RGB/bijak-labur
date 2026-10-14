@@ -201,3 +201,5 @@ h1 .al-pro { font-size: .72rem; }
 .al-hasil-kepala .al-tabs { flex: 0 1 auto; min-width: 0; max-width: 100%; overflow-x: auto; }
 .al-badan .link-btn { display: inline-flex; align-items: center; gap: 6px; }
 .al-badan .link-btn .ic { width: 15px; height: 15px; }
+/* Semua alat SiswaCap mengikut kumpulan (sama seperti menu Alat) */
+.al-kump-t { margin: 14px 0 8px; font-size: 0.76rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }

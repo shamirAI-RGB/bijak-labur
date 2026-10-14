@@ -42,7 +42,7 @@
     return `<figure class="st-stage st-out"><img src="${src(g)}" alt="${esc(g.prompt)}" width="1024" height="1024">
         <figcaption>
           <div class="st-actions">
-            <a class="btn" href="${src(g)}" download="bijak-labur-${g.seed}.jpg">${icon('download')}Muat turun</a>
+            <a class="btn" href="${src(g)}" download="siswacap-${g.seed}.jpg">${icon('download')}Muat turun</a>
             <button class="btn ghost" type="button" data-act="variasi">${icon('refresh')}Variasi lain</button>
             ${navigator.share ? `<button class="btn ghost" type="button" data-act="kongsi">${icon('share')}Kongsi</button>` : ''}
           </div>
@@ -122,7 +122,7 @@
         const bin = atob(S.cur.image), buf = new Uint8Array(bin.length);
         for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
         const blob = new Blob([buf], { type: S.cur.mime || 'image/jpeg' });
-        const file = new File([blob], `bijak-labur-${S.cur.seed}.jpg`, { type: blob.type });
+        const file = new File([blob], `siswacap-${S.cur.seed}.jpg`, { type: blob.type });
         await navigator.share({ files: [file], title: 'Gambar AI daripada SiswaCap', text: S.cur.prompt });
       } catch (err) { if (err && err.name !== 'AbortError') toast('Gambar tidak dapat dikongsi pada peranti ini.'); }
     }

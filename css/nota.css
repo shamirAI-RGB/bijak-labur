@@ -91,3 +91,14 @@
 .nt-dialog h2 { padding-right: 34px; }
 .nt-x { position: absolute; right: 12px; top: 12px; }
 .nt-dialog .nt-meta { margin-top: -8px; }
+
+/* Katalog subjek */
+.nt-katalog { margin-bottom: 8px; }
+.nt-kat { margin: 0; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+.nt-kat h3 { margin: 0; font-size: 1rem; line-height: 1.35; }
+.nt-kat-kod { align-self: flex-start; font-size: 0.74rem; font-weight: 700; letter-spacing: 0.02em; color: var(--brand); background: var(--brand-soft); padding: 3px 9px; border-radius: 999px; }
+.nt-kat-ada { color: var(--brand); font-weight: 650; }
+.nt-kat-acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 6px; }
+.nt-kat-acts .nt-wa-btn { min-height: 0; height: 34px; padding: 0 12px; }
+.nt-kat-topik { margin: 0 0 12px; padding-left: 20px; display: grid; gap: 6px; font-size: 0.93rem; }
+.nt-kat-prev { display: block; width: 100%; max-height: 320px; object-fit: contain; object-position: top; background: var(--surface-2); border-radius: 12px; border: 1px solid var(--border); margin: 6px 0 12px; }

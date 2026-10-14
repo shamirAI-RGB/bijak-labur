@@ -143,6 +143,23 @@
   const butang = (act, teks, ic, kelas = 'btn') => `<button class="${kelas}" type="button" data-act="${act}" ${S.busy ? 'disabled' : ''}>${icon(ic)}${teks}</button>`;
   const senarai = (xs, kelas = '') => xs && xs.length ? `<ul class="${kelas}">${xs.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '';
 
+  // Alat lain mengikut kumpulan yang sama seperti menu Alat di bahagian atas
+  const KUMPULAN = [
+    ['Akademik & Halal UiTM', [
+      ['#semak', 'file', 'Semak Kertas', 'Peratus tulisan AI, plagiarisme dan pembetulan ayat'],
+      ['#jadual', 'calendar', 'Jadual kelas UiTM', 'Susun jadual kuliah dan skrin kunci'],
+      ['#nota', 'bookmark', 'Nota IC220', 'Katalog subjek, pratonton dan tempahan nota melalui WhatsApp'],
+      ['#halal', 'shield', 'Audit Halal', 'Senarai semak audit dalaman dan log ketakakuran (NCR)'],
+      ['#buku', 'book', 'Buku Nota AI', 'Tanya soalan tentang nota anda dengan petikan yang disahkan'],
+      ['#kerja', 'target', 'Kerjaya AI', 'Cadangan jawatan, padanan resume, surat permohonan dan temu duga']]],
+    ['Ibadah & Komuniti', [
+      ['#ibadah', 'moon-star', 'Ibadah', 'Al-Quran, doa, zikir, kiblat, zakat dan kalendar Hijri'],
+      ['#komuniti', 'user', 'Komuniti pelajar', 'Peta rakan, acara kampus, servis pelajar dan sembang']]],
+    ['Gaya Hidup & Kreatif', [
+      ['#studio', 'star', 'Studio Gambar AI', 'Terangkan dalam Bahasa Melayu, AI melukis gambar untuk anda'],
+      ['#sihat', 'camera', 'Sihat: kalori dan langkah', 'Ambil gambar makanan untuk kira kalori, dan kira langkah harian'],
+      ['#jejak', 'pin', 'Jejak Aktiviti GPS', 'Jejak jalan, lari atau berbasikal dengan peta laluan masa nyata']]]
+  ];
   function hubHTML() {
     const due = perluUlang().length;
     return `<div class="page-head"><p class="eyebrow">Pelajar</p><h1 id="h-alat">Alat Pelajar</h1>
@@ -158,12 +175,9 @@
           <p class="al-tag">${a.tag}</p>
           <p class="muted">${a.desc}</p>
           <span class="al-cuba">Cuba ${icon('chev')}</span></a>`).join('')}</div>
-      <h2 class="grid-title">Alat berkaitan</h2>
-      <div class="al-lain">
-        <a class="card shortcut" href="#semak"><span class="sc-ico">${icon('file')}</span><div class="sc-body"><div class="sc-title">Semak Kertas</div><div class="sc-sub">Peratus tulisan AI, plagiarisme dan pembetulan ayat</div></div>${icon('chev', 'ic chev')}</a>
-        <a class="card shortcut" href="#buku"><span class="sc-ico">${icon('book')}</span><div class="sc-body"><div class="sc-title">Buku Nota AI</div><div class="sc-sub">Tanya soalan tentang nota anda dengan petikan yang disahkan</div></div>${icon('chev', 'ic chev')}</a>
-        <a class="card shortcut" href="#jadual"><span class="sc-ico">${icon('calendar')}</span><div class="sc-body"><div class="sc-title">Jadual kelas UiTM</div><div class="sc-sub">Susun jadual kuliah dan skrin kunci</div></div>${icon('chev', 'ic chev')}</a>
-      </div>
+      <h2 class="grid-title">Semua alat SiswaCap</h2>
+      ${KUMPULAN.map(([tajuk, xs]) => `<section class="al-kump" aria-label="${esc(tajuk)}"><h3 class="al-kump-t">${esc(tajuk)}</h3>
+        <div class="al-lain">${xs.map(([h, ic, t, sub]) => `<a class="card shortcut" href="${h}"><span class="sc-ico">${icon(ic)}</span><div class="sc-body"><div class="sc-title">${t}</div><div class="sc-sub">${sub}</div></div>${icon('chev', 'ic chev')}</a>`).join('')}</div></section>`).join('')}
       <p class="note">${icon('alert')}<span>Alat ini membantu anda belajar dan menulis dengan lebih baik. Hasil AI ialah panduan dan boleh tersilap; semak dengan pensyarah dan bahan asal. Ikut dasar integriti akademik universiti anda: jangan hantar hasil AI sebagai kerja sendiri.</span></p>`;
   }
 

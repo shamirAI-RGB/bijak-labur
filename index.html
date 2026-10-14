@@ -230,17 +230,26 @@
         <details class="nav-more">
           <summary>Alat<svg class="ic" aria-hidden="true"><use href="#i-chev-down"/></svg></summary>
           <div class="nav-pop">
-            <a href="#ibadah" data-nav="ibadah" class="nav-sempit">Ibadah</a>
-            <a href="#jadual" data-nav="jadual" class="nav-sempit">Jadual</a>
-            <a href="#nota" data-nav="nota" class="nav-sempit">Nota</a>
-            <a href="#komuniti" data-nav="komuniti">Komuniti pelajar</a>
-            <a href="#studio" data-nav="studio">Studio Gambar AI</a>
-            <a href="#alat" data-nav="alat">Alat Pelajar</a>
-            <a href="#buku" data-nav="buku">Buku Nota AI</a>
-            <a href="#kerja" data-nav="kerja">Kerjaya AI</a>
-            <a href="#sihat" data-nav="sihat">Sihat: kalori dan langkah</a>
-            <a href="#jejak" data-nav="jejak">Jejak Aktiviti (GPS)</a>
-            <a href="#halal" data-nav="halal">Audit Halal</a>
+            <div class="nav-kump" role="group" aria-labelledby="navKump1">
+              <p class="nav-kump-t" id="navKump1">Akademik &amp; Halal UiTM</p>
+              <a href="#jadual" data-nav="jadual" class="nav-sempit">Jadual</a>
+              <a href="#nota" data-nav="nota" class="nav-sempit">Nota</a>
+              <a href="#halal" data-nav="halal">Audit Halal</a>
+              <a href="#alat" data-nav="alat">Alat Pelajar</a>
+              <a href="#buku" data-nav="buku">Buku Nota AI</a>
+              <a href="#kerja" data-nav="kerja">Kerjaya AI</a>
+            </div>
+            <div class="nav-kump" role="group" aria-labelledby="navKump2">
+              <p class="nav-kump-t" id="navKump2">Ibadah &amp; Komuniti</p>
+              <a href="#ibadah" data-nav="ibadah" class="nav-sempit">Ibadah</a>
+              <a href="#komuniti" data-nav="komuniti">Komuniti pelajar</a>
+            </div>
+            <div class="nav-kump" role="group" aria-labelledby="navKump3">
+              <p class="nav-kump-t" id="navKump3">Gaya Hidup &amp; Kreatif</p>
+              <a href="#studio" data-nav="studio">Studio Gambar AI</a>
+              <a href="#sihat" data-nav="sihat">Sihat: kalori dan langkah</a>
+              <a href="#jejak" data-nav="jejak">Jejak Aktiviti (GPS)</a>
+            </div>
           </div>
         </details>
         <a href="#nota" data-nav="nota">Nota</a>
@@ -610,8 +619,9 @@
         </div>
         <div class="card">
           <h3>Bursa Malaysia</h3>
-          <p class="muted small">Carta Bursa Malaysia belum boleh dipaparkan di sini. Buka kaunter di bawah dalam app broker anda.</p>
+          <p class="muted small" id="bursaStatus" role="status">Memuatkan harga kaunter Bursa dalam RM…</p>
           <div class="list" id="bursaList"></div>
+          <p class="small bursa-pautan">Senarai penuh dan pengumuman syarikat: <a href="https://www.bursamarketplace.com/" target="_blank" rel="noopener">Bursa Marketplace</a> · <a href="https://www.bursamalaysia.com/" target="_blank" rel="noopener">Bursa Malaysia</a> · <a href="https://www.tradingview.com/markets/stocks-malaysia/market-movers-large-cap/" target="_blank" rel="noopener">TradingView</a></p>
         </div>
         <div class="card flush"><div id="tvMovers" class="tv-box short"></div></div>
         <div class="card sg-card" id="saringan"></div>
@@ -932,6 +942,7 @@
             <button class="btn" id="trialGo" type="button">Mula percubaan</button>
           </div>
           <div class="plan-grid" id="planGrid"></div>
+          <div id="proBanding"></div>
           <p class="muted small store-terms" id="storeTerms" data-native-only></p>
           <div class="actions" data-native-only>
             <button class="btn sm ghost" type="button" id="storeRestore">Pulihkan pembelian</button>

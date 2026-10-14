@@ -198,7 +198,7 @@
     if (act === 'skrip') {
       const h = S.hasil.podcast, txt = `${h.tajuk}\n\n${h.baris.map(b => `${b.penutur === 'A' ? 'Aina' : 'Hakim'}: ${b.teks}`).join('\n\n')}\n`;
       const url = URL.createObjectURL(new Blob([txt], { type: 'text/plain;charset=utf-8' }));
-      Object.assign(document.createElement('a'), { href: url, download: 'podcast-bijak-labur.txt' }).click();
+      Object.assign(document.createElement('a'), { href: url, download: 'podcast-siswacap.txt' }).click();
       setTimeout(() => URL.revokeObjectURL(url), 2000);
     }
   });

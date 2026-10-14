@@ -69,6 +69,70 @@ kes.push({ kumpulan: 'Halaman', nama: 'Navigasi bawah dan suis tema', langkah: a
   if (await page.evaluate(() => document.documentElement.dataset.theme) !== lepas) throw new Error('tema tidak kekal selepas muat semula');
 } });
 
+// Pasangan yang pernah dilaporkan bertindih semasa peralihan, kemudian setiap halaman secara berturut-turut
+kes.push({ kumpulan: 'Halaman', nama: 'Navigasi hash: hanya satu halaman kelihatan, menu Alat ditutup, tatal ke atas, peralihan tanpa tindih', lebar: 1280, langkah: async (t, page) => {
+  const kelihatan = () => page.evaluate(() => [...document.querySelectorAll('.view')].filter(el => { const s = getComputedStyle(el); return s.display !== 'none' && s.visibility !== 'hidden' && el.getBoundingClientRect().height > 0; }).map(el => el.id));
+  await t.buka('#utama');
+  const urutan = ['jadual', 'komuniti', 'studio', 'alat', 'buku', 'kerja', 'sihat', 'halal', ...VIEWS];
+  for (const v of urutan) {
+    // Buka menu Alat dan tatal ke bawah dahulu: kedua-duanya mesti ditetapkan semula selepas bertukar halaman
+    await page.evaluate(() => { const d = document.querySelector('details.nav-more'); if (d) d.open = true; scrollTo(0, 600); });
+    const masa = await page.evaluate(v => new Promise(selesai => {
+      const lama = [], baru = [];
+      location.hash = '#' + v;
+      // Animasi peralihan halaman: halaman lama mesti hilang sepenuhnya sebelum halaman baharu mula muncul
+      let n = 0;
+      const lihat = () => {
+        for (const a of document.getAnimations()) {
+          const pe = a.effect && a.effect.pseudoElement || '';
+          const tm = a.effect.getComputedTiming();
+          if (/view-transition-old\(root\)/.test(pe)) lama.push(tm.delay + tm.activeDuration);
+          if (/view-transition-new\(root\)/.test(pe)) baru.push(tm.delay);
+        }
+        if (lama.length || baru.length || ++n > 30) selesai({ lama, baru }); else setTimeout(lihat, 10);
+      };
+      lihat();
+    }), v);
+    if (masa.lama.length && masa.baru.length && Math.max(...masa.lama) > Math.min(...masa.baru) + 1) throw new Error(`#${v}: halaman lama masih kelihatan (${Math.max(...masa.lama)} ms) selepas halaman baharu mula muncul (${Math.min(...masa.baru)} ms)`);
+    await t.ada(`#view-${v}.active`, /\S/);
+    await t.rehat(450);
+    const k = await kelihatan();
+    if (k.length !== 1 || k[0] !== 'view-' + v) throw new Error(`#${v}: halaman kelihatan ${JSON.stringify(k)}`);
+    const st = await page.evaluate(() => ({ menu: !!document.querySelector('details.nav-more[open]'), y: scrollY, tersembunyi: [...document.querySelectorAll('.view:not(.active)')].every(el => el.hidden) }));
+    if (st.menu) throw new Error(`#${v}: menu Alat masih terbuka`);
+    if (st.y > 1) throw new Error(`#${v}: halaman tidak ditatal ke atas (scrollY ${st.y})`);
+    if (!st.tersembunyi) throw new Error(`#${v}: halaman lain tidak disembunyikan (atribut hidden)`);
+  }
+  // Laluan yang tiada (cth. #agen) jatuh ke Utama, juga dengan satu halaman sahaja
+  await page.evaluate(() => { location.hash = '#agen'; });
+  await t.ada('#view-utama.active', /\S/); await t.rehat(450);
+  const k = await kelihatan();
+  if (k.length !== 1 || k[0] !== 'view-utama') throw new Error(`#agen: halaman kelihatan ${JSON.stringify(k)}`);
+} });
+
+// Menu Alat: tiga kumpulan berlabel, dan halaman Alat Pelajar memaparkan kumpulan yang sama
+kes.push({ kumpulan: 'Halaman', nama: 'Menu Alat dan halaman Alat Pelajar dalam tiga kumpulan berlabel', lebar: 1280, langkah: async (t, page) => {
+  await t.buka('#utama');
+  const kump = await page.$$eval('.nav-pop .nav-kump', gs => gs.map(g => [g.querySelector('.nav-kump-t').textContent, [...g.querySelectorAll('a')].map(a => a.getAttribute('href'))]));
+  const jangka = [['Akademik & Halal UiTM', ['#jadual', '#nota', '#halal', '#alat', '#buku', '#kerja']], ['Ibadah & Komuniti', ['#ibadah', '#komuniti']], ['Gaya Hidup & Kreatif', ['#studio', '#sihat', '#jejak']]];
+  if (JSON.stringify(kump) !== JSON.stringify(jangka)) throw new Error(`kumpulan menu Alat: ${JSON.stringify(kump)}`);
+  await t.klik('details.nav-more > summary');
+  await t.klik('.nav-pop a[href="#jejak"]');
+  await t.ada('#view-jejak.active', /\S/);
+  if (await page.$('details.nav-more[open]')) throw new Error('menu Alat tidak ditutup selepas memilih');
+  await page.evaluate(() => { location.hash = '#alat'; });
+  await t.ada('#view-alat .al-kump-t', /\S/);
+  const hal = await page.$$eval('#view-alat .al-kump', gs => gs.map(g => g.querySelector('.al-kump-t').textContent));
+  if (JSON.stringify(hal) !== JSON.stringify(jangka.map(x => x[0]))) throw new Error(`kumpulan halaman Alat: ${JSON.stringify(hal)}`);
+} });
+
+// Alamat lama /terms.html melencong ke Terma Perkhidmatan
+kes.push({ kumpulan: 'Halaman', nama: 'terms.html melencong ke terma-guna.html', langkah: async (t, page) => {
+  await t.buka('terms.html');
+  await page.waitForURL(/\/terma-guna\.html$/, { timeout: 5000 });
+  await t.ada('h1', /\S/);
+} });
+
 for (const [kod, re] of [['en', /[A-Za-z]/], ['ar', /[؀-ۿ]/]]) {
   kes.push({ kumpulan: 'Halaman', nama: `Bahasa ${kod.toUpperCase()}: setiap halaman dibuka tanpa ralat`, storan: { bl_bahasa: JSON.stringify(kod) }, langkah: async (t, page) => {
     await t.buka('#utama');

@@ -405,7 +405,7 @@
   async function shareCard(i) {
     const c = drawCard(galCache[i], i, 1080, 1350);
     const blob = await new Promise(r => c.toBlob(r, 'image/png'));
-    const file = new File([blob], `bijak-labur-${i + 1}.png`, { type: 'image/png' });
+    const file = new File([blob], `siswacap-${i + 1}.png`, { type: 'image/png' });
     if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file], title: 'SiswaCap' }); return; } catch (e) { if (e.name === 'AbortError') return; } }
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = file.name; document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 4000);
