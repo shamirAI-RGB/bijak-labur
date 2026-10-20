@@ -2,7 +2,7 @@
    1. Pada pentas: jenama gergasi lut sinar terpotong di tepi bawah, kad petikan dengan gambar kecil
       ciri seterusnya dan anak panah, serta ikon hubungan di kiri bawah.
    2. Jalur putih selepas pentas: bab "01" dengan tajuk besar dan butang pil, karusel kad gelap bergambar
-      (Belajar, Pasaran, Solat, Jadual) dengan anak panah, kenyataan besar bercampur tebal dan kelabu,
+      (Belajar, Pasaran, Solat, Tanya AI Fiqh) dengan anak panah, kenyataan besar bercampur tebal dan kelabu,
       panel taklimat suara, dan kad testimoni pengasas.
    Tiada h2, .card atau .page-head supaya kunci teks Mod Pemilik tidak beralih. */
 (function () {
@@ -55,7 +55,7 @@
     { id: 'belajar', e: 'Belajar · 4 tahap', t: 'Belajar Melabur', s: 'Asas hingga mahir', d: 'Modul saham dan kripto dengan kuiz dan contoh sebenar dari Bursa dan pasaran AS.', h: '#belajar' },
     { id: 'pasaran', e: 'Pasaran · langsung', t: 'Pasaran', s: 'Setiap saat', d: 'Harga kripto dan saham, setiap satu dengan status Syariah dan sebabnya.', h: '#pasaran' },
     { id: 'solat', e: 'Solat · JAKIM', t: 'Waktu Solat', s: 'Seluruh Malaysia', d: 'Waktu rasmi ikut zon, azan, arah kiblat, dan boleh dibaca luar talian.', h: '#solat' },
-    { id: 'jadual', e: 'Jadual · UiTM', t: 'Jadual Kelas', s: 'Skrin kunci', d: 'Jadual kuliah dalam paparan hari dan minggu, siap dijadikan wallpaper.', h: '#jadual' }
+    { id: 'fiqh', e: 'Fiqh · kitab', t: 'Tanya AI Fiqh', s: 'Berujukan', d: 'Soalan muamalat dan ibadah dijawab dengan muka surat kitab dan fatwa rasmi.', h: '#ibadah/fiqh/tanya' }
   ];
   const sec = document.createElement('section');
   sec.className = 'xb'; sec.setAttribute('aria-label', 'Tentang SiswaCap');

@@ -697,8 +697,8 @@ export default [
     sama(await bil(page, '.jd-week .jd-blk'), 5, 'Blok kelas seminggu');
     await t.klik('.jd-blk[data-slot="0:3:840"]');
     await t.ada('.toast', /CSC584 Enterprise Programming · Rabu 2:00 ptg hingga 4:00 ptg · MAKMAL KOMPUTER 6/);
-    // Kad halaman utama
-    await t.buka('#utama');
+    // Kad Jadual dalam bahagian Pelajar UiTM
+    await t.buka('#uitm');
     await t.ada('#homeJadual', /^Sekarang: CSC584 di BK 1$/);
   } },
 
@@ -1412,34 +1412,34 @@ export default [
     await t.klik('[data-xb-prev]'); await t.klik('[data-xb-prev]');
     await t.ada('.sn-body .sn-title', /^Waktu Solat$/);
     await t.klik('[data-xb-prev]');
-    await t.ada('.sn-body .sn-title', /^Jadual Kelas$/);   // berpusing ke hujung
+    await t.ada('.sn-body .sn-title', /^Ibadah$/);   // berpusing ke hujung
     // Papan kekunci pada ikon
-    await page.focus('#snt-jadual');
+    await page.focus('#snt-ibadah');
     await page.keyboard.press('Home');
     await t.ada('.sn-body .sn-title', /^Waktu Solat$/);
     await page.keyboard.press('ArrowRight');
     await t.ada('.sn-body .sn-title', /^Pasaran$/);
     sama(await page.evaluate(() => document.activeElement.id), 'snt-pasaran', 'Fokus mengikut');
     await page.keyboard.press('End');
-    await t.ada('.sn-body .sn-title', /^Jadual Kelas$/);
+    await t.ada('.sn-body .sn-title', /^Ibadah$/);
     // Panduan bertab
     await t.klik('[data-sn-guide]');
     await page.waitForSelector('.sn-guide:not([hidden])');
     sama(await bil(page, '.sn-tabs .sn-tab'), 3, 'Tiga tab panduan');
-    await t.ada('.sn-g-body', /Jadual kelas dibaca dari sistem UiTM/);
+    await t.ada('.sn-g-body', /Lima belas alat ibadah harian/);
     await t.klik('[data-sn-tab="1"]');
-    await t.ada('.sn-g-body', /^Masukkan kod kursus dan kumpulan/);
+    await t.ada('.sn-g-body', /^Buka Ibadah dan pilih alat/);
     await page.keyboard.press('Escape');
     await page.waitForSelector('.sn-guide', { state: 'hidden' });
     // Enter pada ikon membuka halaman
-    await page.focus('#snt-jadual'); await page.keyboard.press('Enter');
-    await page.waitForFunction(() => location.hash === '#jadual');
+    await page.focus('#snt-ibadah'); await page.keyboard.press('Enter');
+    await page.waitForFunction(() => location.hash === '#ibadah');
     await t.buka('#utama');
     // HUD: harga kripto daripada Pasaran
     await t.ada('.md-hud .md-kripto b', /^\$65,000 ▲1\.3%$/);
     padan(await t.teks('.md-hud .md-kripto span'), /^BTC$/, 'Simbol HUD');
     // Pameran: kad dan karusel
-    sama(await page.$$eval('.xb-kad', a => a.map(x => x.getAttribute('href'))), ['#belajar', '#pasaran', '#solat', '#jadual'], 'Kad pameran');
+    sama(await page.$$eval('.xb-kad', a => a.map(x => x.getAttribute('href'))), ['#belajar', '#pasaran', '#solat', '#ibadah/fiqh/tanya'], 'Kad pameran');
     await t.klik('[data-xb-kongsi]');
     await t.ada('.toast', /^Pautan disalin$/);
     sama(await klip(page), 'https://siswacap.my/', 'Kongsi SiswaCap');
