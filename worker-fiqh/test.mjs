@@ -113,6 +113,22 @@ globalThis.fetch = async () => new Response(JSON.stringify({ type: 'error', erro
 r = await call({ q: 'Hukum kripto?' }, 'https://bijaklabur.my', { ...env, FIQH_LIMIT: { limit: async () => ({ success: true }) } });
 assert.equal(r.status, 429);
 
+// Ralat Claude (cth. carian web belum dibenarkan dalam Console): rantaian Tanya AI biasa menjawab jika ada kunci lain
+{
+  let ke = [];
+  globalThis.fetch = async u => {
+    u = String(u); ke.push(u);
+    if (u.includes('anthropic.com')) return new Response(JSON.stringify({ type: 'error', error: { type: 'invalid_request_error', message: 'web search is not enabled' } }), { status: 400, headers: { 'content-type': 'application/json' } });
+    return new Response(JSON.stringify({ choices: [{ message: { role: 'assistant', content: JSON.stringify({ status: 'jawab', ringkasan: 'Haram.', sumber: [{ id: 'quran:2:275' }] }) }, finish_reason: 'stop' }], usage: {} }), { headers: { 'content-type': 'application/json' } });
+  };
+  r = await call({ q: 'Hukum riba bank konvensional?' }, 'https://bijaklabur.my', { ...env, OPENROUTER_API_KEY: 'or-test' });
+  d = await r.json();
+  assert.equal(r.status, 200, JSON.stringify(d)); assert.equal(d.status, 'jawab');
+  assert.ok(ke[0].includes('anthropic.com') && ke.at(-1).includes('openrouter.ai'));
+  // Tanpa kunci lain: ralat seperti biasa
+  assert.equal((await call({ q: 'Hukum riba bank konvensional??' })).status, 502);
+}
+
 // Had kadar
 r = await call({ q: 'Hukum kripto?' }, 'https://bijaklabur.my', { ...env, FIQH_LIMIT: { limit: async () => ({ success: false }) } });
 assert.equal(r.status, 429);
