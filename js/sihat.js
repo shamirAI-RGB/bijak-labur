@@ -3,7 +3,7 @@
 (function () {
   const root = $('#view-sihat');
   if (!root) return;
-  const API = (store.get('fiqh_api', '') || 'https://fiqh.bijaklabur.my').replace(/\/$/, '');
+  const API = (store.get('fiqh_api', '') || 'https://fiqh.siswacap.my').replace(/\/$/, '');
   const MEALS = [['sarapan', 'Sarapan'], ['tengahari', 'Makan tengah hari'], ['petang', 'Minum petang'], ['malam', 'Makan malam'], ['snek', 'Snek']];
   const AKTIF = [[1.2, 'Jarang bersenam'], [1.375, 'Ringan (1 hingga 3 hari)'], [1.55, 'Sederhana (3 hingga 5 hari)'], [1.725, 'Aktif (6 hingga 7 hari)']];
 

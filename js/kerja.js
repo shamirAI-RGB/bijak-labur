@@ -4,7 +4,7 @@
 (function () {
   const root = $('#view-kerja');
   if (!root) return;
-  const API = (store.get('fiqh_api', '') || 'https://fiqh.bijaklabur.my').replace(/\/$/, '');
+  const API = (store.get('fiqh_api', '') || 'https://fiqh.siswacap.my').replace(/\/$/, '');
   const load = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch { return d; } };
   const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
   const ACT = [['cadang', 'Cadang jawatan', 'search'], ['padan', 'Semak padanan', 'target'], ['surat', 'Tulis surat', 'mail'], ['temuduga', 'Soalan temu duga', 'chat']];

@@ -4,15 +4,15 @@ main = "src/index.js"
 compatibility_date = "2026-09-01"
 workers_dev = true
 
-# Domain tetap yang digunakan oleh laman dan app (zon bijaklabur.my dalam akaun Cloudflare yang sama).
-routes = [{ pattern = "nota.bijaklabur.my", custom_domain = true }]
+# Domain tetap yang digunakan oleh laman dan app (zon siswacap.my dalam akaun Cloudflare yang sama).
+routes = [{ pattern = "nota.siswacap.my", custom_domain = true }]
 
 [vars]
 ALLOWED_ORIGINS = "https://siswacap.my,https://www.siswacap.my,https://bijaklabur.my,https://www.bijaklabur.my,https://shamirai-rgb.github.io,capacitor://localhost,https://localhost"
 # Cincang SHA-256 kunci pemilik (bukan kunci itu sendiri). Kunci boleh ditukar dari ruang pemilik.
 OWNER_KEY_HASH = "ba63c8003b26e061933c6529ee7e103940ec510c1aa7aa6438f5ecf2e221d4ef"
-# Alamat pengirim soalan Ruang Soalan (domain bijaklabur.my yang menggunakan Cloudflare Email Routing)
-TANYA_DARI = "tanya@bijaklabur.my"
+# Alamat pengirim soalan Ruang Soalan (domain siswacap.my yang menggunakan Cloudflare Email Routing)
+TANYA_DARI = "tanya@siswacap.my"
 
 # Ikatan e-mel EMEL ([[send_email]]) dan rahsia TANYA_KE (Gmail penerima) ditambah oleh nota.yml
 # hanya apabila rahsia GitHub TANYA_EMEL ditetapkan.

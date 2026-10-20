@@ -18,9 +18,9 @@ export const namaLaluan = l => NAMA_LALUAN[l] || l;
 /* ---------- Perkhidmatan yang disemak ---------- */
 export const PERKHIDMATAN = [
   { nama: 'Laman siswacap.my', url: 'https://siswacap.my/', semak: t => /SiswaCap|Bijak Labur/.test(t) },
-  { nama: 'Pelayan nota', url: 'https://nota.bijaklabur.my/notes', semak: t => /"notes"/.test(t) },
-  { nama: 'Pelayan Tanya AI (fiqh)', url: 'https://fiqh.bijaklabur.my/', semak: t => /"ok":true/.test(t) },
-  { nama: 'Pelayan jadual UiTM', url: 'https://jadual.bijaklabur.my/', semak: t => t.length > 0 },
+  { nama: 'Pelayan nota', url: 'https://nota.siswacap.my/notes', semak: t => /"notes"/.test(t) },
+  { nama: 'Pelayan Tanya AI (fiqh)', url: 'https://fiqh.siswacap.my/', semak: t => /"ok":true/.test(t) },
+  { nama: 'Pelayan jadual UiTM', url: 'https://jadual.siswacap.my/', semak: t => t.length > 0 },
   { nama: 'Pelayan Premium dan akaun', url: 'https://bijak-labur-premium.khanz-amir.workers.dev/', semak: t => /"ok":true/.test(t) }
 ];
 export async function semakKesihatan(env, senarai = PERKHIDMATAN) {

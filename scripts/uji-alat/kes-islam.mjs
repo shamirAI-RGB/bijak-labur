@@ -187,7 +187,7 @@ function jawapanBersumber() {
   return verify(ans, new Map(), docs, CETAK);
 }
 // Jawapan /tanya digantikan pada halaman ini sahaja; OPTIONS (preflight) diteruskan ke pelayan dalam proses
-const tanyaPalsu = (page, fn) => page.route('https://fiqh.bijaklabur.my/tanya', r => r.request().method() === 'POST' ? fn(r) : r.fallback());
+const tanyaPalsu = (page, fn) => page.route('https://fiqh.siswacap.my/tanya', r => r.request().method() === 'POST' ? fn(r) : r.fallback());
 const json = (r, status, data) => r.fulfill({ status, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify(data) });
 
 const KES = [
@@ -914,7 +914,7 @@ const KES = [
   /* ====================== Studio Gambar AI ====================== */
   { kumpulan: K, nama: 'Studio Gambar: jana gambar (FLUX), paparan, muat turun, variasi dan galeri peranti', langkah: async (t, page) => {
     terima(page);
-    const badan = []; page.on('request', r => { if (r.url() === 'https://fiqh.bijaklabur.my/gambar' && r.method() === 'POST') badan.push(JSON.parse(r.postData())); });
+    const badan = []; page.on('request', r => { if (r.url() === 'https://fiqh.siswacap.my/gambar' && r.method() === 'POST') badan.push(JSON.parse(r.postData())); });
     await t.buka('#studio');
     await t.ada('.st-empty', /Gambar anda akan dipaparkan di sini\./);
     const idea = await page.$eval('[data-idea]', b => b.dataset.idea);
@@ -957,7 +957,7 @@ const KES = [
     await t.klik('#stForm button[type=submit]');
     await t.ada('.st-empty .error', /^Permintaan ini tidak sesuai untuk SiswaCap\.$/);
     pastikan(!(await page.$eval('.st-go', b => b.disabled)), 'Butang jana kekal dinyahaktif');
-    await page.route('https://fiqh.bijaklabur.my/gambar', r => r.request().method() === 'POST' ? r.abort('internetdisconnected') : r.fallback());
+    await page.route('https://fiqh.siswacap.my/gambar', r => r.request().method() === 'POST' ? r.abort('internetdisconnected') : r.fallback());
     await t.isi('#stPrompt', 'Rumah kampung tradisional Melayu waktu pagi');
     await t.klik('#stForm button[type=submit]');
     await t.ada('.st-empty .error', /^Tiada sambungan internet\. Cuba lagi\.$/);
@@ -998,7 +998,7 @@ const KES = [
 
   { kumpulan: K, nama: 'Sihat: kalori daripada gambar, batal, dan ralat pelayan', langkah: async (t, page) => {
     await masa(page);
-    const badan = []; page.on('request', r => { if (r.url() === 'https://fiqh.bijaklabur.my/kalori' && r.method() === 'POST') badan.push(JSON.parse(r.postData())); });
+    const badan = []; page.on('request', r => { if (r.url() === 'https://fiqh.siswacap.my/kalori' && r.method() === 'POST') badan.push(JSON.parse(r.postData())); });
     await t.buka('#sihat');
     await page.setInputFiles('#shPick', { name: 'makan.png', mimeType: 'image/png', buffer: PNG });
     await page.waitForFunction(() => document.querySelectorAll('.sh-items li').length === 3, null, { timeout: 20000 });
@@ -1009,7 +1009,7 @@ const KES = [
     // Teks terlalu pendek tidak dihantar
     await t.isi('#shDesc', 'ab'); await t.klik('#shText button[type=submit]');
     await t.rehat(200); sama(badan.length, 1, 'Permintaan untuk teks pendek');
-    await page.route('https://fiqh.bijaklabur.my/kalori', r => r.request().method() === 'POST' ? json(r, 502, { error: 'Analisis kalori tidak tersedia buat masa ini.' }) : r.fallback());
+    await page.route('https://fiqh.siswacap.my/kalori', r => r.request().method() === 'POST' ? json(r, 502, { error: 'Analisis kalori tidak tersedia buat masa ini.' }) : r.fallback());
     await t.isi('#shDesc', 'nasi lemak ayam goreng');
     await t.klik('#shText button[type=submit]');
     await t.ada('#shErr', /^Analisis kalori tidak tersedia buat masa ini\.$/);

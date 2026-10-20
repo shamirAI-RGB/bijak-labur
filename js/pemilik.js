@@ -6,7 +6,7 @@
    Pintu masuk dipaparkan dalam app; di laman web, hanya selepas kunci pemilik disimpan dalam peranti itu
    (contohnya melalui Kedai Nota). Teks dipaparkan dengan textContent sahaja (tiada HTML). */
 (function () {
-  const API = (store.get('nota_api', '') || 'https://nota.bijaklabur.my').replace(/\/$/, '');
+  const API = (store.get('nota_api', '') || 'https://nota.siswacap.my').replace(/\/$/, '');
   const key = () => store.get('nota_key', '');
   let teks = store.get('kandungan_cache', {}) || {};
   let editing = false;

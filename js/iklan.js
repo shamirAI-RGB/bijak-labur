@@ -5,7 +5,7 @@
 (function () {
   const grid = $('#ikGrid');
   if (!grid) return;
-  const API = (store.get('nota_api', '') || 'https://nota.bijaklabur.my').replace(/\/$/, '');
+  const API = (store.get('nota_api', '') || 'https://nota.siswacap.my').replace(/\/$/, '');
   const SLOTS = 4;
   let data = store.get('iklan_cache', null);
 

@@ -373,7 +373,7 @@
   }
 
   /* Halaman utama: suis Kripto / Saham. Harga saham daripada pelayan nota (Yahoo Finance, cache 60 saat) */
-  const STOCK_API = 'https://nota.bijaklabur.my/saham';
+  const STOCK_API = 'https://nota.siswacap.my/saham';
   const HOME_STOCKS = STOCKS.slice(0, 5).map(([tv, n]) => ({ tv, n, s: tv.split(':')[1], ex: tv.split(':')[0] }));
   const STOCK_LOGOS = ['AAPL', 'NVDA', 'TSLA', 'MSFT', 'GOOGL'];   // icons/saham/*.svg
   const STOCK_COLORS = { AAPL: '#555', NVDA: '#76b900', TSLA: '#cc0000', MSFT: '#00a4ef', GOOGL: '#4285f4' };

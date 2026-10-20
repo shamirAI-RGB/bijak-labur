@@ -4,7 +4,7 @@
 (function () {
   const root = $('#view-buku');
   if (!root) return;
-  const API = (store.get('fiqh_api', '') || 'https://fiqh.bijaklabur.my').replace(/\/$/, '');
+  const API = (store.get('fiqh_api', '') || 'https://fiqh.siswacap.my').replace(/\/$/, '');
   const TTS = 'https://bijak-labur-premium.khanz-amir.workers.dev/tts';
   const MAX_TOTAL = 120000, MAX_SUMBER = 10;
   const TABS = [['tanya', 'Tanya'], ['ringkasan', 'Ringkasan'], ['panduan', 'Panduan belajar'], ['kuiz', 'Kuiz'], ['kad', 'Kad imbas'], ['podcast', 'Podcast']];

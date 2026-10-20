@@ -110,7 +110,7 @@ const teksSemua = (page, sel) => page.locator(sel).allTextContents();
 // Permintaan ke pelayan AI daripada halaman (laluan dan badan)
 function rekod(page) {
   const r = [];
-  page.on('request', q => { const u = q.url(); if (u.startsWith('https://fiqh.bijaklabur.my/')) { let b = null; try { b = q.postDataJSON(); } catch {} r.push({ path: new URL(u).pathname, body: b }); } });
+  page.on('request', q => { const u = q.url(); if (u.startsWith('https://fiqh.siswacap.my/')) { let b = null; try { b = q.postDataJSON(); } catch {} r.push({ path: new URL(u).pathname, body: b }); } });
   return r;
 }
 async function muatTurun(page, sel) {

@@ -61,8 +61,8 @@ jobs:
       - name: Buang ikatan e-mel
         if: steps.emel.outcome == 'failure'
         run: cp worker-nota/wrangler.asal.toml worker-nota/wrangler.toml
-      # Cuba dengan domain nota.bijaklabur.my dahulu; jika gagal, pasang ke alamat workers.dev sahaja.
-      - name: Pasang ke Cloudflare (domain nota.bijaklabur.my)
+      # Cuba dengan domain nota.siswacap.my dahulu; jika gagal, pasang ke alamat workers.dev sahaja.
+      - name: Pasang ke Cloudflare (domain nota.siswacap.my)
         id: domain
         if: github.ref == 'refs/heads/main' && env.HAS_CF == 'true' && steps.emel.outcome != 'success'
         continue-on-error: true
@@ -86,14 +86,14 @@ jobs:
           if [ "$HAS_CF" != "true" ]; then
             echo "Rahsia CLOUDFLARE_API_TOKEN dan CLOUDFLARE_ACCOUNT_ID belum ditetapkan, jadi pelayan nota tidak dipasang." >> "$GITHUB_STEP_SUMMARY"
           elif [ "${{ steps.emel.outcome }}" = "success" ]; then
-            echo "Pelayan nota dipasang di https://nota.bijaklabur.my dengan Ruang Soalan ke e-mel." >> "$GITHUB_STEP_SUMMARY"
+            echo "Pelayan nota dipasang di https://nota.siswacap.my dengan Ruang Soalan ke e-mel." >> "$GITHUB_STEP_SUMMARY"
           elif [ "${{ steps.domain.outcome }}" = "success" ]; then
-            echo "Pelayan nota dipasang di https://nota.bijaklabur.my" >> "$GITHUB_STEP_SUMMARY"
+            echo "Pelayan nota dipasang di https://nota.siswacap.my" >> "$GITHUB_STEP_SUMMARY"
             if [ "$HAS_TANYA" != "true" ]; then
               echo "Ruang Soalan ke e-mel belum aktif: tetapkan rahsia GitHub TANYA_EMEL (Gmail yang sudah disahkan dalam Cloudflare Email Routing)." >> "$GITHUB_STEP_SUMMARY"
             else
               echo "::warning::Ruang Soalan ke e-mel gagal dipasang. Pastikan TANYA_EMEL ialah alamat destinasi yang disahkan dalam Email Routing; lihat log langkah e-mel."
             fi
           else
-            echo "Domain nota.bijaklabur.my belum boleh digunakan. Pelayan dipasang di alamat workers.dev; lihat log langkah di atas untuk URL." >> "$GITHUB_STEP_SUMMARY"
+            echo "Domain nota.siswacap.my belum boleh digunakan. Pelayan dipasang di alamat workers.dev; lihat log langkah di atas untuk URL." >> "$GITHUB_STEP_SUMMARY"
           fi

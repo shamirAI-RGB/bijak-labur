@@ -46,13 +46,13 @@ Pelan berbayar Pelajar, Pelabur dan Lengkap dijual melalui ToyyibPay (FPX dan ka
 
 Halaman `#jadual` (`js/jadual.js`, `css/jadual.css`) membina jadual mingguan pelajar UiTM daripada senarai awam iCress mengikut kampus, kod kursus dan kumpulan. Cara paling cepat ialah No. Pelajar: pelayan membaca fail jadual pelajar awam UiTM (`cdn.uitm.link/jadual/baru/<No. Pelajar>.json`, sumber yang sama digunakan oleh penjana jadual lain) tanpa kata laluan, dan jawapannya tidak disimpan dalam cache. Pelajar juga boleh membina jadual sendiri ikut kampus, kursus dan kumpulan, atau menampal teks dari MyStudent. Jadual disimpan dalam peranti, boleh dicetak dan disimpan ke kalendar telefon (.ics).
 
-Pelayan kecil dalam `worker-jadual/` (Cloudflare Workers, percuma) membaca iCress dan menghantar JSON dengan CORS di `https://jadual.bijaklabur.my`. Ia dipasang oleh `.github/workflows/jadual.yml` apabila rahsia `CLOUDFLARE_API_TOKEN` dan `CLOUDFLARE_ACCOUNT_ID` ditetapkan.
+Pelayan kecil dalam `worker-jadual/` (Cloudflare Workers, percuma) membaca iCress dan menghantar JSON dengan CORS di `https://jadual.siswacap.my`. Ia dipasang oleh `.github/workflows/jadual.yml` apabila rahsia `CLOUDFLARE_API_TOKEN` dan `CLOUDFLARE_ACCOUNT_ID` ditetapkan.
 
 - Ujian pelayan: `node worker-jadual/test.mjs`
 
 ## Tanya AI Fiqh
 
-Pelayan `worker-fiqh/` (Cloudflare Workers) menjawab soalan fiqh dengan rujukan yang disemak, di `https://fiqh.bijaklabur.my`. Ia dipasang oleh `.github/workflows/fiqh.yml`.
+Pelayan `worker-fiqh/` (Cloudflare Workers) menjawab soalan fiqh dengan rujukan yang disemak, di `https://fiqh.siswacap.my`. Ia dipasang oleh `.github/workflows/fiqh.yml`.
 
 - Rahsia `GEMINI_API_KEY` (percuma, dari Google AI Studio): jawapan bersandarkan korpus rujukan SiswaCap dan ayat Al-Quran sahaja.
 - Rahsia `ANTHROPIC_API_KEY` (berbayar): Claude juga boleh membuka Shamela, quran.com, sunnah.com dan laman mufti semasa menjawab. Jika kedua-dua kunci ada, Claude digunakan.

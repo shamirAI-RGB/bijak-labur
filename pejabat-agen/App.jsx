@@ -823,7 +823,7 @@ function Office() {
 
 const read = (k, d) => { try { const v = localStorage.getItem("bl_" + k); return v == null ? d : JSON.parse(v); } catch { return d; } };
 const write = (k, v) => { try { localStorage.setItem("bl_" + k, JSON.stringify(v)); } catch {} };
-const NOTA_API = () => (read("nota_api", "") || "https://nota.bijaklabur.my").replace(/\/$/, "");
+const NOTA_API = () => (read("nota_api", "") || "https://nota.siswacap.my").replace(/\/$/, "");
 
 export async function checkOwner(key, fetchFn = fetch) {
   if (!key) return false;

@@ -4,7 +4,7 @@
 (function () {
   const root = $('#view-studio');
   if (!root) return;
-  const API = (store.get('fiqh_api', '') || 'https://fiqh.bijaklabur.my').replace(/\/$/, '');
+  const API = (store.get('fiqh_api', '') || 'https://fiqh.siswacap.my').replace(/\/$/, '');
   const GAYA = [['realistik', 'Realistik'], ['ilustrasi', 'Ilustrasi'], ['anime', 'Anime'], ['catair', 'Cat air'], ['3d', '3D'], ['poster', 'Poster'], ['batik', 'Batik']];
   const IDEA = [
     'Kucing oren comel makan nasi lemak atas daun pisang',

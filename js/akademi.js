@@ -1,7 +1,7 @@
 /* Akademi Pelaburan: dua laluan (Moomoo dan Kripto), tiga tahap setiap satu, dan AI Coach yang menyesuaikan
    jawapan dengan tahap pelajar. Dipaparkan sebagai tab pertama dalam halaman Belajar (lihat learn.js). */
 (function () {
-  const API = (store.get('fiqh_api', '') || 'https://fiqh.bijaklabur.my').replace(/\/$/, '');
+  const API = (store.get('fiqh_api', '') || 'https://fiqh.siswacap.my').replace(/\/$/, '');
   const TAHAP = [['beginner', 'Pemula', 'Tahap 1'], ['intermediate', 'Pertengahan', 'Tahap 2'], ['professional', 'Profesional', 'Tahap 3']];
 
   // pel: pelajaran berkaitan dalam Belajar saham menggunakan Moomoo (id pelajaran dalam learn.js)

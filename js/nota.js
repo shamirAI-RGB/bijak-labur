@@ -4,7 +4,7 @@
 (function () {
   const root = $('#view-nota');
   if (!root) return;
-  const API = (store.get('nota_api', '') || 'https://nota.bijaklabur.my').replace(/\/$/, '');
+  const API = (store.get('nota_api', '') || 'https://nota.siswacap.my').replace(/\/$/, '');
   const DEFAULTS = {
     wa: [{ no: '60102546720', label: 'WhatsApp 1' }, { no: '60176040973', label: 'WhatsApp 2' }],
     msg: 'Hi saya berminat nak beli nota untuk belajar',

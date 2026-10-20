@@ -1,5 +1,5 @@
 /* SiswaCap: Pusat Kawalan pemilik (pusat.html). Berdiri sendiri (tanpa js/app.js).
-   Data daripada pusat.bijaklabur.my (worker-pusat): kunci pemilik disahkan oleh pelayan nota, WebSocket untuk kiraan langsung,
+   Data daripada pusat.siswacap.my (worker-pusat): kunci pemilik disahkan oleh pelayan nota, WebSocket untuk kiraan langsung,
    carta SVG ditulis sendiri (palet disahkan skrip dataviz), agen AI boleh diarahkan dari sini atau Telegram. */
 (function () {
   const $ = (s, r = document) => r.querySelector(s);
@@ -8,7 +8,7 @@
     get(k, d) { try { const v = localStorage.getItem('bl_' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
     set(k, v) { try { localStorage.setItem('bl_' + k, JSON.stringify(v)); } catch {} }
   };
-  const API = (store.get('pusat_api', '') || 'https://pusat.bijaklabur.my').replace(/\/$/, '');
+  const API = (store.get('pusat_api', '') || 'https://pusat.siswacap.my').replace(/\/$/, '');
   const fmt = n => new Intl.NumberFormat('ms-MY').format(Math.round(+n || 0));
   const fmtK = n => n >= 1e6 ? (n / 1e6).toFixed(n >= 1e7 ? 0 : 1) + ' J' : n >= 1e4 ? Math.round(n / 1e3) + ' K' : n >= 1000 ? (n / 1e3).toFixed(1) + ' K' : fmt(n);
   const hari = iso => new Date(iso + 'T00:00:00+08:00').toLocaleDateString('ms-MY', { day: 'numeric', month: 'short' });

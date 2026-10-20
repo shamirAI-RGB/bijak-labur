@@ -1,9 +1,9 @@
-/* SiswaCap: denyut pelawat tanpa nama untuk Pusat Kawalan pemilik (pusat.bijaklabur.my).
+/* SiswaCap: denyut pelawat tanpa nama untuk Pusat Kawalan pemilik (pusat.siswacap.my).
    Dihantar setiap 30 saat semasa tab kelihatan dan setiap kali halaman bertukar. Tiada kuki, tiada IP disimpan:
    hanya id rawak tab ini (sessionStorage), nama halaman, dan jenis peranti. Pelawat yang memasang "Do Not Track" tidak dikira. */
 (function () {
   if (navigator.doNotTrack === '1' || navigator.globalPrivacyControl) return;
-  const API = (store.get('pusat_api', '') || 'https://pusat.bijaklabur.my').replace(/\/$/, '');
+  const API = (store.get('pusat_api', '') || 'https://pusat.siswacap.my').replace(/\/$/, '');
   let sid = '';
   try { sid = sessionStorage.getItem('bl_sid') || ''; if (!/^[\w-]{16,}$/.test(sid)) { sid = Array.from(crypto.getRandomValues(new Uint8Array(12)), b => b.toString(16).padStart(2, '0')).join(''); sessionStorage.setItem('bl_sid', sid); } } catch { return; }
   let rujukan = '';

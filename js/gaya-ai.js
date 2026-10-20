@@ -4,7 +4,7 @@
 (function () {
   const card = $('#slopCard');
   if (!card) return;
-  const API = (store.get('fiqh_api', '') || 'https://fiqh.bijaklabur.my').replace(/\/$/, '');
+  const API = (store.get('fiqh_api', '') || 'https://fiqh.siswacap.my').replace(/\/$/, '');
 
   // [corak, nota, berat]
   const MS = [

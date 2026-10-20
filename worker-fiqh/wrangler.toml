@@ -5,13 +5,13 @@ main = "src/index.js"
 compatibility_date = "2026-09-01"
 workers_dev = true
 
-# Domain tetap yang digunakan oleh laman dan app (zon bijaklabur.my dalam akaun Cloudflare yang sama).
-routes = [{ pattern = "fiqh.bijaklabur.my", custom_domain = true }]
+# Domain tetap yang digunakan oleh laman dan app (zon siswacap.my dalam akaun Cloudflare yang sama).
+routes = [{ pattern = "fiqh.siswacap.my", custom_domain = true }]
 
 [vars]
 ALLOWED_ORIGINS = "https://siswacap.my,https://www.siswacap.my,https://bijaklabur.my,https://www.bijaklabur.my,https://shamirai-rgb.github.io,capacitor://localhost,https://localhost"
 # Pusat Kawalan pemilik: token setiap panggilan model dilaporkan ke sini (rahsia PUSAT_SECRET mesti sama dengan worker-pusat)
-PUSAT_URL = "https://pusat.bijaklabur.my"
+PUSAT_URL = "https://pusat.siswacap.my"
 
 # Had kadar percuma Cloudflare: 5 soalan seminit bagi setiap alamat IP, supaya kredit API tidak dihabiskan.
 [[unsafe.bindings]]

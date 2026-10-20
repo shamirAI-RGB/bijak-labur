@@ -6,7 +6,7 @@
   });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') $$('details.nav-more[open]').forEach(d => { d.open = false; d.querySelector('summary').focus(); }); });
   const btn = $('#menuBtn'), menu = $('#mainMenu');
-  const NOTA_API = (store.get('nota_api', '') || 'https://nota.bijaklabur.my').replace(/\/$/, '');
+  const NOTA_API = (store.get('nota_api', '') || 'https://nota.siswacap.my').replace(/\/$/, '');
   const EMEL = 'hello@siswacap.my';
 
   /* ---------- Saiz tulisan ---------- */
