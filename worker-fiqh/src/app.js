@@ -267,6 +267,18 @@ const tanyaModel = (env, id) => {
 };
 const provider = env => env.ANTHROPIC_API_KEY ? 'claude' : tanyaRantai(env)[0] || (aiSedia(env) ? 'gemini' : '');
 
+/* Ralat Claude terakhir (status dan mesej API sahaja, tanpa kunci) dipaparkan oleh GET / selama sehari, untuk diagnosis pemilik */
+const RALAT_CLAUDE = 'https://fiqh.siswacap.my/ralat-claude';
+async function simpanRalatClaude(e) {
+  if (typeof caches === 'undefined') return;
+  const d = { status: (e && e.status) || 0, jenis: (e && e.error && e.error.error && e.error.error.type) || '', mesej: String(e && e.message || e).slice(0, 300), masa: new Date().toISOString() };
+  try { await caches.default.put(RALAT_CLAUDE, new Response(JSON.stringify(d), { headers: { 'content-type': 'application/json', 'cache-control': 'max-age=86400' } })); } catch {}
+}
+async function ralatClaude() {
+  if (typeof caches === 'undefined') return null;
+  try { const r = await caches.default.match(RALAT_CLAUDE); return r ? await r.json() : null; } catch { return null; }
+}
+
 /** Jawapan Tanya AI daripada rantaian penyedia dan model Tanya AI. Ralat terakhir dilontar jika semuanya gagal. */
 export async function tanyaGenerate(env, body) {
   const effort = env.TANYA_EFFORT || TANYA_EFFORT, mula = Date.now();
@@ -388,7 +400,20 @@ async function tanya(req, env, url, h) {
   // Cari muka surat dokumen rasmi moden yang berkaitan (tanpa model, jadi sama untuk semua penyedia)
   let docs = [];
   try { docs = await search(env, expand(q) + ' ' + await kataKunci(env, q), 8, q); } catch (e) { console.log('rujukan', e && e.message); }
-  try { out = provider(env) === 'claude' ? await ask(env, q, undefined, docs) : await askKorpus(env, q, docs); }
+  try {
+    if (provider(env) !== 'claude') out = await askKorpus(env, q, docs);
+    else {
+      try { out = await ask(env, q, undefined, docs); }
+      catch (e) {
+        // Ralat Claude (kunci salah, kredit habis, carian web belum dibenarkan dalam Console, dsb.) dicatat untuk status
+        // pelayan, kemudian rantaian Tanya AI biasa menjawab supaya pengguna tidak tersekat
+        console.log('claude', e && e.status, e && e.message);
+        await simpanRalatClaude(e);
+        if (!tanyaRantai(env).length && !aiSedia(env)) throw e;
+        out = await askKorpus(env, q, docs);
+      }
+    }
+  }
   catch (e) {
     console.log(provider(env), e && e.status, e && e.message);
     const busy = e && (e.status === 429 || e.status === 529);
@@ -517,7 +542,10 @@ export default {
       if (req.method === 'POST' && url.pathname === '/gambar') return await gambarRoute(req, env, h);
       if (req.method === 'POST' && AI_ROUTES[url.pathname]) return await aiRoute(req, env, h, AI_ROUTES[url.pathname]);
       if (req.method === 'GET' && url.pathname.startsWith('/halaman/')) return await halaman(env, url);
-      if (url.pathname === '/') return json({ ok: true, service: 'bijak-labur-fiqh', ai: !!provider(env), penyedia: provider(env), gambar: !!(env.AI || combo(env, PENYEDIA_GAMBAR).length), sandaran: senaraiAktif(env), sandaran_gambar: combo(env, PENYEDIA_GAMBAR).map(p => p.id) }, 200, h);
+      if (url.pathname === '/') {
+        const ralat = provider(env) === 'claude' ? await ralatClaude() : null;
+        return json({ ok: true, service: 'bijak-labur-fiqh', ai: !!provider(env), penyedia: provider(env), gambar: !!(env.AI || combo(env, PENYEDIA_GAMBAR).length), sandaran: senaraiAktif(env), sandaran_gambar: combo(env, PENYEDIA_GAMBAR).map(p => p.id), ...(ralat ? { ralat_claude: ralat } : {}) }, 200, h);
+      }
       return json({ error: 'Tidak dijumpai' }, 404, h);
     } catch (e) {
       console.log('ralat', e && e.stack || e);
