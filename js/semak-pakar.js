@@ -4,7 +4,7 @@
    2. Pemeriksa rujukan: setiap rujukan disahkan dengan Crossref dan OpenAlex (mengesan rujukan rekaan),
       dan sitasi dalam teks dipadankan dengan senarai rujukan. */
 (function () {
-  const API = (store.get('fiqh_api', '') || 'https://fiqh.bijaklabur.my').replace(/\/$/, '');
+  const API = (store.get('fiqh_api', '') || 'https://fiqh.siswacap.my').replace(/\/$/, '');
   const CRIT = [['struktur', 'Struktur'], ['hujah', 'Hujah dan analisis'], ['bukti', 'Bukti dan contoh'], ['bahasa', 'Bahasa'], ['rujukan', 'Rujukan dan sitasi']];
 
   /* ---------- 1. Ulasan pakar ---------- */

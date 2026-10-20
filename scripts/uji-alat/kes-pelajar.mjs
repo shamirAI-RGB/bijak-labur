@@ -3,7 +3,7 @@
 import { readFile } from 'node:fs/promises';
 
 const K = 'Pelajar';
-const FIQH = 'https://fiqh.bijaklabur.my';
+const FIQH = 'https://fiqh.siswacap.my';
 
 /* ---------- Pembantu ---------- */
 // Tarikh hari ini (waktu Malaysia), sama seperti kiraan kuota dalam js/premium.js
@@ -120,16 +120,16 @@ const CORS = { 'access-control-allow-origin': '*', 'access-control-allow-headers
 const balas = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: CORS });
 
 export const fixture = [
-  [/^https:\/\/nota\.bijaklabur\.my\/notes\/[a-z0-9]+\/preview/, () => new Response(PNG, { headers: { 'content-type': 'image/png', 'access-control-allow-origin': '*' } })],
-  [/^https:\/\/nota\.bijaklabur\.my\/qr/, () => new Response(PNG, { headers: { 'content-type': 'image/png', 'access-control-allow-origin': '*' } })],
-  [/^https:\/\/nota\.bijaklabur\.my\/notes(?:\?|$)/, (u, r) => r.method() === 'OPTIONS' ? new Response(null, { status: 204, headers: CORS }) : balas({ notes: NOTA, settings: TETAPAN })],
-  [/^https:\/\/nota\.bijaklabur\.my\/admin\//, (u, r) => {
+  [/^https:\/\/nota\.siswacap\.my\/notes\/[a-z0-9]+\/preview/, () => new Response(PNG, { headers: { 'content-type': 'image/png', 'access-control-allow-origin': '*' } })],
+  [/^https:\/\/nota\.siswacap\.my\/qr/, () => new Response(PNG, { headers: { 'content-type': 'image/png', 'access-control-allow-origin': '*' } })],
+  [/^https:\/\/nota\.siswacap\.my\/notes(?:\?|$)/, (u, r) => r.method() === 'OPTIONS' ? new Response(null, { status: 204, headers: CORS }) : balas({ notes: NOTA, settings: TETAPAN })],
+  [/^https:\/\/nota\.siswacap\.my\/admin\//, (u, r) => {
     if (r.method() === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
     if ((r.headers().authorization || '') !== 'Bearer ' + KUNCI_PEMILIK) return balas({ error: 'Kunci pemilik salah.' }, 401);
     const p = new URL(u).pathname;
     if (p === '/admin/check') return balas({ ok: true });
     if (p === '/admin/notes') return balas({ notes: [...NOTA, { id: 'aaaaaa06', title: 'Draf tersembunyi', code: 'HIM999', desc: '', price: 5, pages: 3, size: 1000, ext: 'pdf', preview: '', created: '2026-09-06T00:00:00.000Z', hidden: true, name: 'draf.pdf' }].map(n => ({ hidden: false, name: n.title + '.pdf', ...n })), settings: TETAPAN });
-    if (/\/link$/.test(p)) return balas({ ok: true, url: 'https://nota.bijaklabur.my/dl/abcdefghijkmnpqrstuvwxyz', expires: '2026-10-17T00:00:00.000Z' });
+    if (/\/link$/.test(p)) return balas({ ok: true, url: 'https://nota.siswacap.my/dl/abcdefghijkmnpqrstuvwxyz', expires: '2026-10-17T00:00:00.000Z' });
     return balas({ error: 'Laluan tidak dijumpai.' }, 404);
   }]
 ];
@@ -694,8 +694,8 @@ export default [
     await t.ada('#view-nota .nt-card[data-id="aaaaaa03"] .nt-price', /^Percuma$/);
     await t.ada('#view-nota .nt-card[data-id="aaaaaa01"] .nt-meta', /^42 muka surat · PDF · 1\.2 MB$/);
     await t.ada('#view-nota .nt-card[data-id="aaaaaa03"] .nt-meta', /^DOCX · 2 KB$/);
-    sama(await page.$eval('#view-nota .nt-card[data-id="aaaaaa01"] .nt-cover img', i => i.src), 'https://nota.bijaklabur.my/notes/aaaaaa01/preview?v=k1', 'Gambar pratonton');
-    sama(await page.$eval('#view-nota .nt-qr img', i => i.src), 'https://nota.bijaklabur.my/qr?v=q1', 'Kod QR');
+    sama(await page.$eval('#view-nota .nt-card[data-id="aaaaaa01"] .nt-cover img', i => i.src), 'https://nota.siswacap.my/notes/aaaaaa01/preview?v=k1', 'Gambar pratonton');
+    sama(await page.$eval('#view-nota .nt-qr img', i => i.src), 'https://nota.siswacap.my/qr?v=q1', 'Kod QR');
     // Carian (lebih 4 nota)
     await page.fill('#ntSearch', 'him');
     await tunggu(page, () => document.querySelectorAll('#view-nota .nt-card').length === 3, null, 3000);
@@ -748,7 +748,7 @@ export default [
     await page.keyboard.press('Escape');
     await tunggu(page, () => !document.querySelector('dialog.nt-dialog'), null, 3000);
     // Nota kedai yang sepadan dengan kod katalog: harga dan pratonton dipaparkan
-    await page.route('https://nota.bijaklabur.my/notes', r => r.fulfill({ status: 200, headers: { 'access-control-allow-origin': '*', 'content-type': 'application/json' },
+    await page.route('https://nota.siswacap.my/notes', r => r.fulfill({ status: 200, headers: { 'access-control-allow-origin': '*', 'content-type': 'application/json' },
       body: JSON.stringify({ notes: [{ id: 'aaaaaa09', title: 'Nota Qawaid Fiqhiyyah', code: 'isc 550', price: 20, pages: 40, ext: 'pdf', preview: '/notes/aaaaaa09/preview?v=z' }], settings: {} }) }));
     // Navigasi hash sahaja (tanpa muat semula): Nota memuat senarai semula setiap kali halaman dibuka
     await t.buka('#utama');
@@ -757,12 +757,12 @@ export default [
     await t.ada('#view-nota [data-kat-lihat="ISC550"]', /Lihat pratonton/);
     await t.klik('#view-nota [data-kat-lihat="ISC550"]');
     await t.tunggu('dialog.nt-dialog .nt-kat-prev', 3000);
-    sama(await page.$eval('dialog.nt-dialog .nt-kat-prev', i => i.src), 'https://nota.bijaklabur.my/notes/aaaaaa09/preview?v=z', 'Pratonton nota sepadan');
+    sama(await page.$eval('dialog.nt-dialog .nt-kat-prev', i => i.src), 'https://nota.siswacap.my/notes/aaaaaa09/preview?v=z', 'Pratonton nota sepadan');
     await t.ada('dialog.nt-dialog .nt-price.big', /^RM 20\.00$/);
   } },
 
   { kumpulan: K, nama: 'Nota: pelayan 503 tanpa cache dan dengan cache', langkah: async (t, page) => {
-    await page.route('https://nota.bijaklabur.my/**', r => r.fulfill({ status: 503, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ error: 'Storan nota belum disediakan.' }) }));
+    await page.route('https://nota.siswacap.my/**', r => r.fulfill({ status: 503, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ error: 'Storan nota belum disediakan.' }) }));
     await t.buka('#nota');
     await t.ada('#view-nota .nt-msg', /Senarai nota belum dapat dimuatkan\. Storan nota belum disediakan\./);
     await t.ada('#view-nota .nt-empty', /lihat katalog subjek di bawah dan tempah nota penuh melalui WhatsApp/);
@@ -772,8 +772,8 @@ export default [
     sama((await page.$$('#view-nota .nt-buy .nt-wa-btn')).length, 2, 'Butang WhatsApp lalai');
     // Dengan cache: senarai lama dipaparkan bersama amaran
     await page.evaluate(n => localStorage.setItem('bl_nota_cache', JSON.stringify({ notes: n, settings: {} })), NOTA.slice(0, 2));
-    await page.unroute('https://nota.bijaklabur.my/**');
-    await page.route('https://nota.bijaklabur.my/**', r => r.abort('internetdisconnected'));
+    await page.unroute('https://nota.siswacap.my/**');
+    await page.route('https://nota.siswacap.my/**', r => r.abort('internetdisconnected'));
     await page.reload(); await t.buka('#nota');
     await t.ada('#view-nota .nt-msg', /Tiada sambungan ke pelayan nota/);
     sama((await page.$$('#view-nota .nt-card')).length, 2, 'Nota daripada cache');
@@ -797,7 +797,7 @@ export default [
     // Pautan pembeli
     await t.klik('#view-nota .nt-card[data-id="aaaaaa01"] [data-act="link"]');
     await t.tunggu('#ntLinkUrl', 5000);
-    sama(await page.inputValue('#ntLinkUrl'), 'https://nota.bijaklabur.my/dl/abcdefghijkmnpqrstuvwxyz', 'Pautan pembeli');
+    sama(await page.inputValue('#ntLinkUrl'), 'https://nota.siswacap.my/dl/abcdefghijkmnpqrstuvwxyz', 'Pautan pembeli');
     await t.klik('dialog.nt-dialog [data-act="copy"]');
     await toast(t, /Pautan disalin/);
     await t.klik('dialog.nt-dialog [data-close]');

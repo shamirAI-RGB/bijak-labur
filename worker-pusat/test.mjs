@@ -19,7 +19,7 @@ const env = {
 };
 let obj = null;
 env.PUSAT = { idFromName: n => n, get: () => ({ fetch: (u, init) => (obj = obj || new Pusat({ storage: { sql }, getWebSockets: () => [] }, env)).fetch(u instanceof Request ? u : new Request(u, init)) }) };
-const B = 'https://pusat.bijaklabur.my';
+const B = 'https://pusat.siswacap.my';
 const ctx = { waitUntil: p => { tunggu.push(p); } };
 let tunggu = [];
 const call = (path, init = {}, origin = 'https://bijaklabur.my', e = env) => worker.fetch(new Request(B + path, { ...init, headers: { ...(origin ? { origin } : {}), 'content-type': 'application/json', ...(init.headers || {}) } }), e, ctx);

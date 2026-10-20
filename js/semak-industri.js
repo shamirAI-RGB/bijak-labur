@@ -7,7 +7,7 @@
       kod Mermaid (aliran bahan mentah = garisan putus-putus menegak yang lurus).
    5. Skrip Python (PyMuPDF) yang menyerlah dan menyuntik nota komen terus ke dalam PDF tugasan asal. */
 (function () {
-  const API = (store.get('fiqh_api', '') || 'https://fiqh.bijaklabur.my').replace(/\/$/, '');
+  const API = (store.get('fiqh_api', '') || 'https://fiqh.siswacap.my').replace(/\/$/, '');
   const RUBRIK = [['pengenalan', 'Pengenalan dan objektif'], ['literatur', 'Kajian literatur'], ['analisis', 'Analisis dan hujah kritis'], ['metodologi', 'Metodologi'], ['kesimpulan', 'Kesimpulan']];
   const HUJAH = { 'tanpa-sokongan': 'Hujah tanpa sokongan', 'ralat-logik': 'Ralat logik', bercanggah: 'Fakta bercanggah', 'lari-tajuk': 'Lari tajuk', struktur: 'Struktur lemah' };
   const GRED = [[90, 'A+'], [80, 'A'], [75, 'A-'], [70, 'B+'], [65, 'B'], [60, 'B-'], [55, 'C+'], [50, 'C'], [47, 'C-'], [44, 'D+'], [40, 'D'], [30, 'E'], [0, 'F']];

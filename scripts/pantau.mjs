@@ -76,22 +76,22 @@ await check('kritikal', 'Pelayan Premium, akaun, suara', async () => {
   if (off.length) throw new Error(`tidak aktif: ${off.join(', ')}`);
 });
 await check('amaran', 'Pusat Kawalan (pelawat, token, Telegram)', async () => {
-  const d = await json('https://pusat.bijaklabur.my/', H);
+  const d = await json('https://pusat.siswacap.my/', H);
   if (!d.ok) throw new Error('tidak aktif');
   return `agen: ${d.agen}${d.telegram ? ', Telegram aktif' : ', Telegram belum'}${d.catat ? '' : ', PUSAT_SECRET belum'}`;
 });
 await check('kritikal', 'Tanya AI / Semak / Kalori (fiqh)', async () => {
-  const d = await json('https://fiqh.bijaklabur.my/', H);
+  const d = await json('https://fiqh.siswacap.my/', H);
   if (!d.ok || !d.ai) throw new Error('AI tidak aktif');
   return d.penyedia;
 });
 await check('kritikal', 'Jadual UiTM', async () => {
-  const d = await json('https://jadual.bijaklabur.my/session', H);
+  const d = await json('https://jadual.siswacap.my/session', H);
   if (!d.code) throw new Error('tiada sesi');
   return d.label || d.code;
 });
 await check('kritikal', 'Kedai nota', async () => {
-  const d = await json('https://nota.bijaklabur.my/notes', H);
+  const d = await json('https://nota.siswacap.my/notes', H);
   return `${(d.notes || []).length} nota`;
 });
 
@@ -115,8 +115,8 @@ await Promise.all(ext.map(([n, u]) => check('amaran', n, async () => { await ok(
 // Pelayan mesti menolak permintaan daripada laman lain (elak orang lain menggunakan kuota AI dan data pengguna)
 const ASING = { origin: 'https://contoh-jahat.example', 'content-type': 'application/json' };
 for (const [nama, url, body] of [
-  ['Tanya AI menolak asal asing', 'https://fiqh.bijaklabur.my/tanya', { q: 'ujian pemantau keselamatan' }],
-  ['Semak Kertas menolak asal asing', 'https://fiqh.bijaklabur.my/semak', { text: 'ujian' }]
+  ['Tanya AI menolak asal asing', 'https://fiqh.siswacap.my/tanya', { q: 'ujian pemantau keselamatan' }],
+  ['Semak Kertas menolak asal asing', 'https://fiqh.siswacap.my/semak', { text: 'ujian' }]
 ]) await check('kritikal', `Keselamatan: ${nama}`, async () => {
   const r = await get(url, { method: 'POST', headers: ASING, body: JSON.stringify(body) });
   if (r.status !== 403) throw new Error(`dijangka 403, dapat ${r.status}`);
@@ -149,7 +149,7 @@ await check('kritikal', 'Keselamatan: fail sulit tidak terdedah', async () => {
   return 'tiada';
 });
 await check('amaran', 'Keselamatan: pengepala pelayan', async () => {
-  const r = await get('https://fiqh.bijaklabur.my/halaman/jakim/1.jpg');
+  const r = await get('https://fiqh.siswacap.my/halaman/jakim/1.jpg');
   if (r.ok && r.headers.get('x-content-type-options') !== 'nosniff') throw new Error('gambar tanpa nosniff');
   return r.ok ? 'nosniff' : `HTTP ${r.status}`;
 });

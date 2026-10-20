@@ -1663,7 +1663,7 @@ const write = (k, v) => {
     localStorage.setItem("bl_" + k, JSON.stringify(v));
   } catch {}
 };
-const NOTA_API = () => (read("nota_api", "") || "https://nota.bijaklabur.my").replace(/\/$/, "");
+const NOTA_API = () => (read("nota_api", "") || "https://nota.siswacap.my").replace(/\/$/, "");
 async function checkOwner(key, fetchFn = fetch) {
   if (!key) return false;
   try {

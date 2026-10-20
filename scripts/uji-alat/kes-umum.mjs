@@ -216,9 +216,9 @@ export const fixture = [
   [/^https:\/\/api\.coingecko\.com\/api\/v3\/simple\/price/, () => ({ bitcoin: { usd: 64000, usd_24h_change: -2.5 }, ethereum: { usd: 3100, usd_24h_change: 1.1 }, solana: { usd: 150, usd_24h_change: 0.5 } })],
   // Harga saham halaman utama (worker-nota /saham)
   // Kaunter Bursa (<kod>.KL, harga dalam RM): 1155.KL tiada data, meniru simbol yang gagal di Yahoo Finance
-  [/^https:\/\/nota\.bijaklabur\.my\/saham\?s=[^&]*\.KL/, u => ({ quotes: new URL(u).searchParams.get('s').split(',').filter(x => x !== '1155.KL').map((x, i) =>
+  [/^https:\/\/nota\.siswacap\.my\/saham\?s=[^&]*\.KL/, u => ({ quotes: new URL(u).searchParams.get('s').split(',').filter(x => x !== '1155.KL').map((x, i) =>
     ({ s: x, price: x === '5347.KL' ? 13.84 : 2 + i * 0.5, chg: x === '5347.KL' ? -0.72 : 0.4, spark: [], time: Date.parse('2026-10-13T08:59:00Z') / 1000 })) })],
-  [/^https:\/\/nota\.bijaklabur\.my\/saham/, () => ({ quotes: [
+  [/^https:\/\/nota\.siswacap\.my\/saham/, () => ({ quotes: [
     { s: 'AAPL', price: 230.5, chg: 0.85, spark: [228, 229, 230], time: Math.floor(Date.now() / 1000) - 30 },
     { s: 'NVDA', price: 120.25, chg: -1.4, spark: [123, 121, 120], time: Math.floor(Date.now() / 1000) - 30 },
     { s: 'TSLA', price: 250, chg: 2, spark: [], time: Math.floor(Date.now() / 1000) - 30 },
@@ -226,14 +226,14 @@ export const fixture = [
     { s: 'GOOGL', price: 160.3, chg: -0.3, spark: [], time: Math.floor(Date.now() / 1000) - 30 }
   ] })],
   // Ruang soalan (worker-nota /tanya): "HADUJI" meniru had 429, "PELAYANUJI" meniru e-mel gagal (502)
-  [/^https:\/\/nota\.bijaklabur\.my\/tanya/, cors((u, req) => {
+  [/^https:\/\/nota\.siswacap\.my\/tanya/, cors((u, req) => {
     const b = badan(req);
     if (/HADUJI/.test(b.teks || '')) return jsonRes(429, { error: 'Terlalu banyak soalan dalam masa singkat. Cuba lagi sebentar.' });
     if (/PELAYANUJI/.test(b.teks || '')) return jsonRes(502, { error: 'E-mel tidak dapat dihantar sekarang.' });
     globalThis.__tanyaAkhir = b;
     return { ok: true };
   })],
-  [/^https:\/\/jadual\.bijaklabur\.my\//, u => jadualApi(u)],
+  [/^https:\/\/jadual\.siswacap\.my\//, u => jadualApi(u)],
   [/^https:\/\/bijak-labur-premium\.khanz-amir\.workers\.dev\/komuniti\//, cors(kmApi)],
   [/^https:\/\/bijak-labur-premium\.khanz-amir\.workers\.dev\/akaun\/sesi/, cors(() => ({ trialUsed: true, plan: null, exp: 0, switchesLeft: 3 }))],
   // Peta Jalan: "luartalian" meniru carian gagal
@@ -733,7 +733,7 @@ export default [
 
   { kumpulan: K, nama: 'Jadual: pelayan jadual tidak dapat dihubungi (503)', langkah: async (t, page) => {
     await wsPalsu(page);
-    await page.route(/jadual\.bijaklabur\.my/, r => r.fulfill({ status: 503, contentType: 'text/plain', body: 'luar talian' }));
+    await page.route(/jadual\.siswacap\.my/, r => r.fulfill({ status: 503, contentType: 'text/plain', body: 'luar talian' }));
     await t.buka('#jadual');
     await t.ada('#jdCampErr', /Pelayan jadual tidak dapat dihubungi\. Anda masih boleh melihat jadual contoh di bawah\./);
     await t.ada('#jdCampus option[value=""]', /Senarai kampus tidak dapat dimuatkan/);

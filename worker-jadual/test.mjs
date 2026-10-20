@@ -64,7 +64,7 @@ const fake = async (u, init) => {
 };
 const env = { ALLOWED_ORIGINS: 'https://bijaklabur.my' };
 const call = async path => {
-  const r = await worker.fetch(new Request('https://jadual.bijaklabur.my' + path, { headers: { origin: 'https://bijaklabur.my' } }), env, null, { fetch: fake, cache: null });
+  const r = await worker.fetch(new Request('https://jadual.siswacap.my' + path, { headers: { origin: 'https://bijaklabur.my' } }), env, null, { fetch: fake, cache: null });
   return [r.status, await r.json(), r];
 };
 
@@ -96,11 +96,11 @@ calls = 0;
 assert.equal(calls, 0);
 
 // Asal tidak dibenarkan tidak mendapat pengepala CORS
-r = await worker.fetch(new Request('https://jadual.bijaklabur.my/', { headers: { origin: 'https://jahat.example' } }), env, null, { fetch: fake, cache: null });
+r = await worker.fetch(new Request('https://jadual.siswacap.my/', { headers: { origin: 'https://jahat.example' } }), env, null, { fetch: fake, cache: null });
 assert.equal(r.headers.get('access-control-allow-origin'), null);
 
 // iCress tidak menjawab -> 502 dengan mesej BM
-r = await worker.fetch(new Request('https://jadual.bijaklabur.my/campuses'), env, null, { fetch: async () => new Response('', { status: 503 }), cache: null });
+r = await worker.fetch(new Request('https://jadual.siswacap.my/campuses'), env, null, { fetch: async () => new Response('', { status: 503 }), cache: null });
 assert.equal(r.status, 502); assert.match((await r.json()).error, /iCress/);
 
 

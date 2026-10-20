@@ -1,4 +1,4 @@
-/* SiswaCap: agen.bijaklabur.my membawa pemilik terus ke Pejabat AI Agent (siswacap.my/pejabat-agen.html).
+/* SiswaCap: agen.siswacap.my membawa pemilik terus ke Pejabat AI Agent (siswacap.my/pejabat-agen.html).
    Halaman itu sendiri meminta kunci pemilik; Worker ini tidak menyimpan sebarang rahsia. */
 
 export const TARGET = 'https://siswacap.my/pejabat-agen.html';

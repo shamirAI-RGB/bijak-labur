@@ -44,7 +44,7 @@ export async function hantar(env, chatId, teks, extra = {}) {
 }
 export const menaip = (env, chatId) => panggil(env, 'sendChatAction', { chat_id: chatId, action: 'typing' }).catch(() => {});
 
-/** Daftar webhook ke pelayan ini. url = asal pelayan (cth. https://pusat.bijaklabur.my) */
+/** Daftar webhook ke pelayan ini. url = asal pelayan (cth. https://pusat.siswacap.my) */
 export async function pasangWebhook(env, asal) {
   return panggil(env, 'setWebhook', { url: `${asal}/telegram`, secret_token: await webhookSecret(env), allowed_updates: ['message'], max_connections: 10 });
 }

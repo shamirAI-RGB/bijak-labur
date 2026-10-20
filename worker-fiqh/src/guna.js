@@ -1,5 +1,5 @@
 /*
- * Catatan penggunaan token AI untuk Pusat Kawalan (worker-pusat, pusat.bijaklabur.my).
+ * Catatan penggunaan token AI untuk Pusat Kawalan (worker-pusat, pusat.siswacap.my).
  * Setiap permintaan mendapat salinan env sendiri (Object.create) yang membawa GUNA = { laluan, rekod[] }, supaya
  * panggilan model di mana-mana modul boleh mencatat token tanpa keadaan kongsi antara permintaan.
  * Pada akhir permintaan, rekod dihantar sekali ke PUSAT_URL/catat (ctx.waitUntil) dengan Authorization: Bearer PUSAT_SECRET.

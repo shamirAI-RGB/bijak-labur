@@ -4,7 +4,7 @@
   const D = FiqhData;
   const HAPI = 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions';
   // Pelayan Tanya AI (worker-fiqh). Boleh ditukar untuk ujian: store.set('fiqh_api', 'https://...workers.dev')
-  const AI_API = (store.get('fiqh_api', '') || 'https://fiqh.bijaklabur.my').replace(/\/$/, '');
+  const AI_API = (store.get('fiqh_api', '') || 'https://fiqh.siswacap.my').replace(/\/$/, '');
   const BAB = Object.fromEntries(D.BAB.map(b => [b.k, b]));
   const SCALE = ['wajib', 'sunat', 'harus', 'makruh', 'haram'];
   let el = null, seq = 0;

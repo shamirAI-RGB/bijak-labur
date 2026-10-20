@@ -1,6 +1,6 @@
-name: Pintu AI Agent (agen.bijaklabur.my)
+name: Pintu AI Agent (agen.siswacap.my)
 
-# Uji dan pasang Worker agen.bijaklabur.my (pautan pemilik ke Pejabat AI Agent).
+# Uji dan pasang Worker agen.siswacap.my (pautan pemilik ke Pejabat AI Agent).
 on:
   push:
     branches: [main]
@@ -30,6 +30,6 @@ jobs:
           node-version: 22
       - name: Uji
         run: node test.mjs
-      - name: Pasang ke Cloudflare (agen.bijaklabur.my)
+      - name: Pasang ke Cloudflare (agen.siswacap.my)
         if: github.ref == 'refs/heads/main' && env.HAS_CF == 'true'
         run: npx --yes wrangler@3 deploy

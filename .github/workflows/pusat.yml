@@ -33,8 +33,8 @@ jobs:
       - run: npm ci
       - name: Uji
         run: node test.mjs
-      # Cuba dengan domain pusat.bijaklabur.my dahulu. Jika gagal, pasang ke alamat workers.dev sahaja.
-      - name: Pasang ke Cloudflare (domain pusat.bijaklabur.my)
+      # Cuba dengan domain pusat.siswacap.my dahulu. Jika gagal, pasang ke alamat workers.dev sahaja.
+      - name: Pasang ke Cloudflare (domain pusat.siswacap.my)
         id: domain
         if: github.ref == 'refs/heads/main' && env.HAS_CF == 'true'
         continue-on-error: true
@@ -71,7 +71,7 @@ jobs:
           secret=$(printf '%s:webhook' "$TELEGRAM_BOT_TOKEN" | sha256sum | cut -d' ' -f1)
           curl -sS -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook" \
             -H 'content-type: application/json' \
-            -d "{\"url\":\"https://pusat.bijaklabur.my/telegram\",\"secret_token\":\"$secret\",\"allowed_updates\":[\"message\"],\"max_connections\":10}" \
+            -d "{\"url\":\"https://pusat.siswacap.my/telegram\",\"secret_token\":\"$secret\",\"allowed_updates\":[\"message\"],\"max_connections\":10}" \
             | jq -r 'if .ok then "Webhook Telegram dipasang." else "Webhook gagal: \(.description)" end'
       - name: Ringkasan
         if: github.ref == 'refs/heads/main'
@@ -82,7 +82,7 @@ jobs:
         run: |
           {
             if [ "$HAS_CF" != "true" ]; then echo "Rahsia Cloudflare belum ditetapkan, jadi Pusat Kawalan tidak dipasang."; exit 0; fi
-            if [ "${{ steps.domain.outcome }}" = "success" ]; then echo "Pusat Kawalan dipasang di https://pusat.bijaklabur.my (papan: https://siswacap.my/pusat.html)."; else echo "Domain pusat.bijaklabur.my belum boleh digunakan; dipasang ke alamat workers.dev (lihat log)."; fi
+            if [ "${{ steps.domain.outcome }}" = "success" ]; then echo "Pusat Kawalan dipasang di https://pusat.siswacap.my (papan: https://siswacap.my/pusat.html)."; else echo "Domain pusat.siswacap.my belum boleh digunakan; dipasang ke alamat workers.dev (lihat log)."; fi
             [ "$HAS_SECRET" = "true" ] || echo "- PUSAT_SECRET belum ditetapkan: kiraan token AI daripada worker-fiqh tidak akan sampai."
             [ "$HAS_TG" = "true" ] || echo "- TELEGRAM_BOT_TOKEN belum ditetapkan: agen Telegram tidak aktif."
             [ "$HAS_AI" = "true" ] || echo "- ANTHROPIC_API_KEY / GEMINI_API_KEY belum ditetapkan: agen menjawab arahan pantas (/stat, /sihat, ...) sahaja."

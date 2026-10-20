@@ -1091,12 +1091,12 @@ console.log('Semua ujian Tanya AI lulus');
   assert.equal(await hantarGuna(e0), false, 'tanpa PUSAT_URL tiada penghantaran');
 
   // Semak Kertas dengan Gemini: usageMetadata sampai ke /catat dengan rahsia kongsi, melalui ctx.waitUntil
-  const senv = { GEMINI_API_KEY: 'g', ALLOWED_ORIGINS: env.ALLOWED_ORIGINS, PUSAT_URL: 'https://pusat.bijaklabur.my/', PUSAT_SECRET: 'rahsia-kongsi' };
+  const senv = { GEMINI_API_KEY: 'g', ALLOWED_ORIGINS: env.ALLOWED_ORIGINS, PUSAT_URL: 'https://pusat.siswacap.my/', PUSAT_SECRET: 'rahsia-kongsi' };
   const raw = { skor: 61, pembetulan: [], jumlah: 47, penambahbaikan: [] };
   let catat = null, auth = '';
   const tunggu = [];
   globalThis.fetch = async (u, init) => {
-    if (String(u) === 'https://pusat.bijaklabur.my/catat') { catat = JSON.parse(init.body); auth = init.headers.authorization; return new Response('{"ok":true}'); }
+    if (String(u) === 'https://pusat.siswacap.my/catat') { catat = JSON.parse(init.body); auth = init.headers.authorization; return new Response('{"ok":true}'); }
     return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify(raw) }] }, finishReason: 'STOP' }], usageMetadata: { promptTokenCount: 321, candidatesTokenCount: 45, totalTokenCount: 366 } }));
   };
   const r = await worker.fetch(new Request(W + '/semak', { method: 'POST', headers: { origin: 'https://bijaklabur.my', 'content-type': 'application/json' }, body: JSON.stringify({ text: 'Kajian ini menunjukan bahawa pelajar yang mengulangkaji secara berjadual mendapat markah lebih tinggi daripada mereka yang tidak. '.repeat(3), lang: 'ms' }) }), senv, { waitUntil: p => tunggu.push(p) });

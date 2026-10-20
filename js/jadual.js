@@ -3,7 +3,7 @@
 (function () {
   const root = $('#view-jadual');
   if (!root) return;
-  const API = (store.get('jadual_api', '') || 'https://jadual.bijaklabur.my').replace(/\/$/, '');
+  const API = (store.get('jadual_api', '') || 'https://jadual.siswacap.my').replace(/\/$/, '');
   const DAY = ['', 'Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu', 'Ahad'];
   const DAY3 = ['', 'Isn', 'Sel', 'Rab', 'Kha', 'Jum', 'Sab', 'Ahd'];
   const HUES = 8;

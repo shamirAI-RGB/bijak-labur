@@ -274,7 +274,7 @@ async function tanya(req, env, h) {
   const k = 'tanya:' + new Date(Date.now() + 8 * 3600e3).toISOString().slice(0, 10);
   const n = env.NOTA ? (+(await env.NOTA.get(k)) || 0) : 0;
   if (n >= TANYA_HARIAN) throw new HttpError(429, 'Had soalan hari ini telah dicapai. Hubungi kami melalui WhatsApp atau cuba esok.');
-  const from = env.TANYA_DARI || 'tanya@bijaklabur.my';
+  const from = env.TANYA_DARI || 'tanya@siswacap.my';
   try {
     const EmailMessage = env.EmailMessage || (await import('cloudflare:email')).EmailMessage;
     await env.EMEL.send(new EmailMessage(from, env.TANYA_KE, mimeTanya(q, from, env.TANYA_KE)));

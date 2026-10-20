@@ -21,7 +21,7 @@ class KV {
 }
 const KEY = 'kunci-ujian-panjang-123';
 const env = { NOTA: new KV(), OWNER_KEY_HASH: await sha256(KEY), ALLOWED_ORIGINS: 'https://bijaklabur.my' };
-const B = 'https://nota.bijaklabur.my';
+const B = 'https://nota.siswacap.my';
 const call = (path, init = {}, key) => worker.fetch(new Request(B + path, { ...init, headers: { Origin: 'https://bijaklabur.my', ...(key ? { Authorization: 'Bearer ' + key } : {}), ...(init.headers || {}) } }), env);
 
 // Awam: kosong dengan tetapan lalai
@@ -170,7 +170,7 @@ assert.throws(() => sanitizeTanya({ teks: 'Soalan panjang', emel: 'a@b.com\r\nBc
 const sq = sanitizeTanya({ nama: 'Ali\r\nBcc: x@y.com', emel: 'ali@contoh.my', topik: 'Umum', teks: 'Baris satu\r\n\r\n\r\n\r\nBaris dua\u0007' });
 assert.equal(sq.nama, 'Ali  Bcc: x@y.com');
 assert.equal(sq.teks, 'Baris satu\n\nBaris dua');
-const raw = mimeTanya({ ...sq, nama: 'Siti "Aisyah" <x>', teks: 'Apa itu saham patuh syariah?' }, 'tanya@bijaklabur.my', 'pemilik@gmail.com', new Date('2026-10-09T05:00:00Z'));
+const raw = mimeTanya({ ...sq, nama: 'Siti "Aisyah" <x>', teks: 'Apa itu saham patuh syariah?' }, 'tanya@siswacap.my', 'pemilik@gmail.com', new Date('2026-10-09T05:00:00Z'));
 const [head, body] = raw.split('\r\n\r\n');
 assert.ok(!/^Bcc:/mi.test(head));
 assert.match(head, /^Reply-To: =\?UTF-8\?B\?[A-Za-z0-9+/=]+\?= <ali@contoh\.my>$/m);
@@ -179,7 +179,7 @@ const teksBadan = new TextDecoder().decode(Uint8Array.from(atob(body.replace(/\s
 assert.match(teksBadan, /Masa   : 2026-10-09 13:00 \(waktu Malaysia\)/);
 assert.match(teksBadan, /Apa itu saham patuh syariah\?/);
 assert.ok(body.split('\r\n').every(l => l.length <= 76));
-assert.match(mimeTanya({ ...sq, topik: 'Solat – ibadah' }, 'tanya@bijaklabur.my', 'p@gmail.com'), /^Subject: =\?UTF-8\?B\?/m);
+assert.match(mimeTanya({ ...sq, topik: 'Solat – ibadah' }, 'tanya@siswacap.my', 'p@gmail.com'), /^Subject: =\?UTF-8\?B\?/m);
 
 const tanyaBody = b => ({ method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) });
 const soalan = { nama: 'Ali', emel: 'ali@contoh.my', topik: 'Umum', teks: 'Bagaimana mula melabur?' };
@@ -191,7 +191,7 @@ env.EmailMessage = class { constructor(from, to, raw) { Object.assign(this, { fr
 r = await call('/tanya', tanyaBody(soalan));
 assert.equal(r.status, 200);
 assert.equal(dihantar.length, 1);
-assert.equal(dihantar[0].from, 'tanya@bijaklabur.my');
+assert.equal(dihantar[0].from, 'tanya@siswacap.my');
 assert.equal(dihantar[0].to, 'pemilik@gmail.com');
 assert.match(dihantar[0].raw, /Reply-To: .*<ali@contoh\.my>/);
 // Asal asing ditolak

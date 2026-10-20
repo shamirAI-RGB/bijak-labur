@@ -1,4 +1,4 @@
-# Panduan Pusat Kawalan (pusat.bijaklabur.my)
+# Panduan Pusat Kawalan (pusat.siswacap.my)
 
 Pusat Kawalan menunjukkan **pelawat yang sedang melayari laman**, **penggunaan token AI** setiap ciri, **kesihatan pelayan**,
 dan menyediakan **agen AI** yang boleh diarahkan melalui **Telegram** atau dari papan itu sendiri.

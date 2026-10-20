@@ -1,8 +1,8 @@
-# agen.bijaklabur.my: pautan pendek pemilik ke Pejabat AI Agent (Cloudflare Workers, pelan percuma).
+# agen.siswacap.my: pautan pendek pemilik ke Pejabat AI Agent (Cloudflare Workers, pelan percuma).
 # Tiada rahsia. Halaman tujuan meminta kunci pemilik.
 name = "bijak-labur-agen"
 main = "src/index.js"
 compatibility_date = "2026-09-01"
 workers_dev = false
 
-routes = [{ pattern = "agen.bijaklabur.my", custom_domain = true }]
+routes = [{ pattern = "agen.siswacap.my", custom_domain = true }]

@@ -5,7 +5,7 @@
 (function () {
   const root = $('#view-alat');
   if (!root) return;
-  const API = (store.get('fiqh_api', '') || 'https://fiqh.bijaklabur.my').replace(/\/$/, '');
+  const API = (store.get('fiqh_api', '') || 'https://fiqh.siswacap.my').replace(/\/$/, '');
   const load = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch { return d; } };
   const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch { return false; } };
   const fmt = n => Number(n).toLocaleString('ms-MY');

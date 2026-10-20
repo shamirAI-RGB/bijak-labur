@@ -1,8 +1,8 @@
-// Ujian pautan agen.bijaklabur.my tanpa rangkaian: node worker-agen/test.mjs
+// Ujian pautan agen.siswacap.my tanpa rangkaian: node worker-agen/test.mjs
 import assert from 'node:assert/strict';
 import worker, { TARGET } from './src/index.js';
 
-const run = path => worker.fetch(new Request('https://agen.bijaklabur.my' + path));
+const run = path => worker.fetch(new Request('https://agen.siswacap.my' + path));
 let r = await run('/');
 assert.equal(r.status, 302);
 assert.equal(r.headers.get('Location'), 'https://siswacap.my/pejabat-agen.html');

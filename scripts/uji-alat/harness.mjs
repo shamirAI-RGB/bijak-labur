@@ -1,6 +1,6 @@
 /* SiswaCap: kerangka ujian hujung ke hujung bagi setiap alat di laman (Playwright, tanpa rangkaian luar).
    - Laman dihidangkan secara tempatan; setiap permintaan ke luar dipintas.
-   - Pelayan AI (fiqh.bijaklabur.my) dijalankan dalam proses ini menggunakan kod worker-fiqh sebenar; hanya model AI
+   - Pelayan AI (fiqh.siswacap.my) dijalankan dalam proses ini menggunakan kod worker-fiqh sebenar; hanya model AI
      digantikan dengan penjana JSON yang mengikut skema jawapan, supaya kontrak app <-> pelayan turut diuji.
    - API luar lain dijawab dengan data contoh (FIXTURE) atau 503, supaya alat diuji ketika luar talian juga.
    Jalankan: node scripts/uji-alat/jalan.mjs [nama-kumpulan ...] */
@@ -149,7 +149,7 @@ export async function mula({ fixture = [], env = {} } = {}) {
     await ctx.route('**/*', async route => {
       const u = route.request().url();
       if (u.startsWith(web.url)) return route.continue();
-      if (u.startsWith('https://fiqh.bijaklabur.my/')) {
+      if (u.startsWith('https://fiqh.siswacap.my/')) {
         const r = route.request();
         const req = new Request(u, { method: r.method(), headers: r.headers(), body: ['GET', 'HEAD'].includes(r.method()) ? undefined : r.postDataBuffer() });
         const res = await ai.fetch(req);
