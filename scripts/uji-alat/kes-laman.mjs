@@ -1,6 +1,6 @@
 /* Setiap halaman SiswaCap: dibuka tanpa ralat pada telefon dan desktop, tema cerah dan gelap, tiada tatal mendatar,
    tiada gambar atau fail tempatan yang rosak, dan setiap pautan dalaman menuju ke halaman yang wujud. */
-const VIEWS = ['utama', 'belajar', 'pasaran', 'solat', 'ibadah', 'semak', 'jadual', 'nota', 'sihat', 'studio', 'buku', 'kerja', 'jejak', 'komuniti', 'premium', 'soalan', 'halal', 'alat'];
+const VIEWS = ['utama', 'belajar', 'pasaran', 'solat', 'ibadah', 'semak', 'jadual', 'nota', 'sihat', 'studio', 'buku', 'kerja', 'jejak', 'komuniti', 'premium', 'soalan', 'halal', 'alat', 'uitm', 'pelajar-halal'];
 const LAMAN = ['siswa.html', 'tentang.html', 'cara.html', 'terma.html', 'terma-guna.html', 'terma-app.html', 'privacy.html', 'penafian-ai.html', 'bayaran-balik.html', 'padam-data.html', 'peta.html', '404.html'];
 
 // Pantau fail tempatan yang gagal dimuat (404) sepanjang kes
@@ -114,7 +114,7 @@ kes.push({ kumpulan: 'Halaman', nama: 'Navigasi hash: hanya satu halaman kelihat
 kes.push({ kumpulan: 'Halaman', nama: 'Menu Alat dan halaman Alat Pelajar dalam tiga kumpulan berlabel', lebar: 1280, langkah: async (t, page) => {
   await t.buka('#utama');
   const kump = await page.$$eval('.nav-pop .nav-kump', gs => gs.map(g => [g.querySelector('.nav-kump-t').textContent, [...g.querySelectorAll('a')].map(a => a.getAttribute('href'))]));
-  const jangka = [['Akademik & Halal UiTM', ['#jadual', '#nota', '#halal', '#alat', '#buku', '#kerja']], ['Ibadah & Komuniti', ['#ibadah', '#komuniti']], ['Gaya Hidup & Kreatif', ['#studio', '#sihat', '#jejak']]];
+  const jangka = [['Pelajar', ['#alat', '#uitm', '#pelajar-halal', '#buku', '#kerja']], ['Ibadah & Komuniti', ['#ibadah', '#komuniti']], ['Gaya Hidup & Kreatif', ['#studio', '#sihat', '#jejak']]];
   if (JSON.stringify(kump) !== JSON.stringify(jangka)) throw new Error(`kumpulan menu Alat: ${JSON.stringify(kump)}`);
   await t.klik('details.nav-more > summary');
   await t.klik('.nav-pop a[href="#jejak"]');
@@ -124,6 +124,24 @@ kes.push({ kumpulan: 'Halaman', nama: 'Menu Alat dan halaman Alat Pelajar dalam 
   await t.ada('#view-alat .al-kump-t', /\S/);
   const hal = await page.$$eval('#view-alat .al-kump', gs => gs.map(g => g.querySelector('.al-kump-t').textContent));
   if (JSON.stringify(hal) !== JSON.stringify(jangka.map(x => x[0]))) throw new Error(`kumpulan halaman Alat: ${JSON.stringify(hal)}`);
+} });
+
+// Jadual, Nota IC220 dan Audit Halal dipindahkan dari halaman utama ke bahagian Pelajar UiTM dan Pelajar Halal (arahan pemilik 20 Okt 2026)
+kes.push({ kumpulan: 'Halaman', nama: 'Bahagian Pelajar UiTM dan Pelajar Halal menggantikan kad Jadual, Nota dan Audit Halal di halaman utama', langkah: async (t, page) => {
+  await t.buka('#utama');
+  const utama = await page.$$eval('#view-utama a[href="#jadual"]:not(.md-chip), #view-utama a[href="#nota"], #view-utama a[href="#halal"], .desk-nav > a[href="#jadual"], .desk-nav > a[href="#nota"]', as => as.map(a => a.getAttribute('href')));
+  if (utama.length) throw new Error(`masih ada di halaman utama atau barisan navigasi: ${utama.join(', ')}`);
+  for (const [v, tajuk, jangka] of [['uitm', 'Pelajar UiTM', ['#jadual', '#nota', '#alat']], ['pelajar-halal', 'Pelajar Halal', ['#halal', '#nota', '#ibadah/fiqh/tanya']]]) {
+    await page.evaluate(v => { location.hash = '#' + v; }, v);
+    await t.ada(`#view-${v}.active h1`, new RegExp('^' + tajuk + '$'));
+    const kad = await page.$$eval(`#view-${v} .card.shortcut`, as => as.map(a => a.getAttribute('href')));
+    if (JSON.stringify(kad) !== JSON.stringify(jangka)) throw new Error(`kad ${tajuk}: ${JSON.stringify(kad)}`);
+  }
+  await t.klik('#view-pelajar-halal a[href="#halal"]');
+  await t.ada('#view-halal.active h1', /\S/);
+  await page.evaluate(() => { location.hash = '#alat'; });
+  await t.ada('#view-alat a[href="#uitm"]', /Pelajar UiTM/);
+  await t.ada('#view-alat a[href="#pelajar-halal"]', /Pelajar Halal/);
 } });
 
 // Alamat lama /terms.html melencong ke Terma Perkhidmatan

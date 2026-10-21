@@ -68,7 +68,7 @@
   .nav-sempit { display: none !important; }
 }
 @media (min-width: 900px) and (max-width: 1365px) {
-  .topbar .desk-nav > a[data-nav="ibadah"], .topbar .desk-nav > a[data-nav="jadual"], .topbar .desk-nav > a[data-nav="nota"] { display: none; }
+  .topbar .desk-nav > a[data-nav="ibadah"] { display: none; }
   .topbar .desk-nav .nav-pop .nav-sempit { display: block !important; }
 }
 @media (min-width: 1366px) { .topbar-inner { max-width: 1280px; } }

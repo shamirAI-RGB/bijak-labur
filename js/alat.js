@@ -145,11 +145,10 @@
 
   // Alat lain mengikut kumpulan yang sama seperti menu Alat di bahagian atas
   const KUMPULAN = [
-    ['Akademik & Halal UiTM', [
+    ['Pelajar', [
       ['#semak', 'file', 'Semak Kertas', 'Peratus tulisan AI, plagiarisme dan pembetulan ayat'],
-      ['#jadual', 'calendar', 'Jadual kelas UiTM', 'Susun jadual kuliah dan skrin kunci'],
-      ['#nota', 'bookmark', 'Nota IC220', 'Katalog subjek, pratonton dan tempahan nota melalui WhatsApp'],
-      ['#halal', 'shield', 'Audit Halal', 'Senarai semak audit dalaman dan log ketakakuran (NCR)'],
+      ['#uitm', 'cap', 'Pelajar UiTM', 'Jadual kelas UiTM, skrin kunci dan Nota IC220'],
+      ['#pelajar-halal', 'shield', 'Pelajar Halal', 'Audit Halal mengikut skim pensijilan, Nota IC220 dan Tanya AI Fiqh'],
       ['#buku', 'book', 'Buku Nota AI', 'Tanya soalan tentang nota anda dengan petikan yang disahkan'],
       ['#kerja', 'target', 'Kerjaya AI', 'Cadangan jawatan, padanan resume, surat permohonan dan temu duga']]],
     ['Ibadah & Komuniti', [

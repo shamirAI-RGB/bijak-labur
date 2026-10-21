@@ -35,17 +35,7 @@
       desc: 'Al-Quran, doa, zikir, tasbih, kiblat, kalendar Hijri dan rekod ibadah dalam satu tempat.',
       tab: [['Apa ia', 'Lima belas alat ibadah harian, termasuk bacaan Al-Quran dengan suara dan rekod solat.'],
             ['Cara guna', 'Buka Ibadah dan pilih alat. Kegemaran anda boleh dibuka terus dari halaman utama.'],
-            ['Petua', 'Tetapkan nama panggilan dalam Profil supaya ucapan di halaman utama lebih mesra.']] },
-    { id: 'halal', ic: 'shield', jenis: 'Pengurusan Industri Halal', tajuk: 'Audit Halal', href: '#halal',
-      desc: 'Senarai semak audit halal mengikut skim pensijilan, log ketakakuran dan muat turun Excel atau PDF.',
-      tab: [['Apa ia', 'Senarai semak untuk sembilan skim pensijilan halal Malaysia, dengan rujukan setiap perkara.'],
-            ['Cara guna', 'Pilih skim, tanda setiap perkara, catat ketakakuran, kemudian muat turun laporan.'],
-            ['Petua', 'Data disimpan dalam peranti anda sahaja. Muat turun salinan sebelum menukar telefon.']] },
-    { id: 'jadual', ic: 'calendar', jenis: 'UiTM', tajuk: 'Jadual Kelas', href: '#jadual',
-      desc: 'Jadual kelas UiTM anda dalam paparan hari dan minggu, siap dengan wallpaper skrin kunci.',
-      tab: [['Apa ia', 'Jadual kelas dibaca dari sistem UiTM dan dipaparkan dengan kemas, berserta waktu solat.'],
-            ['Cara guna', 'Masukkan kod kursus dan kumpulan, kemudian simpan. Tekan Skrin kunci untuk menjana wallpaper.'],
-            ['Petua', 'Jadual boleh dibuka luar talian selepas disimpan sekali.']] }
+            ['Petua', 'Tetapkan nama panggilan dalam Profil supaya ucapan di halaman utama lebih mesra.']] }
   ];
 
   const stage = document.createElement('div');

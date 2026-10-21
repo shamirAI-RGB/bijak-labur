@@ -1,5 +1,5 @@
 /* SiswaCap: Alat Pelajar (#alat) dan kaki laman berlajur */
-[data-view="alat"] #view-alat { display: block; }
+[data-view="alat"] #view-alat, [data-view="uitm"] #view-uitm, [data-view="pelajar-halal"] #view-pelajar-halal { display: block; }
 
 /* ---------- Hab ---------- */
 .al-grid { display: grid; gap: 14px; margin-bottom: 22px; }

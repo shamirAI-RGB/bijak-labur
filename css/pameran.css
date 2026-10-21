@@ -72,7 +72,7 @@
 .xb-kad[data-ciri="belajar"] { --img: url("../images/jelajah/belajar.svg"); }
 .xb-kad[data-ciri="pasaran"] { --img: url("../images/jelajah/pasaran.svg"); }
 .xb-kad[data-ciri="solat"] { --img: url("../images/jelajah/solat.svg"); }
-.xb-kad[data-ciri="jadual"] { --img: url("../images/jelajah/jadual.svg"); }
+.xb-kad[data-ciri="fiqh"] { --img: url("../images/jelajah/fiqh.svg"); }
 .xb-kad-e { position: absolute; top: 16px; left: 18px; font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.75); }
 .xb-kad-t { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.02em; }
 .xb-kad-s { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.03em; line-height: 1; margin: 6px 0 2px; }

@@ -226,16 +226,14 @@
         <a href="#solat" data-nav="solat">Waktu Solat</a>
         <a href="#ibadah" data-nav="ibadah">Ibadah</a>
         <a href="#semak" data-nav="semak">Semak Kertas</a>
-        <a href="#jadual" data-nav="jadual">Jadual</a>
         <details class="nav-more">
           <summary>Alat<svg class="ic" aria-hidden="true"><use href="#i-chev-down"/></svg></summary>
           <div class="nav-pop">
             <div class="nav-kump" role="group" aria-labelledby="navKump1">
-              <p class="nav-kump-t" id="navKump1">Akademik &amp; Halal UiTM</p>
-              <a href="#jadual" data-nav="jadual" class="nav-sempit">Jadual</a>
-              <a href="#nota" data-nav="nota" class="nav-sempit">Nota</a>
-              <a href="#halal" data-nav="halal">Audit Halal</a>
+              <p class="nav-kump-t" id="navKump1">Pelajar</p>
               <a href="#alat" data-nav="alat">Alat Pelajar</a>
+              <a href="#uitm" data-nav="uitm">Pelajar UiTM</a>
+              <a href="#pelajar-halal" data-nav="pelajar-halal">Pelajar Halal</a>
               <a href="#buku" data-nav="buku">Buku Nota AI</a>
               <a href="#kerja" data-nav="kerja">Kerjaya AI</a>
             </div>
@@ -252,7 +250,6 @@
             </div>
           </div>
         </details>
-        <a href="#nota" data-nav="nota">Nota</a>
         <a href="#premium" data-nav="premium" data-premium-entry class="hidden">Premium</a>
       </nav>
       <button class="icon-btn" id="sayBtn" aria-label="Bacakan halaman ini" aria-pressed="false" title="Bacakan halaman ini"><svg class="ic"><use href="#i-volume"/></svg></button>
@@ -343,7 +340,7 @@
           <li><a href="#belajar"><span class="tk-n">02</span><span class="tk-t">Belajar melabur</span><span class="tk-d">modul syariah</span></a></li>
           <li><a href="#pasaran"><span class="tk-n">03</span><span class="tk-t">Pasaran hari ini</span><span class="tk-d">kripto dan saham</span></a></li>
           <li><a href="#semak"><span class="tk-n">04</span><span class="tk-t">Semak kertas kerja</span><span class="tk-d">plagiat dan AI</span></a></li>
-          <li><a href="#jadual"><span class="tk-n">05</span><span class="tk-t">Jadual kelas</span><span class="tk-d">UiTM</span></a></li>
+          <li><a href="#ibadah/fiqh/tanya"><span class="tk-n">05</span><span class="tk-t">Tanya fiqh</span><span class="tk-d">kitab dan fatwa</span></a></li>
           <li><a href="#komuniti"><span class="tk-n">06</span><span class="tk-t">Komuniti</span><span class="tk-d">rakan dan acara</span></a></li>
         </ol>
       </nav>
@@ -391,7 +388,7 @@
             </a>
             <a class="card shortcut" href="#alat">
               <span class="sc-ico"><svg class="ic"><use href="#i-cap"/></svg></span>
-              <div class="sc-body"><div class="sc-title">Alat Pelajar</div><div class="sc-sub">Rujukan APA 7, pek peperiksaan, penyemak rubrik, nota kuliah dan jurulatih pembentangan</div></div>
+              <div class="sc-body"><div class="sc-title">Alat Pelajar</div><div class="sc-sub">Rujukan APA 7, pek peperiksaan, penyemak rubrik, serta bahagian Pelajar UiTM dan Pelajar Halal</div></div>
               <svg class="ic chev"><use href="#i-chev"/></svg>
             </a>
             <a class="card shortcut" href="#buku">
@@ -402,21 +399,6 @@
             <a class="card shortcut" href="#kerja">
               <span class="sc-ico"><svg class="ic"><use href="#i-target"/></svg></span>
               <div class="sc-body"><div class="sc-title">Kerjaya AI</div><div class="sc-sub">Cadangan jawatan, padanan resume, surat permohonan dan persediaan temu duga</div></div>
-              <svg class="ic chev"><use href="#i-chev"/></svg>
-            </a>
-            <a class="card shortcut" href="#jadual">
-              <span class="sc-ico"><svg class="ic"><use href="#i-calendar"/></svg></span>
-              <div class="sc-body"><div class="sc-title">Jadual kelas UiTM</div><div class="sc-sub" id="homeJadual">Susun jadual kuliah UiTM anda dengan cantik</div></div>
-              <svg class="ic chev"><use href="#i-chev"/></svg>
-            </a>
-            <a class="card shortcut" href="#nota">
-              <span class="sc-ico"><svg class="ic"><use href="#i-bookmark"/></svg></span>
-              <div class="sc-body"><div class="sc-title">Nota IC220</div><div class="sc-sub">Nota Pengurusan Industri Halal daripada pengasas. Lihat pratonton dan beli melalui WhatsApp</div></div>
-              <svg class="ic chev"><use href="#i-chev"/></svg>
-            </a>
-            <a class="card shortcut" href="#halal">
-              <span class="sc-ico"><svg class="ic"><use href="#i-shield"/></svg></span>
-              <div class="sc-body"><div class="sc-title">Audit Halal</div><div class="sc-sub">Senarai semak audit dalaman dan log ketakakuran (NCR) untuk pelajar industri halal</div></div>
               <svg class="ic chev"><use href="#i-chev"/></svg>
             </a>
             <a class="card shortcut" href="#semak">
@@ -732,6 +714,56 @@
     <section class="view" id="view-nota" aria-labelledby="h-nota"></section>
 
     <section class="view" id="view-halal" aria-labelledby="h-halal"></section>
+
+    <section class="view" id="view-uitm" aria-labelledby="h-uitm">
+      <div class="page-head">
+        <p class="eyebrow">Pelajar</p>
+        <h1 id="h-uitm">Pelajar UiTM</h1>
+        <p class="lead">Jadual kelas dan nota subjek untuk pelajar UiTM di satu tempat.</p>
+      </div>
+      <div class="al-lain">
+        <a class="card shortcut" href="#jadual">
+          <span class="sc-ico"><svg class="ic"><use href="#i-calendar"/></svg></span>
+          <div class="sc-body"><div class="sc-title">Jadual kelas UiTM</div><div class="sc-sub" id="homeJadual">Susun jadual kuliah UiTM anda dengan cantik</div></div>
+          <svg class="ic chev"><use href="#i-chev"/></svg>
+        </a>
+        <a class="card shortcut" href="#nota">
+          <span class="sc-ico"><svg class="ic"><use href="#i-bookmark"/></svg></span>
+          <div class="sc-body"><div class="sc-title">Nota IC220</div><div class="sc-sub">Nota Pengurusan Industri Halal daripada pengasas. Lihat pratonton dan beli melalui WhatsApp</div></div>
+          <svg class="ic chev"><use href="#i-chev"/></svg>
+        </a>
+        <a class="card shortcut" href="#alat">
+          <span class="sc-ico"><svg class="ic"><use href="#i-cap"/></svg></span>
+          <div class="sc-body"><div class="sc-title">Alat Pelajar</div><div class="sc-sub">Rujukan APA 7, pek peperiksaan, penyemak rubrik, nota kuliah dan jurulatih pembentangan</div></div>
+          <svg class="ic chev"><use href="#i-chev"/></svg>
+        </a>
+      </div>
+    </section>
+
+    <section class="view" id="view-pelajar-halal" aria-labelledby="h-pelajar-halal">
+      <div class="page-head">
+        <p class="eyebrow">Pengurusan Industri Halal</p>
+        <h1 id="h-pelajar-halal">Pelajar Halal</h1>
+        <p class="lead">Alat khusus untuk pelajar industri halal: senarai semak audit pensijilan, nota subjek dan rujukan hukum.</p>
+      </div>
+      <div class="al-lain">
+        <a class="card shortcut" href="#halal">
+          <span class="sc-ico"><svg class="ic"><use href="#i-shield"/></svg></span>
+          <div class="sc-body"><div class="sc-title">Audit Halal</div><div class="sc-sub">Senarai semak audit dalaman dan log ketakakuran (NCR) untuk pelajar industri halal</div></div>
+          <svg class="ic chev"><use href="#i-chev"/></svg>
+        </a>
+        <a class="card shortcut" href="#nota">
+          <span class="sc-ico"><svg class="ic"><use href="#i-bookmark"/></svg></span>
+          <div class="sc-body"><div class="sc-title">Nota IC220</div><div class="sc-sub">Nota Pengurusan Industri Halal daripada pengasas. Lihat pratonton dan beli melalui WhatsApp</div></div>
+          <svg class="ic chev"><use href="#i-chev"/></svg>
+        </a>
+        <a class="card shortcut" href="#ibadah/fiqh/tanya">
+          <span class="sc-ico"><svg class="ic"><use href="#i-book"/></svg></span>
+          <div class="sc-body"><div class="sc-title">Tanya AI Fiqh</div><div class="sc-sub">Soalan halal dan haram dijawab dengan muka surat kitab dan fatwa rasmi</div></div>
+          <svg class="ic chev"><use href="#i-chev"/></svg>
+        </a>
+      </div>
+    </section>
 
     <section class="view" id="view-semak" aria-labelledby="h-semak">
       <div class="page-head">

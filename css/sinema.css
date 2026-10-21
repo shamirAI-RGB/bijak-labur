@@ -68,8 +68,8 @@
 .view#view-buku > .page-head { --sn-img: url("../images/jelajah/fiqh.svg"); }
 .view#view-alat > .page-head { --sn-img: url("../images/jelajah/semak.svg"); }
 .view#view-ibadah > .page-head, .view#view-soalan > .page-head { --sn-img: url("../images/jelajah/ibadah.svg"); }
-.view#view-halal > .page-head, .view#view-sihat > .page-head { --sn-img: url("../images/jelajah/halal.svg"); }
-.view#view-jadual > .page-head, .view#view-kerja > .page-head, .view#view-komuniti > .page-head { --sn-img: url("../images/jelajah/jadual.svg"); }
+.view#view-halal > .page-head, .view#view-pelajar-halal > .page-head, .view#view-sihat > .page-head { --sn-img: url("../images/jelajah/halal.svg"); }
+.view#view-jadual > .page-head, .view#view-uitm > .page-head, .view#view-kerja > .page-head, .view#view-komuniti > .page-head { --sn-img: url("../images/jelajah/jadual.svg"); }
 
 /* ---------- Pentas ciri di halaman utama ---------- */
 .sn-stage {

@@ -79,6 +79,8 @@
     { t: 'Fiqh & Rujukan', s: 'Hukum dengan sumber kitab', h: '#ibadah/fiqh', ic: 'book', k: 'fiqh hukum muamalat riba halal haram rujukan kitab fatwa' },
     { t: 'Tanya AI Fiqh', s: 'Soalan dijawab dengan muka surat kitab', h: '#ibadah/fiqh/tanya', ic: 'quote', k: 'tanya ai soalan fiqh hukum' },
     { t: 'Semak Kertas', s: 'Peratus AI dan plagiat', h: '#semak', ic: 'file', k: 'plagiat ai tulisan esei assignment semak kertas turnitin' },
+    { t: 'Pelajar UiTM', s: 'Jadual kelas dan Nota IC220', h: '#uitm', ic: 'cap', k: 'uitm pelajar siswa kampus' },
+    { t: 'Pelajar Halal', s: 'Audit Halal, Nota IC220 dan Tanya AI Fiqh', h: '#pelajar-halal', ic: 'shield', k: 'halal pelajar industri pengurusan ic220' },
     { t: 'Jadual Kelas', s: 'Jadual UiTM dan skrin kunci', h: '#jadual', ic: 'calendar', k: 'uitm kelas kuliah timetable wallpaper skrin kunci' },
     { t: 'Kedai Nota', s: 'Nota IC220', h: '#nota', ic: 'receipt', k: 'nota ic220 beli kedai' },
     { t: 'Komuniti pelajar', s: 'Rakan dan acara', h: '#komuniti', ic: 'chat', k: 'komuniti rakan acara forum' },
