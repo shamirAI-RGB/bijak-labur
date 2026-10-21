@@ -131,7 +131,7 @@ kes.push({ kumpulan: 'Halaman', nama: 'Bahagian Pelajar UiTM dan Pelajar Halal m
   await t.buka('#utama');
   const utama = await page.$$eval('#view-utama a[href="#jadual"]:not(.md-chip), #view-utama a[href="#nota"], #view-utama a[href="#halal"], .desk-nav > a[href="#jadual"], .desk-nav > a[href="#nota"]', as => as.map(a => a.getAttribute('href')));
   if (utama.length) throw new Error(`masih ada di halaman utama atau barisan navigasi: ${utama.join(', ')}`);
-  for (const [v, tajuk, jangka] of [['uitm', 'Pelajar UiTM', ['#jadual', '#nota', '#alat']], ['pelajar-halal', 'Pelajar Halal', ['#halal', '#nota', '#ibadah/fiqh/tanya']]]) {
+  for (const [v, tajuk, jangka] of [['uitm', 'Pelajar UiTM', ['#jadual', '#semak', '#alat']], ['pelajar-halal', 'Pelajar Halal', ['#halal', '#nota', '#semak', '#ibadah/fiqh/tanya']]]) {
     await page.evaluate(v => { location.hash = '#' + v; }, v);
     await t.ada(`#view-${v}.active h1`, new RegExp('^' + tajuk + '$'));
     const kad = await page.$$eval(`#view-${v} .card.shortcut`, as => as.map(a => a.getAttribute('href')));
