@@ -361,6 +361,23 @@ export async function kataKunci(env, q) {
   } catch (e) { console.log('kata kunci', e && e.message); return ''; }
 }
 
+/*
+ * Claude dahulu jika kuncinya ada. Jika Claude gagal (kredit habis, kunci salah, sibuk atau ralat), soalan dijawab
+ * dalam mod korpus oleh rantaian Tanya AI biasa (model percuma OpenRouter, kemudian DeepSeek), supaya pengguna tidak
+ * melihat ralat. Sandaran hanya jika Claude gagal cukup awal, supaya jumlah masa menunggu kekal munasabah.
+ */
+export const SANDARAN_CLAUDE_MS = 75000;
+export async function jawabTanya(env, q, docs = [], client) {
+  if (provider(env) !== 'claude') return askKorpus(env, q, docs);
+  const mula = Date.now();
+  try { return await ask(env, q, client, docs); }
+  catch (e) {
+    console.log('tanya claude gagal', e && e.status, String(e && e.message || e).slice(0, 300));
+    if (!(tanyaRantai(env).length || aiSedia(env)) || Date.now() - mula > SANDARAN_CLAUDE_MS) throw e;
+    return askKorpus(env, q, docs);
+  }
+}
+
 async function tanya(req, env, url, h) {
   if (!provider(env)) return json({ error: 'Tanya AI belum diaktifkan.' }, 503, h);
   // Hanya laman dan app SiswaCap (elak orang lain menghabiskan kredit API)
@@ -376,7 +393,9 @@ async function tanya(req, env, url, h) {
   // supaya jawapan model lama tidak dipaparkan selepas pemilik menukar penyedia (cth. Gemini ke OpenRouter).
   const [tCetak, tIndeks] = await Promise.all([assetTag(env), assetTag(env, 'rujukan/meta.json')]);
   const key = new Request(`${url.origin}/tanya-cache-5?q=${encodeURIComponent(norm(q))}&r=${tCetak}&i=${tIndeks}&p=${provider(env)}`);
-  const hit = cache && await cache.match(key);
+  // Cache hanya pemecut: jika ia gagal, soalan tetap dijawab
+  let hit = null;
+  try { hit = cache && await cache.match(key); } catch (e) { console.log('cache tanya', String(e && e.message || e).slice(0, 200)); }
   if (hit) return json(await hit.json(), 200, h);
 
   if (env.FIQH_LIMIT) {
@@ -388,13 +407,17 @@ async function tanya(req, env, url, h) {
   // Cari muka surat dokumen rasmi moden yang berkaitan (tanpa model, jadi sama untuk semua penyedia)
   let docs = [];
   try { docs = await search(env, expand(q) + ' ' + await kataKunci(env, q), 8, q); } catch (e) { console.log('rujukan', e && e.message); }
-  try { out = provider(env) === 'claude' ? await ask(env, q, undefined, docs) : await askKorpus(env, q, docs); }
+  try { out = await jawabTanya(env, q, docs); }
   catch (e) {
-    console.log(provider(env), e && e.status, e && e.message);
+    console.log('tanya gagal', provider(env), e && e.status, e && (e.status ? e.message : e.stack || e));
     const busy = e && (e.status === 429 || e.status === 529);
     return json({ error: busy ? 'Tanya AI sibuk. Cuba lagi sebentar.' : 'Tanya AI tidak tersedia buat masa ini.' }, busy ? 429 : 502, h);
   }
-  if (cache && out.status === 'jawab') await cache.put(key, new Response(JSON.stringify(out), { headers: { 'content-type': 'application/json', 'cache-control': `public, max-age=${CACHE_DAYS * 86400}` } }));
+  // Jawapan yang sudah siap mesti sampai kepada pengguna walaupun cache gagal (cth. had permintaan kecil pelayan habis)
+  if (cache && out.status === 'jawab') {
+    try { await cache.put(key, new Response(JSON.stringify(out), { headers: { 'content-type': 'application/json', 'cache-control': `public, max-age=${CACHE_DAYS * 86400}` } })); }
+    catch (e) { console.log('cache tanya', String(e && e.message || e).slice(0, 200)); }
+  }
   return json(out, 200, h);
 }
 

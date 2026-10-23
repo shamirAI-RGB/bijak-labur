@@ -183,8 +183,8 @@ jobs:
         continue-on-error: true
         run: |
           sleep 15
-          # Log pelayan (wrangler tail) semasa ujian, untuk melihat punca ralat sebenar
-          (timeout 60 npx --yes wrangler@3 tail --format json > tail.log 2>/dev/null &) ; sleep 8
+          # Log pelayan (wrangler tail) semasa ujian, untuk melihat punca ralat sebenar (240 s: log permintaan hanya dihantar selepas jawapan siap, dan Tanya AI boleh mengambil masa 1 hingga 2 minit)
+          (timeout 240 npx --yes wrangler@3 tail --format json > tail.log 2>/dev/null &) ; sleep 8
           F=https://fiqh.siswacap.my; O='origin: https://siswacap.my'; C='content-type: application/json'
           curl -sS "$F/" | jq -c .   # termasuk senarai penyedia sandaran yang aktif
           curl -sS -X POST "$F/gambar" -H "$O" -H "$C" -d '{"prompt":"kucing comel makan nasi lemak atas daun pisang","gaya":"catair","seed":7}' \
