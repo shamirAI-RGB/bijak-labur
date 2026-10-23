@@ -348,6 +348,20 @@ export default [
     await tiadaLimpahan(page);
   } },
 
+  { kumpulan: K, nama: 'Pek: model AI pertama sibuk atau habis kuota, model seterusnya menjawab tanpa ralat "sibuk"', langkah: async (t, page) => {
+    await t.buka('#alat/pek');
+    await isiBahan(t);
+    let n = 0;
+    const sibuk = () => new Response('{"error":{"status":"UNAVAILABLE","message":"high demand"}}', { status: 503 });
+    const kuota = () => new Response('{"error":{"status":"RESOURCE_EXHAUSTED"}}', { status: 429 });
+    await denganModel({ pek: () => (++n === 1 ? sibuk() : n === 2 ? kuota() : PEK_MODEL) }, async dipanggil => {
+      await t.klik('[data-act="jana-pek"]');
+      await t.ada('.al-hasil-kepala', /MCQ \(4\)/, 20000);
+      sama(dipanggil.length, 3, 'Model dicuba mengikut susunan sehingga satu menjawab');
+    });
+    pasti(!(await page.$('#view-alat .error')), 'Tiada mesej ralat');
+  } },
+
   { kumpulan: K, nama: 'Pek: MCQ dijawab dan diskor, ulang, salin semua', langkah: async (t, page) => {
     await t.buka('#alat/pek');
     await isiBahan(t);

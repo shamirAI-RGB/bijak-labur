@@ -7,7 +7,9 @@ import { robots, kandungan, tarikhHtml, tajukHtml, pautanHtml, artikelOk, tajukU
 import { clean, semakBody, systemFor } from './src/semak.js';
 import { clean as cleanK, kaloriBody, check as checkK } from './src/kalori.js';
 import { blocked, check as checkG, promptBody, GAYA, FLUX } from './src/gambar.js';
-import { geminiGenerate, toJsonSchema, ROUTER_MODEL, aiSedia } from './src/gemini.js';
+import { geminiGenerate, geminiOnly, toJsonSchema, ROUTER_MODEL, aiSedia, GEMINI_CFG, GEMINI_FALLBACKS as GF, resetGemini } from './src/gemini.js';
+// Penyejukan model dan jeda cubaan semula Gemini dimatikan supaya setiap ujian bebas; diuji berasingan di bawah
+GEMINI_CFG.sejuk = false; GEMINI_CFG.ulangMs = 0;
 import { PENYEDIA, combo, cooldownFor, keOpenAI, penghalaGenerate, gambarSandaran, resetPenghala } from './src/penghala.js';
 import { check as checkB, clean as cleanB, verifyQuotes, bukuBody, SCHEMAS as SB } from './src/buku.js';
 import { check as checkJ, clean as cleanJ, redact } from './src/kerja.js';
@@ -314,6 +316,26 @@ assert.equal(d.penyedia, 'claude');
   const pd = await penghalaGenerate({ DEEPSEEK_API_KEY: 'd' }, JSON.stringify({ contents: [{ parts: [{ text: 'hai' }] }], generationConfig: { responseMimeType: 'application/json' } }));
   assert.equal(pd.penghala, 'deepseek'); assert.deepEqual([sent[0].b.model, sent[0].b.thinking], ['deepseek-flash', { type: 'disabled' }]);
   resetPenghala();
+
+  // Claude gagal (cth. kredit habis atau sibuk): soalan dijawab oleh model percuma Tanya AI dalam mod korpus, bukan ralat
+  resetPenghala(); sent = [];
+  jawab = (b, u) => u.includes('anthropic') ? new Response(JSON.stringify({ type: 'error', error: { type: 'overloaded_error', message: 'x' } }), { status: 529, headers: { 'content-type': 'application/json' } }) : oa(FOREX);
+  r = await call({ q: 'Hukum forex runcit bila Claude sibuk?' }, 'https://bijaklabur.my', { ...oenv, ...env });
+  d = await r.json();
+  assert.equal(r.status, 200, JSON.stringify(d)); assert.equal(d.status, 'jawab');
+  assert.ok(sent.some(x => x.u.includes('anthropic')) && sent.at(-1).u.includes('openrouter')); assert.equal(google, 0);
+  jawab = (b, u) => u.includes('anthropic') ? new Response(JSON.stringify({ type: 'error', error: { type: 'authentication_error', message: 'x' } }), { status: 401, headers: { 'content-type': 'application/json' } }) : oa(FOREX);
+  assert.equal((await call({ q: 'Hukum forex runcit bila kunci Claude salah?' }, 'https://bijaklabur.my', { ...oenv, ...env })).status, 200);
+  // Claude dan model percuma gagal: ralat Claude dipaparkan
+  jawab = (b, u) => u.includes('anthropic') ? new Response(JSON.stringify({ type: 'error', error: { type: 'overloaded_error', message: 'x' } }), { status: 529, headers: { 'content-type': 'application/json' } }) : new Response('{}', { status: 429 });
+  assert.equal((await call({ q: 'Hukum forex runcit bila semua sibuk?' }, 'https://bijaklabur.my', { ...oenv, ...env })).status, 429);
+
+  // Cache gagal (cth. had permintaan pelayan): jawapan tetap dihantar kepada pengguna, bukan "Ralat pelayan"
+  jawab = () => oa(FOREX);
+  globalThis.caches = { default: { match: async () => { throw new Error('Too many subrequests'); }, put: async () => { throw new Error('Too many subrequests'); } } };
+  r = await call({ q: 'Hukum forex runcit dengan cache rosak?' }, 'https://bijaklabur.my', oenv);
+  delete globalThis.caches;
+  assert.equal(r.status, 200); assert.equal((await r.json()).status, 'jawab');
 }
 
 
@@ -727,7 +749,7 @@ assert.equal(d.status, 'tidak_pasti');
   const body = JSON.stringify({ systemInstruction: { parts: [{ text: 'SYS' }] }, contents: [{ role: 'user', parts: [{ text: 'soalan' }] }],
     generationConfig: { responseMimeType: 'application/json', responseSchema: { type: 'OBJECT', properties: { status: { type: 'STRING' } } }, maxOutputTokens: 9000, temperature: 0.2 } });
   const d = await geminiGenerate({ GEMINI_API_KEY: 'g', AI }, body);
-  assert.equal(calls, 4); assert.equal(got.m, ROUTER_MODEL); assert.equal(d.penghala, 'workers-ai');
+  assert.equal(calls, GF.length + 1); assert.equal(got.m, ROUTER_MODEL); assert.equal(d.penghala, 'workers-ai');
   assert.equal(d.candidates[0].content.parts[0].text, '{"status":"ok"}');
   assert.ok(got.a.messages[0].content.startsWith('SYS') && got.a.messages[1].content === 'soalan');
   assert.equal(got.a.max_tokens, 4096); assert.equal(got.a.response_format.json_schema.type, 'object');
@@ -1295,4 +1317,40 @@ console.log('Semua ujian Tanya AI lulus');
   assert.equal(A.ayat('Keputusan Muzakarah Jawatankuasa Fatwa Majlis Kebangsaan Tentang Vape'), 'Keputusan Muzakarah Jawatankuasa Fatwa Majlis Kebangsaan tentang vape');
   assert.equal(A.ayat('Hukum memakai purdah bagi wanita Muslim'), 'Hukum memakai purdah bagi wanita Muslim');
   console.log('rujukan APA 7 OK');
+}
+
+// Gemini: model yang kehabisan kuota atau sibuk dilangkau seketika; rantaian yang gagal dicuba semula sekali sebelum "sibuk"
+{
+  const body = JSON.stringify({ contents: [{ parts: [{ text: 'hai' }] }], generationConfig: {} });
+  const ok = () => new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: 'ok' }] }, finishReason: 'STOP' }] }));
+  let urut = [], penuh = new Set();
+  globalThis.fetch = async u => { const m = String(u).match(/models\/([^:]+):/)[1]; urut.push(m); return penuh.has(m) ? new Response('{}', { status: 429 }) : ok(); };
+  GEMINI_CFG.sejuk = true; resetGemini();
+  penuh = new Set(['gemini-flash-lite-latest']);
+  await geminiOnly({ GEMINI_API_KEY: 'g' }, body);
+  assert.deepEqual(urut, ['gemini-flash-lite-latest', GF[0]]);
+  urut = [];
+  await geminiOnly({ GEMINI_API_KEY: 'g' }, body);
+  assert.deepEqual(urut, [GF[0]], 'model 429 dilangkau');
+  // Semua model disejukkan: semuanya dicuba juga
+  penuh = new Set(['gemini-flash-lite-latest', ...GF]); await assert.rejects(geminiOnly({ GEMINI_API_KEY: 'g' }, body), e => e.status === 429);
+  urut = []; await assert.rejects(geminiOnly({ GEMINI_API_KEY: 'g' }, body), e => e.status === 429);
+  assert.equal(urut.length, GF.length + 1);
+  // Tamat masa: model seterusnya
+  resetGemini(); urut = [];
+  globalThis.fetch = async (u, init) => { const m = String(u).match(/models\/([^:]+):/)[1]; urut.push(m); if (urut.length === 1) { assert.ok(init.signal); throw new DOMException('timeout', 'TimeoutError'); } return ok(); };
+  assert.equal((await geminiOnly({ GEMINI_API_KEY: 'g' }, body)).candidates[0].content.parts[0].text, 'ok');
+  assert.deepEqual(urut, ['gemini-flash-lite-latest', GF[0]]);
+  // Semua gagal dan tiada sandaran: cuba semula model Lite sekali, kemudian berjaya
+  resetGemini(); let n = 0;
+  globalThis.fetch = async () => ++n <= GF.length + 1 ? new Response('{}', { status: 429 }) : ok();
+  assert.equal((await geminiGenerate({ GEMINI_API_KEY: 'g' }, body)).candidates[0].content.parts[0].text, 'ok');
+  assert.equal(n, GF.length + 2);
+  // Cubaan semula juga gagal: ralat asal (sibuk)
+  resetGemini(); n = 0;
+  globalThis.fetch = async () => { n++; return new Response('{}', { status: 429 }); };
+  await assert.rejects(geminiGenerate({ GEMINI_API_KEY: 'g' }, body), e => e.status === 429);
+  assert.equal(n, GF.length + 1 + 4);
+  GEMINI_CFG.sejuk = false; resetGemini();
+  console.log('penyejukan Gemini OK');
 }
