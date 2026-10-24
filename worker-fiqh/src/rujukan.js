@@ -137,7 +137,26 @@ const asset = async (env, path) => {
   const r = await env.RUJUKAN.fetch(new Request(`https://aset/${path}`));
   return r.ok ? r : null;
 };
-const assetJson = async (env, path) => { const r = await asset(env, path); return r ? r.json() : null; };
+/*
+ * Cloudflare (pelan percuma) mengehadkan setiap permintaan kepada 50 permintaan kecil (subrequest), termasuk setiap fail aset
+ * RUJUKAN, panggilan model dan cache. Carian Tanya AI pernah memerlukan hampir 50 fail aset, jadi panggilan model atau
+ * cache selepasnya gagal ("Too many subrequests"). Aset tidak berubah dalam satu pemasangan, jadi kandungannya disimpan
+ * dalam memori isolate (paling banyak ASET_MAKS fail, yang paling lama tidak digunakan dibuang dahulu).
+ */
+export const ASET_MAKS = 600;
+let memoAset = new WeakMap();   // env.RUJUKAN -> Map(laluan -> Promise)
+/** Untuk ujian yang menukar kandungan aset dalam proses yang sama */
+export const resetAset = () => { memoAset = new WeakMap(); };
+function ingat(env, key, buat) {
+  let m = memoAset.get(env.RUJUKAN);
+  if (!m) memoAset.set(env.RUJUKAN, m = new Map());
+  if (m.has(key)) { const v = m.get(key); m.delete(key); m.set(key, v); return v; }
+  const v = buat().catch(e => { m.delete(key); throw e; });
+  m.set(key, v);
+  if (m.size > ASET_MAKS) m.delete(m.keys().next().value);
+  return v;
+}
+const assetJson = (env, path) => ingat(env, path, async () => { const r = await asset(env, path); return r ? r.json() : null; });
 
 /**
  * Cap kandungan (ETag) fail aset, atau '' jika tiada. Digunakan dalam kunci cache jawapan Tanya AI supaya jawapan lama
@@ -146,8 +165,10 @@ const assetJson = async (env, path) => { const r = await asset(env, path); retur
 export async function assetTag(env, path = 'rujukan/cetakan.json') {
   if (!env.RUJUKAN) return '';
   try {
-    const r = await env.RUJUKAN.fetch(new Request(`https://aset/${path}`, { method: 'HEAD' }));
-    return r.ok ? (r.headers.get('etag') || '').replace(/[^\w-]/g, '').slice(0, 40) : '';
+    return await ingat(env, 'HEAD ' + path, async () => {
+      const r = await env.RUJUKAN.fetch(new Request(`https://aset/${path}`, { method: 'HEAD' }));
+      return r.ok ? (r.headers.get('etag') || '').replace(/[^\w-]/g, '').slice(0, 40) : '';
+    });
   } catch { return ''; }
 }
 
@@ -169,8 +190,9 @@ export async function search(env, query, limit = 6, asal = '') {
   if (!meta || !meta.N) return [];
   const terms = [...new Set(tokens(query))].slice(0, 24);
   if (!terms.length) return [];
+  // Paling banyak MAKS_BALDI fail indeks (had permintaan kecil, lihat ASET_MAKS); istilah soalan asal didahulukan dalam query
   const N = meta.N, byBucket = new Map();
-  for (const t of terms) { const b = bucket(t); if (!byBucket.has(b)) byBucket.set(b, []); byBucket.get(b).push(t); }
+  for (const t of terms) { const b = bucket(t); if (!byBucket.has(b) && byBucket.size >= MAKS_BALDI) continue; if (!byBucket.has(b)) byBucket.set(b, []); byBucket.get(b).push(t); }
   const idx = await Promise.all([...byBucket.keys()].map(b => assetJson(env, `rujukan/i/${b}.json`)));
   // Istilah paling jarang dalam soalan asal (separuh daripada istilahnya, sekurang-kurangnya satu); perkataan tanya diabaikan
   const ada = new Map();
@@ -234,10 +256,11 @@ export async function search(env, query, limit = 6, asal = '') {
 
 const jenisDoc = k => DOC[k] ? DOC[k].jenis : '';
 export const MUFTI_MAKS = 3;
+export const MAKS_BALDI = 14;
 /* Pilih paling banyak MUFTI_MAKS bahagian artikel Mufti: satu bahagian bagi setiap artikel, negeri berbeza didahulukan */
 async function pilihMufti(env, list, skorModen) {
   if (!list.length) return [];
-  const had = Math.max(list[0].skor, skorModen) * 0.4, calon = list.filter(x => x.skor >= had).slice(0, 12);
+  const had = Math.max(list[0].skor, skorModen) * 0.4, calon = list.filter(x => x.skor >= had).slice(0, 6);
   const info = new Map(calon.map(x => [muftiPath(x.k, x.n), null]));
   await Promise.all([...info.keys()].map(async p => info.set(p, await assetJson(env, p))));
   const dulu = [], kemudian = [], url = new Set(), negeri = new Set();

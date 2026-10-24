@@ -8,7 +8,7 @@
  *
  * Seperti 9Router, penyedia yang gagal "disejukkan" seketika supaya permintaan seterusnya terus ke penyedia lain:
  *   429 / kuota: undur eksponen (2 s, 4 s, 8 s ... maksimum 5 minit)
- *   401 / 402 / 403: kunci salah atau kredit habis, 10 minit
+ *   401 / 402 / 403 / 404: kunci salah, kredit habis atau model tiada, 10 minit
  *   5xx / tamat masa / rangkaian: 30 saat
  *   400 lain: punca ialah permintaan itu sendiri, jadi tiada penyejukan (cuba penyedia seterusnya sahaja)
  *
@@ -26,10 +26,10 @@
 import { catatGuna } from './guna.js';
 export const PENYEDIA = [
   // Peringkat percuma (didahulukan)
-  { id: 'groq', nama: 'Groq', key: 'GROQ_API_KEY', url: 'https://api.groq.com/openai/v1/chat/completions', model: 'llama-3.3-70b-versatile', vision: 'meta-llama/llama-4-maverick-17b-128e-instruct', percuma: true },
+  { id: 'groq', nama: 'Groq', key: 'GROQ_API_KEY', url: 'https://api.groq.com/openai/v1/chat/completions', model: 'openai/gpt-oss-120b', vision: 'meta-llama/llama-4-maverick-17b-128e-instruct', percuma: true },
   { id: 'cerebras', nama: 'Cerebras', key: 'CEREBRAS_API_KEY', url: 'https://api.cerebras.ai/v1/chat/completions', model: 'gpt-oss-120b', percuma: true },
   // OpenRouter: pengepala HTTP-Referer dan X-Title memaparkan SiswaCap sebagai app dalam statistik OpenRouter
-  { id: 'openrouter', nama: 'OpenRouter', key: 'OPENROUTER_API_KEY', url: 'https://openrouter.ai/api/v1/chat/completions', model: 'meta-llama/llama-3.3-70b-instruct:free', vision: 'google/gemma-3-27b-it:free', percuma: true, headers: { 'HTTP-Referer': 'https://siswacap.my', 'X-Title': 'SiswaCap' } },
+  { id: 'openrouter', nama: 'OpenRouter', key: 'OPENROUTER_API_KEY', url: 'https://openrouter.ai/api/v1/chat/completions', model: 'nvidia/nemotron-3-super-120b-a12b:free', vision: 'google/gemma-3-27b-it:free', percuma: true, headers: { 'HTTP-Referer': 'https://siswacap.my', 'X-Title': 'SiswaCap' } },
   { id: 'nvidia', nama: 'NVIDIA NIM', key: 'NVIDIA_API_KEY', url: 'https://integrate.api.nvidia.com/v1/chat/completions', model: 'deepseek-ai/deepseek-v4-flash', percuma: true },
   { id: 'mistral', nama: 'Mistral', key: 'MISTRAL_API_KEY', url: 'https://api.mistral.ai/v1/chat/completions', model: 'mistral-small-latest', vision: 'mistral-small-latest', percuma: true },
   { id: 'zai', nama: 'Z.ai', key: 'ZAI_API_KEY', url: 'https://api.z.ai/api/paas/v4/chat/completions', model: 'glm-5.3-flash', percuma: true },
@@ -75,7 +75,8 @@ export function cooldownFor(status, text = '', level = 0) {
     const n = Math.min(level + 1, BACKOFF.maxLevel);
     return { fallback: true, ms: Math.min(BACKOFF.base * 2 ** (n - 1), BACKOFF.max), level: n };
   }
-  if ([401, 402, 403].includes(status)) return { fallback: true, ms: COOLDOWN.auth, level };
+  // 404: model sudah ditarik balik atau tidak lagi percuma; jangan buang satu permintaan kecil setiap kali
+  if ([401, 402, 403, 404].includes(status)) return { fallback: true, ms: COOLDOWN.auth, level };
   if (status >= 400 && status < 500) return { fallback: true, ms: 0, level };
   return { fallback: true, ms: COOLDOWN.transient, level };
 }
