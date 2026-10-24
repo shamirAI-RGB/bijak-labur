@@ -307,9 +307,11 @@ export async function askKorpus(env, question, docs = []) {
   return verify(ans || { status: 'tidak_pasti' }, new Map(), docs, await muatCetakan(env));
 }
 
-export async function ask(env, question, client, docs = []) {
+// web = false: Claude dalam mod korpus (tanpa alat web, satu panggilan, input jauh lebih kecil), sandaran pertama apabila
+// panggilan dengan alat web gagal atau dihadkan
+export async function ask(env, question, client, docs = [], { web = true } = {}) {
   client = client || new Anthropic({ apiKey: env.ANTHROPIC_API_KEY, maxRetries: 1 });
-  const tools = [
+  const tools = !web ? [] : [
     { type: 'web_search_20260209', name: 'web_search', max_uses: 3, allowed_domains: DOMAINS },
     { type: 'web_fetch_20260209', name: 'web_fetch', max_uses: 4, allowed_domains: DOMAINS, max_content_tokens: 12000 }
   ];
@@ -322,7 +324,7 @@ export async function ask(env, question, client, docs = []) {
   let res;
   for (let i = 0; i < 4; i++) {
     res = await client.beta.messages.create({
-      model: MODEL, max_tokens: 12000, system: SYSTEM, tools, messages,
+      model: MODEL, max_tokens: 12000, system: web ? SYSTEM : SYSTEM_KORPUS, ...(web ? { tools } : {}), messages,
       output_config: { effort: 'medium' },
       betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default'
     });
@@ -354,7 +356,9 @@ export async function kataKunci(env, q) {
     });
     // Dengan penyedia Tanya AI: istilah carian daripada penghala percuma (tanpa Gemini) atau Workers AI, supaya
     // had harian model Tanya AI digunakan untuk jawapan sahaja
-    const d = tanyaRantai(env).length ? (await penghalaGenerate(env, body) || await routerGenerate(env, body)) : await geminiGenerate(env, body);
+    // Dengan Claude: Workers AI dahulu (pantas, satu permintaan kecil), supaya had permintaan kecil dan masa disimpan untuk jawapan
+    const d = provider(env) === 'claude' ? (await routerGenerate(env, body) || await penghalaGenerate(env, body))
+      : tanyaRantai(env).length ? (await penghalaGenerate(env, body) || await routerGenerate(env, body)) : await geminiGenerate(env, body);
     if (!d) return '';
     const o = parseAnswer(geminiText(d)) || {};
     return ['ar', 'en', 'ms'].flatMap(k => Array.isArray(o[k]) ? o[k].slice(0, 8) : []).map(t => String(t).slice(0, 40)).join(' ');
@@ -362,9 +366,12 @@ export async function kataKunci(env, q) {
 }
 
 /*
- * Claude dahulu jika kuncinya ada. Jika Claude gagal (kredit habis, kunci salah, sibuk atau ralat), soalan dijawab
- * dalam mod korpus oleh rantaian Tanya AI biasa (model percuma OpenRouter, kemudian DeepSeek), supaya pengguna tidak
- * melihat ralat. Sandaran hanya jika Claude gagal cukup awal, supaya jumlah masa menunggu kekal munasabah.
+ * Claude diutamakan jika kuncinya ada (arahan pemilik, 24 Oktober 2026: "utamakan claude"):
+ *  1. Claude dengan alat web (Shamela, laman Mufti).
+ *  2. Jika gagal (sibuk, had token seminit, ralat sambungan), Claude sekali lagi dalam mod korpus: tanpa alat web,
+ *     satu panggilan, korpus dalam cache segera, jadi jauh lebih ringan dan jarang dihadkan.
+ *  3. Hanya jika Claude masih gagal (cth. kredit habis atau kunci salah), rantaian model percuma Tanya AI.
+ * Sandaran seterusnya hanya jika masih ada masa, supaya jumlah masa menunggu kekal munasabah.
  */
 export const SANDARAN_CLAUDE_MS = 75000;
 export async function jawabTanya(env, q, docs = [], client) {
@@ -373,7 +380,17 @@ export async function jawabTanya(env, q, docs = [], client) {
   try { return await ask(env, q, client, docs); }
   catch (e) {
     console.log('tanya claude gagal', e && e.status, String(e && e.message || e).slice(0, 300));
-    if (!(tanyaRantai(env).length || aiSedia(env)) || Date.now() - mula > SANDARAN_CLAUDE_MS) throw e;
+    if (Date.now() - mula > SANDARAN_CLAUDE_MS) throw e;
+    // Kunci salah atau kredit habis tidak pulih dengan cubaan semula
+    if (![400, 401, 402, 403].includes(e && e.status)) {
+      try { return await ask(env, q, client, docs, { web: false }); }
+      catch (e2) {
+        console.log('tanya claude korpus gagal', e2 && e2.status, String(e2 && e2.message || e2).slice(0, 300));
+        if (Date.now() - mula > SANDARAN_CLAUDE_MS) throw e2;
+        e = e2;
+      }
+    }
+    if (!(tanyaRantai(env).length || aiSedia(env))) throw e;
     return askKorpus(env, q, docs);
   }
 }
