@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import worker, { readJson, NOTA_PDF, kataKunci, verify, collectRetrieved, norm, normUrl, parseAnswer, MODEL, GEMINI_MODEL, GEMINI_FALLBACKS, DOMAINS, TANYA, TANYA_EFFORT } from './src/app.js';
 import { BY_ID, CORPUS_TEXT } from './src/corpus.js';
+import { resetAset, ASET_MAKS, MAKS_BALDI } from './src/rujukan.js';
 import { MODEN, KITAB, MUFTI, DOC, buildIndex, muftiDocs, potong, bahagianPdf, search, expand, pageUrl, pagesText, tokens, cetakan, cetakPdf, assetTag } from './src/rujukan.js';
 import { robots, kandungan, tarikhHtml, tajukHtml, pautanHtml, artikelOk, tajukUmum, tajukFail, tajukTeks, tanpaNamaLaman, KUNCI, ABAI } from './scripts/muat-mufti.mjs';
 import { clean, semakBody, systemFor } from './src/semak.js';
@@ -317,15 +318,30 @@ assert.equal(d.penyedia, 'claude');
   assert.equal(pd.penghala, 'deepseek'); assert.deepEqual([sent[0].b.model, sent[0].b.thinking], ['deepseek-flash', { type: 'disabled' }]);
   resetPenghala();
 
-  // Claude gagal (cth. kredit habis atau sibuk): soalan dijawab oleh model percuma Tanya AI dalam mod korpus, bukan ralat
+  // Claude diutamakan: panggilan dengan alat web gagal (sibuk atau had token seminit), Claude dicuba semula dalam mod korpus
+  // (tanpa alat web), sebelum model percuma
+  const claudeRalat = (st, type) => new Response(JSON.stringify({ type: 'error', error: { type, message: 'x' } }), { status: st, headers: { 'content-type': 'application/json' } });
+  const claudeJawab = obj => new Response(JSON.stringify({ id: 'm', type: 'message', role: 'assistant', model: MODEL, content: [{ type: 'text', text: JSON.stringify(obj) }], stop_reason: 'end_turn', usage: { input_tokens: 1, output_tokens: 1 } }), { headers: { 'content-type': 'application/json' } });
   resetPenghala(); sent = [];
-  jawab = (b, u) => u.includes('anthropic') ? new Response(JSON.stringify({ type: 'error', error: { type: 'overloaded_error', message: 'x' } }), { status: 529, headers: { 'content-type': 'application/json' } }) : oa(FOREX);
+  jawab = (b, u) => !u.includes('anthropic') ? oa(FOREX) : b.tools ? claudeRalat(429, 'rate_limit_error') : claudeJawab(FOREX);
+  r = await call({ q: 'Hukum forex runcit bila Claude dihadkan?' }, 'https://bijaklabur.my', { ...oenv, ...env });
+  d = await r.json();
+  assert.equal(r.status, 200, JSON.stringify(d)); assert.equal(d.status, 'jawab');
+  const ke = sent.filter(x => x.u.includes('anthropic'));
+  assert.ok(ke.length >= 2 && ke.at(-1).b.tools === undefined && ke.at(-1).b.system.includes('Mod korpus'), 'Claude mod korpus selepas alat web gagal');
+  assert.ok(!sent.some(x => x.u.includes('openrouter')), 'model percuma tidak digunakan apabila Claude mod korpus menjawab'); assert.equal(google, 0);
+  // Claude gagal dalam kedua-dua mod: model percuma Tanya AI menjawab, bukan ralat
+  sent = [];
+  jawab = (b, u) => u.includes('anthropic') ? claudeRalat(529, 'overloaded_error') : oa(FOREX);
   r = await call({ q: 'Hukum forex runcit bila Claude sibuk?' }, 'https://bijaklabur.my', { ...oenv, ...env });
   d = await r.json();
   assert.equal(r.status, 200, JSON.stringify(d)); assert.equal(d.status, 'jawab');
   assert.ok(sent.some(x => x.u.includes('anthropic')) && sent.at(-1).u.includes('openrouter')); assert.equal(google, 0);
-  jawab = (b, u) => u.includes('anthropic') ? new Response(JSON.stringify({ type: 'error', error: { type: 'authentication_error', message: 'x' } }), { status: 401, headers: { 'content-type': 'application/json' } }) : oa(FOREX);
+  // Kunci salah atau kredit habis: tiada cubaan semula Claude, terus ke model percuma
+  sent = [];
+  jawab = (b, u) => u.includes('anthropic') ? claudeRalat(401, 'authentication_error') : oa(FOREX);
   assert.equal((await call({ q: 'Hukum forex runcit bila kunci Claude salah?' }, 'https://bijaklabur.my', { ...oenv, ...env })).status, 200);
+  assert.equal(sent.filter(x => x.u.includes('anthropic')).length, 1);
   // Claude dan model percuma gagal: ralat Claude dipaparkan
   jawab = (b, u) => u.includes('anthropic') ? new Response(JSON.stringify({ type: 'error', error: { type: 'overloaded_error', message: 'x' } }), { status: 529, headers: { 'content-type': 'application/json' } }) : new Response('{}', { status: 429 });
   assert.equal((await call({ q: 'Hukum forex runcit bila semua sibuk?' }, 'https://bijaklabur.my', { ...oenv, ...env })).status, 429);
@@ -434,7 +450,7 @@ assert.equal(cetakPdf(null, 1), null);
 }
 // Dengan peta cetakan tetapi tanpa gambar muka surat yang disahkan: halaman tetap diberi kepada model, dan sumber
 // dipaparkan dengan teks halaman Shamela serta nota bahawa gambar cetakannya belum tersedia
-kfiles.set('rujukan/cetakan.json', JSON.stringify({ fathqarib: CET }));
+kfiles.set('rujukan/cetakan.json', JSON.stringify({ fathqarib: CET })); resetAset();
 greply = () => gem({ status: 'jawab', ringkasan: 'x', huraian: ['y'], sumber: [{ id: 'kitab:fathqarib:143', petikan: 'ولا يجوز بيع الذهب بالذهب إلا متماثلا نقدا', maksud: 'Tidak harus menjual emas dengan emas kecuali sama dan tunai.' }] });
 d = await (await call({ q: 'Hukum jual beli emas dengan emas!' }, 'https://bijaklabur.my', { ...genv, ...kenv })).json();
 assert.ok(gsent.contents[0].parts.some(p => p.text.includes('[kitab:fathqarib:143]')));
@@ -442,7 +458,7 @@ assert.equal(d.status, 'jawab'); assert.ok(d.sumber[0].disahkan); assert.equal(d
 assert.ok(d.sumber[0].teks_halaman.includes('بيع الذهب بالذهب')); assert.equal(d.sumber[0].pdf, 147); assert.equal(d.nota_pdf, NOTA_PDF);
 // Dengan gambar muka surat yang disahkan: halaman diberi, sumber membawa gambar cetakan (bukan teks laman web)
 const CETG = { ...CET, paparan: [{ gambar: 'https://archive.org/download/x/page/n{n}_w800.jpg', lihat: 'https://archive.org/details/x/page/n{n}/mode/1up', off: -1 }, null] };
-kfiles.set('rujukan/cetakan.json', JSON.stringify({ fathqarib: CETG }));
+kfiles.set('rujukan/cetakan.json', JSON.stringify({ fathqarib: CETG })); resetAset();
 d = await (await call({ q: 'Hukum jual beli emas dengan emas!!' }, 'https://bijaklabur.my', { ...genv, ...kenv })).json();
 assert.deepEqual([d.sumber[0].pdf, d.sumber[0].pdf_url, d.sumber[0].penerbit, d.sumber[0].disahkan, d.sumber[0].gambar_url], [147, 'https://archive.org/download/x/x.pdf#page=147', 'Dar Ibn Hazm', true, 'https://archive.org/download/x/page/n146_w800.jpg']);
 assert.equal(d.sumber[0].teks_halaman, undefined);
@@ -577,6 +593,7 @@ assert.equal(d.status, 'tidak_pasti');
   // Carian: artikel Mufti yang berkaitan diberi bersama dokumen moden, artikel berbeza dan negeri berbeza didahulukan
   const mfiles = buildIndex({ ...PDF, ...mf.docs });
   for (const [p, c] of mf.files) mfiles.set(p, c);
+  resetAset();
   const menv = { RUJUKAN: { fetch: async req => { const p = new URL(req.url).pathname.slice(1); return mfiles.has(p) ? new Response(mfiles.get(p)) : new Response('', { status: 404 }); } } };
   const mh = await search(menv, expand('Apakah hukum menghisap vape?'));
   // Muka surat PDF yang hanya berkongsi istilah umum ("hukum") jauh lebih lemah daripada artikel Mufti: tidak diberi
@@ -981,7 +998,7 @@ console.log('Semua ujian Tanya AI lulus');
   const e2 = { GEMINI_API_KEY: 'g', GROQ_API_KEY: 'kg', MISTRAL_API_KEY: 'km' };
   let d = await geminiGenerate(e2, JSON.stringify(body));
   assert.equal(d.penghala, 'mistral'); assert.equal(d.candidates[0].content.parts[0].text, '{"status":"ok"}');
-  assert.deepEqual(seen, [['api.groq.com', 'llama-3.3-70b-versatile', 'Bearer kg'], ['api.mistral.ai', 'mistral-small-latest', 'Bearer km']]);
+  assert.deepEqual(seen, [['api.groq.com', 'openai/gpt-oss-120b', 'Bearer kg'], ['api.mistral.ai', 'mistral-small-latest', 'Bearer km']]);
   // Groq masih disejukkan: terus ke Mistral
   seen.length = 0; d = await geminiGenerate(e2, JSON.stringify(body));
   assert.deepEqual(seen.map(x => x[0]), ['api.mistral.ai']);
@@ -1353,4 +1370,25 @@ console.log('Semua ujian Tanya AI lulus');
   assert.equal(n, GF.length + 1 + 4);
   GEMINI_CFG.sejuk = false; resetGemini();
   console.log('penyejukan Gemini OK');
+}
+
+// Had permintaan kecil Cloudflare (50 bagi setiap permintaan pada pelan percuma): carian membaca paling banyak MAKS_BALDI
+// fail indeks, dan fail aset diingati dalam isolate supaya soalan seterusnya tidak membacanya semula
+{
+  const kata = Array.from({ length: 40 }, (_, i) => `istilah${i}x${'abcdefghij'[i % 10]}`);
+  const big = buildIndex({ jakim: kata.map(w => `Muka surat tentang ${w} dan pelaburan patuh syariah.`) });
+  const dibaca = [];
+  const benv = { RUJUKAN: { fetch: async req => { const p = new URL(req.url).pathname.slice(1); dibaca.push(p); return big.has(p) ? new Response(big.get(p)) : new Response('', { status: 404 }); } } };
+  const h1 = await search(benv, kata.join(' '), 8);
+  assert.ok(h1.length > 0);
+  const baldi = dibaca.filter(p => p.startsWith('rujukan/i/')).length;
+  assert.ok(baldi <= MAKS_BALDI, `fail indeks dibaca: ${baldi}`);
+  assert.ok(dibaca.length <= MAKS_BALDI + 12, `jumlah fail aset: ${dibaca.length}`);
+  const n1 = dibaca.length;
+  await search(benv, kata.join(' '), 8);
+  assert.equal(dibaca.length, n1, 'carian kedua menggunakan aset dalam memori');
+  // Aset yang tiada (404) juga diingati; ASET_MAKS mengehadkan memori
+  assert.ok(ASET_MAKS >= 100);
+  resetAset();
+  console.log('had permintaan kecil OK');
 }
