@@ -68,7 +68,7 @@
       S.notes = j.notes; S.settings = { ...DEFAULTS, ...j.settings }; S.error = '';
       if (!owner()) store.set('nota_cache', { notes: j.notes, settings: j.settings });
     } catch (e) {
-      S.error = navigator.onLine === false ? 'Anda di luar talian.' : 'Senarai nota belum dapat dimuatkan. ' + e.message;
+      S.error = navigator.onLine === false ? 'Anda di luar talian.' : 'Senarai nota belum dapat dimuatkan.'; S.errorKod = navigator.onLine === false ? '' : e.message;
       if (!S.notes) S.notes = [];
     }
     S.loaded = true;
@@ -91,7 +91,7 @@
       </div>
       ${owner() ? adminHTML() : ''}
       ${buyHTML()}
-      ${S.error ? `<p class="nt-msg">${icon('alert')}<span>${esc(S.error)}</span></p>` : ''}
+      ${S.error ? `<p class="nt-msg">${icon('alert')}<span>${esc(S.error)}${S.errorKod ? ` <small>${esc(S.errorKod)}</small>` : ''}</span></p>` : ''}
       <div class="block-head"><h2>Senarai nota</h2>${(S.notes || []).length > 4 ? `<input type="search" class="nt-search" id="ntSearch" placeholder="Cari kod atau tajuk" value="${esc(S.q)}" aria-label="Cari nota">` : ''}</div>
       ${!S.loaded && !S.notes ? '<div class="nt-grid">' + '<div class="card nt-card nt-skel"></div>'.repeat(3) + '</div>'
         : notes.length ? `<div class="nt-grid">${notes.map(cardHTML).join('')}</div>`

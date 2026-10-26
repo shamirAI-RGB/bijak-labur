@@ -308,7 +308,7 @@
       if (S.campus === 'B' && !ui.faculties) { ui.faculties = await api('/faculties'); refreshSelects(); }
       if (S.campus) loadCourses();
     } catch (err) {
-      const el = $('#jdCampErr'); if (el) el.textContent = err.message + ' Anda masih boleh melihat jadual contoh di bawah.';
+      const el = $('#jdCampErr'); if (el) { el.textContent = ''; el.append(err.message, ' Anda masih boleh melihat jadual contoh di bawah.'); }
       const o = $('#jdCampus option[value=""]'); if (o && !ui.campuses) o.textContent = 'Senarai kampus tidak dapat dimuatkan';
     }
   }

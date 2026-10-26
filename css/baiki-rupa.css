@@ -59,3 +59,17 @@ select { text-overflow: ellipsis; }
 
 /* Arab (RTL): nombor telefon dan peratus kekal kiri ke kanan (bukan "6720 010-254" atau "1.25%+") */
 :root[dir="rtl"] .nt-wa-btn small, :root[dir="rtl"] .q-chg, :root[dir="rtl"] .q-price { direction: ltr; unicode-bidi: isolate; }
+
+/* Kontras teks (WCAG AA 4.5:1) dalam tema Putih: hijau naik, jingga amaran dan emas pada latar kertas */
+:root[data-theme="light"] { --up: #0a6e4a; --warn: #94590a; --gold: #8a5f12; }
+.chip .done-n { opacity: 1; color: var(--muted); }
+/* Avatar Komuniti: huruf putih jelas pada setiap warna pilihan (jingga dan kuning terlalu cerah) */
+.km-av, .km-pin { background: color-mix(in srgb, var(--c) 75%, #000); }
+/* Putih: lukisan sepanduk (cth. kertas di Semak) tidak lagi bertindih gelap di belakang teks */
+:root[data-theme="light"] .view:not(#view-utama) > .page-head::after { opacity: .6; }
+:root[data-theme="light"] .view:not(#view-utama) > .page-head::before {
+  background: linear-gradient(180deg, rgba(239,236,228,.1) 10%, rgba(239,236,228,.92) 100%), linear-gradient(90deg, rgba(239,236,228,.9), rgba(239,236,228,.2) 75%);
+}
+:root[data-theme="light"][dir="rtl"] .view:not(#view-utama) > .page-head::before {
+  background: linear-gradient(180deg, rgba(239,236,228,.1) 10%, rgba(239,236,228,.92) 100%), linear-gradient(270deg, rgba(239,236,228,.9), rgba(239,236,228,.2) 75%);
+}
