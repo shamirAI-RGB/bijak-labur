@@ -643,7 +643,7 @@
 
         <aside class="solat-side">
           <div class="card tracker">
-            <div class="row-between"><h2>Rekod solat hari ini</h2><span class="streak" id="streak"><svg class="ic"><use href="#i-flame"/></svg><span class="num">0</span></span></div>
+            <div class="row-between"><h2>Rekod solat hari ini</h2><span class="streak" id="streak"><svg class="ic" aria-hidden="true"><use href="#i-flame"/></svg><span class="num">0</span><span class="sr-only">hari berturut-turut</span></span></div>
             <p class="muted small" id="trackerSub">Tandakan setiap solat selepas ditunaikan.</p>
             <div class="track-row" id="trackRow"></div>
           </div>
@@ -683,7 +683,7 @@
       </div>
 
       <div class="block-head"><h2 id="monthTitle">Jadual bulanan</h2></div>
-      <div class="card flush"><div class="tbl-wrap"><table id="monthTable" class="month"></table></div></div>
+      <div class="card flush"><div class="tbl-wrap" tabindex="0" role="region" aria-label="Jadual waktu solat sebulan"><table id="monthTable" class="month"></table></div></div>
       <p class="source">Data waktu solat rasmi Malaysia. Disimpan dalam peranti untuk kegunaan luar talian. Arah kiblat dikira daripada koordinat Kaabah (21.4225° U, 39.8262° T).</p>
     </section>
 

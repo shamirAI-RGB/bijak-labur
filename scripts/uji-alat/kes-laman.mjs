@@ -167,6 +167,23 @@ for (const [kod, re] of [['en', /[A-Za-z]/], ['ar', /[؀-ۿ]/]]) {
   } });
 }
 
+// Placeholder textarea, rekod solat (nombor + ayat) dan waktu "mlm" turut diterjemah
+kes.push({ kumpulan: 'Halaman', nama: 'Bahasa EN: placeholder textarea, rekod solat dan waktu malam diterjemah', storan: { bl_bahasa: '"en"' }, langkah: async (t, page) => {
+  await t.buka('#kerja');
+  await page.waitForFunction(() => /Paste your resume/.test(document.querySelector('#view-kerja textarea')?.placeholder || ''), null, { timeout: 8000 })
+    .catch(async () => { throw new Error('placeholder textarea Kerjaya tidak diterjemah: ' + await page.evaluate(() => document.querySelector('#view-kerja textarea')?.placeholder)); });
+  await t.buka('#solat');
+  await t.ada('#trackerSub', /^\d+ of 5 prayers ticked/);
+  const mlm = await page.evaluate(() => [...document.querySelectorAll('#view-solat')].map(e => e.textContent).join(' ').match(/\d:\d\d (pg|ptg|mlm)\b/));
+  if (mlm) throw new Error('waktu masih BM: ' + mlm[0]);
+} });
+
+kes.push({ kumpulan: 'Halaman', nama: 'Pusat Kawalan: pintu kunci muat dalam skrin telefon', langkah: async (t, page) => {
+  await t.buka('pusat.html');
+  const sw = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  if (sw > 1) throw new Error(`tatal mendatar ${sw}px`);
+} });
+
 kes.push({ kumpulan: 'Halaman', nama: 'Setiap pautan dalaman menuju ke halaman yang wujud', lebar: 1280, langkah: async (t, page) => {
   await t.buka('#utama');
   const pautan = await page.evaluate(VIEWS => {

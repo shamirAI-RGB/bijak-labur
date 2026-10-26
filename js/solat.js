@@ -426,12 +426,14 @@ WLY02|Wilayah Persekutuan|Labuan`.split('\n').map(l => { const [jakimCode, neger
     const now = Date.now() / 1000, done = rekod[keyOf(new Date())] || [], uzur = uzurDay(keyOf(new Date()));
     $('#trackRow').innerHTML = MAIN.map(([k, n]) => {
       const on = done.includes(k), open = d[k] <= now;
-      return `<button type="button" class="track-btn" data-k="${k}" aria-pressed="${on}" ${(open || on) && !uzur ? '' : 'disabled'} aria-label="${n}${open ? '' : ', belum masuk waktu'}"><span class="tb-dot">${icon('check')}</span>${n}</button>`;
+      return `<button type="button" class="track-btn" data-k="${k}" aria-pressed="${on}" ${(open || on) && !uzur ? '' : 'disabled'}><span class="tb-dot">${icon('check')}</span>${n}${open ? '' : '<span class="sr-only"> (belum masuk waktu)</span>'}</button>`;
     }).join('');
     const s = streak();
     $('#streak .num').textContent = s;
-    $('#streak').setAttribute('aria-label', `${s} hari berturut-turut`);
-    $('#trackerSub').textContent = uzur ? 'Mod uzur aktif. Rekod dijeda dan rantaian hari tidak terputus.' : done.length >= 5 ? 'Alhamdulillah, lima waktu lengkap hari ini.' : `${done.length} daripada 5 waktu ditanda. Disimpan dalam peranti ini sahaja.`;
+    // Nombor dan ayat dalam nod teks berasingan supaya suis bahasa boleh menterjemah ayatnya
+    const sub = $('#trackerSub');
+    if (uzur || done.length >= 5) sub.textContent = uzur ? 'Mod uzur aktif. Rekod dijeda dan rantaian hari tidak terputus.' : 'Alhamdulillah, lima waktu lengkap hari ini.';
+    else { sub.textContent = ''; sub.append(String(done.length), ' daripada 5 waktu ditanda. Disimpan dalam peranti ini sahaja.'); }
   }
   $('#trackRow').addEventListener('click', e => {
     const b = e.target.closest('.track-btn'); if (!b || b.disabled) return;

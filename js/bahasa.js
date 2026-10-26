@@ -65,7 +65,8 @@
     let r = semua[a];
     if (!r || (cur !== r.out && cur !== r.src)) r = semua[a] = { src: cur, out: cur };
     if (!aktif) { if (cur !== r.src) el.setAttribute(a, r.src); r.out = r.src; return; }
-    if (cur !== r.src || langkau(el)) return;
+    // Teks dalam textarea tidak diterjemah, tetapi placeholder dan aria-labelnya diterjemah
+    if (cur !== r.src || langkau(el.tagName === 'TEXTAREA' ? el.parentElement : el)) return;
     const t = cari(r.src);
     r.out = t == null ? r.src : t;
     if (r.out !== cur) el.setAttribute(a, r.out);

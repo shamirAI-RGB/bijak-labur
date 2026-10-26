@@ -53,7 +53,7 @@ a { color: inherit; }
 .pk-foot { position: relative; z-index: 1; text-align: center; color: var(--faint); font-size: .76rem; padding: 0 16px 40px; max-width: 760px; margin: 0 auto; }
 
 /* Pintu */
-.pk-gate { display: grid; place-items: center; min-height: 60vh; }
+.pk-gate { display: grid; grid-template-columns: minmax(0, 1fr); place-items: center; min-height: 60vh; }
 .pk-gate-kad { width: min(480px, 100%); padding: 32px 28px; border-radius: 26px; border: 1px solid var(--line); background: linear-gradient(180deg, rgba(255, 255, 255, .05), rgba(255, 255, 255, .02)); box-shadow: 0 40px 80px -40px rgba(0, 0, 0, .8); }
 .pk-gate-kad h1 { font-size: 2rem; font-weight: 800; margin: 12px 0 6px; }
 .pk-gate-kad p { color: var(--muted); margin: 0 0 18px; }
