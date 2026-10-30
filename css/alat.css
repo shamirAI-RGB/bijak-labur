@@ -195,6 +195,8 @@ h1 .al-pro { font-size: .72rem; }
 .kaki-lajur a, .kaki-lajur .link-btn { color: var(--muted); text-decoration: none; font-size: .86rem; padding: 0; }
 .kaki-lajur a:hover, .kaki-lajur .link-btn:hover { color: var(--text); text-decoration: underline; }
 .kaki-bawah { padding-top: 12px; border-top: 1px solid var(--border); }
+.kaki-jenama .kaki-syarikat { margin-top: 6px; font-size: .8rem; letter-spacing: .04em; color: var(--text); }
+.kaki-bawah .kaki-hakcipta { font-weight: 600; color: var(--text); }
 
 /* Tab hasil boleh ditatal di telefon tanpa melebarkan halaman */
 .al-hasil-kepala { min-width: 0; }
