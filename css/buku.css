@@ -1,4 +1,8 @@
-/* SiswaCap: Buku Nota AI, Kerjaya AI dan semakan gaya AI (dikongsi) */
+/* SiswaCap: gaya kongsi untuk Alat Pelajar dan semakan gaya AI (asalnya Buku Nota AI dan Kerjaya AI, yang sudah dibuang) */
+/* Pemusing menunggu (asalnya dalam css/studio.css) */
+.st-spin { width: 44px; height: 44px; border-radius: 50%; border: 3px solid var(--surface-2); border-top-color: var(--brand); animation: st-spin 1s linear infinite; }
+@keyframes st-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .st-spin { animation-duration: 3s; } }
 .error { color: var(--down); font-weight: 600; }
 .row-gap { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .bk-grid { display: grid; gap: 0 14px; }

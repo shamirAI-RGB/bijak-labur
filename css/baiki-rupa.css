@@ -29,14 +29,8 @@ table.month td:first-child { line-height: 1.25; }
 .link-btn:has(> svg.ic) { display: inline-flex; align-items: center; gap: 6px; }
 .link-btn > svg.ic { flex: none; width: 16px; height: 16px; }
 
-/* Kerjaya AI: label "Bahasa hasil" terlipat dua baris di sebelah pilihan */
-#view-kerja .row-between > .muted { white-space: nowrap; }
-
 /* Pilihan (select) yang terlalu panjang: tamatkan dengan elipsis, bukan dipotong di tengah perkataan */
 select { text-overflow: ellipsis; }
-
-/* Sihat: nota BMR di baris sendiri supaya medan borang sejajar */
-#shProf .sh-bmr { grid-column: 1 / -1; margin: 0 0 12px; }
 
 /* Senarai semak Audit Halal (telefon): tiga butang status memenuhi kotak, tiada ruang kosong di hujung */
 @media (max-width: 640px) { .ah-item .segmented .seg { flex: 1 1 auto; } }

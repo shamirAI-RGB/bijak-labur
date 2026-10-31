@@ -99,15 +99,12 @@
   }
 
   /* ---------- Komponen bahan (dikongsi) ---------- */
-  function bukuSumber() { return load('buku_sumber', []).filter(s => s && s.teks); }
   function bahanHTML(label = 'Bahan: slaid, nota atau bab buku', ph = 'Tampal nota kuliah atau teks slaid di sini') {
-    const bs = bukuSumber();
     return `<div class="field al-bahan">
       <div class="row-between"><label for="alBahan">${label}</label><span class="muted small" id="alBahanKira">${fmt(bahan.teks.length)} aksara</span></div>
       <textarea id="alBahan" rows="9" maxlength="${MAX_BAHAN}" placeholder="${esc(ph)}">${esc(bahan.teks)}</textarea>
       <div class="row-gap al-bahan-btn">
         <label class="btn ghost sm">${icon('upload')}Muat naik PDF, PPTX, DOCX<input type="file" id="alBahanFail" accept=".pdf,.pptx,.docx,.txt,.md" multiple hidden></label>
-        ${bs.length ? `<select id="alBuku" aria-label="Guna sumber Buku Nota AI"><option value="">Guna sumber Buku Nota AI…</option>${bs.map((s, i) => `<option value="${i}">${esc(s.tajuk)}</option>`).join('')}<option value="semua">Semua sumber (${bs.length})</option></select>` : ''}
         ${bahan.teks ? `<button class="link-btn" type="button" data-act="kosong-bahan">Kosongkan</button>` : ''}
       </div>
       ${bahan.tajuk ? `<p class="muted small">Bahan semasa: ${esc(bahan.tajuk)}. Bahan ini dikongsi oleh semua alat.</p>` : ''}
@@ -148,16 +145,10 @@
     ['Pelajar', [
       ['#semak', 'file', 'Semak Kertas', 'Peratus tulisan AI, plagiarisme dan pembetulan ayat'],
       ['#uitm', 'cap', 'Pelajar UiTM', 'Jadual kelas UiTM, skrin kunci dan Semak kertas'],
-      ['#pelajar-halal', 'shield', 'Pelajar Halal', 'Audit Halal, Nota IC220, Semak kertas dan Tanya AI Fiqh'],
-      ['#buku', 'book', 'Buku Nota AI', 'Tanya soalan tentang nota anda dengan petikan yang disahkan'],
-      ['#kerja', 'target', 'Kerjaya AI', 'Cadangan jawatan, padanan resume, surat permohonan dan temu duga']]],
+      ['#pelajar-halal', 'shield', 'Pelajar Halal', 'Audit Halal, Nota IC220, Semak kertas dan Tanya AI Fiqh']]],
     ['Ibadah & Komuniti', [
       ['#ibadah', 'moon-star', 'Ibadah', 'Al-Quran, doa, zikir, kiblat, zakat dan kalendar Hijri'],
-      ['#komuniti', 'user', 'Komuniti pelajar', 'Peta rakan, acara kampus, servis pelajar dan sembang']]],
-    ['Gaya Hidup & Kreatif', [
-      ['#studio', 'star', 'Studio Gambar AI', 'Terangkan dalam Bahasa Melayu, AI melukis gambar untuk anda'],
-      ['#sihat', 'camera', 'Sihat: kalori dan langkah', 'Ambil gambar makanan untuk kira kalori, dan kira langkah harian'],
-      ['#jejak', 'pin', 'Jejak Aktiviti GPS', 'Jejak jalan, lari atau berbasikal dengan peta laluan masa nyata']]]
+      ['#komuniti', 'user', 'Komuniti pelajar', 'Peta rakan, acara kampus, servis pelajar dan sembang']]]
   ];
   function hubHTML() {
     const due = perluUlang().length;
@@ -578,7 +569,7 @@ Rujukan APA 7 dan format (15 markah).`]
         ${S.busy === 'transkrip' ? tunggu('Mentranskrip rakaman… kuliah 30 minit boleh mengambil masa 1 hingga 2 minit.') : ''}
         <div class="field"><div class="row-between"><label for="alKlTeks">Transkrip</label><span class="muted small"><span id="alKlKata">${fmt(kata(kl.transkrip))}</span> patah perkataan</span></div>
           <textarea id="alKlTeks" rows="8" maxlength="${MAX_BAHAN}" placeholder="Transkrip muncul di sini semasa merakam. Anda juga boleh menampal transkrip daripada Teams, Zoom atau YouTube.">${esc(kl.transkrip)}</textarea></div>
-        <div class="row-gap">${butang('jana-kuliah', 'Jana nota kuliah', 'file')}${kl.transkrip ? `<button class="link-btn" type="button" data-act="kl-buku">${icon('book')}Simpan ke Buku Nota AI</button><button class="link-btn" type="button" data-act="kl-kosong">Kosongkan</button>` : ''}</div>
+        <div class="row-gap">${butang('jana-kuliah', 'Jana nota kuliah', 'file')}${kl.transkrip ? `<button class="link-btn" type="button" data-act="kl-kosong">Kosongkan</button>` : ''}</div>
         ${kuotaNota('kuliah')}
         <p class="muted small">Minta izin pensyarah sebelum merakam. Rakaman dan transkrip disimpan dalam peranti ini sahaja; audio dihantar ke pelayan hanya untuk Transkrip HD dan tidak disimpan.</p>
       </div>
@@ -810,12 +801,6 @@ Rujukan APA 7 dan format (15 markah).`]
       if (tanpaRalat(d)) { simpanHasil('kuliah', d); render(); keHasil(); }
     },
     'kl-kosong': () => { if (lr) hentiKuliah(); kl.transkrip = ''; audioRakam = null; save('alat_transkrip', ''); render(); },
-    'kl-buku': () => {
-      const src = load('buku_sumber', []);
-      if (src.length >= 10) { toast('Buku Nota AI sudah ada 10 sumber. Buang satu dahulu.'); return; }
-      src.push({ id: Math.random().toString(36).slice(2, 10), tajuk: (H.kuliah && H.kuliah.tajuk || 'Transkrip kuliah ' + hariIni()).slice(0, 120), teks: kl.transkrip.slice(0, 120000), on: true });
-      if (save('buku_sumber', src)) toast('Disimpan ke Buku Nota AI.'); else toast('Storan peranti penuh.');
-    },
     'kl-pek': () => { bahan = { tajuk: H.kuliah.tajuk || 'Kuliah', teks: kl.transkrip.slice(0, MAX_BAHAN) }; simpanBahan(); location.hash = '#alat/pek'; },
     'salin-kuliah': () => { const h = H.kuliah; salin([h.tajuk, '', 'ISYARAT', ...h.isyarat.map(x => '- ' + x), '', ...h.nota.flatMap(n => [n.tajuk.toUpperCase(), ...n.isi.map(x => '- ' + x), '']), 'RUMUSAN', h.rumusan, '', 'KONSEP', ...h.konsep.map(k => `- ${k.nama}: ${k.maksud}`), '', 'TUGASAN', ...h.tindakan.map(t => `- ${t.perkara}${t.tarikh ? ' (' + t.tarikh + ')' : ''}`)].join('\n'), 'Nota disalin.'); },
     'jana-tulis': async () => {
@@ -902,10 +887,6 @@ Rujukan APA 7 dan format (15 markah).`]
     if (t.id === 'alBahanFail' && t.files.length) {
       const f = await bacaFail([...t.files]);
       if (f.length) { bahan = { tajuk: f.map(x => x.tajuk).join(', ').slice(0, 160), teks: f.map(x => f.length > 1 ? `${x.tajuk}\n${x.teks}` : x.teks).join('\n\n').slice(0, MAX_BAHAN) }; simpanBahan(); render(); toast('Bahan dimuatkan.'); }
-    }
-    if (t.id === 'alBuku' && t.value !== '') {
-      const bs = bukuSumber(), pilih = t.value === 'semua' ? bs : [bs[+t.value]];
-      bahan = { tajuk: pilih.map(s => s.tajuk).join(', ').slice(0, 160), teks: pilih.map(s => (pilih.length > 1 ? s.tajuk + '\n' : '') + s.teks).join('\n\n').slice(0, MAX_BAHAN) }; simpanBahan(); render();
     }
     if (t.id === 'alKertas' && t.files.length) await tambahKertas([...t.files]);
     if (t.id === 'alTemplat' && t.value) { if (!rb.rubrik.trim() || confirm('Ganti rubrik semasa dengan templat?')) { rb.rubrik = TEMPLAT[t.value][1]; simpanRb(); render(); } }
