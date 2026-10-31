@@ -1,7 +1,7 @@
 {
   "name": "SiswaCap",
   "short_name": "SiswaCap",
-  "description": "Belajar melabur secara patuh syariah, harga saham dan kripto masa nyata, waktu solat Malaysia, dan penyemak kertas kerja.",
+  "description": "Belajar melabur secara patuh syariah, harga saham dan kripto masa nyata, waktu solat Malaysia, dan Alat Pelajar AI.",
   "lang": "ms",
   "start_url": "./#utama",
   "scope": "./",
@@ -59,8 +59,8 @@
       "url": "./#pasaran"
     },
     {
-      "name": "Semak Kertas",
-      "url": "./#semak"
+      "name": "Alat Pelajar",
+      "url": "./#alat"
     }
   ],
   "id": "./"

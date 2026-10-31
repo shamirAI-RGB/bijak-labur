@@ -48,7 +48,6 @@ const PF = [
   { type: 'stock', sym: 'MAYBANK', qty: 1000, cost: 9.5, cur: 'MYR', price: 10.2 }
 ];
 const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAIAAABLbSncAAAAEUlEQVR4nGNQTX6NFTEMLQkADGRcwcht3uAAAAAASUVORK5CYII=', 'base64');
-const KERTAS = 'Pelaburan patuh Syariah semakin popular dalam kalangan pelajar universiti di Malaysia. Kebanyakan pelajar memilih untuk melabur secara berkala setiap bulan kerana kaedah ini mengurangkan risiko masa pasaran. Walau bagaimanapun, pelajar perlu memahami prinsip asas pelaburan sebelum membuat keputusan. Literasi kewangan yang baik membantu pelajar mengurus perbelanjaan, menyimpan wang dan merancang masa depan dengan lebih teratur.';
 
 // Tarikh Gregorian (04:00 UTC = tengah hari waktu Malaysia) bagi haul seterusnya, dicari hari demi hari
 function haulDijangka(iso) {
@@ -70,8 +69,8 @@ export default [
     await t.tunggu('#toolGrid [data-tool="zakat"]');
     const kunci = await page.$$eval('#toolGrid [data-tool] .tc-name svg.lock', l => l.length);
     const semua = await page.$$eval('#toolGrid [data-tool]', l => l.map(b => b.dataset.tool));
-    pasti(semua.length === 15, `Sepatutnya 15 alat dalam grid, dapat ${semua.length}: ${semua.join(', ')}`);
-    pasti(kunci === 15, `Semua 15 alat patut berikon kunci, dapat ${kunci}`);
+    pasti(semua.length === 14, `Sepatutnya 14 alat dalam grid, dapat ${semua.length}: ${semua.join(', ')}`);
+    pasti(kunci === 14, `Semua 14 alat patut berikon kunci, dapat ${kunci}`);
     for (const k of ['zakat', 'pngk', 'syariah']) {
       await tekan(page, `#toolGrid [data-tool="${k}"]`);
       await t.tunggu(`#tool-${k} .locked:not(.hidden)`, 5000);
@@ -94,8 +93,7 @@ export default [
     pasti(JSON.stringify(jadual[0]) === JSON.stringify(['Ciri', 'Percuma', 'Bulanan', 'Tahunan Jimat 41%']), 'Kepala jadual: ' + JSON.stringify(jadual[0]));
     pasti(JSON.stringify(jadual[1]) === JSON.stringify(['Harga', 'RM0', 'RM6.90/30 hari', 'RM49/setahunRM4.08 sebulan']), 'Baris harga: ' + JSON.stringify(jadual[1]));
     const baris = n => jadual.find(r => r[0].startsWith(n)) || [];
-    pasti(baris('Semak Kertas')[1] === '3 semakan tugasan sehari' && baris('Semak Kertas')[2] === 'Tanpa had', 'Baris Semak: ' + JSON.stringify(baris('Semak Kertas')));
-    pasti(baris('Laporan PDF')[1] === '–Tiada' && baris('Laporan PDF')[3] === 'Ya', 'Baris Laporan PDF: ' + JSON.stringify(baris('Laporan PDF')));
+    pasti(!baris('Semak Kertas').length && !baris('Laporan PDF').length, 'Semak Kertas sudah dibuang daripada jadual pelan');
     pasti(/Percuma untuk semua/.test(baris('AI Coach')[1]), 'Baris AI Coach: ' + JSON.stringify(baris('AI Coach')));
     pasti(baris('Buku Nota AI')[1] === '10 permintaan Buku Nota AI sehari', 'Baris Buku Nota AI: ' + JSON.stringify(baris('Buku Nota AI')));
     pasti(/^Sehingga 3 amaran$/.test(baris('Amaran harga')[1]), 'Baris amaran: ' + JSON.stringify(baris('Amaran harga')));
@@ -613,83 +611,6 @@ export default [
     await t.ada('#dfStats', re('75%', '\\+1', '−0'));
     const buang = await page.$$eval('#dfView del', l => l.map(x => x.textContent));
     pasti(!buang.length, 'Tiada perkataan patut ditanda dibuang, dapat: ' + buang.join('|'));
-  } },
-
-  /* ---------- 14. Sejarah semakan ---------- */
-  { kumpulan: K, nama: 'Sejarah: senarai, banding dengan draf semasa, buka, buang', lebar: 1280,
-    storan: { bl_history: [
-      { t: Date.UTC(2026, 9, 1, 2), title: 'Draf pertama esei kewangan pelajar', words: 120, ai: 35, plag: 10, q: 80, text: 'Saya suka makan nasi lemak setiap pagi.' },
-      { t: Date.UTC(2026, 8, 20, 2), title: 'Esei lama', words: 60, ai: 12, plag: null, q: 91, text: 'Teks esei lama untuk dibuka semula dalam penyemak.' }
-    ] },
-    langkah: async (t, page) => {
-      await alat(t, page, 'sejarah');
-      await t.ada('#hsList', re('Draf pertama esei kewangan pelajar…', '120 patah perkataan', 'AI 35%', 'Plagiat 10%', 'Bahasa 80%', 'Esei lama…', 'AI 12%', 'Bahasa 91%'));
-      const chip = await page.$$eval('#hsList .pf-row:nth-child(2) .hs-chip', l => l.map(c => c.textContent));
-      pasti(chip.join() === 'AI 12%,Bahasa 91%', 'Semakan tanpa plagiat tidak patut ada cip Plagiat: ' + chip);
-      // Banding dengan draf semasa (teks dalam penyemak)
-      await page.$eval('#paper', e => { e.value = 'Saya suka makan roti canai setiap pagi bersama kawan.'; });
-      await tekan(page, '#hsList [data-hdiff="0"]');
-      await t.tunggu('#tool-draf:not(.hidden) #dfOut:not(.hidden)', 3000);
-      await t.ada('#toolTitle', /Bandingkan draf/);
-      pasti(await nilai(page, '#dfA') === 'Saya suka makan nasi lemak setiap pagi.', 'Draf lama patut daripada sejarah');
-      await t.ada('#dfStats', re('56%', '\\+4', '−2'));
-      // Buka semula draf lama dalam penyemak
-      await tekan(page, '#toolBack');
-      await tekan(page, '#toolGrid [data-tool="sejarah"]');
-      await tekan(page, '#hsList [data-hopen="1"]');
-      await page.waitForFunction(() => location.hash === '#semak', null, { timeout: 3000 });
-      await toastAda(t, /Draf dibuka/);
-      pasti(await nilai(page, '#paper') === 'Teks esei lama untuk dibuka semula dalam penyemak.', 'Teks draf tidak dibuka dalam penyemak');
-      // Buang
-      await page.evaluate(() => { location.hash = '#premium'; });
-      await t.tunggu('#tool-sejarah:not(.hidden)', 3000);
-      await tekan(page, '#hsList [data-hdel="0"]');
-      await page.waitForFunction(() => document.querySelectorAll('#hsList .pf-row').length === 1, null, { timeout: 3000 });
-      const n = await page.evaluate(() => JSON.parse(localStorage.getItem('bl_history')).length);
-      pasti(n === 1, 'Storan sejarah patut ada 1 rekod, dapat ' + n);
-      await tekan(page, '#hsList [data-hdel="0"]');
-      await t.ada('#hsList', /Belum ada semakan/);
-    } },
-
-  { kumpulan: K, nama: 'Sejarah + Laporan PDF: semakan sebenar direkod, laporan dicetak (print distub)', langkah: async (t, page) => {
-    await t.buka('#semak');
-    for (const id of ['#optWeb', '#optExpert', '#optRefs', '#optLT', '#optAudit']) if (await page.$(id)) await page.uncheck(id);
-    await t.isi('#paper', KERTAS);
-    await tekan(page, '#checkBtn');
-    await t.tunggu('#results:not(.hidden)', 15000);
-    await t.tunggu('#reportBtn:not(.hidden)', 3000);
-    pasti(await kelas(page, '#reportBtn .lock', 'hidden'), 'Ikon kunci laporan patut tersembunyi untuk Premium');
-    await page.evaluate(() => { window.__cetak = 0; window.print = () => { window.__cetak++; window.__tajukCetak = document.title; }; });
-    const tajuk = await page.title();
-    await tekan(page, '#reportBtn');
-    await page.waitForFunction(() => window.__cetak === 1, null, { timeout: 3000 });
-    pasti(await page.evaluate(() => window.__tajukCetak) === 'Laporan semakan - SiswaCap', 'Tajuk semasa cetak patut menamakan laporan');
-    pasti(await kelas(page, 'body', 'printing'), 'Badan patut dalam mod cetak');
-    await t.ada('#printArea', re('Laporan semakan kertas kerja', 'Anggaran AI', 'Kualiti bahasa', 'Isyarat tulisan AI', 'Cadangan pembetulan', 'Semakan sumber tidak dijalankan', 'Teks yang disemak', 'Pelaburan patuh Syariah semakin popular'));
-    pasti(await page.title() === tajuk, `Tajuk dokumen patut dipulihkan kepada "${tajuk}" selepas cetak, dapat "${await page.title()}"`);
-    await page.evaluate(() => window.dispatchEvent(new Event('afterprint')));
-    pasti(!(await kelas(page, 'body', 'printing')), 'Mod cetak patut tamat');
-    // Semakan direkod dalam sejarah
-    await page.evaluate(() => { location.hash = '#premium'; });
-    await tekan(page, '#toolGrid [data-tool="sejarah"]');
-    await t.ada('#hsList', re('Pelaburan patuh Syariah semakin popular dalam kalangan pelajar universiti…', '\\d+ patah perkataan', 'AI \\d+%', 'Bahasa \\d+%'));
-    pasti(!/Plagiat/.test(await t.teks('#hsList')), 'Semakan tanpa carian sumber tidak patut ada cip Plagiat');
-  } },
-
-  { kumpulan: K, nama: 'Laporan PDF dan sejarah terkunci tanpa Premium', premium: false, langkah: async (t, page) => {
-    await t.buka('#semak');
-    for (const id of ['#optWeb', '#optExpert', '#optRefs', '#optLT', '#optAudit']) if (await page.$(id)) await page.uncheck(id);
-    await t.isi('#paper', KERTAS);
-    await tekan(page, '#checkBtn');
-    await t.tunggu('#results:not(.hidden)', 15000);
-    await t.tunggu('#reportBtn:not(.hidden)', 3000);
-    pasti(!(await kelas(page, '#reportBtn .lock', 'hidden')), 'Ikon kunci laporan patut dipaparkan tanpa Premium');
-    await page.evaluate(() => { window.__cetak = 0; window.print = () => { window.__cetak++; }; });
-    await tekan(page, '#reportBtn');
-    await toastAda(t, /Premium memerlukan akaun|sebahagian daripada SiswaCap Premium/);
-    await page.waitForFunction(() => location.hash === '#premium', null, { timeout: 3000 });
-    pasti(await page.evaluate(() => window.__cetak) === 0, 'Laporan tidak patut dicetak tanpa Premium');
-    pasti(await page.evaluate(() => localStorage.getItem('bl_history')) == null, 'Sejarah tidak patut direkod tanpa Premium');
   } },
 
   /* ---------- 15. Portfolio patuh Syariah ---------- */

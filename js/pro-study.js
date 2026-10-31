@@ -1,4 +1,4 @@
-/* SiswaCap Premium: alat pelajar (PNGK, muka depan tugasan, bandingkan draf, sejarah semakan) */
+/* SiswaCap Premium: alat pelajar (PNGK, muka depan tugasan, bandingkan draf) */
 (function () {
   const { numIn, field, persist } = ProTools.kit;
 
@@ -152,45 +152,6 @@
         $('#dfStats').innerHTML = `<div class="stat"><div class="v num">${Math.round(same / Math.max(wb, 1) * 100)}%</div><div class="k">Draf baharu yang sama</div></div><div class="stat"><div class="v num up">+${add}</div><div class="k">Perkataan ditambah</div></div><div class="stat"><div class="v num down">−${del}</div><div class="k">Perkataan dibuang</div></div>`;
         $('#dfView').innerHTML = ops.map(([op, t]) => op === 0 ? esc(t) : !/\S/.test(t) ? (op > 0 ? esc(t) : '') : op > 0 ? `<ins>${esc(t)}</ins>` : `<del>${esc(t)}</del>`).join('').replace(/<\/ins>(\s*)<ins>/g, '$1').replace(/<\/del><del>/g, '').replace(/\n/g, '<br>');
       });
-    }
-  });
-
-  /* ---------- 4. Sejarah semakan ---------- */
-  let hist = store.get('history', []);
-  document.addEventListener('checkdone', () => {
-    if (!Premium.has('pelajar')) return;
-    const r = window.CheckerReport && window.CheckerReport(); if (!r) return;
-    const text = $('#paper').value.trim();
-    hist = hist.filter(h => h.text !== text);
-    hist.unshift({ t: Date.now(), title: text.split(/\s+/).slice(0, 9).join(' '), words: text.split(/\s+/).length, ai: r.ai, plag: r.plag, q: r.quality, text: text.slice(0, 30000) });
-    hist = hist.slice(0, 30);
-    try { store.set('history', hist); } catch { hist = hist.slice(0, 10); store.set('history', hist); }
-  });
-  ProTools.add('sejarah', {
-    name: 'Sejarah semakan', plan: 'pelajar', icon: 'history', desc: '30 semakan terakhir anda',
-    pitch: 'Setiap semakan kertas kerja disimpan dalam peranti anda, supaya anda boleh membuka semula draf lama dan melihat skor bertambah baik.',
-    html: `<div class="list" id="hsList"></div><p class="source">Disimpan dalam peranti ini sahaja. Semakan baharu direkod secara automatik.</p>`,
-    init() {
-      const fmtD = t => new Date(t).toLocaleString('ms-MY', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-      const render = () => {
-        $('#hsList').innerHTML = hist.length ? hist.map((h, i) => `<div class="pf-row hs">
-          <div class="pf-main"><b>${esc(h.title)}…</b><span class="muted small">${fmtD(h.t)} · ${h.words} patah perkataan</span></div>
-          <div class="pf-val small"><span class="hs-chip" style="--c:var(--purple)">AI ${h.ai}%</span>${h.plag != null ? `<span class="hs-chip" style="--c:var(--down)">Plagiat ${h.plag}%</span>` : ''}<span class="hs-chip" style="--c:var(--brand)">Bahasa ${h.q}%</span></div>
-          <div class="pf-sub"><button class="btn sm ghost" data-hopen="${i}">Buka</button><button class="btn sm ghost" data-hdiff="${i}">Banding dengan draf semasa</button></div>
-          <button class="icon-btn plain pf-del" data-hdel="${i}" aria-label="Buang">${icon('x')}</button></div>`).join('')
-          : '<p class="muted pf-empty">Belum ada semakan. Semak kertas kerja di tab Semak dan ia akan muncul di sini.</p>';
-      };
-      $('#hsList').addEventListener('click', e => {
-        const b = e.target.closest('button'); if (!b) return;
-        if (b.dataset.hdel != null) { hist.splice(+b.dataset.hdel, 1); store.set('history', hist); render(); }
-        if (b.dataset.hopen != null) { $('#paper').value = hist[+b.dataset.hopen].text; $('#paper').dispatchEvent(new Event('input')); location.hash = '#semak'; toast('Draf dibuka. Tekan Semak sekarang untuk menyemak semula.'); }
-        if (b.dataset.hdiff != null) {
-          ProTools.back(); $('[data-tool="draf"]').click();
-          $('#dfA').value = hist[+b.dataset.hdiff].text; $('#dfB').value = $('#paper').value; $('#dfGo').click();
-        }
-      });
-      document.addEventListener('checkdone', render);
-      render();
     }
   });
 })();

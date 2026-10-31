@@ -529,9 +529,7 @@ export default [
     // Setiap bukti yang dipaparkan wujud dalam draf
     for (const b of await teksSemua(page, '.al-kriteria .bk-q p')) pasti(DRAF.includes(b.slice(1, -1)), `Bukti "${b}" wujud dalam draf`);
     await tiadaLimpahan(page);
-    await t.klik('[data-act="ke-semak"]');
-    await page.waitForFunction(() => location.hash === '#semak');
-    sama(await page.inputValue('#paper'), DRAF, 'Draf dibawa ke Semak Kertas');
+    pasti(!(await page.$('[data-act="ke-semak"]')), 'Butang Semak Kertas sudah dibuang');
   } },
 
   { kumpulan: K, nama: 'Rubrik: "Guna dalam draf" berfungsi walaupun ayat draf dipecahkan oleh baris baharu (teks PDF)', langkah: async (t, page) => {
@@ -885,10 +883,7 @@ export default [
     await t.klik('[data-act="tl-salin"]');
     sama(await papan(page), akhir, 'Teks akhir mengekalkan tajuk dan baris pendek');
     await t.ada('.al-banding', new RegExp(`Selepas${(kata(akhir) / akhir.split(/(?<=[.!?])\s+/).filter(x => kata(x) >= 3).length).toFixed(1).replace('.', '\\.')}`));
-    await t.klik('[data-act="tl-semak"]');
-    await page.waitForFunction(() => location.hash === '#semak');
-    sama(await page.inputValue('#paper'), akhir, 'Teks akhir dibawa ke Semak Kertas');
-    await t.buka('#alat/tulis');
+    pasti(!(await page.$('[data-act="tl-semak"]')), 'Butang Semak Kertas sudah dibuang');
     await t.klik('[data-act="tl-guna"]');
     sama(await page.inputValue('#alTl'), akhir, 'Teks baharu mengekalkan tajuk');
   } },
