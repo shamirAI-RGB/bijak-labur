@@ -1,6 +1,6 @@
 /* Setiap halaman SiswaCap: dibuka tanpa ralat pada telefon dan desktop, tema cerah dan gelap, tiada tatal mendatar,
    tiada gambar atau fail tempatan yang rosak, dan setiap pautan dalaman menuju ke halaman yang wujud. */
-const VIEWS = ['utama', 'belajar', 'pasaran', 'solat', 'ibadah', 'semak', 'jadual', 'nota', 'sihat', 'studio', 'buku', 'kerja', 'jejak', 'komuniti', 'premium', 'soalan', 'halal', 'alat', 'uitm', 'pelajar-halal', 'demo'];
+const VIEWS = ['utama', 'belajar', 'pasaran', 'solat', 'ibadah', 'semak', 'jadual', 'nota', 'komuniti', 'premium', 'soalan', 'halal', 'alat', 'uitm', 'pelajar-halal', 'demo'];
 const LAMAN = ['siswa.html', 'tentang.html', 'cara.html', 'terma.html', 'terma-guna.html', 'terma-app.html', 'privacy.html', 'penafian-ai.html', 'bayaran-balik.html', 'padam-data.html', 'peta.html', '404.html'];
 
 // Pantau fail tempatan yang gagal dimuat (404) sepanjang kes
@@ -73,7 +73,7 @@ kes.push({ kumpulan: 'Halaman', nama: 'Navigasi bawah dan suis tema', langkah: a
 kes.push({ kumpulan: 'Halaman', nama: 'Navigasi hash: hanya satu halaman kelihatan, menu Alat ditutup, tatal ke atas, peralihan tanpa tindih', lebar: 1280, langkah: async (t, page) => {
   const kelihatan = () => page.evaluate(() => [...document.querySelectorAll('.view')].filter(el => { const s = getComputedStyle(el); return s.display !== 'none' && s.visibility !== 'hidden' && el.getBoundingClientRect().height > 0; }).map(el => el.id));
   await t.buka('#utama');
-  const urutan = ['jadual', 'komuniti', 'studio', 'alat', 'buku', 'kerja', 'sihat', 'halal', ...VIEWS];
+  const urutan = ['jadual', 'komuniti', 'alat', 'halal', ...VIEWS];
   for (const v of urutan) {
     // Buka menu Alat dan tatal ke bawah dahulu: kedua-duanya mesti ditetapkan semula selepas bertukar halaman
     await page.evaluate(() => { const d = document.querySelector('details.nav-more'); if (d) d.open = true; scrollTo(0, 600); });
@@ -110,15 +110,15 @@ kes.push({ kumpulan: 'Halaman', nama: 'Navigasi hash: hanya satu halaman kelihat
   if (k.length !== 1 || k[0] !== 'view-utama') throw new Error(`#agen: halaman kelihatan ${JSON.stringify(k)}`);
 } });
 
-// Menu Alat: tiga kumpulan berlabel, dan halaman Alat Pelajar memaparkan kumpulan yang sama
-kes.push({ kumpulan: 'Halaman', nama: 'Menu Alat dan halaman Alat Pelajar dalam tiga kumpulan berlabel', lebar: 1280, langkah: async (t, page) => {
+// Menu Alat: dua kumpulan berlabel (Buku Nota AI, Kerjaya AI dan Gaya Hidup & Kreatif dibuang atas arahan pemilik, 31 Okt 2026), dan halaman Alat Pelajar memaparkan kumpulan yang sama
+kes.push({ kumpulan: 'Halaman', nama: 'Menu Alat dan halaman Alat Pelajar dalam dua kumpulan berlabel', lebar: 1280, langkah: async (t, page) => {
   await t.buka('#utama');
   const kump = await page.$$eval('.nav-pop .nav-kump', gs => gs.map(g => [g.querySelector('.nav-kump-t').textContent, [...g.querySelectorAll('a')].map(a => a.getAttribute('href'))]));
-  const jangka = [['Pelajar', ['#alat', '#uitm', '#pelajar-halal', '#buku', '#kerja']], ['Ibadah & Komuniti', ['#ibadah', '#komuniti']], ['Gaya Hidup & Kreatif', ['#studio', '#sihat', '#jejak']]];
+  const jangka = [['Pelajar', ['#alat', '#uitm', '#pelajar-halal']], ['Ibadah & Komuniti', ['#ibadah', '#komuniti']]];
   if (JSON.stringify(kump) !== JSON.stringify(jangka)) throw new Error(`kumpulan menu Alat: ${JSON.stringify(kump)}`);
   await t.klik('details.nav-more > summary');
-  await t.klik('.nav-pop a[href="#jejak"]');
-  await t.ada('#view-jejak.active', /\S/);
+  await t.klik('.nav-pop a[href="#komuniti"]');
+  await t.ada('#view-komuniti.active', /\S/);
   if (await page.$('details.nav-more[open]')) throw new Error('menu Alat tidak ditutup selepas memilih');
   await page.evaluate(() => { location.hash = '#alat'; });
   await t.ada('#view-alat .al-kump-t', /\S/);
@@ -169,9 +169,9 @@ for (const [kod, re] of [['en', /[A-Za-z]/], ['ar', /[؀-ۿ]/]]) {
 
 // Placeholder textarea, rekod solat (nombor + ayat) dan waktu "mlm" turut diterjemah
 kes.push({ kumpulan: 'Halaman', nama: 'Bahasa EN: placeholder textarea, rekod solat dan waktu malam diterjemah', storan: { bl_bahasa: '"en"' }, langkah: async (t, page) => {
-  await t.buka('#kerja');
-  await page.waitForFunction(() => /Paste your resume/.test(document.querySelector('#view-kerja textarea')?.placeholder || ''), null, { timeout: 8000 })
-    .catch(async () => { throw new Error('placeholder textarea Kerjaya tidak diterjemah: ' + await page.evaluate(() => document.querySelector('#view-kerja textarea')?.placeholder)); });
+  await t.buka('#soalan');
+  await page.waitForFunction(() => /Write your question here/.test(document.querySelector('#view-soalan textarea')?.placeholder || ''), null, { timeout: 8000 })
+    .catch(async () => { throw new Error('placeholder textarea Ruang soalan tidak diterjemah: ' + await page.evaluate(() => document.querySelector('#view-soalan textarea')?.placeholder)); });
   await t.buka('#solat');
   await t.ada('#trackerSub', /^\d+ of 5 prayers ticked/);
   const mlm = await page.evaluate(() => [...document.querySelectorAll('#view-solat')].map(e => e.textContent).join(' ').match(/\d:\d\d (pg|ptg|mlm)\b/));

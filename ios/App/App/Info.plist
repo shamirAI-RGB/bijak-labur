@@ -23,21 +23,11 @@
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Lokasi digunakan untuk menentukan zon waktu solat anda, dan semasa anda menjejak jalan, lari atau berbasikal untuk mengira jarak dan melukis laluan. Laluan disimpan dalam peranti anda sahaja.</string>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>Semasa Jejak Aktiviti berjalan, lokasi digunakan walaupun app ditutup atau skrin dikunci supaya jarak dan laluan jalan, lari atau berbasikal anda terus direkodkan. Laluan disimpan dalam peranti anda sahaja.</string>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>location</string>
-	</array>
+	<string>Lokasi digunakan untuk menentukan zon waktu solat anda, memaparkan kedudukan anda pada peta, dan berkongsi lokasi dengan rakan Komuniti jika anda menghidupkannya.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Mikrofon digunakan hanya apabila anda menekan rakam dalam Nota Kuliah AI atau menjawab soalan Jurulatih Pembentangan dengan suara. Rakaman disimpan dalam peranti anda.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>Pengecaman suara menukar kuliah atau jawapan anda kepada teks secara langsung dalam Alat Pelajar.</string>
-	<key>NSHealthShareUsageDescription</key>
-	<string>SiswaCap membaca jumlah langkah dan jarak harian daripada Apple Health untuk dipaparkan di halaman Sihat. Data tidak dihantar ke pelayan.</string>
-	<key>NSHealthUpdateUsageDescription</key>
-	<string>SiswaCap tidak menulis data ke Apple Health; ia hanya membaca langkah dan jarak.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>LSRequiresIPhoneOS</key>

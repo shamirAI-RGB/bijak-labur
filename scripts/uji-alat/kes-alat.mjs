@@ -218,9 +218,8 @@ export default [
   } },
 
   /* ===== Kotak bahan dikongsi ===== */
-  { kumpulan: K, nama: 'Kotak bahan: tampal, kiraan, simpan, muat naik .txt, sumber Buku Nota AI, kosongkan, dikongsi', storan: { buku_sumber: [
-      { id: 'b1', tajuk: 'Bab 1 Riba', teks: AYAT.slice(10, 13).join(' '), on: true },
-      { id: 'b2', tajuk: 'Bab 2 Sukuk', teks: AYAT.slice(8, 10).join(' '), on: true }] },
+  { kumpulan: K, nama: 'Kotak bahan: tampal, kiraan, simpan, muat naik .txt, kosongkan, dikongsi', storan: { buku_sumber: [
+      { id: 'b1', tajuk: 'Bab 1 Riba', teks: AYAT.slice(10, 13).join(' '), on: true }] },
     langkah: async (t, page) => {
     await t.buka('#alat/pek');
     await isiBahan(t);
@@ -241,17 +240,11 @@ export default [
     // Fail terlalu pendek ditolak
     await page.setInputFiles('#alBahanFail', fail('kosong.txt', 'Terlalu pendek.'));
     await t.ada('.toast', /kosong\.txt: tiada teks yang boleh dibaca/);
-    // Sumber Buku Nota AI
-    sama(await teksSemua(page, '#alBuku option'), ['Guna sumber Buku Nota AI…', 'Bab 1 Riba', 'Bab 2 Sukuk', 'Semua sumber (2)'], 'Pilihan sumber');
-    await t.pilih('#alBuku', '1');
-    await t.ada('.al-bahan', /Bahan semasa: Bab 2 Sukuk\./);
-    sama(await page.inputValue('#alBahan'), AYAT.slice(8, 10).join(' '), 'Teks satu sumber');
-    await t.pilih('#alBuku', 'semua');
-    await t.ada('.al-bahan', /Bahan semasa: Bab 1 Riba, Bab 2 Sukuk\./);
-    pasti((await page.inputValue('#alBahan')).startsWith('Bab 1 Riba\n' + AYAT[10]), 'Semua sumber berkepala tajuk');
+    // Buku Nota AI sudah dibuang: sumber lama dalam peranti tidak lagi ditawarkan
+    pasti(!(await page.$('#alBuku')), 'Pilihan sumber Buku Nota AI masih dipaparkan');
     // Dikongsi dengan alat lain
     await t.buka('#alat/coach');
-    pasti((await page.inputValue('#alBahan')).startsWith('Bab 1 Riba'), 'Bahan dikongsi dengan Jurulatih');
+    pasti((await page.inputValue('#alBahan')).startsWith('Bab A\n' + AYAT[0]), 'Bahan dikongsi dengan Jurulatih');
     await t.klik('[data-act="kosong-bahan"]');
     sama(await page.inputValue('#alBahan'), '', 'Bahan dikosongkan');
     await t.ada('#alBahanKira', /^0 aksara$/);
@@ -716,7 +709,7 @@ export default [
     } },
 
   /* ===== Nota Kuliah AI ===== */
-  { kumpulan: K, nama: 'Nota Kuliah: transkrip ditampal, nota Cornell, salin, ke Buku Nota dan Pek', lebar: 1280, langkah: async (t, page) => {
+  { kumpulan: K, nama: 'Nota Kuliah: transkrip ditampal, nota Cornell, salin dan ke Pek', lebar: 1280, langkah: async (t, page) => {
     const req = rekod(page);
     await t.buka('#alat/kuliah');
     await t.isi('#alKlTeks', 'Transkrip terlalu pendek.');
@@ -741,10 +734,7 @@ export default [
     const s = await papan(page);
     for (const x of ['\n\nISYARAT\n- ', '\nRUMUSAN\n', '\nKONSEP\n- ', '\nTUGASAN\n- ']) pasti(s.includes(x), `Nota disalin mengandungi ${JSON.stringify(x)}`);
     const tajuk = (await t.teks('.al-cornell h2')).trim();
-    await t.klik('[data-act="kl-buku"]');
-    await t.ada('.toast', /Disimpan ke Buku Nota AI\./);
-    const bs = await storan(page, 'buku_sumber');
-    sama(bs.map(x => [x.tajuk, x.teks, x.on]), [[tajuk, TRANSKRIP, true]], 'Sumber Buku Nota AI');
+    pasti(!(await page.$('[data-act="kl-buku"]')), 'Butang Simpan ke Buku Nota AI masih dipaparkan');
     await t.klik('[data-act="kl-pek"]');
     await t.ada('#h-alat', /Pek Peperiksaan/);
     sama(await page.inputValue('#alBahan'), TRANSKRIP, 'Transkrip menjadi bahan Pek');
@@ -775,11 +765,6 @@ export default [
     // Mikrofon tanpa kebenaran
     await t.klik('[data-act="rakam-kuliah"]');
     await t.ada('.toast', /Benarkan mikrofon untuk merakam kuliah\./);
-    // Buku Nota AI sudah penuh (10 sumber)
-    await page.evaluate(() => localStorage.setItem('buku_sumber', JSON.stringify(Array.from({ length: 10 }, (_, i) => ({ id: 's' + i, tajuk: 'Sumber ' + i, teks: 'x'.repeat(60), on: true })))));
-    await t.klik('[data-act="kl-buku"]');
-    await t.ada('.toast', /Buku Nota AI sudah ada 10 sumber\. Buang satu dahulu\./);
-    sama((await storan(page, 'buku_sumber')).length, 10, 'Tiada sumber ke-11');
     await t.pilih('#alKlLang', 'en-MY');
     sama(await storan(page, 'alat_kl_lang'), 'en-MY', 'Bahasa kuliah disimpan');
     await t.klik('[data-act="kl-kosong"]');

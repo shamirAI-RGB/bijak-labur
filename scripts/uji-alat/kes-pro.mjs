@@ -97,7 +97,7 @@ export default [
     pasti(baris('Semak Kertas')[1] === '3 semakan tugasan sehari' && baris('Semak Kertas')[2] === 'Tanpa had', 'Baris Semak: ' + JSON.stringify(baris('Semak Kertas')));
     pasti(baris('Laporan PDF')[1] === '–Tiada' && baris('Laporan PDF')[3] === 'Ya', 'Baris Laporan PDF: ' + JSON.stringify(baris('Laporan PDF')));
     pasti(/Percuma untuk semua/.test(baris('AI Coach')[1]), 'Baris AI Coach: ' + JSON.stringify(baris('AI Coach')));
-    pasti(baris('Buku Nota AI')[1] === '10 permintaan Buku Nota AI sehari', 'Baris Buku Nota AI: ' + JSON.stringify(baris('Buku Nota AI')));
+    pasti(!baris('Buku Nota AI').length && !baris('Kerjaya AI').length, 'Baris Buku Nota AI/Kerjaya AI masih ada');
     pasti(/^Sehingga 3 amaran$/.test(baris('Amaran harga')[1]), 'Baris amaran: ' + JSON.stringify(baris('Amaran harga')));
     pasti(baris('Portfolio patuh Syariah')[2] === 'Ya', 'Baris portfolio: ' + JSON.stringify(baris('Portfolio patuh Syariah')));
   } },
