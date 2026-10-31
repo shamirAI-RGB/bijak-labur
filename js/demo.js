@@ -163,10 +163,10 @@
       <p class="dm-nilai num">${wang(m, r.nilai)}</p>
       <p class="dm-beza num ${kelas(r.beza)}">${tanda(m, r.beza)} (${pct(r.bezaPct)}) berbanding modal</p>
       <p class="small dm-ayat">${esc(ayat)}</p>
-      <div class="stat-row">
-        <div class="stat"><div class="v num">${wang(m, a.tunai)}</div><div class="k">Tunai</div></div>
-        <div class="stat"><div class="v num">${wang(m, r.nilaiPegang)}</div><div class="k">Nilai pegangan</div></div>
-        <div class="stat"><div class="v num">${wang(m, a.modal)}</div><div class="k">Modal permulaan</div></div>
+      <div class="dm-stats">
+        <div class="dm-stat"><div class="v num">${wang(m, a.tunai)}</div><div class="k">Tunai</div></div>
+        <div class="dm-stat"><div class="v num">${wang(m, r.nilaiPegang)}</div><div class="k">Nilai pegangan</div></div>
+        <div class="dm-stat"><div class="v num">${wang(m, a.modal)}</div><div class="k">Modal permulaan</div></div>
       </div>
     </div>`;
   }
@@ -369,11 +369,11 @@
       <p class="dm-label">${main ? 'Akaun main semula' : 'Akaun CFD demo'}</p>
       <p class="dm-nilai num">${usd(k.ekuiti)}</p>
       <p class="dm-beza num ${kelas(k.ekuiti - ak.modal)}">${tanda('kripto', k.ekuiti - ak.modal)} (${pct((k.ekuiti - ak.modal) / ak.modal * 100)}) berbanding modal ${usd(ak.modal)}</p>
-      <div class="stat-row four">
-        <div class="stat"><div class="v num">${usd(ak.baki)}</div><div class="k">Baki (tanpa posisi terbuka)</div></div>
-        <div class="stat"><div class="v num ${kelas(k.apg)}">${tanda('kripto', k.apg)}</div><div class="k">Untung/rugi terapung</div></div>
-        <div class="stat"><div class="v num">${usd(k.guna)}</div><div class="k">Margin digunakan</div></div>
-        <div class="stat"><div class="v num ${tahap != null && tahap < 200 ? 'down' : ''}">${tahap == null ? 'Tiada' : Math.max(0, tahap).toFixed(0) + '%'}</div><div class="k">Tahap margin (stop out pada ${CFD.stopOut}%)</div></div>
+      <div class="dm-stats dm-stats-4">
+        <div class="dm-stat"><div class="v num">${usd(ak.baki)}</div><div class="k">Baki (tanpa posisi terbuka)</div></div>
+        <div class="dm-stat"><div class="v num ${kelas(k.apg)}">${tanda('kripto', k.apg)}</div><div class="k">Untung/rugi terapung</div></div>
+        <div class="dm-stat"><div class="v num">${usd(k.guna)}</div><div class="k">Margin digunakan</div></div>
+        <div class="dm-stat"><div class="v num ${tahap != null && tahap < 200 ? 'down' : ''}">${tahap == null ? 'Tiada' : Math.max(0, tahap).toFixed(0) + '%'}</div><div class="k">Tahap margin (stop out pada ${CFD.stopOut}%)</div></div>
       </div>
       ${amaran}`;
   }
@@ -759,6 +759,6 @@
     pemasa = setInterval(() => { if (!document.hidden) muatHarga(pasar); }, pasar === 'kripto' ? 15000 : 60000);
   }
   document.addEventListener('viewchange', e => { if (e.detail === 'demo') { sahReset = false; lukis(); mulaHarga(); } else { clearInterval(pemasa); pemasa = null; if (main) { main.jalan = false; clearInterval(mainPemasa); } } });
-  lukis();
-  mulaHarga();
+  // Dilukis hanya apabila halaman ini dibuka (laman lain tidak menanggung kos, dan tiada elemen bertindih dalam halaman tersembunyi)
+  if (document.documentElement.dataset.view === 'demo') { lukis(); mulaHarga(); }
 })();

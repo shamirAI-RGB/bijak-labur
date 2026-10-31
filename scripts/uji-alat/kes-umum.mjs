@@ -1357,7 +1357,7 @@ export default [
     await t.isi('#dmQty', '2');
     await t.klik('#dmSah');
     await t.ada('.toast', /Dibeli: 2 lot/);
-    await t.ada('.dm-ringkas .stat', /RM7,224\.93/);
+    await t.ada('.dm-ringkas .dm-stat', /RM7,224\.93/);
     await t.ada('.dm-pegang .dm-ayat', /Jika anda jual sekarang, anda rugi/);
     // Gelangsar: +10% menunjukkan untung jika dijual
     await page.$eval('[data-andai="TENAGA"]', el => { el.value = '10'; el.dispatchEvent(new Event('input', { bubbles: true })); });
