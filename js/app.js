@@ -137,7 +137,7 @@ function paintThemeIcon() {
 })();
 
 /* Navigasi berasaskan hash */
-const VIEWS = ['utama', 'belajar', 'pasaran', 'solat', 'ibadah', 'semak', 'jadual', 'nota', 'sihat', 'studio', 'buku', 'kerja', 'jejak', 'komuniti', 'premium', 'soalan', 'halal', 'alat', 'uitm', 'pelajar-halal'];
+const VIEWS = ['utama', 'belajar', 'pasaran', 'solat', 'ibadah', 'semak', 'jadual', 'nota', 'sihat', 'studio', 'buku', 'kerja', 'jejak', 'komuniti', 'premium', 'soalan', 'halal', 'alat', 'uitm', 'pelajar-halal', 'demo'];
 let currentView = null, currentHash = null;
 function route() {
   // Hash boleh mempunyai sub-laluan, cth. #ibadah/quran/36

@@ -1,0 +1,106 @@
+/* SiswaCap: Akaun Demo (paper trading) dan simulator CFD Emas, js/demo.js */
+#view-demo .page-head.with-aside { align-items: flex-end; }
+.dm-tab { flex-wrap: wrap; }
+.dm-label { font-size: 0.8rem; color: var(--muted); font-weight: 600; margin: 0 0 4px; }
+.dm-nilai { font-size: clamp(1.6rem, 6vw, 2.1rem); font-weight: 750; letter-spacing: -0.02em; margin: 0 0 2px; font-variant-numeric: tabular-nums; }
+.dm-nilai .small { font-size: 0.9rem; font-weight: 650; letter-spacing: 0; }
+.dm-beza { font-weight: 650; margin-bottom: 8px; }
+.dm-ayat { background: var(--surface-2); border-radius: 10px; padding: 10px 12px; margin: 10px 0; line-height: 1.5; }
+.dm-ringkas .stat-row { margin-top: 12px; }
+.dm-ringkas .stat .v { font-size: 1rem; overflow-wrap: anywhere; }
+.dm-status { margin: -4px 0 10px; }
+.dm-kosong p { margin: 0; color: var(--muted); }
+.dm-buka-panduan { margin-bottom: 12px; display: inline-block; }
+
+/* Panduan */
+.dm-panduan-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; }
+.dm-langkah { margin: 0 0 12px; padding-left: 20px; display: grid; gap: 6px; }
+.dm-contoh { border-top: 1px solid var(--border); padding-top: 12px; }
+.dm-contoh-tajuk { font-weight: 650; margin-bottom: 8px; }
+.dm-contoh-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+.dm-contoh-kad { border-radius: 10px; padding: 10px 12px; display: grid; gap: 2px; background: color-mix(in srgb, currentColor 9%, transparent); }
+.dm-contoh-kad span { font-size: 0.8rem; font-weight: 600; }
+.dm-contoh-kad b { font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+.dm-contoh-kad small { color: var(--muted); font-size: 0.75rem; line-height: 1.35; }
+
+/* Senarai aset */
+.dm-senarai, .dm-sejarah { list-style: none; margin: 0 0 14px; padding: 0; }
+.dm-aset { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 10px; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--border); }
+.dm-aset:last-child, .dm-sj:last-child { border-bottom: 0; }
+.dm-aset-nama { min-width: 0; }
+.dm-aset-nama .small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dm-aset-harga { display: grid; text-align: right; line-height: 1.3; }
+
+/* Pegangan */
+.dm-pegang-head { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+.dm-pegang-head h3 { margin-bottom: 2px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.dm-pegang-head p { margin: 0; }
+.dm-pl { display: grid; text-align: right; line-height: 1.25; flex: none; }
+.dm-pl b { font-size: 1.15rem; }
+.dm-dl { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; margin: 12px 0 0; }
+.dm-dl > div { display: grid; gap: 1px; min-width: 0; }
+.dm-dl dt { font-size: 0.76rem; color: var(--muted); }
+.dm-dl dd { margin: 0; font-weight: 650; overflow-wrap: anywhere; }
+.dm-dl .dm-jumlah dd { font-size: 1.05rem; }
+.dm-andai { border-top: 1px dashed var(--border); padding-top: 10px; margin-top: 4px; }
+.dm-andai label { font-size: 0.88rem; display: block; margin-bottom: 4px; }
+.dm-andai input[type="range"] { height: 28px; padding: 0; border: 0; background: none; box-shadow: none; accent-color: var(--brand); }
+.dm-andai p { margin: 4px 0 0; }
+.dm-butang { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+
+/* Sejarah */
+.dm-sj { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+.dm-sj-jenis { font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
+.dm-sj-jenis.beli { color: var(--up); background: color-mix(in srgb, var(--up) 13%, transparent); }
+.dm-sj-jenis.jual { color: var(--down); background: color-mix(in srgb, var(--down) 13%, transparent); }
+.dm-sj-kanan { display: grid; text-align: right; line-height: 1.3; }
+.dm-reset { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; margin: 4px 0 8px; }
+
+/* Dialog dagangan */
+.dm-dialog { max-height: calc(100dvh - 32px); overflow-y: auto; }
+.dm-dialog h2 { margin-bottom: 4px; padding-right: 36px; }
+.dm-x { position: absolute; top: 12px; right: 12px; }
+.dm-pantas { display: flex; flex-wrap: wrap; gap: 6px; margin: -4px 0 12px; }
+.dm-pantas .chip { padding: 6px 12px; }
+.dm-kira { min-height: 40px; }
+.dm-hasil { font-size: 1.05rem; font-weight: 650; margin: 12px 0 0; }
+.dm-dialog-butang { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
+.dm-dialog-butang .btn { flex: 1; }
+.btn.dm-jual { background: var(--down); color: #fff; }
+.dm-amaran { border-radius: 10px; padding: 10px 12px; margin: 10px 0; font-size: 0.88rem; line-height: 1.5; color: var(--text);
+  background: color-mix(in srgb, var(--c) 11%, var(--surface)); border: 1px solid color-mix(in srgb, var(--c) 35%, transparent); }
+
+/* CFD Emas */
+.dm-cfd-intro { margin-top: 0; }
+.dm-mod { margin: 4px 0 8px; }
+.dm-bidask { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 10px 0; }
+.dm-bidask > div { background: var(--surface-2); border-radius: 10px; padding: 8px 10px; display: grid; min-width: 0; }
+.dm-bidask span { font-size: 0.72rem; color: var(--muted); }
+.dm-bidask b { font-size: 0.95rem; overflow-wrap: anywhere; }
+.dm-main { border-top: 1px solid var(--border); padding-top: 10px; margin-top: 4px; }
+.dm-main .small { margin: 6px 0 0; }
+.dm-main-bar { height: 6px; border-radius: 99px; background: var(--surface-2); overflow: hidden; }
+.dm-main-isi { display: block; height: 100%; width: 0; background: var(--gold); border-radius: inherit; transition: width .3s linear; }
+.dm-pesanan h2 { margin-bottom: 10px; }
+.dm-arah { display: flex; margin-bottom: 12px; }
+.dm-arah .seg { flex: 1; }
+.dm-arah .seg[data-arah="beli"].active { color: var(--up); }
+.dm-arah .seg[data-arah="jual"].active { color: var(--down); }
+.dm-kesan { background: var(--surface-2); border-radius: 10px; padding: 10px 12px; margin-top: 12px; font-size: 0.9rem; }
+.dm-kesan p:last-child { margin-bottom: 0; }
+.dm-stopout { border: 2px solid var(--down); border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; background: color-mix(in srgb, var(--down) 8%, var(--surface)); }
+.dm-stopout h3 { color: var(--down); }
+.dm-ilmu h2 { margin-bottom: 10px; }
+.dm-banding { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.dm-banding > div { background: var(--surface-2); border-radius: 10px; padding: 12px; min-width: 0; }
+.dm-banding > div:last-child { background: color-mix(in srgb, var(--down) 8%, var(--surface-2)); }
+.dm-banding ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 0.88rem; }
+.dm-sebab { margin: 0 0 12px; padding-left: 22px; display: grid; gap: 10px; }
+.dm-sebab p { margin: 2px 0 0; }
+
+@media (max-width: 560px) {
+  .dm-banding, .dm-contoh-grid { grid-template-columns: 1fr; }
+  .dm-bidask { gap: 6px; }
+  .dm-bidask > div { padding: 8px; }
+  .dm-bidask b { font-size: 0.78rem; white-space: nowrap; }
+}
