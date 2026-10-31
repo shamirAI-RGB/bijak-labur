@@ -1,6 +1,6 @@
 /* Setiap halaman SiswaCap: dibuka tanpa ralat pada telefon dan desktop, tema cerah dan gelap, tiada tatal mendatar,
    tiada gambar atau fail tempatan yang rosak, dan setiap pautan dalaman menuju ke halaman yang wujud. */
-const VIEWS = ['utama', 'belajar', 'pasaran', 'solat', 'ibadah', 'semak', 'jadual', 'nota', 'sihat', 'studio', 'buku', 'kerja', 'jejak', 'komuniti', 'premium', 'soalan', 'halal', 'alat', 'uitm', 'pelajar-halal'];
+const VIEWS = ['utama', 'belajar', 'pasaran', 'solat', 'ibadah', 'jadual', 'nota', 'sihat', 'studio', 'buku', 'kerja', 'jejak', 'komuniti', 'premium', 'soalan', 'halal', 'alat', 'uitm', 'pelajar-halal'];
 const LAMAN = ['siswa.html', 'tentang.html', 'cara.html', 'terma.html', 'terma-guna.html', 'terma-app.html', 'privacy.html', 'penafian-ai.html', 'bayaran-balik.html', 'padam-data.html', 'peta.html', '404.html'];
 
 // Pantau fail tempatan yang gagal dimuat (404) sepanjang kes
@@ -55,7 +55,7 @@ for (const v of VIEWS) {
 
 kes.push({ kumpulan: 'Halaman', nama: 'Navigasi bawah dan suis tema', langkah: async (t, page) => {
   await t.buka('#utama');
-  for (const v of ['belajar', 'pasaran', 'solat', 'semak']) {
+  for (const v of ['belajar', 'pasaran', 'solat', 'ibadah']) {
     const a = await page.$(`[data-nav="${v}"]:visible`);
     if (!a) continue;
     await a.click(); await t.ada(`#view-${v}.active`, /\S/);
@@ -126,12 +126,21 @@ kes.push({ kumpulan: 'Halaman', nama: 'Menu Alat dan halaman Alat Pelajar dalam 
   if (JSON.stringify(hal) !== JSON.stringify(jangka.map(x => x[0]))) throw new Error(`kumpulan halaman Alat: ${JSON.stringify(hal)}`);
 } });
 
+// Semak kertas kerja dibuang (arahan pemilik 31 Okt 2026): tiada pautan tinggal, dan #semak lama dibawa ke halaman utama
+kes.push({ kumpulan: 'Halaman', nama: 'Semak kertas kerja sudah dibuang: tiada pautan, #semak ke halaman utama', langkah: async (t, page) => {
+  await t.buka('#utama');
+  const pautan = await page.$$eval('a[href^="#semak"], [data-nav="semak"], #view-semak, #paper', l => l.length);
+  if (pautan) throw new Error(`masih ada ${pautan} pautan atau elemen Semak Kertas`);
+  await page.evaluate(() => { location.hash = '#semak'; });
+  await t.ada('#view-utama.active', /\S/);
+} });
+
 // Jadual, Nota IC220 dan Audit Halal dipindahkan dari halaman utama ke bahagian Pelajar UiTM dan Pelajar Halal (arahan pemilik 20 Okt 2026)
 kes.push({ kumpulan: 'Halaman', nama: 'Bahagian Pelajar UiTM dan Pelajar Halal menggantikan kad Jadual, Nota dan Audit Halal di halaman utama', langkah: async (t, page) => {
   await t.buka('#utama');
   const utama = await page.$$eval('#view-utama a[href="#jadual"]:not(.md-chip), #view-utama a[href="#nota"], #view-utama a[href="#halal"], .desk-nav > a[href="#jadual"], .desk-nav > a[href="#nota"]', as => as.map(a => a.getAttribute('href')));
   if (utama.length) throw new Error(`masih ada di halaman utama atau barisan navigasi: ${utama.join(', ')}`);
-  for (const [v, tajuk, jangka] of [['uitm', 'Pelajar UiTM', ['#jadual', '#semak', '#alat']], ['pelajar-halal', 'Pelajar Halal', ['#halal', '#nota', '#semak', '#ibadah/fiqh/tanya']]]) {
+  for (const [v, tajuk, jangka] of [['uitm', 'Pelajar UiTM', ['#jadual', '#alat']], ['pelajar-halal', 'Pelajar Halal', ['#halal', '#nota', '#ibadah/fiqh/tanya']]]) {
     await page.evaluate(v => { location.hash = '#' + v; }, v);
     await t.ada(`#view-${v}.active h1`, new RegExp('^' + tajuk + '$'));
     const kad = await page.$$eval(`#view-${v} .card.shortcut`, as => as.map(a => a.getAttribute('href')));

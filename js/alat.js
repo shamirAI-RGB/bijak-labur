@@ -146,9 +146,8 @@
   // Alat lain mengikut kumpulan yang sama seperti menu Alat di bahagian atas
   const KUMPULAN = [
     ['Pelajar', [
-      ['#semak', 'file', 'Semak Kertas', 'Peratus tulisan AI, plagiarisme dan pembetulan ayat'],
-      ['#uitm', 'cap', 'Pelajar UiTM', 'Jadual kelas UiTM, skrin kunci dan Semak kertas'],
-      ['#pelajar-halal', 'shield', 'Pelajar Halal', 'Audit Halal, Nota IC220, Semak kertas dan Tanya AI Fiqh'],
+      ['#uitm', 'cap', 'Pelajar UiTM', 'Jadual kelas UiTM, skrin kunci dan Alat Pelajar'],
+      ['#pelajar-halal', 'shield', 'Pelajar Halal', 'Audit Halal, Nota IC220 dan Tanya AI Fiqh'],
       ['#buku', 'book', 'Buku Nota AI', 'Tanya soalan tentang nota anda dengan petikan yang disahkan'],
       ['#kerja', 'target', 'Kerjaya AI', 'Cadangan jawatan, padanan resume, surat permohonan dan temu duga']]],
     ['Ibadah & Komuniti', [
@@ -280,7 +279,7 @@
       ${h.soalan_kajian.length ? `<h3>Cadangan soalan kajian</h3>${senarai(h.soalan_kajian)}` : ''}</div>`;
     if (tab === 'sorotan') isi = `<div class="card bk-out"><div class="row-between"><h2>Draf sorotan literatur</h2><button class="btn ghost sm" type="button" data-act="salin-sorotan">${icon('copy')}Salin</button></div>
       ${h.sorotan.map(p => `<p>${esc(p)}</p>`).join('')}
-      <p class="muted small">Draf ini titik permulaan. Tulis semula dengan suara anda sendiri, semak setiap dakwaan dengan kertas asal, dan semak di Semak Kertas sebelum menghantar.</p></div>`;
+      <p class="muted small">Draf ini titik permulaan. Tulis semula dengan suara anda sendiri, semak setiap dakwaan dengan kertas asal, sebelum menghantar.</p></div>`;
     if (tab === 'senarai') isi = `<div class="card"><div class="row-between"><h2>Rujukan</h2><div class="row-gap"><button class="btn ghost sm" type="button" data-act="salin-senarai">${icon('copy')}Salin semua</button><button class="btn ghost sm" type="button" data-act="bibtex">${icon('download')}BibTeX</button><button class="btn ghost sm" type="button" data-act="ris">${icon('download')}RIS (Mendeley, Zotero)</button></div></div>
       <ol class="al-senarai-apa">${senaraiApa.map(a => `<li>${a.html}</li>`).join('')}</ol>
       <p class="muted small">Format APA edisi ke-7. Tajuk dikekalkan seperti dalam kertas: tukar tajuk artikel kepada huruf besar ayat (sentence case) jika pensyarah meminta.</p></div>`;
@@ -407,7 +406,7 @@ Rujukan APA 7 dan format (15 markah).`]
         ${k.naik_tahap ? `<p class="al-naik">${icon('target')}<span>${esc(k.naik_tahap)}</span></p>` : ''}
         ${k.baiki.map((b, bi) => `<div class="kj-fix"><del>${esc(b.asal)}</del><ins>${esc(b.baru)}</ins><span class="muted small">${esc(b.sebab)}</span><button class="link-btn" type="button" data-rb-fix="${ki}:${bi}">Guna dalam draf</button></div>`).join('')}
       </div>`; }).join('')}
-      <div class="row-gap al-seterus"><button class="btn ghost" type="button" data-act="ke-semak">${icon('file')}Semak AI% dan plagiarisme draf ini</button><button class="btn ghost" type="button" data-act="ke-tulis">${icon('type')}Baiki penulisan draf ini</button></div>`;
+      <div class="row-gap al-seterus"><button class="btn ghost" type="button" data-act="ke-tulis">${icon('type')}Baiki penulisan draf ini</button></div>`;
   }
 
   /* =========================================================
@@ -741,8 +740,7 @@ Rujukan APA 7 dan format (15 markah).`]
           <p class="al-diff">${diff(p, r.baru)}</p>
           ${r.sitasi_hilang.length ? `<p class="al-amaran small">${icon('alert')}<span>Petikan atau angka asal tiada dalam versi baharu: ${r.sitasi_hilang.map(esc).join(', ')}. Pastikan ia dikekalkan.</span></p>` : ''}
           ${r.perubahan.length ? `<div class="al-ubah">${r.perubahan.map(c => `<span><b>${esc(c.jenis)}</b> ${esc(c.sebab)}</span>`).join('')}</div>` : ''}</div>`;
-      }).join('')}
-      <div class="row-gap al-seterus"><button class="btn ghost" type="button" data-act="tl-semak">${icon('file')}Semak AI% dan plagiarisme teks akhir</button></div>`;
+      }).join('')}`;
   }
 
   /* ---------- Penghala dalaman ---------- */
@@ -790,7 +788,6 @@ Rujukan APA 7 dan format (15 markah).`]
       const d = await jalan('rubrik', { tugas: 'rubrik', rubrik: rb.rubrik, arahan: rb.arahan, draf: rb.draf });
       if (tanpaRalat(d)) { simpanHasil('rubrik', d); render(); keHasil(); }
     },
-    'ke-semak': () => { const el = $('#paper'); if (el) { el.value = rb.draf; el.dispatchEvent(new Event('input', { bubbles: true })); } location.hash = '#semak'; },
     'ke-tulis': () => { tl.teks = rb.draf; save('alat_tulis', tl); location.hash = '#alat/tulis'; },
     'jana-coach': async () => { if (perluBahan()) return; berhentiRakam(); const d = await jalan('coach', { tugas: 'coach_soalan', teks: bahan.teks, tajuk: bahan.tajuk }); if (tanpaRalat(d)) { simpanHasil('coach', d); render(); keHasil(); } },
     'jana-ingat': async () => { if (perluBahan()) return; const d = await jalan('ingat', { tugas: 'ingat_soalan', teks: bahan.teks }); if (tanpaRalat(d)) { simpanHasil('ingat', d); ig = null; render(); keHasil(); } },
@@ -827,8 +824,7 @@ Rujukan APA 7 dan format (15 markah).`]
     },
     'tl-terima-semua': () => { const h = H.tulis; h.perenggan.forEach((p, i) => { if (h.baru[i] && !h.baru[i].sitasi_hilang.length) h.terima[i] = true; }); simpanHasil('tulis', h); render(); if (h.perenggan.some((p, i) => h.baru[i] && h.baru[i].sitasi_hilang.length)) toast('Perenggan yang kehilangan petikan atau angka tidak diterima secara automatik. Semak dahulu.', 4500); },
     'tl-salin': () => { const h = H.tulis; salin(teksAkhir(h), 'Teks akhir disalin.'); },
-    'tl-guna': () => { const h = H.tulis; tl.teks = teksAkhir(h); save('alat_tulis', tl); delete H.tulis; save('alat_hasil', H); render(); toast('Teks dikemas kini.'); },
-    'tl-semak': () => { const h = H.tulis, el = $('#paper'); if (el) { el.value = teksAkhir(h); el.dispatchEvent(new Event('input', { bubbles: true })); } location.hash = '#semak'; }
+    'tl-guna': () => { const h = H.tulis; tl.teks = teksAkhir(h); save('alat_tulis', tl); delete H.tulis; save('alat_hasil', H); render(); toast('Teks dikemas kini.'); }
   };
 
   root.addEventListener('click', async e => {

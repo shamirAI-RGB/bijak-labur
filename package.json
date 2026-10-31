@@ -2,7 +2,7 @@
   "name": "bijak-labur",
   "version": "1.0.0",
   "private": true,
-  "description": "Belajar melabur di Moomoo, harga pasaran masa nyata, waktu solat Malaysia dan penyemak kertas kerja.",
+  "description": "Belajar melabur di Moomoo, harga pasaran masa nyata, waktu solat Malaysia dan Alat Pelajar AI.",
   "type": "module",
   "scripts": {
     "build": "node scripts/build-web.mjs",

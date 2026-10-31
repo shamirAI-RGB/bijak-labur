@@ -21,5 +21,5 @@ SiswaCap (siswacap.my) is a free Malay-language website and app built by two UiT
 - Tanya AI Fiqh: jawapan hanya daripada 13 kitab muktabar (mazhab Syafie, seperti Fath al-Qarib, Minhaj al-Talibin, Mughni al-Muhtaj, Raudhah al-Talibin, Al-Majmu'; dan perbandingan mazhab seperti Bidayah al-Mujtahid dan Al-Fiqh al-Islami wa Adillatuh), Al-Quran, hadis, serta keputusan Muzakarah Jawatankuasa Fatwa Kebangsaan (JAKIM), Majlis Penasihat Syariah SC dan BNM, dan Akademi Fiqh Islam Antarabangsa. Setiap petikan kitab disertakan gambar muka surat cetakan; jika tiada sumber sah, AI menjawab "tidak pasti".
 - Waktu solat seluruh Malaysia (semua zon rasmi) dan dunia, arah kiblat
 - Jadual kelas UiTM dan wallpaper skrin kunci jadual mingguan
-- Penyemak kertas kerja: anggaran tulisan AI, plagiat dan pembetulan bahasa
+- Alat Pelajar AI: rujukan APA 7, pek peperiksaan, penyemak rubrik, nota kuliah dan jurulatih pembentangan
 - Sihat: anggaran kalori makanan dan penjejak aktiviti

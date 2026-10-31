@@ -1217,7 +1217,7 @@ export default [
     await wsPalsu(page);
     await t.buka('#soalan');
     const semua = await bil(page, '#sqFaq details');
-    sama(semua, 18, 'Semua soalan lazim');
+    sama(semua, 16, 'Semua soalan lazim');
     await t.isi('#sqFind', 'azan');
     await page.waitForFunction(() => document.querySelectorAll('#sqFaq details').length === 1);
     await t.ada('#sqFaq', /Kenapa notifikasi azan tidak keluar\?/);
