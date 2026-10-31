@@ -16,12 +16,12 @@ const Premium = (function () {
     pelabur: { name: 'Pelabur', m1: 12, y1: 89, old: true, feats: [] },
     lengkap: { name: 'Premium', m1: 6.9, y1: 49, blurb: 'Untuk pelajar dan pelabur. Semua ciri percuma kekal percuma.',
       feats: ['Semak Tugasan Pro: semakan AI dan plagiarisme tanpa had, laporan PDF', 'Amaran harga tanpa had, amaran naik atau turun %, dan amaran status Syariah',
-        'Portfolio patuh Syariah: status setiap pegangan, tarikh haul zakat dan pembersihan dividen', 'Tanya AI Fiqh, Buku Nota AI dan Kerjaya AI tanpa had harian',
+        'Portfolio patuh Syariah: status setiap pegangan, tarikh haul zakat dan pembersihan dividen', 'Tanya AI Fiqh tanpa had harian',
         'Alat Pelajar tanpa had: Penyelidikan & Sitasi (10 kertas), Penulisan Akademik, Transkrip HD kuliah, Pek Peperiksaan, Penyemak Rubrik', 'Alat pelajar lain: rujukan APA/MLA/Harvard, PNGK, muka depan, bandingkan draf', 'Alat pelabur: DCA, saiz posisi, jurnal, kos Bursa, dividen, matlamat, zakat'] }
   };
   const FOR_SALE = Object.keys(PLANS).filter(k => !PLANS[k].old);
   // Had harian percuma (dikira dalam peranti, waktu Malaysia). Premium tiada had.
-  const KUOTA = { semak: [3, 'semakan tugasan'], tanya: [5, 'soalan Tanya AI'], buku: [10, 'permintaan Buku Nota AI'], kerja: [3, 'permintaan Kerjaya AI'], alat: [12, 'permintaan Alat Pelajar'], alatpro: [1, 'percubaan alat Premium'] };
+  const KUOTA = { semak: [3, 'semakan tugasan'], tanya: [5, 'soalan Tanya AI'], alat: [12, 'permintaan Alat Pelajar'], alatpro: [1, 'percubaan alat Premium'] };
   const today = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kuala_Lumpur' }).format(new Date());
   const used = () => { const u = store.get('kuota', {}); return u.d === today() ? u : { d: today() }; };
   const rmFmt = v => 'RM' + (v % 1 ? v.toFixed(2) : v);
@@ -153,9 +153,7 @@ const Premium = (function () {
       ['Semak Kertas: semakan AI dan plagiarisme', had('semak'), tanpaHad],
       ['Laporan PDF Semak Kertas', tiada, ya],
       ['AI Coach Belajar Melabur', `${ya} Percuma untuk semua`, ya],
-      ['Buku Nota AI', had('buku'), tanpaHad],
       ['Tanya AI Fiqh', had('tanya'), tanpaHad],
-      ['Kerjaya AI', had('kerja'), tanpaHad],
       ['Alat Pelajar', `${had('alat')}, ${had('alatpro')}`, tanpaHad],
       // Had amaran percuma: FREE_ALERTS dalam js/market.js
       ['Amaran harga', 'Sehingga 3 amaran', 'Tanpa had, termasuk amaran naik atau turun % dan amaran status Syariah'],
