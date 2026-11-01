@@ -61,7 +61,7 @@ Peraturan integriti (wajib):
 9. Terjemahan wajib: setiap "petikan" dalam bahasa Arab MESTI disertai "maksud", iaitu terjemahan Bahasa Melayu baku yang tepat dan mengikut konteks bab itu (bukan terjemahan perkataan demi perkataan). Kekalkan istilah fiqh yang lazim (cth. wuduk, najis, riba, akad) dan jelaskan maksudnya jika perlu. Petikan Arab tanpa maksud akan dibuang.
 10. Jawab hanya berdasarkan fakta dalam teks sumber yang diberi atau dibuka, bagi apa-apa bab fiqh (ibadah, muamalat, munakahat, jenayah, makanan, perubatan dan isu semasa). Jangan tambah butiran, angka, syarat atau nama ulama yang tiada dalam sumber. Jika sumber hanya menjawab sebahagian soalan, jawab bahagian itu dan nyatakan dengan jelas bahagian yang tidak dijawab oleh sumber.
 
-Cara bekerja: semak korpus dahulu. Jika perlu huraian kitab, gunakan web_search (cth. nama kitab dan kata kunci dalam bahasa Arab di shamela.ws) dan web_fetch untuk membuka muka surat yang tepat, kemudian petik ayat kitab itu. Paling banyak beberapa carian sahaja.
+Cara bekerja: semak korpus dahulu. Jika perlu huraian kitab, gunakan web_search (cth. nama kitab dan kata kunci dalam bahasa Arab di shamela.ws) dan web_fetch untuk membuka muka surat yang tepat, kemudian petik ayat kitab itu. Paling banyak satu carian dan dua muka surat sahaja, supaya jawapan cepat; jika korpus sudah menjawab, jangan cari lagi.
 
 Jawapan akhir: HANYA satu objek JSON (tiada teks lain, tiada markdown) dengan bentuk:
 {"status":"jawab"|"tidak_pasti"|"luar_skop","ringkasan":"1-2 ayat jawapan dalam Bahasa Melayu","huraian":["perenggan pendek", "..."],"khilaf":"perbezaan pendapat jika ada, atau kosong","nasihat":"cadangan rujukan lanjut jika perlu, atau kosong","sumber":[{"id":"id korpus, quran:S:A, pdf:KOD:MUKASURAT, kitab:KOD:HALAMAN atau mufti:NEGERI:N, atau kosong","url":"URL halaman yang dibuka, atau kosong","jenis":"kitab"|"quran"|"hadis"|"fatwa"|"lain","tajuk":"nama kitab/dokumen","jilid":"juz jika tertera pada halaman, atau kosong","halaman":"nombor halaman cetakan jika tertera, atau kosong","petikan":"teks tepat dari sumber, atau kosong","maksud":"terjemahan atau maksud petikan dalam Bahasa Melayu, atau kosong","untuk":"kenyataan dalam huraian yang disokong sumber ini"}]}`;
@@ -309,11 +309,13 @@ export async function askKorpus(env, question, docs = []) {
 
 // web = false: Claude dalam mod korpus (tanpa alat web, satu panggilan, input jauh lebih kecil), sandaran pertama apabila
 // panggilan dengan alat web gagal atau dihadkan
+// Had alat web dikecilkan (pilihan pemilik, 31 Okt 2026: jawapan terlalu lama, kira-kira 40 hingga 60 saat)
+export const WEB_CARI = 1, WEB_BUKA = 2;
 export async function ask(env, question, client, docs = [], { web = true } = {}) {
   client = client || new Anthropic({ apiKey: env.ANTHROPIC_API_KEY, maxRetries: 1 });
   const tools = !web ? [] : [
-    { type: 'web_search_20260209', name: 'web_search', max_uses: 3, allowed_domains: DOMAINS },
-    { type: 'web_fetch_20260209', name: 'web_fetch', max_uses: 4, allowed_domains: DOMAINS, max_content_tokens: 12000 }
+    { type: 'web_search_20260209', name: 'web_search', max_uses: WEB_CARI, allowed_domains: DOMAINS },
+    { type: 'web_fetch_20260209', name: 'web_fetch', max_uses: WEB_BUKA, allowed_domains: DOMAINS, max_content_tokens: 12000 }
   ];
   const messages = [{ role: 'user', content: [
     { type: 'text', text: `Korpus rujukan SiswaCap (telah disemak):\n\n${CORPUS_TEXT}`, cache_control: { type: 'ephemeral' } },

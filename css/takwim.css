@@ -239,11 +239,6 @@ input, select, textarea { border-radius: 2px !important; }
 /* Jalur cip yang boleh dileret: cip pertama sejajar dengan tepi kandungan, bukan tepi skrin */
 .chips { scroll-padding-inline: 16px; }
 
-/* Sihat: label makro di atas nilai pada telefon supaya ketiga-tiga kotak sama bentuk */
-@media (max-width: 759px) {
-  .sh-macro > div { flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 2px; padding-bottom: 16px; }
-  .sh-macro b { font-size: 1.1rem; }
-}
 
 /* Waktu solat dan azan paling atas halaman utama (arahan pemilik 10 Okt 2026) */
 #view-utama > .prayer-card { margin: 0; }

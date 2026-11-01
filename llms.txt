@@ -22,4 +22,3 @@ SiswaCap (siswacap.my) is a free Malay-language website and app built by two UiT
 - Waktu solat seluruh Malaysia (semua zon rasmi) dan dunia, arah kiblat
 - Jadual kelas UiTM dan wallpaper skrin kunci jadual mingguan
 - Alat Pelajar AI: rujukan APA 7, pek peperiksaan, penyemak rubrik, nota kuliah dan jurulatih pembentangan
-- Sihat: anggaran kalori makanan dan penjejak aktiviti
