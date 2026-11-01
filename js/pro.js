@@ -1,4 +1,4 @@
-/* SiswaCap Premium: portfolio, simulator DCA, zakat pelaburan, penjana rujukan, laporan PDF */
+/* SiswaCap Premium: portfolio, simulator DCA, zakat pelaburan, penjana rujukan */
 (function () {
   const REST = 'https://data-api.binance.vision/api/v3';
   const rm = new Intl.NumberFormat('ms-MY', { style: 'currency', currency: 'MYR', minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -352,31 +352,9 @@
   }
   ProTools.kit = { fmtRM, pct, sign, numIn, FX, once, REST, field, persist, portfolio: () => hold, valueOf, refreshPrices };
 
-  /* ---------- Laporan PDF daripada penyemak kertas ---------- */
-  $('#reportBtn').addEventListener('click', () => {
-    if (!Premium.require('pelajar')) return;
-    const r = window.CheckerReport && window.CheckerReport();
-    if (!r) return toast('Jalankan semakan dahulu.');
-    const when = new Intl.DateTimeFormat('ms-MY', { dateStyle: 'long', timeStyle: 'short', timeZone: 'Asia/Kuala_Lumpur' }).format(new Date());
-    const g = (v, l) => `<div class="rp-g"><b>${v == null ? '–' : v + '%'}</b><span>${l}</span></div>`;
-    $('#printArea').innerHTML = `<header class="rp-head"><img src="icons/icon.svg" width="34" height="34" alt=""><div><h1>Laporan semakan kertas kerja</h1><p>SiswaCap · ${esc(when)}</p></div></header>
-      <section class="rp-gauges">${g(r.ai, 'Anggaran AI')}${g(r.plag, 'Plagiarisme')}${g(r.plag == null ? null : 100 - r.plag, 'Keaslian')}${g(r.quality, 'Kualiti bahasa')}</section>
-      <p class="rp-meta">${r.stats.map(([v, k]) => `${esc(k)}: <b>${esc(String(v))}</b>`).join(' · ')}</p>
-      <h2>Isyarat tulisan AI</h2><table>${r.signals.map(([k, v]) => `<tr><td>${esc(k)}</td><td class="num">${Math.round(v * 100)}%</td></tr>`).join('')}</table>
-      <h2>Cadangan pembetulan (${r.sugg.length})</h2>${r.sugg.length ? `<table><tr><th>Jenis</th><th>Asal</th><th>Cadangan</th><th>Sebab</th></tr>${r.sugg.map(s => `<tr><td>${esc(s.cat)}</td><td>${esc(s.from)}</td><td>${esc(s.to)}</td><td>${esc(s.why)}</td></tr>`).join('')}</table>` : '<p>Tiada isu bahasa ditemui.</p>'}
-      <h2>Sumber yang sepadan</h2>${r.sources.length ? `<table>${r.sources.map(s => `<tr><td>${esc(s.name)}${s.url ? `<br><small>${esc(s.url)}</small>` : ''}</td><td class="num">${s.pct}%</td></tr>`).join('')}</table>` : `<p>${r.plag == null ? 'Semakan sumber tidak dijalankan.' : 'Tiada padanan ketara.'}</p>`}
-      <h2>Teks yang disemak</h2><div class="rp-text">${esc(r.text).replace(/\n/g, '<br>')}</div>
-      <p class="rp-foot">Peratus AI dan plagiarisme ialah anggaran berdasarkan ciri statistik teks dan carian sumber terbuka dan teks yang diberikan. Ia bukan bukti muktamad dan tidak setara dengan sistem semakan rasmi universiti.</p>`;
-    const title = document.title;
-    document.title = 'Laporan semakan - SiswaCap';
-    document.body.classList.add('printing');
-    setTimeout(() => { window.print(); document.title = title; }, 60);
-  });
-
   window.addEventListener('afterprint', () => document.body.classList.remove('printing'));
 
   function paint() {
-    $('#reportBtn').querySelector('.lock').classList.toggle('hidden', Premium.has('pelajar'));
     $('#proWrap').classList.toggle('subscribed', !!Premium.plan);
     open(tool);
   }

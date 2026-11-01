@@ -32,7 +32,7 @@ function loadScript(src) {
   return scriptCache[src];
 }
 
-/* Baca teks daripada fail .pdf, .docx, .pptx atau teks biasa (dikongsi oleh Semak Kertas dan Alat Pelajar) */
+/* Baca teks daripada fail .pdf, .docx, .pptx atau teks biasa (dikongsi oleh Alat Pelajar) */
 async function fileText(f) {
   const name = f.name.toLowerCase();
   if (name.endsWith('.docx')) {
@@ -137,7 +137,7 @@ function paintThemeIcon() {
 })();
 
 /* Navigasi berasaskan hash */
-const VIEWS = ['utama', 'belajar', 'pasaran', 'solat', 'ibadah', 'semak', 'jadual', 'nota', 'komuniti', 'premium', 'soalan', 'halal', 'alat', 'uitm', 'pelajar-halal', 'demo'];
+const VIEWS = ['utama', 'belajar', 'pasaran', 'solat', 'ibadah', 'jadual', 'nota', 'komuniti', 'premium', 'soalan', 'halal', 'alat', 'uitm', 'pelajar-halal', 'demo'];
 let currentView = null, currentHash = null;
 function route() {
   // Hash boleh mempunyai sub-laluan, cth. #ibadah/quran/36

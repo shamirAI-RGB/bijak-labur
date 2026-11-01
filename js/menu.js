@@ -105,20 +105,18 @@
   });
 
   /* ---------- Ruang Soalan ---------- */
-  const TOPICS = ['Umum', 'Belajar & pasaran', 'Waktu solat & ibadah', 'Semak kertas kerja', 'Alat Pelajar', 'Premium & bayaran', 'Maklum balas', 'Laporkan masalah'];
+  const TOPICS = ['Umum', 'Belajar & pasaran', 'Waktu solat & ibadah', 'Alat Pelajar', 'Premium & bayaran', 'Maklum balas', 'Laporkan masalah'];
   const FAQ = [
-    ['Umum', 'Adakah SiswaCap percuma?', 'Ya. Pelajaran pelaburan, harga pasaran, waktu solat, ibadah dan penyemak kertas kerja asas adalah percuma dan kekal percuma. Semakan tugasan dan AI mempunyai had harian percuma; Premium membuang had itu dan menambah amaran harga, portfolio patuh Syariah dan alat lanjutan.'],
+    ['Umum', 'Adakah SiswaCap percuma?', 'Ya. Pelajaran pelaburan, harga pasaran, waktu solat dan ibadah adalah percuma dan kekal percuma. Ciri AI mempunyai had harian percuma; Premium membuang had itu dan menambah amaran harga, portfolio patuh Syariah dan alat lanjutan.'],
     ['Umum', 'Perlukah saya daftar akaun?', 'Tidak buat masa ini. Anda boleh guna sebagai tetamu. Tetapan, profil dan rekod disimpan dalam peranti anda sahaja.'],
     ['Umum', 'Bagaimana pasang SiswaCap seperti app?', 'Di iPhone, buka siswacap.my dalam Safari, tekan butang Kongsi, kemudian Add to Home Screen. Di Android, buka dalam Chrome dan tekan Install app, atau guna Pasang app dalam menu ini.'],
-    ['Umum', 'Bolehkah saya guna tanpa internet?', 'Halaman utama, pelajaran dan waktu solat yang sudah dimuat turun boleh dibuka tanpa internet. Harga pasaran, audio Al-Quran dan semakan plagiat memerlukan internet.'],
+    ['Umum', 'Bolehkah saya guna tanpa internet?', 'Halaman utama, pelajaran dan waktu solat yang sudah dimuat turun boleh dibuka tanpa internet. Harga pasaran, audio Al-Quran dan ciri AI memerlukan internet.'],
     ['Belajar & pasaran', 'Adakah ini nasihat kewangan?', 'Tidak. SiswaCap ialah bahan pendidikan. Buat kajian sendiri dan rujuk penasihat berlesen sebelum melabur. Kami tidak bergabung dengan mana-mana broker yang disebut.'],
     ['Belajar & pasaran', 'Dari mana harga kripto dan saham diambil?', 'Harga kripto dan carta saham AS daripada data pasaran awam yang dikemas kini secara masa nyata. Untuk saham Bursa Malaysia, semak kaunter dalam app broker anda.'],
     ['Belajar & pasaran', 'Bagaimana tahu saham atau kripto patuh Syariah?', 'Bahagian Belajar dan Fiqh menerangkan kaedah saringan Suruhanjaya Sekuriti dan pandangan ulama, dengan rujukan. Untuk keputusan muktamad, rujuk senarai rasmi SC dan Majlis Penasihat Syariah.'],
     ['Waktu solat & ibadah', 'Dari mana waktu solat diambil?', 'Daripada data waktu solat rasmi Malaysia, mengikut zon yang anda pilih di halaman Waktu Solat.'],
     ['Waktu solat & ibadah', 'Kenapa notifikasi azan tidak keluar?', 'Benarkan notifikasi apabila diminta. Di iPhone, notifikasi pelayar hanya berfungsi selepas laman dipasang ke Home Screen.'],
     ['Waktu solat & ibadah', 'Kenapa tarikh Hijri berbeza sehari?', 'Kalendar dikira mengikut Umm al-Qura. Malaysia menentukan awal bulan melalui rukyah dan hisab. Laraskan dalam Tetapan ibadah.'],
-    ['Semak kertas kerja', 'Setepat mana peratus AI dan plagiarisme?', 'Peratus AI ialah anggaran berdasarkan gaya penulisan, bukan bukti. Plagiarisme disemak terhadap ensiklopedia dalam talian dan pangkalan jurnal akademik terbuka, bukan pangkalan peribadi sistem semakan universiti.'],
-    ['Semak kertas kerja', 'Adakah kertas kerja saya dimuat naik ke pelayan?', 'Teks diproses dalam pelayar anda. Hanya potongan ayat pendek dihantar ke enjin carian sumber terbuka untuk mencari padanan.'],
     ['Alat Pelajar', 'Adakah rujukan APA 7 daripada Penyelidikan & Sitasi tepat?', 'Butiran rujukan diekstrak daripada kertas anda, kemudian disemak dengan pangkalan data Crossref apabila DOI atau tajuk dijumpai. Rujukan bertanda "Diekstrak daripada PDF" perlu disemak sendiri, dan anda boleh menyuntingnya. DOI yang tidak tertulis dalam kertas tidak akan direka.'],
     ['Alat Pelajar', 'Bolehkah saya hantar hasil Alat Pelajar sebagai tugasan?', 'Tidak. Alat ini membantu anda belajar, mengulang kaji dan membaiki kerja sendiri. Ikut dasar integriti akademik universiti anda dan isytiharkan penggunaan AI jika diminta pensyarah.'],
     ['Alat Pelajar', 'Adakah rakaman kuliah saya disimpan?', 'Tidak. Kapsyen langsung diproses oleh pelayar anda. Untuk Transkrip HD, audio dihantar ke pelayan untuk ditranskrip dan tidak disimpan. Transkrip dan nota disimpan dalam peranti anda sahaja. Minta izin pensyarah sebelum merakam.'],
@@ -150,7 +148,7 @@
       </div>
       <div class="sq-grid">
         <div>
-          <label class="sq-search"><span class="sr-only">Cari soalan</span>${icon('search')}<input type="search" id="sqFind" placeholder="Cari, cth. azan, plagiat, premium" autocomplete="off"></label>
+          <label class="sq-search"><span class="sr-only">Cari soalan</span>${icon('search')}<input type="search" id="sqFind" placeholder="Cari, cth. azan, zakat, premium" autocomplete="off"></label>
           <div id="sqFaq">${faqHtml('')}</div>
         </div>
         <aside class="card sq-ask">
