@@ -1,9 +1,10 @@
 name: Data waktu solat
 
 # Kemas kini fail sandaran waktu solat untuk laman web setiap bulan.
+# Hari 1 juga dijalankan supaya fail bulan depan wujud sepanjang bulan (js/solat.js memuatkannya untuk notifikasi).
 on:
   schedule:
-    - cron: '0 18 25,28 * *'
+    - cron: '0 18 1,25,28 * *'
   workflow_dispatch:
 
 permissions:
