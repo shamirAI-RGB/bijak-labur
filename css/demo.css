@@ -107,3 +107,38 @@
   .dm-bidask > div { padding: 8px; }
   .dm-bidask b { font-size: 0.78rem; white-space: nowrap; }
 }
+
+/* Modal latihan */
+.dm-modal h2 { margin-bottom: 6px; }
+.dm-modal .dm-pantas { margin: 4px 0 10px; }
+.dm-modal-form { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+.dm-modal-form input { flex: 1; min-width: 0; }
+.dm-tukar-modal { display: inline-block; margin-top: 10px; }
+
+/* Carta */
+.dm-carta-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; }
+.dm-carta-head h2 { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+.dm-carta { height: 280px; margin: 0 -6px; }
+.dm-carta-msg { padding: 100px 0; text-align: center; }
+#dmCartaMsg:empty { display: none; }
+@media (min-width: 900px) { .dm-carta { height: 360px; } }
+
+/* Senarai aset: nama sebagai butang pemilih carta */
+.dm-aset-nama { all: unset; cursor: pointer; min-width: 0; display: block; border-radius: 8px; }
+.dm-aset-nama:focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; }
+.dm-aset.dipilih { background: color-mix(in srgb, var(--brand) 7%, transparent); box-shadow: inset 3px 0 0 var(--brand); }
+
+/* Stop loss dan take profit */
+.dm-sltp { border-top: 1px dashed var(--border); margin-top: 10px; padding-top: 8px; }
+.dm-sltp summary { cursor: pointer; font-weight: 650; font-size: 0.9rem; padding: 4px 0; }
+.dm-sltp[open] summary { margin-bottom: 8px; }
+.dm-sltp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; }
+.dm-sltp-grid label { font-size: 0.8rem; }
+.dm-pesanan .dm-sltp-grid { margin-top: 6px; }
+
+/* Pilihan instrumen CFD */
+.dm-ins { display: grid; gap: 8px; }
+.dm-ins-kump .dm-label { margin-bottom: 6px; }
+.dm-ins-kump .dm-pantas { margin: 0; }
+.dm-senarai-titik { margin: 0 0 10px; padding-left: 18px; display: grid; gap: 6px; }
+.dm-lev-spot { border-left: 3px solid var(--warn); }

@@ -218,6 +218,13 @@ export const fixture = [
   // Kaunter Bursa (<kod>.KL, harga dalam RM): 1155.KL tiada data, meniru simbol yang gagal di Yahoo Finance
   [/^https:\/\/nota\.siswacap\.my\/saham\?s=[^&]*\.KL/, u => ({ quotes: new URL(u).searchParams.get('s').split(',').filter(x => x !== '1155.KL').map((x, i) =>
     ({ s: x, price: x === '5347.KL' ? 13.84 : 2 + i * 0.5, chg: x === '5347.KL' ? -0.72 : 0.4, spark: [], time: Date.parse('2026-10-13T08:59:00Z') / 1000 })) })],
+  // Akaun Demo: forex (=X) dan saham AS untuk CFD, serta lilin carta /carta
+  [/^https:\/\/nota\.siswacap\.my\/saham\?s=[^&]*=X/, u => ({ quotes: new URL(u).searchParams.get('s').split(',').map(x =>
+    ({ s: x, price: { 'EURUSD=X': 1.08, 'GBPUSD=X': 1.27, 'JPY=X': 152.3, AAPL: 230.5, TSLA: 250 }[x] || 100, chg: 0.2, spark: [], time: Math.floor(Date.now() / 1000) })) })],
+  [/^https:\/\/nota\.siswacap\.my\/carta/, u => {
+    const p0 = /\.KL/.test(u) ? 13.5 : /=X/.test(u) ? 1.07 : 228, n = 60, now = Math.floor(Date.now() / 1000);
+    return { s: new URL(u).searchParams.get('s'), lilin: Array.from({ length: n }, (_, i) => { const p = +(p0 * (1 + i * 0.0005)).toFixed(5); return [now - (n - i) * 3600, p, +(p * 1.002).toFixed(5), +(p * 0.998).toFixed(5), p]; }) };
+  }],
   [/^https:\/\/nota\.siswacap\.my\/saham/, () => ({ quotes: [
     { s: 'AAPL', price: 230.5, chg: 0.85, spark: [228, 229, 230], time: Math.floor(Date.now() / 1000) - 30 },
     { s: 'NVDA', price: 120.25, chg: -1.4, spark: [123, 121, 120], time: Math.floor(Date.now() / 1000) - 30 },
@@ -1336,16 +1343,22 @@ export default [
     await page.waitForSelector('#seg-crypto:not(.hidden)');
   } }
   ,
-  { kumpulan: K, nama: 'Akaun demo Bursa: beli lot, untung/rugi pegangan, gelangsar andaian, jual dan set semula', lebar: 390, langkah: async (t, page) => {
+  { kumpulan: K, nama: 'Akaun demo Bursa: pilih modal, carta, beli lot, untung/rugi, gelangsar andaian, stop loss, jual dan set semula', lebar: 390, langkah: async (t, page) => {
     await tanpaGerak(page);
     await t.buka('#demo');
     await t.ada('#h-demo', /^Latihan dagangan$/);
+    // Lawatan pertama: pilih modal latihan sendiri
+    await t.ada('.dm-modal h2', /Berapa modal latihan anda/);
+    await t.klik('[data-modal="10000"]');
+    pastikan(!(await page.$('.dm-modal')), 'Pemilih modal ditutup selepas dipilih');
     await t.ada('.dm-ringkas .dm-nilai', /^RM10,000\.00$/);
-    // Harga Bursa daripada pelayan nota: TENAGA RM13.84, MAYBANK tiada data (butang Beli dimatikan)
-    await t.ada('[data-s="TENAGA"]', /Beli/);
+    // Carta lilin kaunter pertama daripada pelayan nota /carta
+    await page.waitForSelector('#dmCarta canvas');
     await page.waitForFunction(() => !document.querySelector('[data-act="beli"][data-s="TENAGA"]').disabled);
     pastikan(await page.$eval('[data-act="beli"][data-s="MAYBANK"]', b => b.disabled), 'MAYBANK tanpa harga sepatutnya tidak boleh dibeli');
     padan(await page.$eval('.dm-aset:has([data-s="MAYBANK"])', e => e.textContent), /Haram/, 'Label Syariah MAYBANK');
+    await t.klik('[data-pilih="PCHEM"]');
+    await t.ada('#dmCartaTajuk', /PCHEM/);
     await t.klik('[data-act="beli"][data-s="TENAGA"]');
     await t.isi('#dmQty', '2');
     // 200 unit x RM13.84 = RM2,768.00; kos: komisen minimum RM3 x 1.08 (SST) + fi penjelasan RM0.83 + duti setem RM3 = RM7.07
@@ -1359,65 +1372,120 @@ export default [
     await t.ada('.toast', /Dibeli: 2 lot/);
     await t.ada('.dm-ringkas .dm-stat', /RM7,224\.93/);
     await t.ada('.dm-pegang .dm-ayat', /Jika anda jual sekarang, anda rugi/);
-    // Gelangsar: +10% menunjukkan untung jika dijual
     await page.$eval('[data-andai="TENAGA"]', el => { el.value = '10'; el.dispatchEvent(new Event('input', { bubbles: true })); });
     await t.ada('[data-andai-hasil="TENAGA"]', /RM15\.22[\s\S]*untung/);
-    const d = await storan(page, 'bl_demo');
-    sama(d.bursa.pegang.TENAGA.unit, 200, 'Unit disimpan');
-    // Jual semua: rugi sebenar = kos beli + kos jual
+    // Stop loss -5% daripada RM13.84 = RM13.148
+    await t.klik('.dm-pegang .dm-sltp summary');
+    await t.klik('[data-sltp="sl"][data-pct="-5"]');
+    sama(await nilai(page, '#dmSl-TENAGA'), '13.148', 'Cip SL -5%');
+    await t.isi('#dmTp-TENAGA', '13');
+    await t.klik('[data-act="sltp-simpan"]');
+    await t.ada('.toast', /Take profit mesti di atas harga semasa/);
+    await t.isi('#dmTp-TENAGA', '');
+    await t.klik('[data-act="sltp-simpan"]');
+    await t.ada('.toast', /dijual secara automatik jika harga jatuh ke RM13\.148/);
+    sama((await storan(page, 'bl_demo')).bursa.pegang.TENAGA.sl, 13.148, 'SL disimpan');
+    // Jual 1 lot secara manual: rugi sebenar = separuh kos beli + kos jual
     await t.klik('[data-act="jual"][data-s="TENAGA"]');
-    await t.klik('[data-pantas="max"]');
-    await t.ada('.dm-hasil', /Anda akan rugi\s*RM14\.14/);
+    await t.isi('#dmQty', '1');
     await t.klik('#dmSah');
-    await t.ada('.toast', /Rugi sebenar RM14\.14/);
-    await t.ada('.dm-sejarah', /Jual[\s\S]*−RM14\.14/);
-    sama(Object.keys((await storan(page, 'bl_demo')).bursa.pegang).length, 0, 'Pegangan kosong selepas jual');
+    await t.ada('.toast', /Rugi sebenar/);
+    // Stop loss di atas harga semasa (seperti harga jatuh) dicetuskan semasa harga dimuat semula
+    await page.evaluate(() => { const d = JSON.parse(localStorage.getItem('bl_demo')); d.bursa.pegang.TENAGA.sl = 14; localStorage.setItem('bl_demo', JSON.stringify(d)); });
+    await page.reload(); await t.rehat(300);
+    await t.ada('.toast', /Stop loss dicetuskan: TENAGA dijual pada RM13\.84/);
+    await t.ada('#dmSejarah', /stop loss/);
+    sama(Object.keys((await storan(page, 'bl_demo')).bursa.pegang).length, 0, 'Pegangan kosong selepas stop loss');
     await t.klik('[data-act="reset"]');
     await t.ada('[data-act="reset"]', /sekali lagi/);
     await t.klik('[data-act="reset"]');
     await t.ada('.dm-ringkas .dm-nilai', /^RM10,000\.00$/);
   } },
-  { kumpulan: K, nama: 'Akaun demo Kripto: beli dalam US$, akaun berasingan daripada Bursa', lebar: 1280, langkah: async (t, page) => {
+  { kumpulan: K, nama: 'Akaun demo Kripto: modal RM50, harga US$ ditukar ke RM, beli dalam RM, nota leverage', lebar: 1280, langkah: async (t, page) => {
     await t.buka('#demo');
     await t.klik('[data-pasar="kripto"]');
-    await t.ada('.dm-ringkas .dm-nilai', /^US\$1,000\.00$/);
+    await t.ada('.dm-modal h2', /Berapa modal latihan anda/);
+    await t.klik('[data-modal="50"]');
+    await t.ada('.dm-ringkas .dm-nilai', /^RM50\.00$/);
+    // US$65,000 x 4.2 = RM273,000
+    await t.ada('.dm-aset:has([data-s="BTC"]) .dm-aset-harga', /US\$65,000\.00[\s\S]*RM273,000\.00/);
     await page.waitForFunction(() => !document.querySelector('[data-act="beli"][data-s="BTC"]').disabled);
     await t.klik('[data-act="beli"][data-s="BTC"]');
     await t.klik('[data-pantas="0.5"]');
-    await t.ada('.dm-kira', /US\$499\.50[\s\S]*US\$0\.50/);
+    await t.ada('.dm-kira', /RM24\.97[\s\S]*RM0\.02/);
     await t.klik('#dmSah');
     await t.ada('.dm-pegang h3', /BTC/);
-    sama((await storan(page, 'bl_demo')).bursa.tunai, 10000, 'Tunai Bursa tidak terjejas');
-    sama(await storan(page, 'bl_demoPasar'), 'kripto', 'Tab disimpan');
+    const d = await storan(page, 'bl_demo');
+    sama(d.kripto.modal, 50, 'Modal kripto'); sama(d.kripto.tunai, 25.01, 'Tunai kripto'); sama(d.bursa.tunai, 10000, 'Tunai Bursa tidak terjejas');
+    sama((await storan(page, 'bl_demoModal')).kripto, 50, 'Modal disimpan');
+    await t.ada('.dm-lev-spot', /Kripto pun boleh diberi leverage[\s\S]*riba/);
+    // Tukar modal dengan jumlah sendiri memulakan semula akaun
+    await t.klik('[data-act="modal-buka"]');
+    await t.isi('#dmModalLain', '5');
+    await t.klik('[data-act="modal-lain"]');
+    await t.ada('.toast', /antara RM10 dan RM1,000,000/);
+    await t.isi('#dmModalLain', '250');
+    await t.klik('[data-act="modal-lain"]');
+    await t.ada('.dm-ringkas .dm-nilai', /^RM250\.00$/);
+    pastikan(!(await page.$('.dm-pegang')), 'Pegangan dikosongkan selepas tukar modal');
+    // Pautan dari nota leverage ke tab CFD
+    await t.klik('.dm-lev-spot [data-pasar="cfd"]');
+    await t.ada('.dm-cfd-intro', /haram/);
   } },
-  { kumpulan: K, nama: 'Akaun demo CFD Emas: spread, leverage, posisi terapung, tutup, main semula sehingga stop out', lebar: 390, langkah: async (t, page) => {
+  { kumpulan: K, nama: 'Akaun demo CFD: emas dalam RM, SL/TP, forex, saham AS, main semula dengan take profit dan stop out', lebar: 390, langkah: async (t, page) => {
     await tanpaGerak(page);
     await t.buka('#demo');
     await t.klik('[data-pasar="cfd"]');
     await t.ada('.dm-cfd-intro', /haram menurut Muzakarah/);
+    await t.klik('[data-modal="1000"]');
+    await t.ada('#dmCfdAkaun .dm-nilai', /^RM1,000\.00$/);
     // Harga PAXG contoh US$65,000: bid/ask berbeza US$0.40
     await t.ada('#dmCfdHarga', /US\$64,999\.80[\s\S]*US\$65,000\.20[\s\S]*US\$0\.40/);
+    await page.waitForSelector('#dmCarta canvas');
     await t.klik('[data-lot="0.01"]');
     await t.klik('[data-lev="100"]');
-    // 1 auns x US$65,000.20 / 100 = margin US$650.00; 1% menentang = 100% margin
-    await t.ada('#dmCfdKira', /US\$65,000\.20[\s\S]*US\$650\.00[\s\S]*100%/);
+    // 1 auns x US$65,000.20 x 4.2 = RM273,000.84; margin 1:100 = RM2,730.01 melebihi modal
+    await t.ada('#dmCfdKira', /RM273,000\.84[\s\S]*RM2,730\.01/);
+    pastikan(await page.$eval('[data-act="cfd-buka"]', b => b.disabled), 'Margin melebihi modal sepatutnya tidak boleh dibuka');
+    await t.klik('[data-lev="500"]');
+    await t.ada('#dmCfdKira', /RM546\.00[\s\S]*500%/);
+    // SL 1% bagi Beli: 65,000 x 0.99 = 64,350; SL di atas harga ditolak
+    await t.klik('[data-csltp="sl"][data-pct="1"]');
+    sama(await nilai(page, '#dmCSl'), '64350', 'Cip SL 1%');
+    await t.ada('#dmCfdKira', /Stop loss pada US\$64,350\.00/);
+    await t.isi('#dmCSl', '66000');
+    await t.ada('#dmCfdKira', /mesti di bawah harga bid/);
+    pastikan(await page.$eval('[data-act="cfd-buka"]', b => b.disabled), 'SL salah sepatutnya menghalang pesanan');
+    await t.isi('#dmCSl', '64350');
     await t.klik('[data-act="cfd-buka"]');
-    await t.ada('.toast', /rugi US\$0\.40 kerana spread/);
-    await t.ada('#dmCfdPosisi .dm-pl', /−US\$0\.40/);
+    await t.ada('.toast', /rugi RM1\.68 kerana spread/);
+    await t.ada('#dmCfdPosisi .dm-pl', /−RM1\.68/);
+    await t.ada('#dmCfdPosisi', /US\$64,350\.00 \/ Tiada/);
     await t.klik('[data-act="cfd-tutup"]');
-    await t.ada('#dmCfdSejarah', /−US\$0\.40/);
-    sama((await storan(page, 'bl_demoCfd')).baki, 999.6, 'Baki selepas tutup');
-    // Margin tidak cukup pada 1 lot 1:1
-    await t.klik('[data-lev="1"]'); await t.klik('[data-lot="1"]');
-    pastikan(await page.$eval('[data-act="cfd-buka"]', b => b.disabled), 'Butang buka sepatutnya dimatikan apabila margin tidak cukup');
-    // Main semula: harga contoh naik setiap jam, jadi Jual 1:500 dihentikan secara paksa
+    await t.ada('#dmCfdSejarah', /XAU\/USD[\s\S]*−RM1\.68/);
+    sama((await storan(page, 'bl_demoCfd2')).baki, 998.32, 'Baki selepas tutup');
+    // Forex di bawah CFD: EUR/USD 1.08, spread 0.00012
+    await t.klik('[data-ins="EURUSD"]');
+    await t.ada('#dmCfdHarga', /1\.07994[\s\S]*1\.08006[\s\S]*0\.00012/);
+    await t.ada('#dmCfdPesanan', /1 lot = 100,000 EUR/);
+    await t.klik('[data-ins="AAPL"]');
+    pastikan(!(await page.$('[data-lev="500"]')), 'CFD saham AS tiada leverage 1:500');
+    await t.ada('#dmCfdPesanan', /maksimum 1:20/);
+    // Main semula: harga contoh naik setiap jam. Beli dengan take profit, kemudian Jual 1:500 sehingga stop out
+    await t.klik('[data-ins="XAU"]');
     await t.klik('[data-act="mod-main"]');
     await t.ada('#dmCfdHarga', /Main semula/);
-    await t.klik('[data-arah="jual"]'); await t.klik('[data-lev="500"]'); await t.klik('[data-lot="0.1"]');
+    pastikan(await page.$eval('[data-ins="BTC"]', b => b.disabled), 'Instrumen lain dikunci semasa main semula');
+    await t.klik('[data-lot="0.01"]'); await t.klik('[data-lev="500"]');
+    await t.klik('[data-csltp="tp"][data-pct="2"]');
+    await t.klik('[data-act="cfd-buka"]');
+    await t.ada('.toast', /Take profit XAU\/USD: untung/, 20000);
+    await t.ada('#dmCfdSejarah', /take profit/);
+    await t.klik('[data-arah="jual"]'); await t.klik('[data-lot="0.01"]'); await t.klik('[data-lev="500"]');
     await t.klik('[data-act="cfd-buka"]');
     await t.ada('.dm-stopout', /Stop out/, 20000);
     await t.ada('#dmCfdSejarah', /stop out/);
-    sama((await storan(page, 'bl_demoCfd')).baki, 999.6, 'Main semula tidak mengubah akaun langsung');
+    sama((await storan(page, 'bl_demoCfd2')).baki, 998.32, 'Main semula tidak mengubah akaun langsung');
     await t.klik('[data-act="cfd-faham"]');
     pastikan(!(await page.$('.dm-stopout')), 'Notis stop out ditutup');
     await t.klik('[data-act="main-henti"]');
