@@ -148,6 +148,10 @@ async function salin(page, sel) {
 }
 const storan = (page, k) => page.evaluate(k => { const v = localStorage.getItem(k); return v == null ? null : JSON.parse(v); }, k);
 const terima = page => page.on('dialog', d => d.accept());
+/* Salinan tetap data JAKIM Oktober 2026: data/solat/ hanya menyimpan bulan ini dan bulan depan (fetch-solat.mjs),
+   jadi ujian yang masanya ditetapkan pada Oktober tidak boleh bergantung pada fail itu. */
+const OKT = join(ROOT, 'scripts', 'uji-alat', 'data', 'WLY01-2026-10.json');
+const terbinaOkt = page => page.route(/\/data\/solat\/WLY01-2026-10\.json$/, r => r.fulfill({ status: 200, contentType: 'application/json', body: readFileSync(OKT, 'utf8') }));
 const blok = (page, re, status = 503) => page.route(re, r => r.fulfill({ status, contentType: 'text/plain', headers: { 'access-control-allow-origin': '*' }, body: 'luar talian (ujian)' }));
 const baris = page => page.$$eval('#todayGrid li', ls => ls.map(l => ({ n: l.querySelector('.pr-name').firstChild.textContent, t: l.querySelector('.pr-time').textContent, c: l.className.replace(/\s+/g, ' ').trim() })));
 const muatTurun = async (page, sel) => { const [d] = await Promise.all([page.waitForEvent('download', { timeout: 10000 }), page.click(sel)]); return d; };
@@ -275,9 +279,10 @@ const KES = [
   { kumpulan: K, nama: 'Waktu Solat: API 503 menggunakan data rasmi terbina dalam laman', langkah: async (t, page) => {
     await masa(page); await senyap(page);
     await blok(page, /api\.waktusolat\.app/);
+    await terbinaOkt(page);
     await t.buka('#solat');
     await t.ada('#nextName', /^Asar pada/);
-    const d = JSON.parse(readFileSync(join(ROOT, 'data', 'solat', 'WLY01-2026-10.json'), 'utf8')).prayers[9];
+    const d = JSON.parse(readFileSync(OKT, 'utf8')).prayers[9];
     sama((await baris(page)).map(x => x.t), SENARAI.map(([k]) => jam(minitKL(d[k]))), 'Waktu daripada data terbina');
     await t.ada('#zoneName', /^Kuala Lumpur, Putrajaya, Wilayah Persekutuan$/);
   } },
@@ -289,7 +294,7 @@ const KES = [
     await t.buka('#solat');
     await t.ada('#zoneName', /waktu anggaran luar talian$/);
     await t.ada('#nextName', /^Asar pada .* · lagi$/);
-    const rasmi = JSON.parse(readFileSync(join(ROOT, 'data', 'solat', 'WLY01-2026-10.json'), 'utf8')).prayers[9];
+    const rasmi = JSON.parse(readFileSync(OKT, 'utf8')).prayers[9];
     const r = await baris(page), beza = SENARAI.map(([k], i) => [k, keMinit(r[i].t) - minitKL(rasmi[k])]);
     pastikan(beza.every(([, b]) => Math.abs(b) <= 3), `Anggaran berbeza lebih 3 minit daripada JAKIM: ${JSON.stringify(beza)}`);
     // Anggaran tidak disimpan supaya data rasmi menggantikannya kemudian
