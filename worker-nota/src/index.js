@@ -24,6 +24,7 @@
  *
  * Harga saham (kad Kripto/Saham halaman utama)
  *   GET  /saham?s=AAPL,NVDA          -> { quotes: [{ s, price, chg, spark: [...], time }] }  (cache 60 saat)
+ *   GET  /carta?s=5347.KL&r=5d       -> { s, lilin: [[masa, buka, tinggi, rendah, tutup], ...] }  (carta Akaun Demo; r = 1d, 5d, 3mo)
  *
  * Iklan halaman utama (4 ruang) dan teks laman yang boleh disunting oleh pemilik
  *   GET    /iklan                    -> { slots: [iklan | null] x4, wa }   (awam, iklan aktif sahaja)
@@ -190,7 +191,8 @@ export function stockSyms(q) {
   const out = [];
   for (const raw of String(q || '').toUpperCase().split(',')) {
     const s = raw.trim();
-    if (/^[A-Z0-9]{1,6}([.-][A-Z]{1,3})?$/.test(s) && !out.includes(s)) out.push(s);
+    // Saham (AAPL, 1155.KL, BRK-B) dan pasangan mata wang Yahoo (EURUSD=X, JPY=X)
+    if (/^[A-Z0-9]{1,6}([.-][A-Z]{1,3}|=X)?$/.test(s) && !out.includes(s)) out.push(s);
     if (out.length >= STOCK_MAX) break;
   }
   return out;
@@ -204,6 +206,26 @@ export function parseChart(s, j) {
   const spark = closes.filter(v => typeof v === 'number' && isFinite(v));
   const step = Math.max(1, Math.ceil(spark.length / 32));
   return { s, price, chg: prev > 0 ? (price / prev - 1) * 100 : 0, spark: spark.filter((_, i) => i % step === 0).map(v => +v.toFixed(4)), time: meta.regularMarketTime || 0 };
+}
+// Lilin OHLC untuk carta Akaun Demo: julat -> selang Yahoo
+export const CARTA_JULAT = { '1d': '5m', '5d': '60m', '3mo': '1d' };
+export function parseCarta(s, j) {
+  const r = j && j.chart && j.chart.result && j.chart.result[0];
+  const t = r && r.timestamp, q = r && r.indicators && r.indicators.quote && r.indicators.quote[0];
+  if (!Array.isArray(t) || !q) return null;
+  const ok = v => typeof v === 'number' && isFinite(v) && v > 0;
+  const lilin = [];
+  t.forEach((m, i) => { const o = q.open?.[i], h = q.high?.[i], l = q.low?.[i], c = q.close?.[i]; if (ok(o) && ok(h) && ok(l) && ok(c)) lilin.push([m, +o.toFixed(5), +h.toFixed(5), +l.toFixed(5), +c.toFixed(5)]); });
+  return lilin.length ? { s, lilin: lilin.slice(-400) } : null;
+}
+async function carta(s, julat) {
+  try {
+    const r = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(s)}?range=${julat}&interval=${CARTA_JULAT[julat]}`, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SiswaCap/1.0; +https://siswacap.my)', Accept: 'application/json' },
+      cf: { cacheTtl: julat === '3mo' ? 3600 : 120, cacheEverything: true }
+    });
+    return r.ok ? parseCarta(s, await r.json()) : null;
+  } catch { return null; }
 }
 async function quote(s) {
   try {
@@ -301,6 +323,14 @@ async function handle(req, env, h) {
     const quotes = (await Promise.all(syms.map(quote))).filter(Boolean);
     if (!quotes.length) throw new HttpError(502, 'Harga saham tidak dapat diambil sekarang.');
     return json({ quotes }, 200, h, 'public, max-age=60');
+  }
+  if (p === '/carta' && M === 'GET') {
+    if (await limited(env.SAHAM_LIMIT, ip(req))) throw new HttpError(429, 'Terlalu banyak permintaan. Cuba lagi sebentar.');
+    const s = stockSyms(url.searchParams.get('s'))[0], julat = url.searchParams.get('r') || '5d';
+    if (!s || !CARTA_JULAT[julat]) throw new HttpError(400, 'Simbol atau julat carta tidak sah.');
+    const c = await carta(s, julat);
+    if (!c) throw new HttpError(502, 'Carta tidak dapat diambil sekarang.');
+    return json(c, 200, h, `public, max-age=${julat === '3mo' ? 1800 : 120}`);
   }
   if (p === '/tanya' && M === 'POST') return tanya(req, env, h);
   if (!env.NOTA) throw new HttpError(503, 'Storan nota belum disediakan.');

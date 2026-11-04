@@ -1,6 +1,6 @@
 // Ujian pelayan nota tanpa rangkaian: node worker-nota/test.mjs
 import assert from 'node:assert/strict';
-import worker, { sha256, waNumber, price, sanitizeSettings, adUrl, sanitizeAd, live, mergeText, stockSyms, parseChart, sanitizeTanya, mimeTanya, TANYA_HARIAN } from './src/index.js';
+import worker, { sha256, waNumber, price, sanitizeSettings, adUrl, sanitizeAd, live, mergeText, stockSyms, parseChart, parseCarta, sanitizeTanya, mimeTanya, TANYA_HARIAN } from './src/index.js';
 
 assert.equal(waNumber('010-254 6720'), '60102546720');
 assert.equal(waNumber('0176040973'), '60176040973');
@@ -221,6 +221,11 @@ assert.equal((await worker.fetch(new Request(B + '/notes'), {})).status, 503);
 // Harga saham
 assert.deepEqual(stockSyms('aapl, nvda,AAPL,bad sym,1155.KL,BRK-B,<x>'), ['AAPL', 'NVDA', '1155.KL', 'BRK-B']);
 assert.equal(stockSyms('A,B,C,D,E,F,G,H,I,J').length, 8);
+assert.deepEqual(stockSyms('eurusd=x,JPY=X,A=B,EUR=XX'), ['EURUSD=X', 'JPY=X']);
+// Carta Akaun Demo
+const ct = parseCarta('AAPL', { chart: { result: [{ timestamp: [1, 2, 3], indicators: { quote: [{ open: [1, null, 3], high: [2, 2, 4], low: [0.5, 1, 2], close: [1.5, 2, 3.5] }] } }] } });
+assert.deepEqual(ct.lilin, [[1, 1, 2, 0.5, 1.5], [3, 3, 4, 2, 3.5]]);
+assert.equal(parseCarta('X', { chart: { result: [{ meta: {} }] } }), null);
 const ch = parseChart('AAPL', { chart: { result: [{ meta: { regularMarketPrice: 110, chartPreviousClose: 100, regularMarketTime: 5 }, indicators: { quote: [{ close: [100, null, 105, 110] }] } }] } });
 assert.equal(ch.price, 110); assert.equal(Math.round(ch.chg), 10); assert.deepEqual(ch.spark, [100, 105, 110]);
 assert.equal(parseChart('X', { chart: { result: null } }), null);
@@ -231,6 +236,13 @@ r = await call('/saham?s=AAPL,BAD');
 assert.equal(r.status, 200);
 assert.deepEqual((await r.json()).quotes.map(q => q.s), ['AAPL']);
 assert.equal((await call('/saham?s=BAD')).status, 502);
+assert.equal((await call('/carta?s=AAPL&r=10y')).status, 400);
+assert.equal((await call('/carta?r=5d')).status, 400);
+globalThis.fetch = async u => new Response(JSON.stringify({ chart: { result: [{ timestamp: [10, 20], indicators: { quote: [{ open: [1, 2], high: [2, 3], low: [1, 1], close: [2, 2.5] }] } }] } }), { status: String(u).includes('BAD') ? 404 : 200 });
+r = await call('/carta?s=5347.KL&r=5d');
+assert.equal(r.status, 200);
+assert.deepEqual((await r.json()).lilin, [[10, 1, 2, 1, 2], [20, 2, 3, 1, 2.5]]);
+assert.equal((await call('/carta?s=BAD&r=1d')).status, 502);
 globalThis.fetch = realFetch;
 
 console.log('Semua ujian pelayan nota lulus.');
