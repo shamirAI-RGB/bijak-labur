@@ -88,10 +88,10 @@ export default [
     await tekan(page, '#tool-zakat .locked [data-goplans]');
     await t.tunggu('#plansBlock:not(.hidden)', 3000);
     await page.waitForFunction(() => { const r = document.querySelector('#plansBlock').getBoundingClientRect(); return r.top < innerHeight && r.bottom > 0; }, null, { timeout: 5000 });
-    // Jadual perbandingan: harga sebenar pelan (RM22 / RM100), jimat dikira daripada harga, had percuma daripada KUOTA
+    // Jadual perbandingan: harga sebenar pelan (RM25 / RM100), jimat dikira daripada harga, had percuma daripada KUOTA
     const jadual = await page.$$eval('#proBanding table tr', rs => rs.map(r => [...r.children].map(c => c.textContent.replace(/\s+/g, ' ').trim())));
-    pasti(JSON.stringify(jadual[0]) === JSON.stringify(['Ciri', 'Percuma', 'Bulanan', 'Tahunan Jimat 62%']), 'Kepala jadual: ' + JSON.stringify(jadual[0]));
-    pasti(JSON.stringify(jadual[1]) === JSON.stringify(['Harga', 'RM0', 'RM22/30 hari', 'RM100/setahunRM8.33 sebulan']), 'Baris harga: ' + JSON.stringify(jadual[1]));
+    pasti(JSON.stringify(jadual[0]) === JSON.stringify(['Ciri', 'Percuma', 'Bulanan', 'Tahunan Jimat 67%']), 'Kepala jadual: ' + JSON.stringify(jadual[0]));
+    pasti(JSON.stringify(jadual[1]) === JSON.stringify(['Harga', 'RM0', 'RM25/30 hari', 'RM100/setahunRM8.33 sebulan']), 'Baris harga: ' + JSON.stringify(jadual[1]));
     const baris = n => jadual.find(r => r[0].startsWith(n)) || [];
     pasti(!baris('Semak Kertas').length && !baris('Laporan PDF').length, 'Semak Kertas sudah dibuang daripada jadual pelan');
     pasti(/Percuma untuk semua/.test(baris('AI Coach')[1]), 'Baris AI Coach: ' + JSON.stringify(baris('AI Coach')));

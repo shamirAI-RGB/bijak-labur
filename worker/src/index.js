@@ -20,7 +20,7 @@ export { Akaun, Komuniti };
 export const PLANS = {
   pelajar: { name: 'Pelajar', m1: 500, y1: 3900, old: true },
   pelabur: { name: 'Pelabur', m1: 1200, y1: 8900, old: true },
-  lengkap: { name: 'Premium', m1: 2200, y1: 10000 }
+  lengkap: { name: 'Premium', m1: 2500, y1: 10000 }
 };
 export const PERIODS = { m1: { days: 30, label: '30 Hari' }, y1: { days: 365, label: '1 Tahun' } };
 
