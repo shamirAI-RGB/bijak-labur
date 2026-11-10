@@ -804,15 +804,15 @@ const KES = [
     await t.ada('#fqAns .note', /^Tidak dapat menghubungi Tanya AI\. Semak sambungan internet anda\.$/);
   } },
 
-  { kumpulan: K, nama: 'Tanya AI: had percuma 5 soalan sehari (tanpa Premium) tidak menghantar soalan', premium: false,
-    storan: { bl_kuota: { d: hariIniKL(), tanya: 5 } },
+  { kumpulan: K, nama: 'Tanya AI: had percuma 3 soalan sehari (tanpa Premium) tidak menghantar soalan', premium: false,
+    storan: { bl_kuota: { d: hariIniKL(), tanya: 3 } },
     langkah: async (t, page) => {
       await masa(page);
       const minta = []; page.on('request', r => { if (r.url().includes('/tanya')) minta.push(r.method()); });
       await t.buka('#ibadah/fiqh/tanya');
       await t.isi('#fqAsk', 'Adakah saham perlu dizakatkan?');
       await t.klik('[data-fq-ask]');
-      await t.ada('.toast', /^Had percuma 5 soalan Tanya AI sehari sudah dicapai/);
+      await t.ada('.toast', /^Had percuma 3 soalan Tanya AI sehari sudah dicapai/);
       await t.rehat(300);
       sama(minta, [], 'Permintaan ke /tanya');
       sama(await t.teks('#fqAns'), '', 'Kotak jawapan');
