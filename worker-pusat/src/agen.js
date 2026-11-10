@@ -74,7 +74,7 @@ export async function penggunaanWorkers(env) {
 }
 
 /* ---------- Baca laman sendiri ---------- */
-const HOS_OK = h => h === 'siswacap.my' || h === 'www.siswacap.my' || h === 'bijaklabur.my' || h.endsWith('.bijaklabur.my') || h === 'shamirai-rgb.github.io' || /^bijak-labur-[a-z-]+\.khanz-amir\.workers\.dev$/.test(h);
+const HOS_OK = h => h === 'siswacap.my' || h === 'www.siswacap.my' || h.endsWith('.siswacap.my') || h === 'shamirai-rgb.github.io' || /^bijak-labur-[a-z-]+\.khanz-amir\.workers\.dev$/.test(h);
 export async function bacaLaman(env, url) {
   let u; try { u = new URL(url); } catch { return { error: 'URL tidak sah' }; }
   if (u.protocol !== 'https:' || !HOS_OK(u.hostname)) return { error: 'Hanya laman dan pelayan SiswaCap boleh dibaca.' };

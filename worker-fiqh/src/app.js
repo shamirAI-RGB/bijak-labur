@@ -30,6 +30,7 @@ import { coach, check as checkCoach } from './coach.js';
 import { mulaGuna, catatGuna, hantarGuna } from './guna.js';
 import { audit, check as checkAudit } from './audit.js';
 import { alat, check as checkAlat, transkrip, checkTranskrip } from './alat.js';
+import { ambilKuota, ambilClaude } from './kuota.js';
 export { GEMINI_MODEL, GEMINI_FALLBACKS, geminiModels };
 
 export const MODEL = 'claude-opus-5-5';
@@ -96,7 +97,7 @@ function cors(req, env) {
   const origin = req.headers.get('origin') || '';
   const allowed = (env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
   if (!allowed.includes(origin)) return {};
-  return { 'access-control-allow-origin': origin, 'access-control-allow-methods': 'POST, GET, OPTIONS', 'access-control-allow-headers': 'content-type', 'access-control-max-age': '86400', vary: 'origin' };
+  return { 'access-control-allow-origin': origin, 'access-control-allow-methods': 'POST, GET, OPTIONS', 'access-control-allow-headers': 'content-type, authorization, x-lesen', 'access-control-max-age': '86400', vary: 'origin' };
 }
 
 /* ---------- Penyemakan ---------- */
@@ -422,12 +423,23 @@ async function tanya(req, env, url, h) {
     const { success } = await env.FIQH_LIMIT.limit({ key: ip });
     if (!success) return json({ error: 'Terlalu banyak soalan. Cuba lagi sebentar.' }, 429, h);
   }
+  // Had harian di pelayan (jawapan daripada cache tidak dikira)
+  const kuota = await ambilKuota(req, env, 'tanya');
+  if (!kuota.ok) return json({ error: kuota.error, kod: 'kuota' }, 429, h);
+  // Had Claude keseluruhan sehari: selepas dicapai, jawapan daripada model percuma sehingga esok
+  const claude = provider(env) === 'claude' ? await ambilClaude(env) : null;
+  const percuma = claude && !claude.ok;
+  if (percuma && !(tanyaRantai(env).length || aiSedia(env))) {
+    await kuota.pulang();
+    return json({ error: 'Had harian Tanya AI telah dicapai. Cuba lagi esok.', kod: 'kuota' }, 429, h);
+  }
   let out;
   // Cari muka surat dokumen rasmi moden yang berkaitan (tanpa model, jadi sama untuk semua penyedia)
   let docs = [];
   try { docs = await search(env, expand(q) + ' ' + await kataKunci(env, q), 8, q); } catch (e) { console.log('rujukan', e && e.message); }
-  try { out = await jawabTanya(env, q, docs); }
+  try { out = percuma ? await askKorpus(env, q, docs) : await jawabTanya(env, q, docs); }
   catch (e) {
+    await Promise.all([kuota.pulang(), claude && claude.ok && claude.pulang()]);
     console.log('tanya gagal', provider(env), e && e.status, e && (e.status ? e.message : e.stack || e));
     const busy = e && (e.status === 429 || e.status === 529);
     return json({ error: busy ? 'Tanya AI sibuk. Cuba lagi sebentar.' : 'Tanya AI tidak tersedia buat masa ini.' }, busy ? 429 : 502, h);
@@ -512,8 +524,8 @@ const AI_ROUTES = {
   '/manusia': { nama: 'Semakan gaya AI', limit: 'MANUSIA_LIMIT', check: checkManusia, run: manusia, maxBytes: 200_000 },
   '/audit': { nama: 'Audit lanjutan', limit: 'AUDIT_LIMIT', check: checkAudit, run: audit, maxBytes: 400_000 },
   '/coach': { nama: 'AI Coach', limit: 'COACH_LIMIT', check: checkCoach, run: coach, maxBytes: 30_000 },
-  '/alat': { nama: 'Alat Pelajar', limit: 'ALAT_LIMIT', check: checkAlat, run: alat, maxBytes: 800_000 },
-  '/transkrip': { nama: 'Transkrip kuliah', limit: 'TRANSKRIP_LIMIT', check: checkTranskrip, run: transkrip, maxBytes: 20_000_000 }
+  '/alat': { nama: 'Alat Pelajar', limit: 'ALAT_LIMIT', check: checkAlat, run: alat, maxBytes: 800_000, kuota: b => ['rujukan', 'tulis'].includes(b.tugas) ? 'alatpro' : 'alat' },
+  '/transkrip': { nama: 'Transkrip kuliah', limit: 'TRANSKRIP_LIMIT', check: checkTranskrip, run: transkrip, maxBytes: 20_000_000, kuota: () => 'alatpro' }
 };
 
 async function aiRoute(req, env, h, r) {
@@ -527,8 +539,13 @@ async function aiRoute(req, env, h, r) {
     const { success } = await env[r.limit].limit({ key: req.headers.get('cf-connecting-ip') || 'x' });
     if (!success) return json({ error: 'Terlalu banyak permintaan. Cuba lagi selepas seminit.' }, 429, h);
   }
+  // Had harian di pelayan untuk Alat Pelajar (rujukan dan penulisan ialah alat Premium: 1 percubaan sehari)
+  const jenis = r.kuota && r.kuota(input);
+  const kuota = jenis ? await ambilKuota(req, env, jenis) : null;
+  if (kuota && !kuota.ok) return json({ error: kuota.error, kod: 'kuota' }, 429, h);
   try { return json(await r.run(env, input), 200, h); }
   catch (e) {
+    if (kuota) await kuota.pulang();
     console.log(r.nama, e && e.status, e && e.message);
     const busy = e && (e.status === 429 || e.status === 529);
     return json({ error: e && e.status === 422 ? 'Kandungan ini tidak dapat diproses.' : busy ? `${r.nama} sibuk. Cuba lagi sebentar.` : `${r.nama} tidak tersedia buat masa ini.` }, busy ? 429 : 502, h);

@@ -230,7 +230,8 @@
     box.innerHTML = `<div class="card fq-ai-wait"><span class="fq-ai-spin" aria-hidden="true"></span><div><b>Mencari dalam kitab, fatwa dan dokumen rasmi</b><p class="muted small">AI sedang membuka muka surat sumber dan menyemak petikan. Ini mungkin mengambil masa sehingga satu minit.</p></div></div>`;
     const my = seq;
     try {
-      const r = await fetch(AI_API + '/tanya', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ q }) });
+      const kepala = typeof Akaun !== 'undefined' && Akaun.kepala ? await Akaun.kepala() : {};
+      const r = await fetch(AI_API + '/tanya', { method: 'POST', headers: { 'content-type': 'application/json', ...kepala }, body: JSON.stringify({ q }) });
       const d = await r.json().catch(() => ({}));
       if (my !== seq) return;
       if (!r.ok) throw new Error(d.error || (r.status === 503 ? 'Tanya AI belum diaktifkan.' : 'Tanya AI tidak tersedia buat masa ini.'));

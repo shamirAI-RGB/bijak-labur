@@ -9,7 +9,7 @@ workers_dev = true
 routes = [{ pattern = "pusat.siswacap.my", custom_domain = true }]
 
 [vars]
-ALLOWED_ORIGINS = "https://siswacap.my,https://www.siswacap.my,https://bijaklabur.my,https://www.bijaklabur.my,https://shamirai-rgb.github.io,capacitor://localhost,https://localhost"
+ALLOWED_ORIGINS = "https://siswacap.my,https://www.siswacap.my,https://shamirai-rgb.github.io,capacitor://localhost,https://localhost"
 SITE_URL = "https://siswacap.my"
 REPO = "shamirAI-RGB/bijak-labur"
 # Anggaran kos (USD bagi setiap sejuta token) untuk penyedia berbayar sahaja (Claude, DeepSeek). Gemini, penghala percuma dan Workers AI dikira RM0 (kuota percuma).

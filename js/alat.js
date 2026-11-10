@@ -41,10 +41,12 @@
   const simpanBahan = () => save('alat_bahan', bahan);
 
   /* ---------- Panggilan pelayan ---------- */
+  // Had harian dikira di pelayan bagi setiap akaun (atau alamat IP untuk tetamu)
+  const kepalaAkaun = async () => typeof Akaun !== 'undefined' && Akaun.kepala ? Akaun.kepala() : {};
   async function panggil(path, body, kuota) {
     const pr = P();
     if (pr && kuota && !pr.boleh(kuota)) return null;
-    const r = await fetch(API + path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+    const r = await fetch(API + path, { method: 'POST', headers: { 'content-type': 'application/json', ...(await kepalaAkaun()) }, body: JSON.stringify(body) });
     const d = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(d.error || 'Alat Pelajar tidak tersedia buat masa ini.');
     if (pr && kuota) pr.catat(kuota);
@@ -642,7 +644,7 @@ Rujukan APA 7 dan format (15 markah).`]
     S.busy = 'transkrip'; S.err = ''; render();
     try {
       const mime = (blob.type || (/\.m4a$/i.test(nama) ? 'audio/mp4' : /\.mp3$/i.test(nama) ? 'audio/mpeg' : /\.wav$/i.test(nama) ? 'audio/wav' : 'audio/webm')).split(';')[0];
-      const r = await fetch(API + '/transkrip', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ audio: await b64(blob), mime }) });
+      const r = await fetch(API + '/transkrip', { method: 'POST', headers: { 'content-type': 'application/json', ...(await kepalaAkaun()) }, body: JSON.stringify({ audio: await b64(blob), mime }) });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(d.error || 'Transkrip tidak tersedia buat masa ini.');
       if (pr) pr.catat('alatpro');

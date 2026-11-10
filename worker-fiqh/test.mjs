@@ -19,6 +19,16 @@ import { check as checkC, coachBody, systemFor as sysC } from './src/coach.js';
 import { check as checkAl, clean as cleanAl, checkTranskrip, transkripBody, sitasiHilang, alatBody, SCHEMAS as SAl } from './src/alat.js';
 import '../js/apa.js';
 import { check as checkA, clean as cleanA, normalZon, auditBody, systemFor as sysA } from './src/audit.js';
+import { Kuota, sahLesen, kunciIp, HAD_PERCUMA, hariMY, hadFor } from './src/kuota.js';
+import { DatabaseSync } from 'node:sqlite';
+
+// Durable Object KUOTA sebenar atas SQLite dalam memori
+function kuotaPalsu() {
+  const db = new DatabaseSync(':memory:');
+  const sql = { exec: (q, ...a) => { const st = db.prepare(q); if (/^\s*SELECT/i.test(q)) return { toArray: () => st.all(...a) }; if (a.length) st.run(...a); else db.exec(q); return { toArray: () => [] }; } };
+  const obj = new Kuota({ storage: { sql } });
+  return { idFromName: n => n, get: () => ({ fetch: (u, init) => obj.fetch(new Request(u, init)) }) };
+}
 
 const env = { ANTHROPIC_API_KEY: 'sk-test', ALLOWED_ORIGINS: 'https://bijaklabur.my' };
 const W = 'https://fiqh.example.workers.dev';
@@ -345,6 +355,47 @@ assert.equal(d.penyedia, 'claude');
   // Claude dan model percuma gagal: ralat Claude dipaparkan
   jawab = (b, u) => u.includes('anthropic') ? new Response(JSON.stringify({ type: 'error', error: { type: 'overloaded_error', message: 'x' } }), { status: 529, headers: { 'content-type': 'application/json' } }) : new Response('{}', { status: 429 });
   assert.equal((await call({ q: 'Hukum forex runcit bila semua sibuk?' }, 'https://bijaklabur.my', { ...oenv, ...env })).status, 429);
+
+  // Had harian di pelayan: tetamu (IP yang sama) disekat selepas HAD_PERCUMA.tanya soalan; cache tidak dikira
+  {
+    const KUOTA = kuotaPalsu(), qenv = { ...oenv, KUOTA };
+    const tanyaIp = (q, ip) => worker.fetch(new Request(W + '/tanya', { method: 'POST', headers: { origin: 'https://bijaklabur.my', 'content-type': 'application/json', 'cf-connecting-ip': ip }, body: JSON.stringify({ q }) }), qenv);
+    jawab = () => oa(FOREX);
+    for (let i = 0; i < HAD_PERCUMA.tanya; i++) assert.equal((await tanyaIp(`Hukum forex runcit soalan kuota ${i}?`, '2001:db8:1:2::5')).status, 200);
+    // IPv6 lain dalam blok /64 yang sama tetap dikira sebagai pemanggil yang sama
+    r = await tanyaIp('Hukum forex runcit soalan kuota lebih?', '2001:db8:1:2:aaaa::9');
+    d = await r.json();
+    assert.equal(r.status, 429); assert.equal(d.kod, 'kuota'); assert.match(d.error, /Log masuk/);
+    assert.equal((await tanyaIp('Hukum forex runcit soalan kuota lebih?', '203.0.113.7')).status, 200, 'IP lain tidak terjejas');
+    // Ralat model tidak menghabiskan kuota
+    jawab = () => new Response('{}', { status: 500 });
+    for (let i = 0; i < 3; i++) assert.equal((await tanyaIp(`Hukum forex ralat ${i}?`, '198.51.100.1')).status, 502);
+    jawab = () => oa(FOREX);
+    assert.equal((await tanyaIp('Hukum forex selepas ralat?', '198.51.100.1')).status, 200);
+    // Lesen palsu tidak memberi had Premium
+    const palsu = await worker.fetch(new Request(W + '/tanya', { method: 'POST', headers: { origin: 'https://bijaklabur.my', 'content-type': 'application/json', 'cf-connecting-ip': '2001:db8:1:2::5', 'x-lesen': 'eyJwIjoibGVuZ2thcCJ9.AAAA' }, body: JSON.stringify({ q: 'Hukum forex dengan lesen palsu?' }) }), qenv);
+    assert.equal(palsu.status, 429);
+    // CORS membenarkan pengepala akaun
+    const pre = await worker.fetch(new Request(W + '/tanya', { method: 'OPTIONS', headers: { origin: 'https://bijaklabur.my' } }), qenv);
+    assert.match(pre.headers.get('access-control-allow-headers'), /authorization/); assert.match(pre.headers.get('access-control-allow-headers'), /x-lesen/);
+
+    // Had Claude keseluruhan: selepas HAD_CLAUDE_HARIAN soalan, model percuma menjawab (Claude tidak dipanggil)
+    sent = [];
+    const cenv = { ...oenv, ...env, KUOTA: kuotaPalsu(), HAD_CLAUDE_HARIAN: '1' };
+    const tanyaC = (q, ip) => worker.fetch(new Request(W + '/tanya', { method: 'POST', headers: { origin: 'https://bijaklabur.my', 'content-type': 'application/json', 'cf-connecting-ip': ip }, body: JSON.stringify({ q }) }), cenv);
+    jawab = (b, u) => u.includes('anthropic') ? claudeJawab(FOREX) : oa(FOREX);
+    assert.equal((await tanyaC('Hukum forex runcit had Claude satu?', '192.0.2.1')).status, 200);
+    assert.equal(sent.filter(x => x.u.includes('anthropic')).length, 1);
+    sent = [];
+    r = await tanyaC('Hukum forex runcit had Claude dua?', '192.0.2.2');
+    assert.equal(r.status, 200); assert.equal((await r.json()).status, 'jawab');
+    assert.ok(!sent.some(x => x.u.includes('anthropic')), 'Claude tidak dipanggil selepas had harian');
+    assert.ok(sent.some(x => x.u.includes('openrouter')));
+    // Had dicapai dan tiada model percuma: mesej had, bukan ralat
+    r = await worker.fetch(new Request(W + '/tanya', { method: 'POST', headers: { origin: 'https://bijaklabur.my', 'content-type': 'application/json', 'cf-connecting-ip': '192.0.2.3' }, body: JSON.stringify({ q: 'Hukum forex had tanpa sandaran?' }) }), { ...env, KUOTA: cenv.KUOTA, HAD_CLAUDE_HARIAN: '1' });
+    assert.equal(r.status, 429); assert.equal((await r.json()).kod, 'kuota');
+    console.log('kuota harian OK');
+  }
 
   // Cache gagal (cth. had permintaan pelayan): jawapan tetap dihantar kepada pengguna, bukan "Ralat pelayan"
   jawab = () => oa(FOREX);
@@ -1391,4 +1442,44 @@ console.log('Semua ujian Tanya AI lulus');
   assert.ok(ASET_MAKS >= 100);
   resetAset();
   console.log('had permintaan kecil OK');
+}
+
+// Kuota: lesen Premium disahkan dengan kunci awam, IPv6 mengikut /64
+{
+  const kp = await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify']);
+  const jwk = await crypto.subtle.exportKey('jwk', kp.publicKey);
+  const b64u = b => Buffer.from(b).toString('base64url');
+  const tandatangan = async p => { const body = b64u(JSON.stringify(p)); return `${body}.${b64u(await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, kp.privateKey, new TextEncoder().encode(body)))}`; };
+  const t = Date.now() / 1000;
+  assert.deepEqual(await sahLesen(await tandatangan({ v: 2, p: 'lengkap', x: t + 3600, u: 'abc' }), jwk), { u: 'abc', p: 'lengkap' });
+  assert.equal(await sahLesen(await tandatangan({ v: 2, p: 'lengkap', x: t - 1, u: 'abc' }), jwk), null, 'lesen tamat');
+  assert.equal(await sahLesen(await tandatangan({ v: 2, p: 'lengkap', x: t + 3600, u: 'abc' })), null, 'kunci lain');
+  const sah = await tandatangan({ v: 2, p: 'lengkap', x: t + 3600, u: 'abc' });
+  assert.equal(await sahLesen(sah.replace(/^./, c => c === 'e' ? 'f' : 'e'), jwk), null, 'lesen diubah');
+  assert.deepEqual(await sahLesen(await tandatangan({ v: 2, p: 'tanya', x: t + 3600, u: 'q' }), jwk), { u: 'q', p: 'tanya' });
+  assert.equal(await sahLesen(await tandatangan({ v: 2, p: 'lain', x: t + 3600, u: 'q' }), jwk), null, 'pelan tidak dikenali');
+  assert.equal(hadFor({}, 'tanya', false), HAD_PERCUMA.tanya);
+  assert.equal(hadFor({ HAD_PERCUMA_TANYA: '3' }, 'tanya', false), 3);
+  assert.equal(hadFor({ HAD_PERCUMA_TANYA: 'x' }, 'tanya', false), HAD_PERCUMA.tanya);
+  assert.equal(kunciIp('2001:db8:1:2:3:4:5:6'), '2001:db8:1:2::/64');
+  assert.equal(kunciIp('2001:db8::1'), '2001:db8:0:0::/64');
+  assert.equal(kunciIp('203.0.113.9'), '203.0.113.9');
+  assert.match(hariMY(Date.UTC(2026, 10, 9, 17)), /^2026-11-10$/);
+  console.log('kuota lesen OK');
+}
+
+// Alat Pelajar: alat Premium (tulis, rujukan, transkrip) 1 percubaan sehari di pelayan untuk pengguna percuma
+{
+  const KUOTA = kuotaPalsu();
+  const stubK = KUOTA.get();
+  await stubK.fetch('https://kuota/', { method: 'POST', body: JSON.stringify({ op: 'ambil', hari: hariMY(), kunci: 'alatpro:ip:192.0.2.50', had: 1 }) });
+  const e = { GEMINI_API_KEY: 'g', ALLOWED_ORIGINS: 'https://bijaklabur.my', KUOTA };
+  const hantarAlat = (b, ip) => worker.fetch(new Request(W + '/alat', { method: 'POST', headers: { origin: 'https://bijaklabur.my', 'content-type': 'application/json', 'cf-connecting-ip': ip }, body: JSON.stringify(b) }), e);
+  const tulis = { tugas: 'tulis', perenggan: ['Perenggan pertama yang agak panjang untuk dibaiki oleh pembantu penulisan (Ali, 2020).'], mod: 'akademik' };
+  const r = await hantarAlat(tulis, '192.0.2.50');
+  assert.equal(r.status, 429); assert.equal((await r.json()).kod, 'kuota');
+  // Alat biasa (kuota 'alat') bagi IP yang sama belum dicapai
+  const r2 = await hantarAlat({ tugas: 'pek', teks: 'pendek' }, '192.0.2.50');
+  assert.equal(r2.status, 400, 'alat biasa tidak disekat oleh kuota alat Premium');
+  console.log('kuota alat OK');
 }

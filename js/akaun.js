@@ -52,7 +52,15 @@ const Akaun = (function () {
     get info() { return info; },
     call, open, signOut, sync,
     // Token ID untuk pelayan lain (cth. Komuniti); force = muat semula token
-    token: force => user ? user.getIdToken(!!force) : Promise.reject(Object.assign(new Error('Sila log masuk dahulu.'), { status: 401 }))
+    token: force => user ? user.getIdToken(!!force) : Promise.reject(Object.assign(new Error('Sila log masuk dahulu.'), { status: 401 })),
+    // Pengepala untuk pelayan AI: had harian dikira di pelayan bagi setiap akaun (lesen Premium = had Premium), bukan bagi alamat IP
+    async kepala() {
+      const h = {};
+      if (!user) return h;
+      if (licence && licence.uid === user.uid) h['x-lesen'] = licence.token;
+      try { h.authorization = 'Bearer ' + await user.getIdToken(); } catch {}
+      return h;
+    }
   };
 
   function announce() { paintButton(); document.dispatchEvent(new CustomEvent('akaunchange')); if (dlg.open) renderPane(); }
