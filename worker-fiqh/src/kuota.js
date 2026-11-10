@@ -12,7 +12,7 @@
  */
 
 // Sama seperti had percuma dalam js/premium.js (KUOTA)
-export const HAD_PERCUMA = { tanya: 5, alat: 12, alatpro: 1 };
+export const HAD_PERCUMA = { tanya: 3, alat: 12, alatpro: 1 };
 // Premium: "tanpa had" untuk kegunaan biasa, dengan siling penggunaan adil supaya lesen yang dikongsi tidak menghabiskan kredit
 export const HAD_PREMIUM = { tanya: 200, alat: 500, alatpro: 500 };
 export const HAD_CLAUDE_HARIAN = 100;
