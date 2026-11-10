@@ -1,0 +1,16 @@
+/* SiswaCap: bahagian "Servis YOUNIQUE VENTURES" di halaman utama (selepas pengasas) dan servis.html.
+   Rupa mengikut token tema (Hitam/Putih); nombor merah takwim seperti bahagian lain. */
+.sv-blok { margin: 34px 0 18px; padding-top: 18px; border-top: 3px double var(--rule); scroll-margin-top: 70px; }
+.sv-kepala { max-width: 760px; margin-bottom: 16px; }
+.sv-kepala h2 { font-family: var(--display); font-size: clamp(1.6rem, 4.4vw, 2.3rem); line-height: 1.1; letter-spacing: -0.02em; margin: 4px 0 10px; }
+.sv-kepala .lead { margin: 0; }
+.sv-senarai { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); border-top: 1px solid var(--rule); }
+.sv-senarai li { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 14px; padding: 14px 2px; border-bottom: 1px solid var(--border); }
+.sv-n { font-family: var(--display); font-size: 1.3rem; line-height: 1.2; color: var(--ink-red); font-variant-numeric: tabular-nums; min-width: 1.6em; }
+.sv-senarai h3 { margin: 0 0 4px; font-size: 1.05rem; }
+.sv-senarai p { margin: 0; color: var(--muted); font-size: .95rem; line-height: 1.5; }
+.sv-hubungi { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-top: 16px; }
+.sv-pautan { color: var(--text); text-decoration: underline; text-decoration-color: var(--ink-red); text-underline-offset: 3px; }
+@media (min-width: 760px) {
+  .sv-senarai { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 28px; }
+}
