@@ -14,14 +14,14 @@ const Premium = (function () {
   const PLANS = {
     pelajar: { name: 'Pelajar', m1: 5, y1: 39, old: true, feats: [] },
     pelabur: { name: 'Pelabur', m1: 12, y1: 89, old: true, feats: [] },
-    lengkap: { name: 'Premium', m1: 6.9, y1: 49, blurb: 'Untuk pelajar dan pelabur. Semua ciri percuma kekal percuma.',
+    lengkap: { name: 'Premium', m1: 22, y1: 100, blurb: 'Untuk pelajar dan pelabur. Semua ciri percuma kekal percuma.',
       feats: ['Amaran harga tanpa had, amaran naik atau turun %, dan amaran status Syariah',
         'Portfolio patuh Syariah: status setiap pegangan, tarikh haul zakat dan pembersihan dividen', 'Tanya AI Fiqh tanpa had harian',
         'Alat Pelajar tanpa had: Penyelidikan & Sitasi (10 kertas), Penulisan Akademik, Transkrip HD kuliah, Pek Peperiksaan, Penyemak Rubrik', 'Alat pelajar lain: rujukan APA/MLA/Harvard, PNGK, muka depan, bandingkan draf', 'Alat pelabur: DCA, saiz posisi, jurnal, kos Bursa, dividen, matlamat, zakat'] }
   };
   const FOR_SALE = Object.keys(PLANS).filter(k => !PLANS[k].old);
   // Had harian percuma (dikira dalam peranti, waktu Malaysia). Premium tiada had.
-  const KUOTA = { tanya: [5, 'soalan Tanya AI'], alat: [12, 'permintaan Alat Pelajar'], alatpro: [1, 'percubaan alat Premium'] };
+  const KUOTA = { tanya: [3, 'soalan Tanya AI'], alat: [12, 'permintaan Alat Pelajar'], alatpro: [1, 'percubaan alat Premium'] };
   const today = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kuala_Lumpur' }).format(new Date());
   const used = () => { const u = store.get('kuota', {}); return u.d === today() ? u : { d: today() }; };
   const rmFmt = v => 'RM' + (v % 1 ? v.toFixed(2) : v);

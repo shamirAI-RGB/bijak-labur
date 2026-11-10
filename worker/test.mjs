@@ -114,7 +114,7 @@ r = await call('/checkout', { plan: 'lengkap', period: 'y1', name: 'Ali Abu', em
 d = await r.json();
 assert.equal(r.status, 200); assert.equal(d.url, 'https://dev.toyyibpay.com/abc12345');
 assert.equal(r.headers.get('access-control-allow-origin'), 'https://shamirai-rgb.github.io');
-assert.equal(created.billAmount, '4900'); assert.equal(created.billEmail, 'ali@mail.com'); assert.equal(created.billPhone, '0123456789');
+assert.equal(created.billAmount, '10000'); assert.equal(created.billEmail, 'ali@mail.com'); assert.equal(created.billPhone, '0123456789');
 assert.ok(created.billName.length <= 30, created.billName);
 assert.ok(created.billDescription.length <= 100, created.billDescription);
 assert.equal(created.billReturnUrl, W + '/return');
@@ -141,7 +141,7 @@ assert.equal(r.status, 302); assert.equal(r.headers.get('location'), 'https://sh
 r = await call('/claim', { billcode: 'zzz99999', email: 'ali@mail.com', device: DEV_C });
 assert.equal(r.status, 404); assert.match((await r.json()).error, /bukan daripada SiswaCap/);
 // Pelan dan harga diambil daripada rekod pelayan, bukan daripada teks bil
-assert.deepEqual((({ plan, period, sen }) => ({ plan, period, sen }))(await (await env.AKAUN.get('b:abc12345').fetch('https://akaun/', { method: 'POST', body: JSON.stringify({ op: 'lihat' }) })).json()), { plan: 'lengkap', period: 'y1', sen: 4900 });
+assert.deepEqual((({ plan, period, sen }) => ({ plan, period, sen }))(await (await env.AKAUN.get('b:abc12345').fetch('https://akaun/', { method: 'POST', body: JSON.stringify({ op: 'lihat' }) })).json()), { plan: 'lengkap', period: 'y1', sen: 10000 });
 
 // Belum bayar
 tx = [{ billpaymentStatus: '3', billEmail: 'ali@mail.com' }];
@@ -150,7 +150,7 @@ assert.equal((await call('/claim', { billcode: 'abc12345', email: 'ali@mail.com'
 // Sudah bayar
 const now = new Date(Date.now() + 8 * 3600e3), p2 = n => String(n).padStart(2, '0');
 const tpDate = `${p2(now.getUTCDate())}-${p2(now.getUTCMonth() + 1)}-${now.getUTCFullYear()} ${p2(now.getUTCHours())}:${p2(now.getUTCMinutes())}:00`;
-tx = [{ billpaymentStatus: '1', billEmail: 'ali@mail.com', billpaymentAmount: '49.00', billExternalReferenceNo: 'BL-lengkap-y1-1234abcd', billPaymentDate: tpDate }];
+tx = [{ billpaymentStatus: '1', billEmail: 'ali@mail.com', billpaymentAmount: '100.00', billExternalReferenceNo: 'BL-lengkap-y1-1234abcd', billPaymentDate: tpDate }];
 assert.equal((await call('/claim', { billcode: 'abc12345', email: 'lain@mail.com' })).status, 403);
 assert.equal((await call('/claim', { billcode: 'abc12345' })).status, 400);
 // Peranti tidak aktif (C sudah log keluar) ditolak
@@ -176,7 +176,7 @@ assert.equal((await call('/claim', { billcode: 'abc12345', email: 'ali@mail.com'
 tx[0].billpaymentAmount = '15.00';
 assert.equal((await call('/claim', { billcode: 'abc12345', email: 'ali@mail.com', device: DEV_C })).status, 400);
 // Langganan tamat
-Object.assign(tx[0], { billpaymentAmount: '49.00', billPaymentDate: '01-01-2024 10:00:00' });
+Object.assign(tx[0], { billpaymentAmount: '100.00', billPaymentDate: '01-01-2024 10:00:00' });
 assert.equal((await call('/claim', { billcode: 'abc12345', email: 'ali@mail.com', device: DEV_C })).status, 410);
 
 // Suara HD
