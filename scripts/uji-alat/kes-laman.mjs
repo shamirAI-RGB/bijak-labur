@@ -1,7 +1,7 @@
 /* Setiap halaman SiswaCap: dibuka tanpa ralat pada telefon dan desktop, tema cerah dan gelap, tiada tatal mendatar,
    tiada gambar atau fail tempatan yang rosak, dan setiap pautan dalaman menuju ke halaman yang wujud. */
 const VIEWS = ['utama', 'belajar', 'pasaran', 'solat', 'ibadah', 'jadual', 'nota', 'komuniti', 'premium', 'soalan', 'halal', 'alat', 'uitm', 'pelajar-halal', 'demo'];
-const LAMAN = ['siswa.html', 'tentang.html', 'cara.html', 'terma.html', 'terma-guna.html', 'terma-app.html', 'privacy.html', 'penafian-ai.html', 'bayaran-balik.html', 'padam-data.html', 'peta.html', '404.html'];
+const LAMAN = ['siswa.html', 'tentang.html', 'servis.html', 'cara.html', 'terma.html', 'terma-guna.html', 'terma-app.html', 'privacy.html', 'penafian-ai.html', 'bayaran-balik.html', 'padam-data.html', 'peta.html', '404.html'];
 
 // Pantau fail tempatan yang gagal dimuat (404) sepanjang kes
 function pantau404(page) {
@@ -185,6 +185,24 @@ kes.push({ kumpulan: 'Halaman', nama: 'Bahasa EN: placeholder textarea, rekod so
   await t.ada('#trackerSub', /^\d+ of 5 prayers ticked/);
   const mlm = await page.evaluate(() => [...document.querySelectorAll('#view-solat')].map(e => e.textContent).join(' ').match(/\d:\d\d (pg|ptg|mlm)\b/));
   if (mlm) throw new Error('waktu masih BM: ' + mlm[0]);
+} });
+
+const sama = (sebenar, jangka, apa) => { if (JSON.stringify(sebenar) !== JSON.stringify(jangka)) throw new Error(`${apa}: dijangka ${JSON.stringify(jangka)}, dapat ${JSON.stringify(sebenar)}`); };
+const pastikan = (syarat, mesej) => { if (!syarat) throw new Error(mesej); };
+// Servis YOUNIQUE VENTURES: selepas surat pengasas di Utama, pautan kaki laman, dan diterjemah ke EN
+kes.push({ kumpulan: 'Halaman', nama: 'Utama: bahagian Servis YOUNIQUE VENTURES selepas pengasas', langkah: async (t, page) => {
+  await t.buka('#utama');
+  pastikan(await page.$eval('.founders', s => s.nextElementSibling && s.nextElementSibling.matches('#servis')), 'Servis tidak terletak selepas pengasas');
+  sama(await page.$$eval('#servis .sv-senarai h3', x => x.map(h => h.textContent)), ['Bina laman web dengan AI', 'Kelas buat video dengan AI'], 'Senarai servis');
+  sama(await page.$$eval('#servis .sv-harga', x => x.map(h => h.textContent)), ['RM 750', 'RM 550'], 'Harga servis');
+  pastikan(await page.$('#servis a[href^="https://wa.me/60102546720"]'), 'Butang WhatsApp tiada');
+  pastikan(await page.$('.site-footer a[href="servis.html"]'), 'Pautan kaki laman tiada');
+} });
+kes.push({ kumpulan: 'Halaman', nama: 'Bahasa EN: bahagian Servis diterjemah', storan: { bl_bahasa: '"en"' }, langkah: async (t, page) => {
+  await t.buka('#utama');
+  await t.ada('#h-servis', /^We also build websites and teach AI$/);
+  await t.ada('#servis .sv-senarai li:nth-child(2) h3', /^Making videos with AI$/);
+  await t.ada('#servis .sv-senarai li:nth-child(1) h3', /^Website building with AI$/);
 } });
 
 kes.push({ kumpulan: 'Halaman', nama: 'Pusat Kawalan: pintu kunci muat dalam skrin telefon', langkah: async (t, page) => {
