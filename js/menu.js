@@ -105,7 +105,7 @@
   });
 
   /* ---------- Ruang Soalan ---------- */
-  const TOPICS = ['Umum', 'Belajar & pasaran', 'Waktu solat & ibadah', 'Alat Pelajar', 'Premium & bayaran', 'Maklum balas', 'Laporkan masalah'];
+  const TOPICS = ['Umum', 'Belajar & pasaran', 'Waktu solat & ibadah', 'Premium & bayaran', 'Maklum balas', 'Laporkan masalah'];
   const FAQ = [
     ['Umum', 'Adakah SiswaCap percuma?', 'Ya. Pelajaran pelaburan, harga pasaran, waktu solat dan ibadah adalah percuma dan kekal percuma. Ciri AI mempunyai had harian percuma; Premium membuang had itu dan menambah amaran harga, portfolio patuh Syariah dan alat lanjutan.'],
     ['Umum', 'Perlukah saya daftar akaun?', 'Tidak buat masa ini. Anda boleh guna sebagai tetamu. Tetapan, profil dan rekod disimpan dalam peranti anda sahaja.'],
@@ -117,10 +117,6 @@
     ['Waktu solat & ibadah', 'Dari mana waktu solat diambil?', 'Daripada data waktu solat rasmi Malaysia, mengikut zon yang anda pilih di halaman Waktu Solat.'],
     ['Waktu solat & ibadah', 'Kenapa notifikasi azan tidak keluar?', 'Benarkan notifikasi apabila diminta. Di iPhone, notifikasi pelayar hanya berfungsi selepas laman dipasang ke Home Screen.'],
     ['Waktu solat & ibadah', 'Kenapa tarikh Hijri berbeza sehari?', 'Kalendar dikira mengikut Umm al-Qura. Malaysia menentukan awal bulan melalui rukyah dan hisab. Laraskan dalam Tetapan ibadah.'],
-    ['Alat Pelajar', 'Adakah rujukan APA 7 daripada Penyelidikan & Sitasi tepat?', 'Butiran rujukan diekstrak daripada kertas anda, kemudian disemak dengan pangkalan data Crossref apabila DOI atau tajuk dijumpai. Rujukan bertanda "Diekstrak daripada PDF" perlu disemak sendiri, dan anda boleh menyuntingnya. DOI yang tidak tertulis dalam kertas tidak akan direka.'],
-    ['Alat Pelajar', 'Bolehkah saya hantar hasil Alat Pelajar sebagai tugasan?', 'Tidak. Alat ini membantu anda belajar, mengulang kaji dan membaiki kerja sendiri. Ikut dasar integriti akademik universiti anda dan isytiharkan penggunaan AI jika diminta pensyarah.'],
-    ['Alat Pelajar', 'Adakah rakaman kuliah saya disimpan?', 'Tidak. Kapsyen langsung diproses oleh pelayar anda. Untuk Transkrip HD, audio dihantar ke pelayan untuk ditranskrip dan tidak disimpan. Transkrip dan nota disimpan dalam peranti anda sahaja. Minta izin pensyarah sebelum merakam.'],
-    ['Alat Pelajar', 'Berapa had percuma Alat Pelajar?', '12 permintaan sehari untuk Pek Peperiksaan, Penyemak Rubrik, Jurulatih Pembentangan, Ingat Aktif dan Nota Kuliah. Penyelidikan & Sitasi, Penulisan Akademik dan Transkrip HD ialah alat Premium dengan 1 percubaan percuma sehari. Premium tanpa had.'],
     ['Premium & bayaran', 'Bagaimana cuba Premium percuma?', 'Buka halaman Premium dan mulakan percubaan percuma 1 hari (sekali bagi setiap akaun). Dalam app telefon, percubaan 3 hari dan langganan diuruskan oleh Google Play atau App Store.'],
     ['Premium & bayaran', 'Saya sudah bayar tetapi Premium tidak aktif.', 'Di laman web, buka halaman Premium, tekan "Sudah membayar? Aktifkan Premium pada peranti ini", kemudian masukkan kod bil dan e-mel semasa membayar. Dalam app, guna akaun Google Play atau App Store yang sama. Jika masih gagal, hantar soalan kepada kami.']
   ];

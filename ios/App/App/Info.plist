@@ -25,9 +25,9 @@
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Lokasi digunakan untuk menentukan zon waktu solat anda, memaparkan kedudukan anda pada peta, dan berkongsi lokasi dengan rakan Komuniti jika anda menghidupkannya.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Mikrofon digunakan hanya apabila anda menekan rakam dalam Nota Kuliah AI atau menjawab soalan Jurulatih Pembentangan dengan suara. Rakaman disimpan dalam peranti anda.</string>
+	<string>Mikrofon digunakan hanya apabila anda menekan butang arahan suara.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>Pengecaman suara menukar kuliah atau jawapan anda kepada teks secara langsung dalam Alat Pelajar.</string>
+	<string>Pengecaman suara menukar arahan suara anda kepada teks.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>LSRequiresIPhoneOS</key>

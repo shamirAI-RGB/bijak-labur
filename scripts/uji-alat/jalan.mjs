@@ -1,6 +1,6 @@
 /* Jalankan ujian hujung ke hujung bagi setiap alat SiswaCap.
    node scripts/uji-alat/jalan.mjs                 # semua kumpulan
-   node scripts/uji-alat/jalan.mjs pro alat        # kumpulan tertentu (nama fail kes-<nama>.mjs)
+   node scripts/uji-alat/jalan.mjs pro islam        # kumpulan tertentu (nama fail kes-<nama>.mjs)
    UJI_JSON=hasil.json simpan keputusan dalam fail JSON; UJI_GAMBAR=folder simpan tangkapan skrin kes yang gagal. */
 import { appendFileSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';

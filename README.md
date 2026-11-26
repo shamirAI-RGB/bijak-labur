@@ -1,6 +1,6 @@
 # SiswaCap
 
-Laman web + app (PWA) percuma: Belajar saham menggunakan Moomoo, harga saham & kripto masa nyata, waktu solat seluruh Malaysia, dan Alat Pelajar AI.
+Laman web + app (PWA) percuma: Belajar saham menggunakan Moomoo, harga saham & kripto masa nyata, dan waktu solat seluruh Malaysia.
 
 ## Struktur
 - `index.html`: semua halaman (Utama, Belajar, Pasaran, Solat, Semak)

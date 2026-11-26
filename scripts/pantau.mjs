@@ -104,10 +104,7 @@ const ext = [
   ['Al-Quran (alquran.cloud)', 'https://api.alquran.cloud/v1/ayah/1:1'],
   ['Harga kripto (Binance)', 'https://data-api.binance.vision/api/v3/ticker/price?symbol=BTCUSDT'],
   ['Harga kripto (CoinGecko)', 'https://api.coingecko.com/api/v3/ping'],
-  ['Kadar tukaran (open.er-api)', 'https://open.er-api.com/v6/latest/USD'],
-  ['Tatabahasa (LanguageTool)', 'https://api.languagetool.org/v2/languages'],
-  ['Rujukan (Crossref)', 'https://api.crossref.org/works?rows=1'],
-  ['Rujukan (OpenAlex)', 'https://api.openalex.org/works?per-page=1']
+  ['Kadar tukaran (open.er-api)', 'https://open.er-api.com/v6/latest/USD']
 ];
 await Promise.all(ext.map(([n, u]) => check('amaran', n, async () => { await ok(u); })));
 

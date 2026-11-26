@@ -1,6 +1,6 @@
 /* Setiap halaman SiswaCap: dibuka tanpa ralat pada telefon dan desktop, tema cerah dan gelap, tiada tatal mendatar,
    tiada gambar atau fail tempatan yang rosak, dan setiap pautan dalaman menuju ke halaman yang wujud. */
-const VIEWS = ['utama', 'belajar', 'pasaran', 'solat', 'ibadah', 'jadual', 'nota', 'komuniti', 'premium', 'soalan', 'halal', 'alat', 'uitm', 'pelajar-halal', 'demo'];
+const VIEWS = ['utama', 'belajar', 'pasaran', 'solat', 'ibadah', 'jadual', 'nota', 'komuniti', 'premium', 'soalan', 'halal', 'uitm', 'pelajar-halal', 'demo'];
 const LAMAN = ['siswa.html', 'tentang.html', 'servis.html', 'cara.html', 'terma.html', 'terma-guna.html', 'terma-app.html', 'privacy.html', 'penafian-ai.html', 'bayaran-balik.html', 'padam-data.html', 'peta.html', '404.html'];
 
 // Pantau fail tempatan yang gagal dimuat (404) sepanjang kes
@@ -73,7 +73,7 @@ kes.push({ kumpulan: 'Halaman', nama: 'Navigasi bawah dan suis tema', langkah: a
 kes.push({ kumpulan: 'Halaman', nama: 'Navigasi hash: hanya satu halaman kelihatan, menu Alat ditutup, tatal ke atas, peralihan tanpa tindih', lebar: 1280, langkah: async (t, page) => {
   const kelihatan = () => page.evaluate(() => [...document.querySelectorAll('.view')].filter(el => { const s = getComputedStyle(el); return s.display !== 'none' && s.visibility !== 'hidden' && el.getBoundingClientRect().height > 0; }).map(el => el.id));
   await t.buka('#utama');
-  const urutan = ['jadual', 'komuniti', 'alat', 'halal', ...VIEWS];
+  const urutan = ['jadual', 'komuniti', 'halal', ...VIEWS];
   for (const v of urutan) {
     // Buka menu Alat dan tatal ke bawah dahulu: kedua-duanya mesti ditetapkan semula selepas bertukar halaman
     await page.evaluate(() => { const d = document.querySelector('details.nav-more'); if (d) d.open = true; scrollTo(0, 600); });
@@ -110,20 +110,19 @@ kes.push({ kumpulan: 'Halaman', nama: 'Navigasi hash: hanya satu halaman kelihat
   if (k.length !== 1 || k[0] !== 'view-utama') throw new Error(`#agen: halaman kelihatan ${JSON.stringify(k)}`);
 } });
 
-// Menu Alat: dua kumpulan berlabel (Buku Nota AI, Kerjaya AI dan Gaya Hidup & Kreatif dibuang atas arahan pemilik, 31 Okt 2026), dan halaman Alat Pelajar memaparkan kumpulan yang sama
-kes.push({ kumpulan: 'Halaman', nama: 'Menu Alat dan halaman Alat Pelajar dalam dua kumpulan berlabel', lebar: 1280, langkah: async (t, page) => {
+// Menu Alat: dua kumpulan berlabel (Buku Nota AI, Kerjaya AI dan Gaya Hidup & Kreatif dibuang atas arahan pemilik, 31 Okt 2026), dan #alat lama (Alat Pelajar dibuang atas arahan pemilik, 26 Nov 2026) dibawa ke Pelajar UiTM
+kes.push({ kumpulan: 'Halaman', nama: 'Menu Alat dalam dua kumpulan berlabel; #alat lama dibawa ke Pelajar UiTM', lebar: 1280, langkah: async (t, page) => {
   await t.buka('#utama');
   const kump = await page.$$eval('.nav-pop .nav-kump', gs => gs.map(g => [g.querySelector('.nav-kump-t').textContent, [...g.querySelectorAll('a')].map(a => a.getAttribute('href'))]));
-  const jangka = [['Pelajar', ['#alat', '#uitm', '#pelajar-halal']], ['Ibadah & Komuniti', ['#ibadah', '#komuniti']]];
+  const jangka = [['Pelajar', ['#uitm', '#pelajar-halal']], ['Ibadah & Komuniti', ['#ibadah', '#komuniti']]];
   if (JSON.stringify(kump) !== JSON.stringify(jangka)) throw new Error(`kumpulan menu Alat: ${JSON.stringify(kump)}`);
   await t.klik('details.nav-more > summary');
   await t.klik('.nav-pop a[href="#komuniti"]');
   await t.ada('#view-komuniti.active', /\S/);
   if (await page.$('details.nav-more[open]')) throw new Error('menu Alat tidak ditutup selepas memilih');
   await page.evaluate(() => { location.hash = '#alat'; });
-  await t.ada('#view-alat .al-kump-t', /\S/);
-  const hal = await page.$$eval('#view-alat .al-kump', gs => gs.map(g => g.querySelector('.al-kump-t').textContent));
-  if (JSON.stringify(hal) !== JSON.stringify(jangka.map(x => x[0]))) throw new Error(`kumpulan halaman Alat: ${JSON.stringify(hal)}`);
+  await t.ada('#view-uitm.active h1', /^Pelajar UiTM$/);
+  if (await page.$('#view-alat, a[href="#alat"], [data-nav="alat"]')) throw new Error('masih ada elemen atau pautan Alat Pelajar');
 } });
 
 // Semak kertas kerja dibuang (arahan pemilik 31 Okt 2026): tiada pautan tinggal, dan #semak lama dibawa ke halaman utama
@@ -140,7 +139,7 @@ kes.push({ kumpulan: 'Halaman', nama: 'Bahagian Pelajar UiTM dan Pelajar Halal m
   await t.buka('#utama');
   const utama = await page.$$eval('#view-utama a[href="#jadual"]:not(.md-chip), #view-utama a[href="#nota"], #view-utama a[href="#halal"], .desk-nav > a[href="#jadual"], .desk-nav > a[href="#nota"]', as => as.map(a => a.getAttribute('href')));
   if (utama.length) throw new Error(`masih ada di halaman utama atau barisan navigasi: ${utama.join(', ')}`);
-  for (const [v, tajuk, jangka] of [['uitm', 'Pelajar UiTM', ['#jadual', '#alat']], ['pelajar-halal', 'Pelajar Halal', ['#halal', '#nota', '#ibadah/fiqh/tanya']]]) {
+  for (const [v, tajuk, jangka] of [['uitm', 'Pelajar UiTM', ['#jadual']], ['pelajar-halal', 'Pelajar Halal', ['#halal', '#nota', '#ibadah/fiqh/tanya']]]) {
     await page.evaluate(v => { location.hash = '#' + v; }, v);
     await t.ada(`#view-${v}.active h1`, new RegExp('^' + tajuk + '$'));
     const kad = await page.$$eval(`#view-${v} .card.shortcut`, as => as.map(a => a.getAttribute('href')));
@@ -148,9 +147,6 @@ kes.push({ kumpulan: 'Halaman', nama: 'Bahagian Pelajar UiTM dan Pelajar Halal m
   }
   await t.klik('#view-pelajar-halal a[href="#halal"]');
   await t.ada('#view-halal.active h1', /\S/);
-  await page.evaluate(() => { location.hash = '#alat'; });
-  await t.ada('#view-alat a[href="#uitm"]', /Pelajar UiTM/);
-  await t.ada('#view-alat a[href="#pelajar-halal"]', /Pelajar Halal/);
 } });
 
 // Alamat lama /terms.html melencong ke Terma Perkhidmatan

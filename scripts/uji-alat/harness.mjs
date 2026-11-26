@@ -106,8 +106,6 @@ export const FIXTURE = [
   }],
   [/^https:\/\/data-api\.binance\.vision\/api\/v3\/ticker\/price/, () => [{ symbol: 'BTCUSDT', price: '65000.00' }, { symbol: 'ETHUSDT', price: '3200.00' }]],
   [/^https:\/\/data-api\.binance\.vision\/api\/v3\/depth/, () => ({ lastUpdateId: 1, bids: Array.from({ length: 20 }, (_, i) => [String(65000 - i * 5), '0.5']), asks: Array.from({ length: 20 }, (_, i) => [String(65005 + i * 5), '0.4']) })],
-  [/^https:\/\/api\.crossref\.org\/works\/10\./, () => ({ message: { DOI: '10.1000/uji.1', title: ['Kajian ujian pelaburan pelajar'], author: [{ given: 'Ahmad', family: 'Ali' }], issued: { 'date-parts': [[2023]] }, 'container-title': ['Jurnal Ujian'], volume: '5', issue: '2', page: '10-20', type: 'journal-article', publisher: 'Penerbit Ujian' } })],
-  [/^https:\/\/api\.crossref\.org\/works\?/, () => ({ message: { items: [{ DOI: '10.1000/uji.1', title: ['Kajian ujian pelaburan pelajar'], author: [{ given: 'Ahmad', family: 'Ali' }], issued: { 'date-parts': [[2023]] }, 'container-title': ['Jurnal Ujian'], type: 'journal-article' }] } })]
 ];
 
 /* ---------- Halaman dengan pemintasan rangkaian dan pengumpulan ralat ---------- */
