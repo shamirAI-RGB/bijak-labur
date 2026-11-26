@@ -78,7 +78,7 @@
     { t: 'Panduan Haji & Umrah', s: 'Langkah demi langkah', h: '#ibadah/haji', ic: 'plane', k: 'haji umrah mekah' },
     { t: 'Fiqh & Rujukan', s: 'Hukum dengan sumber kitab', h: '#ibadah/fiqh', ic: 'book', k: 'fiqh hukum muamalat riba halal haram rujukan kitab fatwa' },
     { t: 'Tanya AI Fiqh', s: 'Soalan dijawab dengan muka surat kitab', h: '#ibadah/fiqh/tanya', ic: 'quote', k: 'tanya ai soalan fiqh hukum' },
-    { t: 'Pelajar UiTM', s: 'Jadual kelas dan Alat Pelajar', h: '#uitm', ic: 'cap', k: 'uitm pelajar siswa kampus jadual kelas' },
+    { t: 'Pelajar UiTM', s: 'Jadual kelas dan skrin kunci', h: '#uitm', ic: 'cap', k: 'uitm pelajar siswa kampus jadual kelas' },
     { t: 'Pelajar Halal', s: 'Audit Halal, Nota IC220 dan Tanya AI Fiqh', h: '#pelajar-halal', ic: 'shield', k: 'halal pelajar industri pengurusan ic220' },
     { t: 'Jadual Kelas', s: 'Jadual UiTM dan skrin kunci', h: '#jadual', ic: 'calendar', k: 'uitm kelas kuliah timetable wallpaper skrin kunci' },
     { t: 'Kedai Nota', s: 'Nota IC220', h: '#nota', ic: 'receipt', k: 'nota ic220 beli kedai' },

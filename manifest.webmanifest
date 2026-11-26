@@ -1,7 +1,7 @@
 {
   "name": "SiswaCap",
   "short_name": "SiswaCap",
-  "description": "Belajar melabur secara patuh syariah, harga saham dan kripto masa nyata, waktu solat Malaysia, dan Alat Pelajar AI.",
+  "description": "Belajar melabur secara patuh syariah, harga saham dan kripto masa nyata, dan waktu solat Malaysia.",
   "lang": "ms",
   "start_url": "./#utama",
   "scope": "./",
@@ -59,8 +59,8 @@
       "url": "./#pasaran"
     },
     {
-      "name": "Alat Pelajar",
-      "url": "./#alat"
+      "name": "Jadual Kelas UiTM",
+      "url": "./#jadual"
     }
   ],
   "id": "./"

@@ -1,4 +1,4 @@
-/* SiswaCap: gaya kongsi untuk Alat Pelajar dan semakan gaya AI (asalnya Buku Nota AI dan Kerjaya AI, yang sudah dibuang) */
+/* SiswaCap: gaya kongsi (pemusing menunggu, menu lungsur Alat desktop, ruang soalan dan lain-lain; asalnya untuk Buku Nota AI, Kerjaya AI dan Alat Pelajar, yang sudah dibuang) */
 /* Pemusing menunggu (asalnya dalam css/studio.css) */
 .st-spin { width: 44px; height: 44px; border-radius: 50%; border: 3px solid var(--surface-2); border-top-color: var(--brand); animation: st-spin 1s linear infinite; }
 @keyframes st-spin { to { transform: rotate(360deg); } }

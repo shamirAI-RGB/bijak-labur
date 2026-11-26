@@ -1097,22 +1097,22 @@ export default [
     // Pengesahan
     await t.klik('#sqHantar');
     await t.ada('#sqErr', /^Tulis soalan anda dahulu\.$/);
-    await t.isi('#sqNama', 'Ali'); await t.pilih('#sqTopik', 'Alat Pelajar');
-    await t.isi('#sqTeks', 'Bagaimana cara eksport rujukan APA 7?');
-    await t.ada('#sqLen', /^37$/);
+    await t.isi('#sqNama', 'Ali'); await t.pilih('#sqTopik', 'Belajar & pasaran');
+    await t.isi('#sqTeks', 'Bagaimana cara menyimpan portfolio saya?');
+    await t.ada('#sqLen', /^40$/);
     await t.klik('#sqHantar');
     await t.ada('#sqErr', /^Isi e-mel anda supaya kami boleh membalas/);
     await t.isi('#sqEmel', 'ali@contoh'); await t.klik('#sqHantar');
     await t.ada('#sqErr', /^Semak semula alamat e-mel anda\.$/);
     // Draf kekal selepas muat semula
     await page.reload(); await page.waitForSelector('#sqForm');
-    sama([await nilai(page, '#sqNama'), await nilai(page, '#sqTopik'), await nilai(page, '#sqTeks')], ['Ali', 'Alat Pelajar', 'Bagaimana cara eksport rujukan APA 7?'], 'Draf dipulihkan');
+    sama([await nilai(page, '#sqNama'), await nilai(page, '#sqTopik'), await nilai(page, '#sqTeks')], ['Ali', 'Belajar & pasaran', 'Bagaimana cara menyimpan portfolio saya?'], 'Draf dipulihkan');
     await t.isi('#sqEmel', 'ali@contoh.my');
     await t.klik('#sqHantar');
     await page.waitForSelector('#sqDone:not([hidden])');
     await t.ada('#sqDoneTeks', /^Terima kasih, Ali\. Kami akan membalas ke ali@contoh\.my\./);
     const b = globalThis.__tanyaAkhir || {};   // fixture berjalan dalam proses Node yang sama
-    sama([b.nama, b.emel, b.topik, b.teks, b.sumber, b.laman], ['Ali', 'ali@contoh.my', 'Alat Pelajar', 'Bagaimana cara eksport rujukan APA 7?', 'web', ''], 'Badan permintaan /tanya');
+    sama([b.nama, b.emel, b.topik, b.teks, b.sumber, b.laman], ['Ali', 'ali@contoh.my', 'Belajar & pasaran', 'Bagaimana cara menyimpan portfolio saya?', 'web', ''], 'Badan permintaan /tanya');
     sama((await storan(page, 'bl_soalanDraf')).teks, '', 'Soalan dikosongkan selepas dihantar');
     await t.klik('#sqLagi');
     await page.waitForSelector('#sqForm:not([hidden])');

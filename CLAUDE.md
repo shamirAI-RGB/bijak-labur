@@ -42,7 +42,7 @@ Jenama SiswaCap (Siswa Capital) sejak 10 Oktober 2026. Alamat utama laman ialah 
 node worker/test.mjs && node worker-nota/test.mjs && node worker-jadual/test.mjs && node worker-agen/test.mjs
 (cd worker-fiqh && npm ci --silent && node test.mjs)
 npx -y http-server . -p 8099 -s -c-1   # kemudian buka setiap #view dengan Playwright dan pastikan tiada pageerror
-NODE_PATH=$(npm root -g) node scripts/uji-alat/jalan.mjs [laman pro alat pelajar islam umum]   # ujian setiap alat (CI: uji-alat.yml)
+NODE_PATH=$(npm root -g) node scripts/uji-alat/jalan.mjs [laman pro pelajar islam umum]   # ujian setiap alat (CI: uji-alat.yml)
 ```
 - `scripts/uji-alat/`: ujian hujung ke hujung setiap alat dalam pelayar, tanpa internet. Pelayan worker-fiqh sebenar dijalankan dalam proses dengan model AI palsu yang mengikut skema jawapan; API luar dijawab oleh `FIXTURE`. Apabila menambah atau mengubah alat, tambah kes dalam `kes-<kumpulan>.mjs` yang berkenaan.
 - Chromium untuk Playwright: `/opt/pw-browsers/chromium-*/chrome-linux/chrome`.
